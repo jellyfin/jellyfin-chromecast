@@ -1682,6 +1682,38 @@ module.controller('MainCtrl', function ($scope, $interval, $timeout, $q, $http, 
                 embyActions.displayUserInfo($scope, data.serverAddress, data.accessToken, data.userId);
             }
         }
+        else if (data.command == 'SetVolume') {
+
+            // TODO
+            // Scale 0-100
+            window.mediaElement.volume = data.options.volume / 100;
+        }
+        else if (data.command == 'Seek') {
+
+            // TODO
+            // Scale 0-100
+            var newPosition = data.options.position;
+        }
+        else if (data.command == 'Mute') {
+
+            // TODO
+            window.mediaElement.volume = 0;
+        }
+        else if (data.command == 'Stop') {
+
+            stop();
+        }
+        else if (data.command == 'Pause') {
+
+            // TODO
+            window.mediaElement.pause();
+
+        }
+        else if (data.command == 'Unpause') {
+
+            // TODO
+            window.mediaElement.play();
+        }
         else {
 
             translateItems(data, data.options, data.options.items);
