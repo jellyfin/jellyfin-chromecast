@@ -1489,11 +1489,20 @@ module.controller('MainCtrl', function ($scope, $interval, $timeout, $q, $http, 
         }
     }
 
+    function onMediaElementVolumeChange() {
+
+        var volume = window.mediaElement.volume;
+        window.VolumeInfo.Level = volume * 100;
+        window.VolumeInfo.IsMuted = volume == 0;
+    }
+
     function enableTimeUpdateListener(enabled) {
         if (enabled) {
             window.mediaElement.addEventListener('timeupdate', onMediaElementTimeUpdate);
+            window.mediaElement.addEventListener('volumechange', onMediaElementVolumeChange);
         } else {
             window.mediaElement.removeEventListener('timeupdate', onMediaElementTimeUpdate);
+            window.mediaElement.removeEventListener('volumechange', onMediaElementVolumeChange);
         }
     }
 
@@ -1684,15 +1693,12 @@ module.controller('MainCtrl', function ($scope, $interval, $timeout, $q, $http, 
         }
         else if (data.command == 'SetVolume') {
 
-            // TODO
             // Scale 0-100
             window.mediaElement.volume = data.options.volume / 100;
         }
         else if (data.command == 'Seek') {
 
-            // TODO
-            // Scale 0-100
-            var newPosition = data.options.position;
+            window.mediaElement.currentTime = data.options.position;
         }
         else if (data.command == 'Mute') {
 
@@ -1705,13 +1711,11 @@ module.controller('MainCtrl', function ($scope, $interval, $timeout, $q, $http, 
         }
         else if (data.command == 'Pause') {
 
-            // TODO
             window.mediaElement.pause();
 
         }
         else if (data.command == 'Unpause') {
 
-            // TODO
             window.mediaElement.play();
         }
         else {
