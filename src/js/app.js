@@ -356,7 +356,7 @@ function createStreamInfo(item, mediaSource, startPosition) {
 
             } else {
 
-                mediaUrl = getUrl(item.serverAddress, mediaSource.TranscodingUrl) + "&EnableAutoStreamCopy=false";
+                mediaUrl = getUrl(item.serverAddress, mediaSource.TranscodingUrl) + "&EnableAutoStreamCopy=false&EnableSplitTranscoding=false";
 
                 if (mediaSource.TranscodingSubProtocol == 'hls') {
 
@@ -859,32 +859,6 @@ module.factory('embyActions', function ($timeout, $interval, $http, $q) {
         return $http.post(url, options,
           {
               headers: getSecurityHeaders($scope.accessToken, $scope.userId)
-          });
-    };
-
-    factory.stopTranscoding = function (serverAddress, accessToken, userId) {
-
-        var deferred = $q.defer();
-        deferred.resolve();
-
-        if (!userId) {
-            console.log("null userId");
-            return deferred.promise;
-        }
-
-        if (!serverAddress) {
-            console.log("null serverAddress");
-            return deferred.promise;
-        }
-
-        var url = getUrl(serverAddress, "Videos/ActiveEncodings");
-
-        return $http.delete(url,
-          {
-              params: {
-                  deviceId: deviceInfo.deviceId
-              },
-              headers: getSecurityHeaders(accessToken, userId)
           });
     };
 
@@ -1560,31 +1534,21 @@ module.controller('MainCtrl', function ($scope, $interval, $timeout, $q, $http, 
 
         var reportingParams = getReportingParams($scope);
 
+		var promise;
+		
         if (reportingParams.ItemId) {
-            embyActions.reportPlaybackStopped($scope, reportingParams);
+            promise = embyActions.reportPlaybackStopped($scope, reportingParams);
         }
 
         clearMediaElement();
 
-        return embyActions.stopTranscoding($scope.serverAddress, $scope.accessToken, $scope.userId).success(function () {
-
-            if (nextMode == "next") {
-                playNextItem();
-            }
-            else if (nextMode == "previous") {
-                playPreviousItem();
-            }
-            else if (nextMode == "none") {
-
-            }
-            else {
-
-                window.playlist = [];
-                window.currentPlaylistIndex = -1;
-
-                embyActions.displayUserInfo($scope, $scope.serverAddress, $scope.accessToken, $scope.userId);
-            }
-        });
+		if (promise){
+			return promise;
+		}
+		
+        var deferred = $q.defer();
+        deferred.resolve();
+		return deferred.promise;
     }
 
     window.castReceiverManager = cast.receiver.CastReceiverManager.getInstance();
@@ -2066,15 +2030,17 @@ module.controller('MainCtrl', function ($scope, $interval, $timeout, $q, $http, 
         }
 
         host.onError = function (errorCode) {
+		
+			host.onError = null;
+			
             console.log("Fatal Error - " + errorCode);
-
-            embyActions.stopTranscoding($scope.serverAddress, $scope.accessToken, $scope.userId);
 
             broadcastToMessageBus({
                 type: 'error',
                 message: "Fatal Error - " + errorCode
             });
-            unloadPlayer();
+			
+			stop(null, false);
         };
 
         if (protocol !== null) {
