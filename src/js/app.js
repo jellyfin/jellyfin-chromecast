@@ -150,13 +150,7 @@ function getDeviceProfile() {
     profile.CodecProfiles.push({
         Type: 'Video',
         Codec: 'h264',
-        Conditions: [
-        {
-            Condition: 'Equals',
-            Property: 'IsCabac',
-            Value: 'true',
-            IsRequired: false
-        },
+        Conditions: [       
         {
             Condition: 'NotEquals',
             Property: 'IsAnamorphic',
