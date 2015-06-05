@@ -1399,7 +1399,7 @@ function clearMediaElement() {
 
 function broadcastToMessageBus(msg) {
 
-    window.playlistMessageBus.broadcast(JSON.stringify(msg));
+    window.playlistMessageBus.broadcast(msg);
 }
 
 function broadcastConnectionErrorMessage() {
