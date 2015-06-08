@@ -704,7 +704,7 @@ module.factory('embyActions', function ($timeout, $interval, $http, $q) {
     var setApplicationClose = function () {
         $timeout.cancel(closeAppPromise);
         closeAppPromise = $timeout(function () {
-            window.close();
+            window.close(); t
         }, 3600000, false);
     };
 
@@ -764,6 +764,10 @@ module.factory('embyActions', function ($timeout, $interval, $http, $q) {
             pingInterval = null;
         }
     }
+
+    factory.stopPingInterval = function () {
+        stopPingInterval();
+    };
 
     factory.reportPlaybackStart = function ($scope, options) {
 
@@ -834,6 +838,8 @@ module.factory('embyActions', function ($timeout, $interval, $http, $q) {
 
     factory.reportPlaybackStopped = function ($scope, options) {
 
+        stopPingInterval();
+
         var deferred = $q.defer();
         deferred.resolve();
 
@@ -853,8 +859,6 @@ module.factory('embyActions', function ($timeout, $interval, $http, $q) {
             type: 'playbackstop',
             data: getSenderReportingData($scope, options)
         });
-
-        stopPingInterval();
 
         return $http.post(url, options,
           {
@@ -1536,6 +1540,8 @@ module.controller('MainCtrl', function ($scope, $interval, $timeout, $q, $http, 
         var reportingParams = getReportingParams($scope);
 
         var promise;
+
+        embyActions.stopPingInterval();
 
         if (reportingParams.ItemId) {
             promise = embyActions.reportPlaybackStopped($scope, reportingParams);
