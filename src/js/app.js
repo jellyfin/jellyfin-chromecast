@@ -76,12 +76,18 @@ function getDeviceProfile() {
     profile.MaxStaticBitrate = DefaultMaxBitrate;
     profile.MusicStreamingTranscodingBitrate = 192000;
 
+	var videoAudioCodecs = "aac,mp3";
+	
+	if (window.playOptions.supportsAc3) {
+		videoAudioCodecs += ",ac3";
+	}
+	
     profile.DirectPlayProfiles = [];
     profile.DirectPlayProfiles.push({
         Container: 'mp4,mkv,m4v',
         Type: 'Video',
         VideoCodec: 'h264',
-        AudioCodec: 'aac,mp3'
+        AudioCodec: videoAudioCodecs
     });
 
     profile.DirectPlayProfiles.push({
@@ -1251,7 +1257,8 @@ module.factory('embyActions', function ($timeout, $interval, $http, $q) {
 });
 
 window.playOptions = {
-    maxBitrate: DefaultMaxBitrate
+    maxBitrate: DefaultMaxBitrate,
+	supportsAc3: false
 };
 
 window.playlist = [];
@@ -1580,6 +1587,10 @@ module.controller('MainCtrl', function ($scope, $interval, $timeout, $q, $http, 
         window.deviceInfo.deviceName = data.receiverName || window.deviceInfo.deviceName;
         window.deviceInfo.deviceId = data.receiverName ? CryptoJS.SHA1(data.receiverName).toString() : window.deviceInfo.deviceId;
         window.playOptions.maxBitrate = Math.min(data.maxBitrate || window.playOptions.maxBitrate, BitrateCap);
+		
+		if (data.supportsAc3 != null){
+			window.playOptions.supportsAc3 = data.supportsAc3;
+		}
 
         // Items will have properties - Id, Name, Type, MediaType, IsFolder
 
