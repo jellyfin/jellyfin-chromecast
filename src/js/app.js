@@ -76,12 +76,12 @@ function getDeviceProfile() {
     profile.MaxStaticBitrate = DefaultMaxBitrate;
     profile.MusicStreamingTranscodingBitrate = 192000;
 
-	var videoAudioCodecs = "aac,mp3";
-	
-	if (window.playOptions.supportsAc3) {
-		videoAudioCodecs += ",ac3";
-	}
-	
+    var videoAudioCodecs = "aac,mp3";
+
+    if (window.playOptions.supportsAc3) {
+        videoAudioCodecs += ",ac3";
+    }
+
     profile.DirectPlayProfiles = [];
     profile.DirectPlayProfiles.push({
         Container: 'mp4,mkv,m4v',
@@ -156,7 +156,7 @@ function getDeviceProfile() {
     profile.CodecProfiles.push({
         Type: 'Video',
         Codec: 'h264',
-        Conditions: [       
+        Conditions: [
         {
             Condition: 'NotEquals',
             Property: 'IsAnamorphic',
@@ -1258,7 +1258,7 @@ module.factory('embyActions', function ($timeout, $interval, $http, $q) {
 
 window.playOptions = {
     maxBitrate: DefaultMaxBitrate,
-	supportsAc3: false
+    supportsAc3: false
 };
 
 window.playlist = [];
@@ -1535,21 +1535,21 @@ module.controller('MainCtrl', function ($scope, $interval, $timeout, $q, $http, 
 
         var reportingParams = getReportingParams($scope);
 
-		var promise;
-		
+        var promise;
+
         if (reportingParams.ItemId) {
             promise = embyActions.reportPlaybackStopped($scope, reportingParams);
         }
 
         clearMediaElement();
 
-		if (promise){
-			return promise;
-		}
-		
+        if (promise) {
+            return promise;
+        }
+
         var deferred = $q.defer();
         deferred.resolve();
-		return deferred.promise;
+        return deferred.promise;
     }
 
     window.castReceiverManager = cast.receiver.CastReceiverManager.getInstance();
@@ -1587,10 +1587,10 @@ module.controller('MainCtrl', function ($scope, $interval, $timeout, $q, $http, 
         window.deviceInfo.deviceName = data.receiverName || window.deviceInfo.deviceName;
         window.deviceInfo.deviceId = data.receiverName ? CryptoJS.SHA1(data.receiverName).toString() : window.deviceInfo.deviceId;
         window.playOptions.maxBitrate = Math.min(data.maxBitrate || window.playOptions.maxBitrate, BitrateCap);
-		
-		if (data.supportsAc3 != null){
-			window.playOptions.supportsAc3 = data.supportsAc3;
-		}
+
+        if (data.supportsAc3 != null) {
+            window.playOptions.supportsAc3 = data.supportsAc3;
+        }
 
         // Items will have properties - Id, Name, Type, MediaType, IsFolder
 
@@ -1641,13 +1641,13 @@ module.controller('MainCtrl', function ($scope, $interval, $timeout, $q, $http, 
         }
         else if (data.command == 'VolumeUp') {
 
-            // TODO
+            window.mediaElement.volume = Math.min(1, window.mediaElement.volume + .2);
 
         }
         else if (data.command == 'VolumeDown') {
 
             // TODO
-
+            window.mediaElement.volume = Math.max(0, window.mediaElement.volume - .2);
         }
         else if (data.command == 'ToggleMute') {
 
@@ -2035,17 +2035,17 @@ module.controller('MainCtrl', function ($scope, $interval, $timeout, $q, $http, 
         }
 
         host.onError = function (errorCode) {
-		
-			host.onError = null;
-			
+
+            host.onError = null;
+
             console.log("Fatal Error - " + errorCode);
 
             broadcastToMessageBus({
                 type: 'error',
                 message: "Fatal Error - " + errorCode
             });
-			
-			stop(null, false);
+
+            stop(null, false);
         };
 
         if (protocol !== null) {
