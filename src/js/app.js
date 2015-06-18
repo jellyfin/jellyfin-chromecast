@@ -759,8 +759,10 @@ module.factory('embyActions', function ($timeout, $interval, $http, $q) {
 
     function stopPingInterval() {
 
-        if (pingInterval) {
-            $interval.cancel(pingInterval);
+        var current = pingInterval;
+
+        if (current) {
+            $interval.cancel(current);
             pingInterval = null;
         }
     }
