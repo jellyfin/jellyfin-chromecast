@@ -1833,9 +1833,18 @@ module.controller('MainCtrl', function ($scope, $interval, $timeout, $q, $http, 
     function playItem(item, options, stopPlayer) {
 
         if (stopPlayer) {
-            stop("none", false).success(function () {
+		
+			var callback = function () {
                 onStopPlayerBeforePlaybackDone(item, options);
-            });
+            };
+			
+            var promise = stop("none", false);
+
+			if (promise.success) {
+				promise.success(callback);
+			} else {
+				promise.then(callback);
+			}
         }
         else {
             onStopPlayerBeforePlaybackDone(item, options);
