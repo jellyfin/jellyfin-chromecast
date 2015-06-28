@@ -716,10 +716,17 @@ module.factory('embyActions', function ($timeout, $interval, $http, $q) {
 
     var fallBackBackdropImg = function ($scope, src) {
         if (!src) {
-            $scope.$apply(function () {
-                $scope.backdrop = "img/bg.jpg";
-            });
-            return;
+			// Use try/catch in case an [$rootScope:inprog] is thrown
+			try {
+				$scope.$apply(function () {
+					$scope.backdrop = "img/bg.jpg";
+				});
+			
+			}
+			catch (err) {
+			
+			}
+			return;
         }
 
         var setBackdrop = function () {
