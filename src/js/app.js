@@ -716,17 +716,17 @@ module.factory('embyActions', function ($timeout, $interval, $http, $q) {
 
     var fallBackBackdropImg = function ($scope, src) {
         if (!src) {
-			// Use try/catch in case an [$rootScope:inprog] is thrown
-			try {
-				$scope.$apply(function () {
-					$scope.backdrop = "img/bg.jpg";
-				});
-			
-			}
-			catch (err) {
-			
-			}
-			return;
+            // Use try/catch in case an [$rootScope:inprog] is thrown
+            try {
+                $scope.$apply(function () {
+                    $scope.backdrop = "img/bg.jpg";
+                });
+
+            }
+            catch (err) {
+
+            }
+            return;
         }
 
         var setBackdrop = function () {
@@ -1276,6 +1276,7 @@ window.playOptions = {
 
 window.playlist = [];
 window.currentPlaylistIndex = -1;
+window.repeatMode = "RepeatNone";
 
 function unloadPlayer() {
     if (window.player !== null && window.player !== undefined) {
@@ -1311,7 +1312,8 @@ function getReportingParams($scope) {
         CanSeek: $scope.canSeek,
         PlayMethod: $scope.playMethod,
         LiveStreamId: $scope.liveStreamId,
-        PlaySessionId: $scope.playSessionId
+        PlaySessionId: $scope.playSessionId,
+        RepeatMode: window.repeatMode
     };
 }
 
@@ -1652,7 +1654,7 @@ module.controller('MainCtrl', function ($scope, $interval, $timeout, $q, $http, 
         else if (data.command == 'SetSubtitleStreamIndex') {
 
             // TODO
-
+            setSubtitleStreamIndex($scope, data.options.index, data.serverAddress);
         }
         else if (data.command == 'VolumeUp') {
 
@@ -1698,6 +1700,11 @@ module.controller('MainCtrl', function ($scope, $interval, $timeout, $q, $http, 
             window.mediaElement.pause();
 
         }
+        else if (data.command == 'SetRepeatMode') {
+
+            window.repeatMode = data.options.RepeatMode;
+
+        }
         else if (data.command == 'Unpause') {
 
             window.mediaElement.play();
@@ -1706,6 +1713,28 @@ module.controller('MainCtrl', function ($scope, $interval, $timeout, $q, $http, 
 
             translateItems(data, data.options, data.options.items);
         }
+    }
+
+    function setSubtitleStreamIndex($scope, index, serverAddress) {
+
+        if (index == -1 || index == null) {
+            setTextTrack($scope);
+            return;
+        }
+
+        var mediaStreams = getSenderReportingData($scope, getReportingParams($scope)).MediaStreams;
+
+        var subtitleStream = getStreamByIndex(mediaStreams, 'Subtitle', index);
+        if (subtitleStream && subtitleStream.DeliveryMethod == 'External') {
+
+            var textStreamUrl = subtitleStream.IsExternalUrl ? subtitleStream.DeliveryUrl : (getUrl(serverAddress, subtitleStream.DeliveryUrl));
+
+            console.log('Subtitle url: ' + textStreamUrl);
+            setTextTrack($scope, textStreamUrl);
+            return;
+        }
+
+        // TODO: If we get here then it must require a transcoding change. 
     }
 
     // Create a message handler for the custome namespace channel
@@ -1811,8 +1840,30 @@ module.controller('MainCtrl', function ($scope, $interval, $timeout, $q, $http, 
 
         var playlist = window.playlist;
 
-        if (playlist && window.currentPlaylistIndex < playlist.length - 1) {
-            window.currentPlaylistIndex++;
+        if (!playlist) {
+            return false;
+        }
+
+        var newIndex;
+
+        switch (window.repeatMode) {
+
+            case 'RepeatOne':
+                newIndex = window.currentPlaylistIndex;
+                break;
+            case 'RepeatAll':
+                newIndex = window.currentPlaylistIndex + 1;
+                if (newIndex >= window.playlist.length) {
+                    newIndex = 0;
+                }
+                break;
+            default:
+                newIndex = window.currentPlaylistIndex + 1;
+                break;
+        }
+
+        if (newIndex < playlist.length) {
+            window.currentPlaylistIndex = newIndex;
 
             var item = playlist[window.currentPlaylistIndex];
 
@@ -1840,18 +1891,18 @@ module.controller('MainCtrl', function ($scope, $interval, $timeout, $q, $http, 
     function playItem(item, options, stopPlayer) {
 
         if (stopPlayer) {
-		
-			var callback = function () {
+
+            var callback = function () {
                 onStopPlayerBeforePlaybackDone(item, options);
             };
-			
+
             var promise = stop("none", false);
 
-			if (promise.success) {
-				promise.success(callback);
-			} else {
-				promise.then(callback);
-			}
+            if (promise.success) {
+                promise.success(callback);
+            } else {
+                promise.then(callback);
+            }
         }
         else {
             onStopPlayerBeforePlaybackDone(item, options);
@@ -1968,17 +2019,8 @@ module.controller('MainCtrl', function ($scope, $interval, $timeout, $q, $http, 
         return false;
     }
 
-    function playMediaSource(playSessionId, item, mediaSource, options) {
+    function setTextTrack($scope, subtitleStreamUrl) {
 
-        $timeout(function () {
-            $scope.status = 'loading';
-        }, 0);
-
-        unloadPlayer();
-
-        var streamInfo = createStreamInfo(item, mediaSource, options.startPositionTicks);
-
-        var url = streamInfo.url;
         while (window.mediaElement.firstChild) {
             window.mediaElement.removeChild(window.mediaElement.firstChild);
         }
@@ -1991,8 +2033,8 @@ module.controller('MainCtrl', function ($scope, $interval, $timeout, $q, $http, 
         for (var i = cues.length - 1 ; i >= 0 ; i--) {
             track.removeCue(cues[i]);
         }
-        if (streamInfo.subtitleStreamUrl) {
-            embyActions.getSubtitle($scope, streamInfo.subtitleStreamUrl).success(function (data) {
+        if (subtitleStreamUrl) {
+            embyActions.getSubtitle($scope, subtitleStreamUrl).success(function (data) {
 
                 track.mode = "showing";
 
@@ -2001,6 +2043,20 @@ module.controller('MainCtrl', function ($scope, $interval, $timeout, $q, $http, 
                 });
             });
         }
+    }
+
+    function playMediaSource(playSessionId, item, mediaSource, options) {
+
+        $timeout(function () {
+            $scope.status = 'loading';
+        }, 0);
+
+        unloadPlayer();
+
+        var streamInfo = createStreamInfo(item, mediaSource, options.startPositionTicks);
+
+        var url = streamInfo.url;
+        setTextTrack($scope, streamInfo.subtitleStreamUrl);
 
         var mediaInfo = {
             customData: {
