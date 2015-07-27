@@ -1,0 +1,92 @@
+<!--
+Copyright (C) 2013 Google Inc. All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+     http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<!DOCTYPE html>
+<html ng-app="emby">
+<head>
+    <title>Emby</title>
+    <script src="//www.gstatic.com/cast/sdk/libs/receiver/2.0.0/cast_receiver.js"></script>
+    <script src="//www.gstatic.com/cast/sdk/libs/mediaplayer/1.0.0/media_player.js"></script>
+    <link rel="stylesheet" href="css/glyphicons.css">
+    <link rel="stylesheet" href="css/emby.css?hash=026">
+</head>
+<body ng-class="status" ng-controller="MainCtrl">
+    <div id="waiting-container-backdrop" ng-style="{ backgroundImage : 'url(' + waitingbackdrop + ')' }"></div>
+    <div id="waiting-container">
+        <div class="waitingContent">
+            <img class="logo" src="img/logo.png">
+            
+            <h1>Ready to cast</h1>
+            <h2>Select your media in Emby and play it here</h2>
+        </div>
+        <div class="timeOfDay"><span>{{timePrefix}}</span> <span class="timeSuffix">{{timeSuffix}}</span></div>
+        <p class="version-number">{{versionNumber}}</p>
+    </div>
+    <video id="video-player" crossorigin="anonymous" preload="auto"></video>
+    <img id="photo"></img>
+    <div id="backdrop" ng-style="{ backgroundImage : 'url(' + backdrop + ')' }">
+        <img class="spinner" src="img/spinner.png" />
+        <div class="gradient">
+            <img id="media-poster" ng-src="{{poster}}" ng-show="showPoster" />
+            <h2>
+                <span class="media-title">{{mediaTitle}}</span>
+                <span class="media-secondary-title" ng-show="secondaryTitle">{{secondaryTitle}}</span>
+                <span class="media-artist" ng-show="artist">{{artist}}</span>
+                <span class="media-album-title" ng-show="albumTitle"><em>{{albumTitle}}</em></span>
+            </h2>
+        </div>
+    </div>
+    <div id="controls">
+        <img id="media-poster" ng-src="{{poster}}" />
+        <div id="right-controls">
+            <h1>
+                <i class="glyphicon glyphicon-pause" ng-show="paused"></i>
+                <i class="glyphicon glyphicon-play" ng-hide="paused"></i>
+                <span class="media-title">{{mediaTitle}}</span>
+                <span class="media-secondary-title" ng-show="secondaryTitle">{{secondaryTitle}}</span>
+                <span class="media-artist" ng-show="artist">{{artist}}</span>
+                <span class="media-album-title" ng-show="albumTitle"><em>(from the album "{{albumTitle}}")</em></span>
+            </h1>
+            <div id="player-controls-left"><span class="player-time player-current-time">{{( (startPositionTicks * 1) + (currentTime * 10000000)) | displayTime}}</span></div>
+            <div id="player-controls-right"><span class="player-time player-duration">{{runtimeTicks | displayTime}}</span></div>
+            <div id="player-controls-center">
+                <div id="player-progress-track">
+                    <div id="player-progress-bar" ng-style="{ width: (( (startPositionTicks * 1) + (currentTime * 10000000)) / runtimeTicks * 100) + '%' }"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="detailContent">
+        <div class="timeOfDay"><span>{{timePrefix}}</span><span class="timeSuffix">{{timeSuffix}}</span></div>
+		
+        <div class="detailImage" ng-style="{ backgroundImage : 'url(' + detailImageUrl + ')' }">
+            <div id="playedIndicator"></div>
+			
+            <div class="detailImageProgressContainer" ng-show="hasPlayedPercentage"><progress class="itemProgressBar" min="0" max="100" value="{{playedPercentage}}"></progress></div>
+        </div>
+		
+        <div class="detailInfo">
+            <p class="displayNameContainer"><span class="displayName">{{displayName}}</span><span id="miscInfo"></span></p>
+            <div id="detailRating"></div>
+            <p class="genres">{{genres}}</p>
+            <p class="overview">{{overview}}</p>
+        </div>
+    </div>
+    <div class="detailLogo" ng-style="{ backgroundImage : 'url(' + detailLogoUrl + ')' }"></div>
+    <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.2.7/angular.min.js"></script>
+	<script src="js/sha1.js?hash=051"></script>
+    <script src="js/app.js?hash=051"></script>
+</body>
+</html>
