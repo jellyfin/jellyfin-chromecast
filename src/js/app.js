@@ -1479,6 +1479,10 @@ module.controller('MainCtrl', function ($scope, $interval, $timeout, $q, $http, 
         }
     }
 
+    function onMediaElementPause() {
+        embyActions.reportPlaybackProgress($scope, getReportingParams($scope));
+    }
+
     function onMediaElementVolumeChange() {
 
         var volume = window.mediaElement.volume;
@@ -1490,9 +1494,11 @@ module.controller('MainCtrl', function ($scope, $interval, $timeout, $q, $http, 
         if (enabled) {
             window.mediaElement.addEventListener('timeupdate', onMediaElementTimeUpdate);
             window.mediaElement.addEventListener('volumechange', onMediaElementVolumeChange);
+            window.mediaElement.addEventListener('pause', onMediaElementPause);
         } else {
             window.mediaElement.removeEventListener('timeupdate', onMediaElementTimeUpdate);
             window.mediaElement.removeEventListener('volumechange', onMediaElementVolumeChange);
+            window.mediaElement.removeEventListener('pause', onMediaElementPause);
         }
     }
 
@@ -1611,6 +1617,8 @@ module.controller('MainCtrl', function ($scope, $interval, $timeout, $q, $http, 
 
         // Items will have properties - Id, Name, Type, MediaType, IsFolder
 
+        var reportProgress = false;
+
         if (data.command == 'PlayLast' || data.command == 'PlayNext') {
 
             tagItems(data.options.items, data);
@@ -1659,12 +1667,13 @@ module.controller('MainCtrl', function ($scope, $interval, $timeout, $q, $http, 
         else if (data.command == 'VolumeUp') {
 
             window.mediaElement.volume = Math.min(1, window.mediaElement.volume + .2);
-
+            reportProgress = true;
         }
         else if (data.command == 'VolumeDown') {
 
             // TODO
             window.mediaElement.volume = Math.max(0, window.mediaElement.volume - .2);
+            reportProgress = true;
         }
         else if (data.command == 'ToggleMute') {
 
@@ -1681,10 +1690,12 @@ module.controller('MainCtrl', function ($scope, $interval, $timeout, $q, $http, 
 
             // Scale 0-100
             window.mediaElement.volume = data.options.volume / 100;
+            reportProgress = true;
         }
         else if (data.command == 'Seek') {
 
             window.mediaElement.currentTime = data.options.position;
+            reportProgress = true;
         }
         else if (data.command == 'Mute') {
 
@@ -1698,7 +1709,7 @@ module.controller('MainCtrl', function ($scope, $interval, $timeout, $q, $http, 
         else if (data.command == 'Pause') {
 
             window.mediaElement.pause();
-
+            reportProgress = true;
         }
         else if (data.command == 'SetRepeatMode') {
 
@@ -1708,10 +1719,15 @@ module.controller('MainCtrl', function ($scope, $interval, $timeout, $q, $http, 
         else if (data.command == 'Unpause') {
 
             window.mediaElement.play();
+            reportProgress = true;
         }
         else {
 
             translateItems(data, data.options, data.options.items);
+        }
+
+        if (reportProgress) {
+            embyActions.reportPlaybackProgress($scope, getReportingParams($scope));
         }
     }
 
