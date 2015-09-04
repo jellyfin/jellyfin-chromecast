@@ -1665,7 +1665,7 @@ module.controller('MainCtrl', function ($scope, $interval, $timeout, $q, $http, 
             // TODO
             setSubtitleStreamIndex($scope, data.options.index, data.serverAddress);
         }
-        else if (data.command == 'VolumeUp') {
+        else if (data.command == 'VolumeUsp') {
 
             window.mediaElement.volume = Math.min(1, window.mediaElement.volume + .2);
             reportProgress = true;
@@ -1737,6 +1737,7 @@ module.controller('MainCtrl', function ($scope, $interval, $timeout, $q, $http, 
         console.log('setSubtitleStreamIndex. index: ' + index);
 
         if (index == -1 || index == null) {
+            $scope.subtitleStreamIndex = null;
             setTextTrack($scope);
             return;
         }
@@ -1759,6 +1760,7 @@ module.controller('MainCtrl', function ($scope, $interval, $timeout, $q, $http, 
 
             console.log('Subtitle url: ' + textStreamUrl);
             setTextTrack($scope, textStreamUrl);
+            $scope.subtitleStreamIndex = index;
             return;
         } else {
             console.log('setSubtitleStreamIndex video url change required');
