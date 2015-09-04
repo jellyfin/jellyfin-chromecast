@@ -2084,7 +2084,6 @@ module.controller('MainCtrl', function ($scope, $interval, $timeout, $q, $http, 
         unloadPlayer();
 
         var streamInfo = createStreamInfo(item, mediaSource, options.startPositionTicks);
-        $scope.PlaybackMediaSource = streamInfo.mediaSource;
 
         var url = streamInfo.url;
         setTextTrack($scope, streamInfo.subtitleStreamUrl);
@@ -2118,6 +2117,7 @@ module.controller('MainCtrl', function ($scope, $interval, $timeout, $q, $http, 
         }
 
         embyActions.load($scope, mediaInfo.customData, item);
+        $scope.PlaybackMediaSource = mediaSource;
 
         var autoplay = true;
 
