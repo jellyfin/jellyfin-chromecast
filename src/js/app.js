@@ -356,7 +356,7 @@ function createStreamInfo(item, mediaSource, startPosition) {
 
             } else {
 
-                mediaUrl = getUrl(item.serverAddress, mediaSource.TranscodingUrl) + "&EnableAutoStreamCopy=false&EnableSplitTranscoding=false";
+                mediaUrl = getUrl(item.serverAddress, mediaSource.TranscodingUrl);
 
                 if (mediaSource.TranscodingSubProtocol == 'hls') {
 
@@ -496,6 +496,7 @@ function resetPlaybackScope($scope) {
     $scope.audioStreamIndex = null;
     $scope.subtitleStreamIndex = null;
     $scope.mediaSourceId = '';
+    $scope.PlaybackMediaSource = null;
 
     $scope.showPoster = false;
 
@@ -1664,7 +1665,7 @@ module.controller('MainCtrl', function ($scope, $interval, $timeout, $q, $http, 
             // TODO
             setSubtitleStreamIndex($scope, data.options.index, data.serverAddress);
         }
-        else if (data.command == 'VolumeUp') {
+        else if (data.command == 'VolumeUsp') {
 
             window.mediaElement.volume = Math.min(1, window.mediaElement.volume + .2);
             reportProgress = true;
@@ -1733,23 +1734,38 @@ module.controller('MainCtrl', function ($scope, $interval, $timeout, $q, $http, 
 
     function setSubtitleStreamIndex($scope, index, serverAddress) {
 
+        console.log('setSubtitleStreamIndex. index: ' + index);
+
         if (index == -1 || index == null) {
+            $scope.subtitleStreamIndex = null;
             setTextTrack($scope);
             return;
         }
 
-        var mediaStreams = getSenderReportingData($scope, getReportingParams($scope)).NowPlayingItem.MediaStreams;
+        JSON.stringify($scope.PlaybackMediaSource);
+        var mediaStreams = $scope.PlaybackMediaSource.MediaStreams;
 
         var subtitleStream = getStreamByIndex(mediaStreams, 'Subtitle', index);
-        if (subtitleStream && subtitleStream.DeliveryMethod == 'External') {
+
+        if (!subtitleStream) {
+            console.log('setSubtitleStreamIndex error condition - subtitle stream not found.');
+            return;
+        }
+
+        console.log('setSubtitleStreamIndex DeliveryMethod:' + subtitleStream.DeliveryMethod);
+
+        if (subtitleStream.DeliveryMethod == 'External') {
 
             var textStreamUrl = subtitleStream.IsExternalUrl ? subtitleStream.DeliveryUrl : (getUrl(serverAddress, subtitleStream.DeliveryUrl));
 
             console.log('Subtitle url: ' + textStreamUrl);
             setTextTrack($scope, textStreamUrl);
+            $scope.subtitleStreamIndex = index;
             return;
-        }
+        } else {
+            console.log('setSubtitleStreamIndex video url change required');
 
+        }
         // TODO: If we get here then it must require a transcoding change. 
     }
 
@@ -2103,6 +2119,7 @@ module.controller('MainCtrl', function ($scope, $interval, $timeout, $q, $http, 
         }
 
         embyActions.load($scope, mediaInfo.customData, item);
+        $scope.PlaybackMediaSource = mediaSource;
 
         var autoplay = true;
 
