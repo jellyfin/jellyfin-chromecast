@@ -356,7 +356,7 @@ function createStreamInfo(item, mediaSource, startPosition) {
 
             } else {
 
-                mediaUrl = getUrl(item.serverAddress, mediaSource.TranscodingUrl) + "&EnableAutoStreamCopy=false&EnableSplitTranscoding=false";
+                mediaUrl = getUrl(item.serverAddress, mediaSource.TranscodingUrl);
 
                 if (mediaSource.TranscodingSubProtocol == 'hls') {
 
@@ -1733,6 +1733,8 @@ module.controller('MainCtrl', function ($scope, $interval, $timeout, $q, $http, 
 
     function setSubtitleStreamIndex($scope, index, serverAddress) {
 
+        console.log('setSubtitleStreamIndex. index: ' + index);
+
         if (index == -1 || index == null) {
             setTextTrack($scope);
             return;
@@ -1748,8 +1750,10 @@ module.controller('MainCtrl', function ($scope, $interval, $timeout, $q, $http, 
             console.log('Subtitle url: ' + textStreamUrl);
             setTextTrack($scope, textStreamUrl);
             return;
-        }
+        } else {
+            console.log('setSubtitleStreamIndex video url change required');
 
+        }
         // TODO: If we get here then it must require a transcoding change. 
     }
 
