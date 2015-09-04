@@ -1743,7 +1743,15 @@ module.controller('MainCtrl', function ($scope, $interval, $timeout, $q, $http, 
         var mediaStreams = getSenderReportingData($scope, getReportingParams($scope)).NowPlayingItem.MediaStreams;
 
         var subtitleStream = getStreamByIndex(mediaStreams, 'Subtitle', index);
-        if (subtitleStream && subtitleStream.DeliveryMethod == 'External') {
+
+        if (!subtitleStream) {
+            console.log('setSubtitleStreamIndex error condition - subtitle stream not found.');
+            return;
+        }
+
+        console.log('setSubtitleStreamIndex DeliveryMethod:' + subtitleStream.DeliveryMethod);
+
+        if (subtitleStream.DeliveryMethod == 'External') {
 
             var textStreamUrl = subtitleStream.IsExternalUrl ? subtitleStream.DeliveryUrl : (getUrl(serverAddress, subtitleStream.DeliveryUrl));
 
