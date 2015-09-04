@@ -1347,7 +1347,9 @@ function getSenderReportingData($scope, reportingData) {
         nowPlayingItem.Chapters = item.Chapters || [];
 
         // TODO: Fill these
-        var mediaSource = $scope.PlaybackMediaSource;
+        var mediaSource = item.MediaSources.filter(function (m) {
+            return m.Id == reportingData.MediaSourceId;
+        })[0];
 
         nowPlayingItem.MediaStreams = mediaSource ? mediaSource.MediaStreams : [];
 
@@ -1739,7 +1741,8 @@ module.controller('MainCtrl', function ($scope, $interval, $timeout, $q, $http, 
             return;
         }
 
-        var mediaStreams = getSenderReportingData($scope, getReportingParams($scope)).NowPlayingItem.MediaStreams;
+        JSON.stringify($scope.PlaybackMediaSource);
+        var mediaStreams = $scope.PlaybackMediaSource.MediaStreams;
 
         var subtitleStream = getStreamByIndex(mediaStreams, 'Subtitle', index);
 
