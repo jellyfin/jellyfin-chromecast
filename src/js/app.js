@@ -1738,7 +1738,7 @@ module.controller('MainCtrl', function ($scope, $interval, $timeout, $q, $http, 
             return;
         }
 
-        var mediaStreams = getSenderReportingData($scope, getReportingParams($scope)).MediaStreams;
+        var mediaStreams = getSenderReportingData($scope, getReportingParams($scope)).NowPlayingItem.MediaStreams;
 
         var subtitleStream = getStreamByIndex(mediaStreams, 'Subtitle', index);
         if (subtitleStream && subtitleStream.DeliveryMethod == 'External') {
