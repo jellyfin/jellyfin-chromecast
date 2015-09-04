@@ -496,6 +496,7 @@ function resetPlaybackScope($scope) {
     $scope.audioStreamIndex = null;
     $scope.subtitleStreamIndex = null;
     $scope.mediaSourceId = '';
+    $scope.PlaybackMediaSource = null;
 
     $scope.showPoster = false;
 
@@ -1346,9 +1347,7 @@ function getSenderReportingData($scope, reportingData) {
         nowPlayingItem.Chapters = item.Chapters || [];
 
         // TODO: Fill these
-        var mediaSource = item.MediaSources.filter(function (m) {
-            return m.Id == reportingData.MediaSourceId;
-        })[0];
+        var mediaSource = $scope.PlaybackMediaSource;
 
         nowPlayingItem.MediaStreams = mediaSource ? mediaSource.MediaStreams : [];
 
@@ -2082,6 +2081,7 @@ module.controller('MainCtrl', function ($scope, $interval, $timeout, $q, $http, 
         unloadPlayer();
 
         var streamInfo = createStreamInfo(item, mediaSource, options.startPositionTicks);
+        $scope.PlaybackMediaSource = streamInfo.mediaSource;
 
         var url = streamInfo.url;
         setTextTrack($scope, streamInfo.subtitleStreamUrl);
