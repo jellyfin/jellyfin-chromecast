@@ -1665,7 +1665,7 @@ module.controller('MainCtrl', function ($scope, $interval, $timeout, $q, $http, 
             // TODO
             setSubtitleStreamIndex($scope, data.options.index, data.serverAddress);
         }
-        else if (data.command == 'VolumeUsp') {
+        else if (data.command == 'VolumeUp') {
 
             window.mediaElement.volume = Math.min(1, window.mediaElement.volume + .2);
             reportProgress = true;
