@@ -335,6 +335,8 @@ function createStreamInfo(item, mediaSource, startPosition) {
     var isStatic = false;
     var streamContainer = mediaSource.Container;
 
+    var playerStartPositionTicks = 0;
+
     var type = item.MediaType.toLowerCase();
 
     if (type == 'video') {
@@ -361,6 +363,7 @@ function createStreamInfo(item, mediaSource, startPosition) {
                 if (mediaSource.TranscodingSubProtocol == 'hls') {
 
                     mediaUrl += seekParam;
+                    playerStartPositionTicks = startPosition || 0;
                     contentType = 'application/x-mpegURL';
                     streamContainer = 'm3u8';
                 } else {
@@ -417,7 +420,8 @@ function createStreamInfo(item, mediaSource, startPosition) {
         canSeek: canSeek,
         canClientSeek: isStatic || (canSeek && streamContainer == 'm3u8'),
         audioStreamIndex: mediaSource.DefaultAudioStreamIndex,
-        subtitleStreamIndex: mediaSource.DefaultSubtitleStreamIndex
+        subtitleStreamIndex: mediaSource.DefaultSubtitleStreamIndex,
+        playerStartPositionTicks: playerStartPositionTicks
     };
 
     if (info.subtitleStreamIndex != null) {
@@ -1947,7 +1951,7 @@ module.controller('MainCtrl', function ($scope, $interval, $timeout, $q, $http, 
 
         return $http.get(requestUrl,
           {
-              headers: getSecurityHeaders($scope.accessToken, $scope.userId)
+              headers: getSecurityHeaders(item.accessToken, item.userId)
 
           }).success(function (data) {
 
@@ -2167,6 +2171,9 @@ module.controller('MainCtrl', function ($scope, $interval, $timeout, $q, $http, 
             window.player = new cast.player.api.Player(host);
             window.player.load(protocol, startSeconds);
 
+            if (streamInfo.playerStartPositionTicks) {
+                window.mediaElement.currentTime = (streamInfo.playerStartPositionTicks / 10000000);
+            }
             if (autoplay) {
                 window.mediaElement.pause();
                 embyActions.delayStart($scope);
