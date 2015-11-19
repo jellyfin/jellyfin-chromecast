@@ -112,7 +112,7 @@ function getDeviceProfile() {
     profile.TranscodingProfiles.push({
         Container: 'ts',
         Type: 'Video',
-        AudioCodec: 'aac',
+        AudioCodec: 'mp3',
         VideoCodec: 'h264',
         Context: 'Streaming',
         Protocol: 'hls'
