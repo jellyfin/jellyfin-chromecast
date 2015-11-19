@@ -68,6 +68,8 @@ function parseISO8601Date(s, options) {
 var BitrateCap = 20000000;
 var DefaultMaxBitrate = 3000000;
 
+var canPlayFlac = document.createElement('audio').canPlayType('audio/flac').replace(/no/, '');
+
 function getDeviceProfile() {
 
     var profile = {};
@@ -95,8 +97,14 @@ function getDeviceProfile() {
         Type: 'Video'
     });
 
+    var audioFormats = 'mp3,aac,webm,webma';
+
+    if (canPlayFlac) {
+        audioFormats += ',flac';
+    }
+
     profile.DirectPlayProfiles.push({
-        Container: 'mp3,aac,webm,webma',
+        Container: audioFormats,
         Type: 'Audio'
     });
 
