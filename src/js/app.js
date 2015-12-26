@@ -692,7 +692,7 @@ module.filter('displayTime', function () {
     };
 });
 
-module.factory('embyActions', function ($timeout, $interval, $http, $q) {
+module.factory('embyActions', function ($timeout, $interval, $http) {
 
     var factory = {};
     var controlsPromise, delayStartPromise, closeAppPromise;
@@ -1451,7 +1451,7 @@ function broadcastConnectionErrorMessage() {
 }
 
 //Controllers
-module.controller('MainCtrl', function ($scope, $interval, $timeout, $q, $http, embyActions) {
+module.controller('MainCtrl', function ($scope, $interval, $timeout, $http, embyActions) {
 
     $interval(function () {
         updateTimeOfDay($scope);
@@ -1820,7 +1820,7 @@ module.controller('MainCtrl', function ($scope, $interval, $timeout, $q, $http, 
             playFromOptions(data.options);
         };
 
-        var promise = translateRequestedItems($q, $http, data.serverAddress, data.accessToken, data.userId, items);
+        var promise = translateRequestedItems($http, data.serverAddress, data.accessToken, data.userId, items);
 
         if (promise.success) {
             promise.success(callback);
@@ -2319,7 +2319,7 @@ function getIntros($http, serverAddress, accessToken, userId, firstItem) {
     });
 }
 
-function translateRequestedItems($q, $http, serverAddress, accessToken, userId, items) {
+function translateRequestedItems($http, serverAddress, accessToken, userId, items) {
 
     var firstItem = items[0];
 
