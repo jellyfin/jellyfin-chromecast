@@ -1,11 +1,3 @@
-function guid() {
-    function _p8(s) {
-        var p = (Math.random().toString(16) + "000000000").substr(2, 8);
-        return s ? "-" + p.substr(0, 4) + "-" + p.substr(4, 4) : p;
-    }
-    return _p8(false) + _p8(true) + _p8(true) + _p8(false);
-}
-
 function parseISO8601Date(s, options) {
 
     options = options || {};
@@ -68,6 +60,8 @@ function parseISO8601Date(s, options) {
 var BitrateCap = 20000000;
 var DefaultMaxBitrate = 3000000;
 
+var canPlayFlac = document.createElement('audio').canPlayType('audio/flac').replace(/no/, '');
+
 function getDeviceProfile() {
 
     var profile = {};
@@ -95,8 +89,14 @@ function getDeviceProfile() {
         Type: 'Video'
     });
 
+    var audioFormats = 'mp3,aac,webm,webma';
+
+    if (canPlayFlac) {
+        audioFormats += ',flac';
+    }
+
     profile.DirectPlayProfiles.push({
-        Container: 'mp3,aac,webm,webma',
+        Container: audioFormats,
         Type: 'Audio'
     });
 
@@ -112,7 +112,7 @@ function getDeviceProfile() {
     profile.TranscodingProfiles.push({
         Container: 'ts',
         Type: 'Video',
-        AudioCodec: 'aac',
+        AudioCodec: 'mp3',
         VideoCodec: 'h264',
         Context: 'Streaming',
         Protocol: 'hls'
@@ -335,6 +335,8 @@ function createStreamInfo(item, mediaSource, startPosition) {
     var isStatic = false;
     var streamContainer = mediaSource.Container;
 
+    var playerStartPositionTicks = 0;
+
     var type = item.MediaType.toLowerCase();
 
     if (type == 'video') {
@@ -361,6 +363,7 @@ function createStreamInfo(item, mediaSource, startPosition) {
                 if (mediaSource.TranscodingSubProtocol == 'hls') {
 
                     mediaUrl += seekParam;
+                    playerStartPositionTicks = startPosition || 0;
                     contentType = 'application/x-mpegURL';
                     streamContainer = 'm3u8';
                 } else {
@@ -417,7 +420,8 @@ function createStreamInfo(item, mediaSource, startPosition) {
         canSeek: canSeek,
         canClientSeek: isStatic || (canSeek && streamContainer == 'm3u8'),
         audioStreamIndex: mediaSource.DefaultAudioStreamIndex,
-        subtitleStreamIndex: mediaSource.DefaultSubtitleStreamIndex
+        subtitleStreamIndex: mediaSource.DefaultSubtitleStreamIndex,
+        playerStartPositionTicks: playerStartPositionTicks
     };
 
     if (info.subtitleStreamIndex != null) {
@@ -538,7 +542,7 @@ function getUrl(serverAddress, name) {
 }
 
 window.deviceInfo = {
-    deviceId: guid(),
+    deviceId: "chromecast_" + new Date().getTime(),
     deviceName: 'Chromecast',
     versionNumber: '2.0.000'
 };
@@ -783,17 +787,18 @@ module.factory('embyActions', function ($timeout, $interval, $http, $q) {
 
         this.stopDynamicContent();
 
-        var deferred = $q.defer();
-        deferred.resolve();
-
         if (!$scope.userId) {
             console.log("null userId");
-            return deferred.promise;
+            return new Promise(function (resolve, reject) {
+                resolve();
+            });
         }
 
         if (!$scope.serverAddress) {
             console.log("null serverAddress");
-            return deferred.promise;
+            return new Promise(function (resolve, reject) {
+                resolve();
+            });
         }
 
         var url = getUrl($scope.serverAddress, "Sessions/Playing");
@@ -805,25 +810,29 @@ module.factory('embyActions', function ($timeout, $interval, $http, $q) {
 
         restartPingInterval($scope, options);
 
-        return $http.post(url, options,
-          {
-              headers: getSecurityHeaders($scope.accessToken, $scope.userId)
-          });
+        return new Promise(function (resolve, reject) {
+
+            $http.post(url, options,
+            {
+                headers: getSecurityHeaders($scope.accessToken, $scope.userId)
+            }).finally(resolve);
+        });
     };
 
     factory.reportPlaybackProgress = function ($scope, options, reportToServer) {
 
-        var deferred = $q.defer();
-        deferred.resolve();
-
         if (!$scope.userId) {
             console.log("null userId");
-            return deferred.promise;
+            return new Promise(function (resolve, reject) {
+                resolve();
+            });
         }
 
         if (!$scope.serverAddress) {
             console.log("null serverAddress");
-            return deferred.promise;
+            return new Promise(function (resolve, reject) {
+                resolve();
+            });
         }
 
         broadcastToMessageBus({
@@ -832,7 +841,9 @@ module.factory('embyActions', function ($timeout, $interval, $http, $q) {
         });
 
         if (reportToServer === false) {
-            return deferred.promise;
+            return new Promise(function (resolve, reject) {
+                resolve();
+            });
         }
 
         var url = getUrl($scope.serverAddress, "Sessions/Playing/Progress");
@@ -850,17 +861,18 @@ module.factory('embyActions', function ($timeout, $interval, $http, $q) {
 
         stopPingInterval();
 
-        var deferred = $q.defer();
-        deferred.resolve();
-
         if (!$scope.userId) {
             console.log("null userId");
-            return deferred.promise;
+            return new Promise(function (resolve, reject) {
+                resolve();
+            });
         }
 
         if (!$scope.serverAddress) {
             console.log("null serverAddress");
-            return deferred.promise;
+            return new Promise(function (resolve, reject) {
+                resolve();
+            });
         }
 
         var url = getUrl($scope.serverAddress, "Sessions/Playing/Stopped");
@@ -878,26 +890,27 @@ module.factory('embyActions', function ($timeout, $interval, $http, $q) {
 
     factory.pingTranscoder = function ($scope, options) {
 
-        var deferred = $q.defer();
-
         if (!$scope.userId) {
             console.log("null userId");
-            deferred.resolve();
-            return deferred.promise;
+            return new Promise(function (resolve, reject) {
+                resolve();
+            });
         }
 
         if (!$scope.serverAddress) {
             console.log("null serverAddress");
-            deferred.resolve();
-            return deferred.promise;
+            return new Promise(function (resolve, reject) {
+                resolve();
+            });
         }
 
         var now = new Date().getTime();
         if ((now - lastTranscoderPing) < 10000) {
 
             console.log("Skipping ping due to recent progress check-in");
-            deferred.resolve();
-            return deferred.promise;
+            return new Promise(function (resolve, reject) {
+                resolve();
+            });
         }
 
         var url = getUrl($scope.serverAddress, "Sessions/Playing/Ping");
@@ -1104,7 +1117,7 @@ module.factory('embyActions', function ($timeout, $interval, $http, $q) {
     factory.delayStart = function ($scope) {
         delayStartPromise = $timeout(function () {
 
-            factory.reportPlaybackStart($scope, getReportingParams($scope)).finally(function () {
+            factory.reportPlaybackStart($scope, getReportingParams($scope)).then(function () {
                 window.mediaElement.play();
                 $scope.status = 'playing-with-controls';
                 if ($scope.mediaType == "Audio") {
@@ -1176,93 +1189,96 @@ module.factory('embyActions', function ($timeout, $interval, $http, $q) {
 
     factory.getPlaybackInfo = function (item, maxBitrate, deviceProfile, startPosition, mediaSourceId, audioStreamIndex, subtitleStreamIndex, liveStreamId) {
 
-        var deferred = $q.defer();
-        deferred.resolve();
+        return new Promise(function (resolve, reject) {
+            if (!item.userId) {
+                console.log("null userId");
+                resolve();
+                return;
+            }
 
-        if (!item.userId) {
-            console.log("null userId");
-            return deferred.promise;
-        }
+            if (!item.serverAddress) {
+                console.log("null serverAddress");
+                resolve();
+                return;
+            }
 
-        if (!item.serverAddress) {
-            console.log("null serverAddress");
-            return deferred.promise;
-        }
+            var postData = {
+                DeviceProfile: deviceProfile
+            };
 
-        var postData = {
-            DeviceProfile: deviceProfile
-        };
+            var query = {
+                UserId: item.userId,
+                StartTimeTicks: startPosition || 0,
+                MaxStreamingBitrate: maxBitrate
+            };
 
-        var query = {
-            UserId: item.userId,
-            StartTimeTicks: startPosition || 0,
-            MaxStreamingBitrate: maxBitrate
-        };
+            if (audioStreamIndex != null) {
+                query.AudioStreamIndex = audioStreamIndex;
+            }
+            if (subtitleStreamIndex != null) {
+                query.SubtitleStreamIndex = subtitleStreamIndex;
+            }
+            if (mediaSourceId) {
+                query.MediaSourceId = mediaSourceId;
+            }
+            if (liveStreamId) {
+                query.LiveStreamId = liveStreamId;
+            }
 
-        if (audioStreamIndex != null) {
-            query.AudioStreamIndex = audioStreamIndex;
-        }
-        if (subtitleStreamIndex != null) {
-            query.SubtitleStreamIndex = subtitleStreamIndex;
-        }
-        if (mediaSourceId) {
-            query.MediaSourceId = mediaSourceId;
-        }
-        if (liveStreamId) {
-            query.LiveStreamId = liveStreamId;
-        }
+            var url = getUrl(item.serverAddress, 'Items/' + item.Id + '/PlaybackInfo');
 
-        var url = getUrl(item.serverAddress, 'Items/' + item.Id + '/PlaybackInfo');
-
-        return $http.post(url, postData,
-          {
-              headers: getSecurityHeaders(item.accessToken, item.userId),
-              params: query
-          });
+            $http.post(url, postData,
+              {
+                  headers: getSecurityHeaders(item.accessToken, item.userId),
+                  params: query
+              }).success(resolve);
+        });
     };
 
     factory.getLiveStream = function (item, playSessionId, maxBitrate, deviceProfile, startPosition, mediaSource, audioStreamIndex, subtitleStreamIndex) {
 
-        var deferred = $q.defer();
-        deferred.resolve();
+        return new Promise(function (resolve, reject) {
 
-        if (!item.userId) {
-            console.log("null userId");
-            return deferred.promise;
-        }
+            if (!item.userId) {
+                console.log("null userId");
+                resolve();
+                return;
+            }
 
-        if (!item.serverAddress) {
-            console.log("null serverAddress");
-            return deferred.promise;
-        }
+            if (!item.serverAddress) {
+                console.log("null serverAddress");
+                resolve();
+                return;
+            }
 
-        var postData = {
-            DeviceProfile: deviceProfile,
-            OpenToken: mediaSource.OpenToken
-        };
+            var postData = {
+                DeviceProfile: deviceProfile,
+                OpenToken: mediaSource.OpenToken
+            };
 
-        var query = {
-            UserId: item.userId,
-            StartTimeTicks: startPosition || 0,
-            ItemId: item.Id,
-            MaxStreamingBitrate: maxBitrate,
-            PlaySessionId: playSessionId
-        };
+            var query = {
+                UserId: item.userId,
+                StartTimeTicks: startPosition || 0,
+                ItemId: item.Id,
+                MaxStreamingBitrate: maxBitrate,
+                PlaySessionId: playSessionId
+            };
 
-        if (audioStreamIndex != null) {
-            query.AudioStreamIndex = audioStreamIndex;
-        }
-        if (subtitleStreamIndex != null) {
-            query.SubtitleStreamIndex = subtitleStreamIndex;
-        }
+            if (audioStreamIndex != null) {
+                query.AudioStreamIndex = audioStreamIndex;
+            }
+            if (subtitleStreamIndex != null) {
+                query.SubtitleStreamIndex = subtitleStreamIndex;
+            }
 
-        var url = getUrl(item.serverAddress, 'LiveStreams/Open');
+            var url = getUrl(item.serverAddress, 'LiveStreams/Open');
 
-        return $http.post(url, postData,
-          {
-              headers: getSecurityHeaders(item.accessToken, item.userId),
-              params: query
-          });
+            $http.post(url, postData,
+              {
+                  headers: getSecurityHeaders(item.accessToken, item.userId),
+                  params: query
+              }).success(resolve);
+        });
     };
 
     factory.setApplicationClose = setApplicationClose;
@@ -1571,9 +1587,9 @@ module.controller('MainCtrl', function ($scope, $interval, $timeout, $q, $http, 
             return promise;
         }
 
-        var deferred = $q.defer();
-        deferred.resolve();
-        return deferred.promise;
+        return new Promise(function (resolve, reject) {
+            resolve();
+        });
     }
 
     window.castReceiverManager = cast.receiver.CastReceiverManager.getInstance();
@@ -1665,7 +1681,7 @@ module.controller('MainCtrl', function ($scope, $interval, $timeout, $q, $http, 
             // TODO
             setSubtitleStreamIndex($scope, data.options.index, data.serverAddress);
         }
-        else if (data.command == 'VolumeUsp') {
+        else if (data.command == 'VolumeUp') {
 
             window.mediaElement.volume = Math.min(1, window.mediaElement.volume + .2);
             reportProgress = true;
@@ -1947,7 +1963,7 @@ module.controller('MainCtrl', function ($scope, $interval, $timeout, $q, $http, 
 
         return $http.get(requestUrl,
           {
-              headers: getSecurityHeaders($scope.accessToken, $scope.userId)
+              headers: getSecurityHeaders(item.accessToken, item.userId)
 
           }).success(function (data) {
 
@@ -1970,7 +1986,7 @@ module.controller('MainCtrl', function ($scope, $interval, $timeout, $q, $http, 
         var deviceProfile = getDeviceProfile();
         var maxBitrate = window.playOptions.maxBitrate;
 
-        embyActions.getPlaybackInfo(item, maxBitrate, deviceProfile, options.startPositionTicks, options.mediaSourceId, options.audioStreamIndex, options.subtitleStreamIndex).success(function (result) {
+        embyActions.getPlaybackInfo(item, maxBitrate, deviceProfile, options.startPositionTicks, options.mediaSourceId, options.audioStreamIndex, options.subtitleStreamIndex).then(function (result) {
 
             if (validatePlaybackInfoResult(result)) {
 
@@ -1980,7 +1996,7 @@ module.controller('MainCtrl', function ($scope, $interval, $timeout, $q, $http, 
 
                     if (mediaSource.RequiresOpening) {
 
-                        embyActions.getLiveStream(item, result.PlaySessionId, maxBitrate, deviceProfile, options.startPositionTicks, mediaSource, null, null).success(function (openLiveStreamResult) {
+                        embyActions.getLiveStream(item, result.PlaySessionId, maxBitrate, deviceProfile, options.startPositionTicks, mediaSource, null, null).then(function (openLiveStreamResult) {
 
                             openLiveStreamResult.MediaSource.enableDirectPlay = supportsDirectPlay(openLiveStreamResult.MediaSource);
                             playMediaSource(result.PlaySessionId, item, mediaSource, options);
@@ -2167,6 +2183,9 @@ module.controller('MainCtrl', function ($scope, $interval, $timeout, $q, $http, 
             window.player = new cast.player.api.Player(host);
             window.player.load(protocol, startSeconds);
 
+            if (streamInfo.playerStartPositionTicks) {
+                window.mediaElement.currentTime = (streamInfo.playerStartPositionTicks / 10000000);
+            }
             if (autoplay) {
                 window.mediaElement.pause();
                 embyActions.delayStart($scope);
@@ -2340,9 +2359,10 @@ function translateRequestedItems($q, $http, serverAddress, accessToken, userId, 
         });
     }
 
-    var deferred = $q.defer();
-    deferred.resolve({ Items: items });
-    return deferred.promise;
+    return new Promise(function (resolve, reject) {
+
+        resolve({ Items: items });
+    });
 }
 
 function getMiscInfoHtml(item) {
