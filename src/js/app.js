@@ -1,11 +1,3 @@
-function guid() {
-    function _p8(s) {
-        var p = (Math.random().toString(16) + "000000000").substr(2, 8);
-        return s ? "-" + p.substr(0, 4) + "-" + p.substr(4, 4) : p;
-    }
-    return _p8(false) + _p8(true) + _p8(true) + _p8(false);
-}
-
 function parseISO8601Date(s, options) {
 
     options = options || {};
@@ -550,7 +542,7 @@ function getUrl(serverAddress, name) {
 }
 
 window.deviceInfo = {
-    deviceId: guid(),
+    deviceId: "chromecast_" + new Date().getTime(),
     deviceName: 'Chromecast',
     versionNumber: '2.0.000'
 };
