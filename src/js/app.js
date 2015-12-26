@@ -1231,7 +1231,8 @@ module.factory('embyActions', function ($timeout, $interval, $http, $q) {
               {
                   headers: getSecurityHeaders(item.accessToken, item.userId),
                   params: query
-              }).success(resolve);
+
+              }).success(resolve).error(reject);
         });
     };
 
@@ -2010,7 +2011,7 @@ module.controller('MainCtrl', function ($scope, $interval, $timeout, $q, $http, 
                 }
             }
 
-        }).error(broadcastConnectionErrorMessage);
+        }, broadcastConnectionErrorMessage);
 
     }
 
