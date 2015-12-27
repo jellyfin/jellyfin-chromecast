@@ -189,30 +189,6 @@ function getDeviceProfile() {
         }]
     });
 
-    profile.CodecProfiles.push({
-        Type: 'Video',
-        Codec: 'vpx',
-        Conditions: [
-        {
-            Condition: 'NotEquals',
-            Property: 'IsAnamorphic',
-            Value: 'true',
-            IsRequired: false
-        },
-        {
-            Condition: 'LessThanEqual',
-            Property: 'Width',
-            Value: "1920",
-            IsRequired: true
-        },
-        {
-            Condition: 'LessThanEqual',
-            Property: 'Height',
-            Value: "1080",
-            IsRequired: true
-        }]
-    });
-
     // Subtitle profiles
     // External vtt
     profile.SubtitleProfiles = [];
