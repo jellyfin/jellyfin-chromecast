@@ -172,7 +172,7 @@ function getDeviceProfile() {
         {
             Condition: 'LessThanEqual',
             Property: 'VideoLevel',
-            Value: '50',
+            Value: '41',
             IsRequired: false
         },
         {
