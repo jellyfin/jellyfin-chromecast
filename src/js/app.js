@@ -685,7 +685,7 @@ module.factory('embyActions', function ($timeout, $interval, $http) {
     var setApplicationClose = function () {
         $timeout.cancel(closeAppPromise);
         closeAppPromise = $timeout(function () {
-            window.close(); t
+            window.close();
         }, 3600000, false);
     };
 
