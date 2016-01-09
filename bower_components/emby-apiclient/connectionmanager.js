@@ -1466,6 +1466,17 @@
 
         self.getRegistrationInfo = function (feature, apiClient) {
 
+            if (isConnectUserSupporter()) {
+                return new Promise(function (resolve, reject) {
+
+                    resolve({
+                        Name: feature,
+                        IsRegistered: true,
+                        IsTrial: false
+                    });
+                });
+            }
+
             return self.getAvailableServers().then(function (servers) {
 
                 var matchedServers = servers.filter(function (s) {
@@ -1497,6 +1508,19 @@
                 }
             });
         };
+
+        function isConnectUserSupporter() {
+
+            if (self.isLoggedIntoConnect()) {
+
+                var connectUser = self.connectUser();
+
+                if (connectUser && connectUser.IsSupporter) {
+                    return true;
+                }
+            }
+            return false;
+        }
 
         function updateDateLastLocalConnection(serverId) {
 
