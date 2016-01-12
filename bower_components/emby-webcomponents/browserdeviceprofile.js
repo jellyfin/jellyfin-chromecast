@@ -235,7 +235,7 @@
             }]
         });
 
-        var videoAudioChannels = browser.safari ? '2' : '6';
+        var videoAudioChannels = '6';
 
         profile.CodecProfiles.push({
             Type: 'VideoAudio',
