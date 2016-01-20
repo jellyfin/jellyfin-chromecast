@@ -236,7 +236,7 @@
             headers: getSecurityHeaders(accessToken, userId),
             dataType: 'json',
             type: 'GET',
-            params: {
+            query: {
                 SortBy: "Random",
                 IncludeItemTypes: "Movie,Series",
                 ImageTypes: 'Backdrop',
