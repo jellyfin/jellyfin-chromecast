@@ -125,9 +125,7 @@
         });
 
         if (reportToServer === false) {
-            return new Promise(function (resolve, reject) {
-                resolve();
-            });
+            return Promise.resolve();
         }
 
         var url = getUrl($scope.serverAddress, "Sessions/Playing/Progress");
