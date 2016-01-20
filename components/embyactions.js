@@ -118,7 +118,9 @@
         if (!$scope.serverAddress) {
             throw new Error("null serverAddress");
         }
-        console.log(JSON.stringify(getSenderReportingData($scope, options)));
+
+        //console.log(JSON.stringify(getSenderReportingData($scope, options)));
+
         broadcastToMessageBus({
             type: 'playbackprogress',
             data: getSenderReportingData($scope, options)
