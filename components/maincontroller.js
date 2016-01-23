@@ -664,7 +664,7 @@
                             embyActions.getLiveStream(item, result.PlaySessionId, maxBitrate, deviceProfile, options.startPositionTicks, mediaSource, null, null).then(function (openLiveStreamResult) {
 
                                 openLiveStreamResult.MediaSource.enableDirectPlay = supportsDirectPlay(openLiveStreamResult.MediaSource);
-                                playMediaSource(result.PlaySessionId, item, mediaSource, options);
+                                playMediaSource(result.PlaySessionId, item, openLiveStreamResult.MediaSource, options);
                             });
 
                         } else {
