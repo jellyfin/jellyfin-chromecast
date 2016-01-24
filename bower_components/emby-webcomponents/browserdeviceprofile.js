@@ -1,55 +1,8 @@
-﻿define(['browser'], function (browser) {
+define(['browser'], function (browser) {
 
     function canPlayH264() {
         var v = document.createElement('video');
         return !!(v.canPlayType && v.canPlayType('video/mp4; codecs="avc1.42E01E, mp4a.40.2"').replace(/no/, ''));
-    }
-
-    var supportedFormats;
-    function getSupportedFormats() {
-
-        if (supportedFormats) {
-            return supportedFormats;
-        }
-
-        var list = [];
-        var elem = document.createElement('video');
-
-        if (elem.canPlayType('video/webm').replace(/no/, '')) {
-            list.push('webm');
-        }
-        if (elem.canPlayType('audio/mp4; codecs="ac-3"').replace(/no/, '')) {
-            list.push('ac3');
-        }
-        if (browser.chrome) {
-            list.push('mkv');
-        }
-
-        if (canPlayH264()) {
-            list.push('h264');
-        }
-
-        if (document.createElement('audio').canPlayType('audio/aac').replace(/no/, '')) {
-            list.push('aac');
-        }
-
-        if (document.createElement('audio').canPlayType('audio/mp3').replace(/no/, '')) {
-            list.push('mp3');
-        }
-        if (document.createElement('audio').canPlayType('audio/ogg; codecs="opus"').replace(/no/, '')) {
-            list.push('opus');
-        }
-
-        if (document.createElement('audio').canPlayType('audio/webm').replace(/no/, '')) {
-            list.push('webma');
-        }
-
-        if (document.createElement('audio').canPlayType('audio/flac').replace(/no/, '')) {
-            list.push('flac');
-        }
-
-        supportedFormats = list;
-        return list;
     }
 
     var _supportsTextTracks;
@@ -67,7 +20,7 @@
     function canPlayHls(src) {
 
         if (_canPlayHls == null) {
-            _canPlayHls = window.MediaSource != null || canPlayNativeHls();
+            _canPlayHls = canPlayNativeHls() || canPlayHlsWithMSE();
         }
         return _canPlayHls;
     }
@@ -83,17 +36,43 @@
         return false;
     }
 
+    function canPlayHlsWithMSE() {
+        if (window.MediaSource != null) {
+            // text tracks don’t work with this in firefox
+            return !browser.firefox;
+        }
+
+        return false;
+    }
+
+    function canPlayAudioFormat(format) {
+
+        var typeString;
+
+        if (format == 'opus') {
+            typeString = 'audio/ogg; codecs="opus"';
+        } else if (format == 'webma') {
+            typeString = 'audio/webm';
+        } else {
+            typeString = 'audio/' + format;
+        }
+
+        if (document.createElement('audio').canPlayType(typeString).replace(/no/, '')) {
+            return true;
+        }
+
+        return false;
+    }
+
     return function () {
 
         var bitrateSetting = 100000000;
 
-        var supportedFormats = getSupportedFormats();
+        var videoTestElement = document.createElement('video');
 
-        var canPlayWebm = supportedFormats.indexOf('webm') != -1;
-        var canPlayAc3 = supportedFormats.indexOf('ac3') != -1;
-        var canPlayMp3 = supportedFormats.indexOf('mp3') != -1;
-        var canPlayAac = supportedFormats.indexOf('aac') != -1;
-        var canPlayMkv = supportedFormats.indexOf('mkv') != -1;
+        var canPlayWebm = videoTestElement.canPlayType('video/webm').replace(/no/, '');
+        // No real way to detect this, but it's too good to pass up
+        var canPlayMkv = browser.chrome;
 
         var profile = {};
 
@@ -104,17 +83,30 @@
         profile.DirectPlayProfiles = [];
 
         var videoAudioCodecs = [];
-        if (canPlayMp3) {
-            videoAudioCodecs.push('mp3');
+
+        var supportsMp3VideoAudio = videoTestElement.canPlayType('video/mp4; codecs="avc1.640029, mp4a.69"').replace(/no/, '') ||
+            videoTestElement.canPlayType('video/mp4; codecs="avc1.640029, mp4a.6B"').replace(/no/, '');
+
+        // Only put mp3 first if mkv support is there
+        // Otherwise with HLS and mp3 audio we're seeing some browsers
+        if (canPlayMkv) {
+            if (supportsMp3VideoAudio) {
+                videoAudioCodecs.push('mp3');
+            }
         }
-        if (canPlayAac) {
+        if (videoTestElement.canPlayType('video/mp4; codecs="avc1.640029, mp4a.40.2"').replace(/no/, '')) {
             videoAudioCodecs.push('aac');
         }
-        if (canPlayAc3) {
+        if (!canPlayMkv) {
+            if (supportsMp3VideoAudio) {
+                videoAudioCodecs.push('mp3');
+            }
+        }
+        if (videoTestElement.canPlayType('audio/mp4; codecs="ac-3"').replace(/no/, '')) {
             videoAudioCodecs.push('ac3');
         }
 
-        if (supportedFormats.indexOf('h264') != -1) {
+        if (canPlayH264()) {
             profile.DirectPlayProfiles.push({
                 Container: 'mp4,m4v',
                 Type: 'Video',
@@ -132,14 +124,12 @@
             });
         }
 
-        ['opus', 'mp3', 'aac', 'flac', 'webma'].forEach(function (audioFormat) {
+        ['opus', 'mp3', 'aac', 'flac', 'webma'].filter(canPlayAudioFormat).forEach(function (audioFormat) {
 
-            if (supportedFormats.indexOf(audioFormat) != -1) {
-                profile.DirectPlayProfiles.push({
-                    Container: audioFormat == 'webma' ? 'webma,webm' : audioFormat,
-                    Type: 'Audio'
-                });
-            }
+            profile.DirectPlayProfiles.push({
+                Container: audioFormat == 'webma' ? 'webma,webm' : audioFormat,
+                Type: 'Audio'
+            });
         });
 
         if (canPlayWebm) {
@@ -151,24 +141,22 @@
 
         profile.TranscodingProfiles = [];
 
-        ['opus', 'mp3', 'aac'].forEach(function (audioFormat) {
+        ['opus', 'mp3', 'aac'].filter(canPlayAudioFormat).forEach(function (audioFormat) {
 
-            if (supportedFormats.indexOf(audioFormat) != -1) {
-                profile.TranscodingProfiles.push({
-                    Container: audioFormat,
-                    Type: 'Audio',
-                    AudioCodec: audioFormat,
-                    Context: 'Streaming',
-                    Protocol: 'http'
-                });
-                profile.TranscodingProfiles.push({
-                    Container: audioFormat,
-                    Type: 'Audio',
-                    AudioCodec: audioFormat,
-                    Context: 'Static',
-                    Protocol: 'http'
-                });
-            }
+            profile.TranscodingProfiles.push({
+                Container: audioFormat,
+                Type: 'Audio',
+                AudioCodec: audioFormat,
+                Context: 'Streaming',
+                Protocol: 'http'
+            });
+            profile.TranscodingProfiles.push({
+                Container: audioFormat,
+                Type: 'Audio',
+                AudioCodec: audioFormat,
+                Context: 'Static',
+                Protocol: 'http'
+            });
         });
 
         // Can't use mkv on mobile because we have to use the native player controls and they won't be able to seek it
@@ -237,36 +225,31 @@
 
         var videoAudioChannels = '6';
 
-        profile.CodecProfiles.push({
-            Type: 'VideoAudio',
-            Codec: 'aac',
-            Container: 'mkv,mov',
-            Conditions: [
-                {
-                    Condition: 'NotEquals',
-                    Property: 'AudioProfile',
-                    Value: 'HE-AAC'
-                },
-                {
-                    Condition: 'LessThanEqual',
-                    Property: 'AudioChannels',
-                    Value: videoAudioChannels
-                },
-                {
-                    Condition: 'Equals',
-                    Property: 'IsSecondaryAudio',
-                    Value: 'false',
-                    IsRequired: 'false'
-                }
-                // Disabling this is going to require us to learn why it was disabled in the first place
-                //,
-                //{
-                //    Condition: 'NotEquals',
-                //    Property: 'AudioProfile',
-                //    Value: 'LC'
-                //}
-            ]
-        });
+        // Handle he-aac not supported
+        if (!videoTestElement.canPlayType('video/mp4; codecs="avc1.640029, mp4a.40.5"').replace(/no/, '')) {
+            profile.CodecProfiles.push({
+                Type: 'VideoAudio',
+                Codec: 'aac',
+                Conditions: [
+                    {
+                        Condition: 'NotEquals',
+                        Property: 'AudioProfile',
+                        Value: 'HE-AAC'
+                    },
+                    {
+                        Condition: 'LessThanEqual',
+                        Property: 'AudioChannels',
+                        Value: videoAudioChannels
+                    },
+                    {
+                        Condition: 'Equals',
+                        Property: 'IsSecondaryAudio',
+                        Value: 'false',
+                        IsRequired: 'false'
+                    }
+                ]
+            });
+        }
 
         profile.CodecProfiles.push({
             Type: 'VideoAudio',
