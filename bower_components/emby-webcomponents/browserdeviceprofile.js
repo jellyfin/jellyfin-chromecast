@@ -89,19 +89,19 @@ define(['browser'], function (browser) {
 
         // Only put mp3 first if mkv support is there
         // Otherwise with HLS and mp3 audio we're seeing some browsers
-        //if (canPlayMkv) {
-        //    if (supportsMp3VideoAudio) {
-        //        videoAudioCodecs.push('mp3');
-        //    }
-        //}
-        if (videoTestElement.canPlayType('video/mp4; codecs="avc1.640029, mp4a.40.2"').replace(/no/, '')) {
-            videoAudioCodecs.push('aac');
-        }
-        //if (!canPlayMkv) {
+        if (canPlayMkv) {
             if (supportsMp3VideoAudio) {
                 videoAudioCodecs.push('mp3');
             }
-        //}
+        }
+        if (videoTestElement.canPlayType('video/mp4; codecs="avc1.640029, mp4a.40.2"').replace(/no/, '')) {
+            videoAudioCodecs.push('aac');
+        }
+        if (!canPlayMkv) {
+            if (supportsMp3VideoAudio) {
+                videoAudioCodecs.push('mp3');
+            }
+        }
         if (videoTestElement.canPlayType('audio/mp4; codecs="ac-3"').replace(/no/, '')) {
             videoAudioCodecs.push('ac3');
         }
