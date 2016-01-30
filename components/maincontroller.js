@@ -631,6 +631,12 @@
         profile.MaxStaticBitrate = maxBitrate;
         profile.MusicStreamingTranscodingBitrate = 192000;
 
+        // This needs to be forced
+        profile.DirectPlayProfiles.push({
+            Container: "flac",
+            Type: 'Audio'
+        });
+
         profile.SubtitleProfiles = [];
         profile.SubtitleProfiles.push({
             Format: 'js',
