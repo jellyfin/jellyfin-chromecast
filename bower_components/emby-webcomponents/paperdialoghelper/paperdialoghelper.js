@@ -1,10 +1,11 @@
 ﻿define(['historyManager', 'focusManager', 'performanceManager', 'browser', 'paper-dialog', 'scale-up-animation', 'fade-out-animation', 'fade-in-animation', 'css!./paperdialoghelper.css'], function (historyManager, focusManager, performanceManager, browser) {
 
-    function paperDialogHashHandler(dlg, hash, resolve, lockDocumentScroll) {
+    function paperDialogHashHandler(dlg, hash, resolve) {
 
         var self = this;
         self.originalUrl = window.location.href;
         var activeElement = document.activeElement;
+        var removeScrollLockOnClose = false;
 
         function onHashChange(e) {
 
@@ -22,14 +23,13 @@
 
         function onDialogClosed() {
 
-            if (lockDocumentScroll !== false) {
-                // TODO
-                //Dashboard.onPopupClose();
+            if (removeScrollLockOnClose) {
+                document.body.classList.remove('noScroll');
             }
 
             window.removeEventListener('popstate', onHashChange);
 
-            if (!self.closedByBack) {
+            if (!self.closedByBack && isHistoryEnabled(dlg)) {
                 var state = history.state || {};
                 if (state.dialogId == hash) {
                     history.back();
@@ -55,14 +55,20 @@
         dlg.addEventListener('iron-overlay-closed', onDialogClosed);
         dlg.open();
 
-        if (lockDocumentScroll !== false) {
-            // TODO
-            //Dashboard.onPopupOpen();
+        if (dlg.getAttribute('data-lockscroll') == 'true' && !document.body.classList.contains('noScroll')) {
+            document.body.classList.add('noScroll');
+            removeScrollLockOnClose = true;
         }
 
-        historyManager.pushState({ dialogId: hash }, "Dialog", hash);
+        if (isHistoryEnabled(dlg)) {
+            historyManager.pushState({ dialogId: hash }, "Dialog", hash);
 
-        window.addEventListener('popstate', onHashChange);
+            window.addEventListener('popstate', onHashChange);
+        }
+    }
+
+    function isHistoryEnabled(dlg) {
+        return dlg.getAttribute('data-history') == 'true';
     }
 
     function open(dlg) {
@@ -76,13 +82,30 @@
     function close(dlg) {
 
         if (dlg.opened) {
-            history.back();
+            if (isHistoryEnabled(dlg)) {
+                history.back();
+            } else {
+                dlg.close();
+            }
         }
     }
 
     function onDialogOpened(e) {
 
         focusManager.autoFocus(e.target);
+    }
+
+    function shouldLockDocumentScroll(options) {
+
+        if (options.lockScroll != null) {
+            return options.lockScroll;
+        }
+
+        if (options.size == 'fullscreen') {
+            return true;
+        }
+
+        return browser.mobile;
     }
 
     function createDialog(options) {
@@ -93,6 +116,14 @@
 
         dlg.setAttribute('with-backdrop', 'with-backdrop');
         dlg.setAttribute('role', 'alertdialog');
+
+        if (shouldLockDocumentScroll(options)) {
+            dlg.setAttribute('data-lockscroll', 'true');
+        }
+
+        if (options.enableHistory !== false) {
+            dlg.setAttribute('data-history', 'true');
+        }
 
         // without this safari will scroll the background instead of the dialog contents
         // but not needed here since this is already on top of an existing dialog
@@ -109,16 +140,19 @@
         dlg.entryAnimation = options.entryAnimation || defaultEntryAnimation;
         dlg.exitAnimation = 'fade-out-animation';
 
+        // If it's not fullscreen then lower the default animation speed to make it open really fast
+        var entryAnimationDuration = options.entryAnimationDuration || (options.size ? 240 : 300);
+
         dlg.animationConfig = {
             // scale up
             'entry': {
-                name: options.entryAnimation || 'scale-up-animation',
+                name: dlg.entryAnimation,
                 node: dlg,
-                timing: { duration: options.entryAnimationDuration || 300, easing: 'ease-out' }
+                timing: { duration: entryAnimationDuration, easing: 'ease-out' }
             },
             // fade out
             'exit': {
-                name: 'fade-out-animation',
+                name: dlg.exitAnimation,
                 node: dlg,
                 timing: { duration: options.exitAnimationDuration || 400, easing: 'ease-in' }
             }
@@ -135,7 +169,14 @@
             dlg.setAttribute('data-removeonclose', 'true');
         }
 
-        dlg.addEventListener('iron-overlay-opened', onDialogOpened);
+        if (options.size) {
+            dlg.classList.add('fixedSize');
+            dlg.classList.add(options.size);
+        }
+
+        if (options.autoFocus !== false) {
+            dlg.addEventListener('iron-overlay-opened', onDialogOpened);
+        }
 
         return dlg;
     }
