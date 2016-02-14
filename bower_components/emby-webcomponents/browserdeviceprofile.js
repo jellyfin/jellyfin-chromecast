@@ -51,7 +51,27 @@ define(['browser'], function (browser) {
 
         if (format == 'opus') {
             typeString = 'audio/ogg; codecs="opus"';
-        } else if (format == 'webma') {
+
+            if (document.createElement('audio').canPlayType(typeString).replace(/no/, '')) {
+                return true;
+            }
+
+            // Newer mobile chrome supports it but doesn't report it
+            if (browser.chrome) {
+                var version = (browser.version || '').toString().split('.')[0];
+                try {
+                    version = parseInt(version);
+                    if (version >= 48) {
+                        return true;
+                    }
+                } catch (err) {
+
+                }
+            }
+            return false;
+        }
+
+        if (format == 'webma') {
             typeString = 'audio/webm';
         } else {
             typeString = 'audio/' + format;
@@ -83,6 +103,7 @@ define(['browser'], function (browser) {
         profile.DirectPlayProfiles = [];
 
         var videoAudioCodecs = [];
+        var hlsVideoAudioCodecs = [];
 
         var supportsMp3VideoAudio = videoTestElement.canPlayType('video/mp4; codecs="avc1.640029, mp4a.69"').replace(/no/, '') ||
             videoTestElement.canPlayType('video/mp4; codecs="avc1.640029, mp4a.6B"').replace(/no/, '');
@@ -90,19 +111,30 @@ define(['browser'], function (browser) {
         // Only put mp3 first if mkv support is there
         // Otherwise with HLS and mp3 audio we're seeing some browsers
         if (videoTestElement.canPlayType('audio/mp4; codecs="ac-3"').replace(/no/, '')) {
-            videoAudioCodecs.push('ac3');
+            // safari is lying
+            if (!browser.safari) {
+                videoAudioCodecs.push('ac3');
+
+                // This works in edge desktop, but not mobile
+                if (!browser.edge || !browser.mobile) {
+                    hlsVideoAudioCodecs.push('ac3');
+                }
+            }
         }
         if (canPlayMkv) {
             if (supportsMp3VideoAudio) {
                 videoAudioCodecs.push('mp3');
+                hlsVideoAudioCodecs.push('mp3');
             }
         }
         if (videoTestElement.canPlayType('video/mp4; codecs="avc1.640029, mp4a.40.2"').replace(/no/, '')) {
             videoAudioCodecs.push('aac');
+            hlsVideoAudioCodecs.push('aac');
         }
         if (!canPlayMkv) {
             if (supportsMp3VideoAudio) {
                 videoAudioCodecs.push('mp3');
+                hlsVideoAudioCodecs.push('mp3');
             }
         }
 
@@ -174,7 +206,7 @@ define(['browser'], function (browser) {
             profile.TranscodingProfiles.push({
                 Container: 'ts',
                 Type: 'Video',
-                AudioCodec: videoAudioCodecs.join(','),
+                AudioCodec: hlsVideoAudioCodecs.join(','),
                 VideoCodec: 'h264',
                 Context: 'Streaming',
                 Protocol: 'hls'
