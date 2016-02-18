@@ -193,8 +193,7 @@
 
         if (data.command == 'PlayLast' || data.command == 'PlayNext') {
 
-            tagItems(data.options.items, data);
-            queue(data.options.items, data.command);
+            translateItems(data, data.options, data.options.items, data.command);
         }
         else if (data.command == 'Shuffle') {
             shuffle(data, data.options, data.options.items[0]);
@@ -291,7 +290,7 @@
         }
         else {
 
-            translateItems(data, data.options, data.options.items);
+            translateItems(data, data.options, data.options.items, 'play');
         }
 
         if (reportProgress) {
@@ -431,8 +430,8 @@
 
         setTextTrack($scope, streamInfo.subtitleStreamUrl);
 
-        setTimeout(function() {
-            
+        setTimeout(function () {
+
             $scope.isChangingStream = false;
 
         }, 1000);
@@ -463,16 +462,22 @@
         }
     }
 
-    function translateItems(data, options, items) {
+    function translateItems(data, options, items, method) {
 
         var callback = function (result) {
 
             options.items = result.Items;
             tagItems(options.items, data);
-            playFromOptions(data.options);
+
+            if (method == 'PlayNext' || method == 'PlayLast') {
+                queue(options.items, method);
+            } else {
+                playFromOptions(data.options);
+            }
         };
 
-        translateRequestedItems(data.serverAddress, data.accessToken, data.userId, items).then(callback);
+        var smartTranslate = method != 'PlayNext' && method != 'PlayLast';
+        translateRequestedItems(data.serverAddress, data.accessToken, data.userId, items, smartTranslate).then(callback);
     }
 
     function instantMix(data, options, item) {
@@ -496,7 +501,11 @@
     }
 
     function queue(items, method) {
-        window.playlist.push(items);
+
+        for (var i = 0, length = items.length; i < length; i++) {
+
+            window.playlist.push(items[i]);
+        }
     }
 
     function playFromOptions(options) {
@@ -564,7 +573,7 @@
         if (newIndex < playlist.length) {
             window.currentPlaylistIndex = newIndex;
 
-            var item = playlist[window.currentPlaylistIndex];
+            var item = playlist[newIndex];
 
             playItem(item, options || {}, stopPlayer);
             return true;
