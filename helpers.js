@@ -334,6 +334,10 @@ function createStreamInfo(item, mediaSource, startPosition) {
 
                     contentType = 'video/' + mediaSource.TranscodingContainer;
                     streamContainer = mediaSource.TranscodingContainer;
+
+                    if (mediaUrl.toLowerCase().indexOf('copytimestamps=true') != -1) {
+                        startPosition = 0;
+                    }
                 }
             }
         }
