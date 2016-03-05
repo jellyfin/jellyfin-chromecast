@@ -1,4 +1,4 @@
-﻿define(['historyManager', 'focusManager', 'performanceManager', 'browser', 'layoutManager', 'paper-dialog', 'scale-up-animation', 'fade-out-animation', 'fade-in-animation', 'css!./paperdialoghelper.css'], function (historyManager, focusManager, performanceManager, browser, layoutManager) {
+﻿define(['historyManager', 'focusManager', 'browser', 'layoutManager', 'inputManager', 'paper-dialog', 'scale-up-animation', 'fade-out-animation', 'fade-in-animation', 'css!./paperdialoghelper.css'], function (historyManager, focusManager, browser, layoutManager, inputManager) {
 
     function paperDialogHashHandler(dlg, hash, resolve) {
 
@@ -21,6 +21,17 @@
             }
         }
 
+        function onBackCommand(e) {
+
+            if (e.detail.command == 'back') {
+                inputManager.off(dlg, onBackCommand);
+
+                self.closedByBack = true;
+                dlg.close();
+                e.preventDefault();
+            }
+        }
+
         function onDialogClosed() {
 
             if (removeScrollLockOnClose) {
@@ -28,6 +39,7 @@
             }
 
             window.removeEventListener('popstate', onHashChange);
+            inputManager.off(dlg, onBackCommand);
 
             if (!self.closedByBack && isHistoryEnabled(dlg)) {
                 var state = history.state || {};
@@ -71,6 +83,8 @@
             historyManager.pushState({ dialogId: hash }, "Dialog", hash);
 
             window.addEventListener('popstate', onHashChange);
+        } else {
+            inputManager.on(dlg, onBackCommand);
         }
     }
 
@@ -128,7 +142,7 @@
             dlg.setAttribute('data-lockscroll', 'true');
         }
 
-        if (options.enableHistory !== false) {
+        if (options.enableHistory !== false && historyManager.enableNativeHistory()) {
             dlg.setAttribute('data-history', 'true');
         }
 
@@ -143,7 +157,7 @@
         // seeing max call stack size exceeded in the debugger with this
         dlg.setAttribute('noAutoFocus', 'noAutoFocus');
 
-        var defaultEntryAnimation = performanceManager.getAnimationPerformance() <= 1 ? 'fade-in-animation' : 'scale-up-animation';
+        var defaultEntryAnimation = browser.animate && !browser.mobile ? 'scale-up-animation' : 'fade-in-animation';
         dlg.entryAnimation = options.entryAnimation || defaultEntryAnimation;
         dlg.exitAnimation = 'fade-out-animation';
 
@@ -166,7 +180,7 @@
         };
 
         // too buggy in IE, not even worth it
-        if (browser.msie) {
+        if (!browser.animate) {
             dlg.animationConfig = null;
             dlg.entryAnimation = null;
             dlg.exitAnimation = null;

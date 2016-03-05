@@ -9,19 +9,18 @@ define([], function () {
 
         if (typeof options === 'string') {
             options = {
-                label: '',
+                title: '',
                 text: options
             };
         }
 
-        var label = replaceAll(options.label || '', '<br/>', '\n');
-
-        var result = prompt(label, options.text || '');
+        var text = replaceAll(options.text || '', '<br/>', '\n');
+        var result = confirm(text);
 
         if (result) {
-            return Promise.resolve(result);
+            return Promise.resolve();
         } else {
-            return Promise.reject(result);
+            return Promise.reject();
         }
     };
 });
