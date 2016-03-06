@@ -262,7 +262,7 @@ function setMetadata(item, metadata, datetime) {
         }
 
         if (item.PremiereDate) {
-            metadata.releaseDate = parseISO8601Date(item.PremiereDate).toISOString();
+            metadata.releaseDate = datetime.parseISO8601Date(item.PremiereDate).toISOString();
         }
     }
 
@@ -275,7 +275,7 @@ function setMetadata(item, metadata, datetime) {
         }
 
         if (item.PremiereDate) {
-            metadata.releaseDate = parseISO8601Date(item.PremiereDate).toISOString();
+            metadata.releaseDate = datetime.parseISO8601Date(item.PremiereDate).toISOString();
         }
     }
 
