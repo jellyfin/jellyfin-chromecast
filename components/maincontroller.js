@@ -322,7 +322,7 @@
             if (currentDeliveryMethod == 'Encode') {
                 console.log('setSubtitleStreamIndex video url change required');
                 var positionTicks = getCurrentPositionTicks($scope);
-                changeStream(positionTicks, { SubtitleIndex: -1 });
+                changeStream(positionTicks, { SubtitleStreamIndex: -1 });
             } else {
                 $scope.subtitleStreamIndex = null;
                 setTextTrack($scope);
@@ -352,7 +352,7 @@
         } else {
             console.log('setSubtitleStreamIndex video url change required');
             var positionTicks = getCurrentPositionTicks($scope);
-            changeStream(positionTicks, { SubtitleIndex: index });
+            changeStream(positionTicks, { SubtitleStreamIndex: index });
         }
     }
 
