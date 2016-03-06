@@ -273,6 +273,15 @@
 
             stop();
         }
+        else if (data.command == 'PlayPause') {
+
+            if (window.mediaElement.paused) {
+                window.mediaElement.play();
+            } else {
+                window.mediaElement.pause();
+            }
+            reportProgress = true;
+        }
         else if (data.command == 'Pause') {
 
             window.mediaElement.pause();
@@ -302,9 +311,22 @@
 
         console.log('setSubtitleStreamIndex. index: ' + index);
 
+        var currentSubtitleStream = $scope.mediaSource.MediaStreams.filter(function (m) {
+            return m.Index == $scope.subtitleStreamIndex && m.Type == 'Subtitle';
+        })[0];
+        var currentDeliveryMethod = currentSubtitleStream ? currentSubtitleStream.DeliveryMethod : null;
+
         if (index == -1 || index == null) {
-            $scope.subtitleStreamIndex = null;
-            setTextTrack($scope);
+
+            // Need to change the stream to turn off the subs
+            if (currentDeliveryMethod == 'Encode') {
+                console.log('setSubtitleStreamIndex video url change required');
+                var positionTicks = getCurrentPositionTicks($scope);
+                changeStream(positionTicks, { SubtitleIndex: -1 });
+            } else {
+                $scope.subtitleStreamIndex = null;
+                setTextTrack($scope);
+            }
             return;
         }
 
@@ -320,13 +342,13 @@
 
         console.log('setSubtitleStreamIndex DeliveryMethod:' + subtitleStream.DeliveryMethod);
 
-        if (subtitleStream.DeliveryMethod == 'External') {
+        if (subtitleStream.DeliveryMethod == 'External' && currentDeliveryMethod != 'Encode') {
 
             var textStreamUrl = subtitleStream.IsExternalUrl ? subtitleStream.DeliveryUrl : (getUrl(serverAddress, subtitleStream.DeliveryUrl));
 
             console.log('Subtitle url: ' + textStreamUrl);
             setTextTrack($scope, textStreamUrl);
-            $scope.subtitleStreamIndex = index;
+            $scope.subtitleStream = subtitleStream;
             return;
         } else {
             console.log('setSubtitleStreamIndex video url change required');
@@ -429,6 +451,7 @@
         window.mediaElement.play();
 
         setTextTrack($scope, streamInfo.subtitleStreamUrl);
+        $scope.mediaSource = streamInfo.mediaSource;
 
         setTimeout(function () {
 

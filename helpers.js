@@ -163,6 +163,7 @@ function resetPlaybackScope($scope) {
 
     $scope.audioStreamIndex = null;
     $scope.subtitleStreamIndex = null;
+    $scope.mediaSource = null;
     $scope.mediaSourceId = '';
     $scope.PlaybackMediaSource = null;
 
