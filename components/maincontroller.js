@@ -330,7 +330,6 @@
             return;
         }
 
-        JSON.stringify($scope.PlaybackMediaSource);
         var mediaStreams = $scope.PlaybackMediaSource.MediaStreams;
 
         var subtitleStream = getStreamByIndex(mediaStreams, 'Subtitle', index);
