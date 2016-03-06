@@ -449,8 +449,8 @@
 
         window.mediaElement.play();
 
-        setTextTrack($scope, streamInfo.subtitleStreamUrl);
         $scope.mediaSource = streamInfo.mediaSource;
+        setTextTrack($scope, streamInfo.subtitleStreamUrl);
 
         setTimeout(function () {
 
@@ -888,6 +888,7 @@
 
         window.mediaElement.src = url;
         window.mediaElement.autoplay = true;
+        $scope.mediaSource = mediaSource;
 
         window.mediaElement.load();
         if (autoplay) {

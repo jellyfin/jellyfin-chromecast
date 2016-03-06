@@ -339,7 +339,6 @@ function createStreamInfo(item, mediaSource, startPosition) {
                     if (mediaUrl.toLowerCase().indexOf('copytimestamps=true') != -1) {
                         startPosition = 0;
                     }
-                    startPosition = 0;
                 }
             }
         }
