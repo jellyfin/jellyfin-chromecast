@@ -24,6 +24,8 @@ function getCurrentPositionTicks($scope) {
         positionTicks += ($scope.startPositionTicks || 0);
     }
 
+    console.log($scope.startPositionTicks || 0);
+
     return positionTicks;
 }
 

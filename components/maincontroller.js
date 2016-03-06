@@ -26,8 +26,6 @@
             return;
         }
 
-        console.log(e.target.currentTime);
-
         var now = new Date();
 
         var elapsed = now - broadcastToServer;
