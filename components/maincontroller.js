@@ -324,7 +324,7 @@
                 var positionTicks = getCurrentPositionTicks($scope);
                 changeStream(positionTicks, { SubtitleStreamIndex: -1 });
             } else {
-                $scope.subtitleStreamIndex = null;
+                $scope.subtitleStreamIndex = -1;
                 setTextTrack($scope);
             }
             return;
@@ -347,7 +347,7 @@
 
             console.log('Subtitle url: ' + textStreamUrl);
             setTextTrack($scope, textStreamUrl);
-            $scope.subtitleStream = subtitleStream;
+            $scope.subtitleStreamIndex = subtitleStream.Index;
             return;
         } else {
             console.log('setSubtitleStreamIndex video url change required');
