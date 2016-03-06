@@ -20,11 +20,13 @@
 
     var broadcastToServer = new Date();
 
-    function onMediaElementTimeUpdate() {
+    function onMediaElementTimeUpdate(e) {
 
         if ($scope.isChangingStream) {
             return;
         }
+
+        console.log(e.target.currentTime);
 
         var now = new Date();
 
