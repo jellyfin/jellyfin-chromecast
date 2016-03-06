@@ -442,6 +442,8 @@
     function setSrcIntoRenderer(streamInfo) {
 
         var url = streamInfo.url;
+
+        console.log('new media url: ' + url);
         window.mediaElement.src = url;
         window.mediaElement.autoplay = true;
 
