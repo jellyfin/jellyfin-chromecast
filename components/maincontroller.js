@@ -881,6 +881,8 @@
             mediaInfo.duration = Math.floor(streamInfo.mediaSource.RunTimeTicks / 10000000);
         }
 
+        mediaInfo.customData.startPositionTicks = streamInfo.startPosition || 0;
+
         embyActions.load($scope, mediaInfo.customData, item);
         $scope.PlaybackMediaSource = mediaSource;
 
