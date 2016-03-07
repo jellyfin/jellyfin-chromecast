@@ -109,7 +109,7 @@
         });
     };
 
-    factory.reportPlaybackProgress = function ($scope, options, reportToServer) {
+    factory.reportPlaybackProgress = function ($scope, options, reportToServer, broadcastEventName) {
 
         if (!$scope.userId) {
             throw new Error("null userId");
@@ -122,7 +122,7 @@
         //console.log(JSON.stringify(getSenderReportingData($scope, options)));
 
         broadcastToMessageBus({
-            type: 'playbackprogress',
+            type: broadcastEventName || 'playbackprogress',
             data: getSenderReportingData($scope, options)
         });
 

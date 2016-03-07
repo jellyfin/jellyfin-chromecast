@@ -189,7 +189,7 @@
 
         // Items will have properties - Id, Name, Type, MediaType, IsFolder
 
-        var reportProgress = false;
+        var reportEventType;
 
         if (data.command == 'PlayLast' || data.command == 'PlayNext') {
 
@@ -236,17 +236,18 @@
         else if (data.command == 'VolumeUp') {
 
             window.mediaElement.volume = Math.min(1, window.mediaElement.volume + .2);
-            reportProgress = true;
+            reportEventType = 'volumechange';
         }
         else if (data.command == 'VolumeDown') {
 
             // TODO
             window.mediaElement.volume = Math.max(0, window.mediaElement.volume - .2);
-            reportProgress = true;
+            reportEventType = 'volumechange';
         }
         else if (data.command == 'ToggleMute') {
 
             // TODO
+            reportEventType = 'volumechange';
 
         }
         else if (data.command == 'Identify') {
@@ -259,7 +260,7 @@
 
             // Scale 0-100
             window.mediaElement.volume = data.options.volume / 100;
-            reportProgress = true;
+            reportEventType = 'volumechange';
         }
         else if (data.command == 'Seek') {
             seek(data.options.position * 10000000);
@@ -280,12 +281,12 @@
             } else {
                 window.mediaElement.pause();
             }
-            reportProgress = true;
+            reportEventType = 'playstatechange';
         }
         else if (data.command == 'Pause') {
 
             window.mediaElement.pause();
-            reportProgress = true;
+            reportEventType = 'playstatechange';
         }
         else if (data.command == 'SetRepeatMode') {
 
@@ -295,19 +296,19 @@
         else if (data.command == 'Unpause') {
 
             window.mediaElement.play();
-            reportProgress = true;
+            reportEventType = 'playstatechange';
         }
         else {
 
             translateItems(data, data.options, data.options.items, 'play');
         }
 
-        if (reportProgress) {
+        if (reportEventType) {
 
             var report = function() {
                 embyActions.reportPlaybackProgress($scope, getReportingParams($scope));
             };
-            report();
+            embyActions.reportPlaybackProgress($scope, getReportingParams($scope), true, reportEventType);
             setTimeout(report, 100);
             setTimeout(report, 500);
         }
