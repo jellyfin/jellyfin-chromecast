@@ -303,7 +303,13 @@
         }
 
         if (reportProgress) {
-            embyActions.reportPlaybackProgress($scope, getReportingParams($scope));
+
+            var report = function() {
+                embyActions.reportPlaybackProgress($scope, getReportingParams($scope));
+            };
+            report();
+            setTimeout(report, 100);
+            setTimeout(report, 500);
         }
     }
 
