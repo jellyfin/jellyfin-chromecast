@@ -48,6 +48,11 @@ body {
     display: none;
 }
 
+    #video-player::-webkit-media-text-track-display {
+        /* Move them up to avoid them getting cut off at the bottom on some displays */
+        margin-top: -1.5em;
+    }
+
 .hide {
     display: none !important;
 }
