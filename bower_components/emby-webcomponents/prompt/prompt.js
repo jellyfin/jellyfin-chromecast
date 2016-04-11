@@ -1,4 +1,4 @@
-define(['paperdialoghelper', 'layoutManager', 'dialogText', 'html!./icons.html', 'css!./style.css', 'paper-button', 'paper-input'], function (paperdialoghelper, layoutManager, dialogText) {
+define(['dialogHelper', 'layoutManager', 'dialogText', 'html!./icons.html', 'css!./style.css', 'paper-button', 'paper-input'], function (dialogHelper, layoutManager, dialogText) {
 
     return function (options) {
 
@@ -27,7 +27,7 @@ define(['paperdialoghelper', 'layoutManager', 'dialogText', 'html!./icons.html',
             dialogOptions.exitAnimationDuration = 200;
         }
 
-        var dlg = paperdialoghelper.createDialog(dialogOptions);
+        var dlg = dialogHelper.createDialog(dialogOptions);
 
         dlg.classList.add('promptDialog');
 
@@ -59,7 +59,7 @@ define(['paperdialoghelper', 'layoutManager', 'dialogText', 'html!./icons.html',
         if (raisedButtons) {
             html += '<paper-button raised class="btnSubmit"><iron-icon icon="dialog:check"></iron-icon><span>' + dialogText.get('Ok') + '</span></paper-button>';
         } else {
-            html += '<div style="text-align:right;">';
+            html += '<div class="buttons">';
             html += '<paper-button class="btnSubmit">' + dialogText.get('Ok') + '</paper-button>';
             html += '<paper-button class="btnPromptExit">' + dialogText.get('Cancel') + '</paper-button>';
             html += '</div>';
@@ -75,8 +75,14 @@ define(['paperdialoghelper', 'layoutManager', 'dialogText', 'html!./icons.html',
         dlg.querySelector('form').addEventListener('submit', function (e) {
 
             submitValue = dlg.querySelector('.txtPromptValue').value;
-            paperdialoghelper.close(dlg);
             e.preventDefault();
+            e.stopPropagation();
+
+            // Important, don't close the dialog until after the form has completed submitting, or it will cause an error in Chrome
+            setTimeout(function () {
+                dialogHelper.close(dlg);
+            }, 300);
+
             return false;
         });
 
@@ -94,11 +100,12 @@ define(['paperdialoghelper', 'layoutManager', 'dialogText', 'html!./icons.html',
 
         dlg.querySelector('.btnPromptExit').addEventListener('click', function (e) {
 
-            paperdialoghelper.close(dlg);
+            dialogHelper.close(dlg);
         });
 
-        return paperdialoghelper.open(dlg).then(function () {
+        return dialogHelper.open(dlg).then(function () {
             var value = submitValue;
+
             if (value) {
                 return value;
             } else {

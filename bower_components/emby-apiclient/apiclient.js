@@ -59,25 +59,31 @@
         self.getCurrentUser = function () {
 
             if (currentUser) {
-                return new Promise(function (resolve, reject) {
-
-                    resolve(currentUser);
-                });
+                return Promise.resolve(currentUser);
             }
 
             var userId = self.getCurrentUserId();
 
             if (!userId) {
-                return new Promise(function (resolve, reject) {
-
-                    reject();
-                });
+                return Promise.reject();
             }
 
             return self.getUser(userId).then(function (user) {
                 currentUser = user;
                 return user;
             });
+        };
+
+        self.isLoggedIn = function() {
+
+            var info = self.serverInfo();
+            if (info) {
+                if (info.UserId && info.AccessToken) {
+                    return true;
+                }
+            }
+
+            return false;
         };
 
         /**
@@ -520,6 +526,14 @@
             }
         };
 
+        self.ensureWebSocket = function() {
+            if (self.isWebSocketOpenOrConnecting() || !self.isWebSocketSupported()) {
+                return;
+            }
+
+            self.openWebSocket();
+        };
+
         self.openWebSocket = function () {
 
             var accessToken = self.accessToken();
@@ -549,9 +563,7 @@
                 }, 0);
             };
             webSocket.onerror = function () {
-                setTimeout(function () {
-                    Events.trigger(self, 'websocketerror');
-                }, 0);
+                Events.trigger(self, 'websocketerror');
             };
             webSocket.onclose = function () {
                 setTimeout(function () {
