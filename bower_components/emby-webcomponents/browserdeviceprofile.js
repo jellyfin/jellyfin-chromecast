@@ -144,17 +144,21 @@ define(['browser'], function (browser) {
 
     function getMaxBitrate() {
 
-        var userAgent = navigator.userAgent.toLowerCase();
+        try {
+            var userAgent = navigator.userAgent.toLowerCase();
 
-        if (browser.tizen) {
+            if (browser.tizen) {
 
-            // 2015 models
-            if (userAgent.indexOf('tizen 2.3') != -1) {
-                return 20000000;
+                // 2015 models
+                if (userAgent.indexOf('tizen 2.3') != -1) {
+                    return 20000000;
+                }
+
+                // 2016 models
+                return 40000000;
             }
-
-            // 2016 models
-            return 40000000;
+        } catch (err) {
+            
         }
 
         return 100000000;
