@@ -162,6 +162,11 @@
     // app to add items to a playlist
     window.playlistMessageBus = window.castReceiverManager.getCastMessageBus('urn:x-cast:com.connectsdk', cast.receiver.CastMessageBus.MessageType.JSON);
 
+    function cleanName(name) {
+        
+        return name.replace(/[^\w\s]/gi, '');
+    }
+
     function processMessage(data) {
 
         if (!data.command || !data.serverAddress || !data.userId || !data.accessToken) {
@@ -180,8 +185,9 @@
         $scope.serverAddress = data.serverAddress;
 
         data.options = data.options || {};
-        window.deviceInfo.deviceName = data.receiverName || window.deviceInfo.deviceName;
-        window.deviceInfo.deviceId = data.receiverName ? CryptoJS.SHA1(data.receiverName).toString() : window.deviceInfo.deviceId;
+        var cleanReceiverName = cleanName(data.receiverName || '');
+        window.deviceInfo.deviceName = cleanReceiverName || window.deviceInfo.deviceName;
+        window.deviceInfo.deviceId = cleanReceiverName ? CryptoJS.SHA1(cleanReceiverName).toString() : window.deviceInfo.deviceId;
 
         if (data.maxBitrate) {
             window.MaxBitrate = data.maxBitrate;
