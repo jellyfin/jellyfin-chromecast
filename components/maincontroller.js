@@ -118,11 +118,7 @@
         }
     };
 
-    function stop(nextMode, callDefaultOnStop) {
-
-        if (callDefaultOnStop !== false) {
-            mgr.defaultOnStop(event);
-        }
+    function stop(nextMode) {
 
         embyActions.stop($scope);
         enableTimeUpdateListener(false);
@@ -641,7 +637,7 @@
 
         if (stopPlayer) {
 
-            stop("none", false).then(callback);
+            stop("none").then(callback);
         }
         else {
             callback();
