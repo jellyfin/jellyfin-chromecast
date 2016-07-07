@@ -1,7 +1,7 @@
 ﻿define(['datetime', 'fetchhelper'], function (datetime, fetchhelper) {
 
     var factory = {};
-    var controlsPromise, delayStartPromise, closeAppPromise;
+    var controlsPromise, closeAppPromise;
 
     var setControls = function ($scope) {
         clearTimeout(controlsPromise);
@@ -22,7 +22,6 @@
     var clearTimeouts = function () {
         clearTimeout(controlsPromise);
         clearTimeout(closeAppPromise);
-        clearTimeout(delayStartPromise);
     };
 
     var fallBackBackdropImg = function ($scope, src) {
@@ -406,9 +405,13 @@
     };
 
     factory.delayStart = function ($scope) {
-        delayStartPromise = setTimeout(function () {
+        setTimeout(function () {
+
+            console.log('reporting playback start');
 
             factory.reportPlaybackStart($scope, getReportingParams($scope)).then(function () {
+
+                console.log('calling mediaElement.play');
                 window.mediaElement.play();
                 setAppStatus('playing-with-controls');
                 if ($scope.mediaType == "Audio") {
@@ -419,7 +422,7 @@
 
             setControls($scope);
 
-        }, 1000);
+        }, 700);
     };
 
     factory.play = function ($scope, event) {

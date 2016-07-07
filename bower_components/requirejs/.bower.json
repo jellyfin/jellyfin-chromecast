@@ -21,8 +21,7 @@
     "tag": "2.1.22",
     "commit": "9cd0b99417eac61e890d11c5119f2e45e752c999"
   },
-  "_source": "git://github.com/jrburke/requirejs-bower.git",
+  "_source": "https://github.com/jrburke/requirejs-bower.git",
   "_target": "~2.1.22",
-  "_originalSource": "requirejs",
-  "_direct": true
+  "_originalSource": "requirejs"
 }

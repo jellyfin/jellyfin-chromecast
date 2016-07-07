@@ -159,7 +159,7 @@
     window.playlistMessageBus = window.castReceiverManager.getCastMessageBus('urn:x-cast:com.connectsdk', cast.receiver.CastMessageBus.MessageType.JSON);
 
     function cleanName(name) {
-        
+
         return name.replace(/[^\w\s]/gi, '');
     }
 
@@ -307,7 +307,7 @@
 
         if (reportEventType) {
 
-            var report = function() {
+            var report = function () {
                 embyActions.reportPlaybackProgress($scope, getReportingParams($scope));
             };
             embyActions.reportPlaybackProgress($scope, getReportingParams($scope), true, reportEventType);
@@ -860,6 +860,7 @@
         var streamInfo = createStreamInfo(item, mediaSource, options.startPositionTicks);
 
         var url = streamInfo.url;
+        console.log('setting setTextTrack to ' + (streamInfo.subtitleStreamUrl || ''));
         setTextTrack($scope, streamInfo.subtitleStreamUrl);
 
         var mediaInfo = {
@@ -899,13 +900,17 @@
 
         mediaElement.autoplay = autoplay;
 
-        window.mediaElement.src = url;
+        console.log('setting src to ' + url);
         window.mediaElement.autoplay = true;
+        window.mediaElement.src = url;
         $scope.mediaSource = mediaSource;
 
+        console.log('calling mediaElement.load');
         window.mediaElement.load();
+
         if (autoplay) {
             window.mediaElement.pause();
+            console.log('calling embyActions.delayStart');
             embyActions.delayStart($scope);
         }
         enableTimeUpdateListener(false);

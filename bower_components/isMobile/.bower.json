@@ -15,7 +15,7 @@
     "tag": "0.3.9",
     "commit": "84c93a48e09506267241f9f33fd3ae97743f52db"
   },
-  "_source": "git://github.com/kaimallea/isMobile.git",
+  "_source": "https://github.com/kaimallea/isMobile.git",
   "_target": "^0.3.9",
   "_originalSource": "isMobile"
 }
