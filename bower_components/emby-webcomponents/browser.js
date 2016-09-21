@@ -1,4 +1,4 @@
-﻿define(['isMobile'], function (isMobile) {
+﻿define([], function () {
 
     function isTv() {
 
@@ -22,6 +22,93 @@
         }
 
         if (userAgent.indexOf('webos') != -1) {
+            return true;
+        }
+
+        return false;
+    }
+
+    function isMobile(userAgent) {
+
+        var terms = [
+            'mobi',
+            'ipad',
+            'iphone',
+            'ipod',
+            'silk',
+            'gt-p1000',
+            'nexus 7',
+            'kindle fire',
+            'opera mini'
+        ];
+
+        var lower = userAgent.toLowerCase();
+
+        for (var i = 0, length = terms.length; i < length; i++) {
+            if (lower.indexOf(terms[i]) != -1) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    function isStyleSupported(prop, value) {
+        // If no value is supplied, use "inherit"
+        value = arguments.length === 2 ? value : 'inherit';
+        // Try the native standard method first
+        if ('CSS' in window && 'supports' in window.CSS) {
+            return window.CSS.supports(prop, value);
+        }
+        // Check Opera's native method
+        if ('supportsCSS' in window) {
+            return window.supportsCSS(prop, value);
+        }
+
+        // need try/catch because it's failing on tizen
+
+        try {
+            // Convert to camel-case for DOM interactions
+            var camel = prop.replace(/-([a-z]|[0-9])/ig, function (all, letter) {
+                return (letter + '').toUpperCase();
+            });
+            // Check if the property is supported
+            var support = (camel in el.style);
+            // Create test element
+            var el = document.createElement('div');
+            // Assign the property and value to invoke
+            // the CSS interpreter
+            el.style.cssText = prop + ':' + value;
+            // Ensure both the property and value are
+            // supported and return
+            return support && (el.style[camel] !== '');
+        } catch (err) {
+            return false;
+        }
+    }
+
+    function hasKeyboard(browser) {
+
+        if (browser.touch) {
+            return true;
+        }
+
+        if (browser.xboxOne) {
+            return true;
+        }
+
+        if (browser.ps4) {
+            return true;
+        }
+
+        if (browser.edgeUwp) {
+            // This is OK for now, but this won't always be true
+            // Should we use this?
+            // https://gist.github.com/wagonli/40d8a31bd0d6f0dd7a5d
+            return true;
+        }
+
+        if (browser.tv) {
             return true;
         }
 
@@ -89,17 +176,37 @@
         browser.safari = true;
     }
 
-    if (isMobile.any) {
+    if (userAgent.toLowerCase().indexOf("playstation 4") != -1) {
+        browser.ps4 = true;
+        browser.tv = true;
+    }
+
+    if (isMobile(userAgent)) {
         browser.mobile = true;
     }
 
     browser.xboxOne = userAgent.toLowerCase().indexOf('xbox') != -1;
     browser.animate = document.documentElement.animate != null;
-    browser.tizen = userAgent.toLowerCase().indexOf('tizen') != -1;
+    browser.tizen = userAgent.toLowerCase().indexOf('tizen') != -1 || userAgent.toLowerCase().indexOf('smarthub') != -1;
     browser.web0s = userAgent.toLowerCase().indexOf('Web0S'.toLowerCase()) != -1;
+    browser.edgeUwp = browser.edge && userAgent.toLowerCase().indexOf('msapphost') != -1;
 
     browser.tv = isTv();
     browser.operaTv = browser.tv && userAgent.toLowerCase().indexOf('opr/') != -1;
+
+    if (!isStyleSupported('display', 'flex')) {
+        browser.noFlex = true;
+    }
+
+    if (browser.mobile || browser.tv) {
+        browser.slow = true;
+    }
+
+    if (('ontouchstart' in window) || window.DocumentTouch && document instanceof DocumentTouch) {
+        browser.touch = true;
+    }
+
+    browser.keyboard = hasKeyboard(browser);
 
     return browser;
 });

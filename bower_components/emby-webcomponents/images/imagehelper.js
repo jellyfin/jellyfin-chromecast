@@ -1,38 +1,70 @@
-define(['visibleinviewport', 'imageFetcher'], function (visibleinviewport, imageFetcher) {
+define(['visibleinviewport', 'imageFetcher', 'layoutManager', 'events', 'browser', 'dom'], function (visibleinviewport, imageFetcher, layoutManager, events, browser, dom) {
 
-    var thresholdX = screen.availWidth;
-    var thresholdY = screen.availHeight;
+    var thresholdX;
+    var thresholdY;
 
-    var wheelEvent = (document.implementation.hasFeature('Event.wheel', '3.0') ? 'wheel' : 'mousewheel');
+    var supportsIntersectionObserver = function () {
 
-    function isVisible(elem, windowSize) {
-        return visibleinviewport(elem, true, thresholdX, thresholdY, windowSize);
+        if (window.IntersectionObserver) {
+
+            return true;
+        }
+
+        return false;
+    }();
+
+    function resetThresholds() {
+
+        var x = screen.availWidth;
+        var y = screen.availHeight;
+
+        if (browser.touch) {
+            x *= 2;
+            y *= 2;
+        }
+
+        thresholdX = x;
+        thresholdY = y;
     }
 
+    if (!supportsIntersectionObserver) {
+        dom.addEventListener(window, "orientationchange", resetThresholds, { passive: true });
+        dom.addEventListener(window, 'resize', resetThresholds, { passive: true });
+        resetThresholds();
+    }
+
+    function isVisible(elem) {
+        return visibleinviewport(elem, true, thresholdX, thresholdY);
+    }
+
+    var wheelEvent = (document.implementation.hasFeature('Event.wheel', '3.0') ? 'wheel' : 'mousewheel');
     var self = {};
 
-    function fillImage(elem) {
-        var source = elem.getAttribute('data-src');
+    var enableFade = browser.animate && !browser.slow;
+
+    function fillImage(elem, source, enableEffects) {
+
+        if (!source) {
+            source = elem.getAttribute('data-src');
+        }
         if (source) {
-            if (self.enableFade) {
+            if (enableFade && !layoutManager.tv && enableEffects !== false) {
                 imageFetcher.loadImage(elem, source).then(fadeIn);
             } else {
                 imageFetcher.loadImage(elem, source);
             }
-            elem.setAttribute("data-src", '');
+            elem.removeAttribute("data-src");
         }
     }
 
     function fadeIn(elem) {
 
-        if (elem.classList.contains('noFade')) {
-            return;
-        }
+        var duration = layoutManager.tv ? 160 : 300;
 
         var keyframes = [
           { opacity: '0', offset: 0 },
           { opacity: '1', offset: 1 }];
-        var timing = { duration: 300, iterations: 1 };
+        var timing = { duration: duration, iterations: 1 };
         elem.animate(keyframes, timing);
     }
 
@@ -43,23 +75,49 @@ define(['visibleinviewport', 'imageFetcher'], function (visibleinviewport, image
         }
     }
 
-    function unveilElements(images) {
+    function unveilWithIntersection(images, root) {
+
+        var filledCount = 0;
+
+        var options = {};
+
+        //options.rootMargin = "300%";
+
+        var observer = new IntersectionObserver(function (entries) {
+            for (var j = 0, length2 = entries.length; j < length2; j++) {
+                var entry = entries[j];
+                var target = entry.target;
+                observer.unobserve(target);
+                fillImage(target);
+                filledCount++;
+            }
+        },
+        options
+        );
+        // Start observing an element
+        for (var i = 0, length = images.length; i < length; i++) {
+            observer.observe(images[i]);
+        }
+    }
+
+    function unveilElements(images, root) {
 
         if (!images.length) {
             return;
         }
 
+        if (supportsIntersectionObserver) {
+            unveilWithIntersection(images, root);
+            return;
+        }
+
+        var filledImages = [];
         var cancellationTokens = [];
+
         function unveilInternal(tokenIndex) {
 
-            var remaining = [];
             var anyFound = false;
             var out = false;
-
-            var windowSize = {
-                innerHeight: window.innerHeight,
-                innerWidth: window.innerWidth
-            };
 
             // TODO: This out construct assumes left to right, top to bottom
 
@@ -68,26 +126,39 @@ define(['visibleinviewport', 'imageFetcher'], function (visibleinviewport, image
                 if (cancellationTokens[tokenIndex]) {
                     return;
                 }
+                if (filledImages[i]) {
+                    continue;
+                }
                 var img = images[i];
-                if (!out && isVisible(img, windowSize)) {
+                if (!out && isVisible(img)) {
                     anyFound = true;
+                    filledImages[i] = true;
                     fillImage(img);
                 } else {
 
                     if (anyFound) {
                         out = true;
                     }
-                    remaining.push(img);
                 }
             }
 
-            images = remaining;
-
             if (!images.length) {
-                document.removeEventListener('focus', unveil, true);
-                document.removeEventListener('scroll', unveil, true);
-                document.removeEventListener(wheelEvent, unveil, true);
-                window.removeEventListener('resize', unveil, true);
+                dom.removeEventListener(document, 'focus', unveil, {
+                    capture: true,
+                    passive: true
+                });
+                dom.removeEventListener(document, 'scroll', unveil, {
+                    capture: true,
+                    passive: true
+                });
+                dom.removeEventListener(document, wheelEvent, unveil, {
+                    capture: true,
+                    passive: true
+                });
+                dom.removeEventListener(window, 'resize', unveil, {
+                    capture: true,
+                    passive: true
+                });
             }
         }
 
@@ -103,35 +174,29 @@ define(['visibleinviewport', 'imageFetcher'], function (visibleinviewport, image
             }, 1);
         }
 
-        document.addEventListener('scroll', unveil, true);
-        document.addEventListener('focus', unveil, true);
-        document.addEventListener(wheelEvent, unveil, true);
-        window.addEventListener('resize', unveil, true);
+        dom.addEventListener(document, 'focus', unveil, {
+            capture: true,
+            passive: true
+        });
+        dom.addEventListener(document, 'scroll', unveil, {
+            capture: true,
+            passive: true
+        });
+        dom.addEventListener(document, wheelEvent, unveil, {
+            capture: true,
+            passive: true
+        });
+        dom.addEventListener(window, 'resize', unveil, {
+            capture: true,
+            passive: true
+        });
 
         unveil();
     }
 
-    function fillImages(elems) {
-
-        for (var i = 0, length = elems.length; i < length; i++) {
-            var elem = elems[0];
-            var source = elem.getAttribute('data-src');
-            if (source) {
-                ImageStore.setImageInto(elem, source);
-                elem.setAttribute("data-src", '');
-            }
-        }
-    }
-
     function lazyChildren(elem) {
 
-        unveilElements(elem.getElementsByClassName('lazy'));
-    }
-
-    function lazyImage(elem, url) {
-
-        elem.setAttribute('data-src', url);
-        fillImages([elem]);
+        unveilElements(elem.getElementsByClassName('lazy'), elem);
     }
 
     function getPrimaryImageAspectRatio(items) {
@@ -199,14 +264,8 @@ define(['visibleinviewport', 'imageFetcher'], function (visibleinviewport, image
         }
     }
 
-    function lazyImage(elem, url) {
-
-        elem.setAttribute('data-src', url);
-        fillImage(elem);
-    }
-
     self.fillImages = fillImages;
-    self.lazyImage = lazyImage;
+    self.lazyImage = fillImage;
     self.lazyChildren = lazyChildren;
     self.getPrimaryImageAspectRatio = getPrimaryImageAspectRatio;
 

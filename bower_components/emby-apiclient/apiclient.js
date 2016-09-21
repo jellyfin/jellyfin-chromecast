@@ -1,4 +1,4 @@
-﻿define(['events'], function (Events) {
+﻿define(['events'], function (events) {
 
     /**
      * Creates a new api client instance
@@ -38,7 +38,7 @@
                 serverAddress = val;
 
                 if (changed) {
-                    Events.trigger(this, 'serveraddresschanged');
+                    events.trigger(this, 'serveraddresschanged');
                 }
             }
 
@@ -50,6 +50,10 @@
             serverInfo = info || serverInfo;
 
             return serverInfo;
+        };
+
+        self.serverId = function () {
+            return self.serverInfo().Id;
         };
 
         var currentUser;
@@ -74,7 +78,7 @@
             });
         };
 
-        self.isLoggedIn = function() {
+        self.isLoggedIn = function () {
 
             var info = self.serverInfo();
             if (info) {
@@ -137,11 +141,11 @@
 
         function onFetchFail(url, response) {
 
-            Events.trigger(self, 'requestfail', [
+            events.trigger(self, 'requestfail', [
             {
                 url: url,
                 status: response.status,
-                errorCode: response.headers ? response.headers["X-Application-Error-Code"] : null
+                errorCode: response.headers ? response.headers.get('X-Application-Error-Code') : null
             }]);
         }
 
@@ -526,13 +530,22 @@
             }
         };
 
-        self.ensureWebSocket = function() {
+        self.ensureWebSocket = function () {
             if (self.isWebSocketOpenOrConnecting() || !self.isWebSocketSupported()) {
                 return;
             }
 
-            self.openWebSocket();
+            try {
+                self.openWebSocket();
+            } catch (err) {
+                console.log("Error opening web socket: " + err);
+            }
         };
+
+        function replaceAll(originalString, strReplace, strWith) {
+            var reg = new RegExp(strReplace, 'ig');
+            return originalString.replace(reg, strWith);
+        }
 
         self.openWebSocket = function () {
 
@@ -542,7 +555,10 @@
                 throw new Error("Cannot open web socket without access token.");
             }
 
-            var url = self.getUrl("socket").replace("emby/socket", "embywebsocket").replace('http', 'ws');
+            var url = self.getUrl("socket");
+
+            url = replaceAll(url, 'emby/socket', 'embywebsocket');
+            url = replaceAll(url, 'http', 'ws');
 
             url += "?api_key=" + accessToken;
             url += "&deviceId=" + deviceId;
@@ -559,15 +575,15 @@
 
                 console.log('web socket connection opened');
                 setTimeout(function () {
-                    Events.trigger(self, 'websocketopen');
+                    events.trigger(self, 'websocketopen');
                 }, 0);
             };
             webSocket.onerror = function () {
-                Events.trigger(self, 'websocketerror');
+                events.trigger(self, 'websocketerror');
             };
             webSocket.onclose = function () {
                 setTimeout(function () {
-                    Events.trigger(self, 'websocketclose');
+                    events.trigger(self, 'websocketclose');
                 }, 0);
             };
         };
@@ -592,7 +608,7 @@
                 }
             }
 
-            Events.trigger(self, 'websocketmessage', [msg]);
+            events.trigger(self, 'websocketmessage', [msg]);
         }
 
         self.sendWebSocketMessage = function (name, data) {
@@ -924,6 +940,13 @@
         self.getLiveTvRecordings = function (options) {
 
             var url = self.getUrl("LiveTv/Recordings", options || {});
+
+            return self.getJSON(url);
+        };
+
+        self.getLiveTvRecordingSeries = function (options) {
+
+            var url = self.getUrl("LiveTv/Recordings/Series", options || {});
 
             return self.getJSON(url);
         };
@@ -1716,7 +1739,7 @@
        * Adds a virtual folder
        * @param {String} name
        */
-        self.addVirtualFolder = function (name, type, refreshLibrary, initialPaths) {
+        self.addVirtualFolder = function (name, type, refreshLibrary, initialPaths, libraryOptions) {
 
             if (!name) {
                 throw new Error("null name");
@@ -1739,7 +1762,28 @@
                 type: "POST",
                 url: url,
                 data: JSON.stringify({
-                    Paths: initialPaths
+                    Paths: initialPaths,
+                    LibraryOptions: libraryOptions
+                }),
+                contentType: 'application/json'
+            });
+        };
+        self.updateVirtualFolderOptions = function (id, libraryOptions) {
+
+            if (!id) {
+                throw new Error("null name");
+            }
+
+            var url = "Library/VirtualFolders/LibraryOptions";
+
+            url = self.getUrl(url);
+
+            return self.ajax({
+                type: "POST",
+                url: url,
+                data: JSON.stringify({
+                    Id: id,
+                    LibraryOptions: libraryOptions
                 }),
                 contentType: 'application/json'
             });
@@ -2836,9 +2880,24 @@
             return self.getJSON(url);
         };
 
+        self.getMovieRecommendations = function (options) {
+
+            return self.getJSON(self.getUrl('Movies/Recommendations', options));
+        };
+
+        self.getUpcomingEpisodes = function (options) {
+
+            return self.getJSON(self.getUrl('Shows/Upcoming', options));
+        };
+
         self.getChannels = function (query) {
 
             return self.getJSON(self.getUrl("Channels", query || {}));
+        };
+
+        self.getLatestChannelItems = function (query) {
+
+            return self.getJSON(self.getUrl("Channels/Items/Latest", query));
         };
 
         self.getUserViews = function (options, userId) {
@@ -2980,6 +3039,20 @@
             return self.getJSON(url);
         };
 
+        self.getGameSystems = function () {
+
+            var options = {};
+
+            var userId = self.getCurrentUserId();
+            if (userId) {
+                options.userId = userId;
+            }
+
+            var url = self.getUrl("Games/SystemSummaries", options);
+
+            return self.getJSON(url);
+        };
+
         self.getAdditionalVideoParts = function (userId, itemId) {
 
             if (!itemId) {
@@ -3020,7 +3093,13 @@
 
             var url = self.getUrl("Search/Hints", options);
 
-            return self.getJSON(url);
+            return self.getJSON(url).then(function (result) {
+                var serverId = self.serverId();
+                result.SearchHints.forEach(function (i) {
+                    i.ServerId = serverId;
+                });
+                return result;
+            });
         };
 
         /**
@@ -3294,6 +3373,22 @@
 
             return self.ajax({
                 type: "POST",
+                url: url
+            });
+        };
+
+        self.cancelSyncItems = function (itemIds, targetId) {
+
+            if (!itemIds) {
+                throw new Error("null itemIds");
+            }
+
+            var url = self.getUrl("Sync/" + (targetId || self.deviceId()) + "/Items", {
+                ItemIds: itemIds.join(',')
+            });
+
+            return self.ajax({
+                type: "DELETE",
                 url: url
             });
         };

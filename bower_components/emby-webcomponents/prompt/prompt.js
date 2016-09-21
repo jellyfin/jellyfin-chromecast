@@ -1,80 +1,60 @@
-define(['dialogHelper', 'layoutManager', 'dialogText', 'html!./icons.html', 'css!./style.css', 'paper-button', 'paper-input'], function (dialogHelper, layoutManager, dialogText) {
+define(['dialogHelper', 'layoutManager', 'scrollHelper', 'globalize', 'dom', 'require', 'material-icons', 'emby-button', 'paper-icon-button-light', 'emby-input', 'formDialogStyle'], function (dialogHelper, layoutManager, scrollHelper, globalize, dom, require) {
 
-    return function (options) {
+    function setInputProperties(dlg, options) {
+        var txtInput = dlg.querySelector('#txtInput');
 
-        if (typeof options === 'string') {
-            options = {
-                title: '',
-                text: options
-            };
+        if (txtInput.label) {
+            txtInput.label(options.label || '');
+        } else {
+            txtInput.setAttribute('label', options.label || '');
         }
+        txtInput.value = options.value || '';
+    }
+
+    function showDialog(options, template) {
 
         var dialogOptions = {
-            removeOnClose: true
+            removeOnClose: true,
+            scrollY: false
         };
-
-        var backButton = false;
-        var raisedButtons = false;
 
         if (layoutManager.tv) {
             dialogOptions.size = 'fullscreen';
-            backButton = true;
-            raisedButtons = true;
         } else {
-
-            dialogOptions.modal = false;
-            dialogOptions.entryAnimationDuration = 160;
-            dialogOptions.exitAnimationDuration = 200;
+            //dialogOptions.size = 'mini';
         }
 
         var dlg = dialogHelper.createDialog(dialogOptions);
 
-        dlg.classList.add('promptDialog');
+        dlg.classList.add('formDialog');
 
-        var html = '';
-        var submitValue = '';
+        dlg.innerHTML = globalize.translateHtml(template, 'sharedcomponents');
 
-        html += '<div class="promptDialogContent">';
-        if (backButton) {
-            html += '<paper-icon-button tabindex="-1" icon="dialog:arrow-back" class="btnPromptExit"></paper-icon-button>';
+        if (layoutManager.tv) {
+            scrollHelper.centerFocus.on(dlg.querySelector('.formDialogContent'), false);
+        } else {
+            dlg.querySelector('.dialogContentInner').classList.add('dialogContentInner-mini');
         }
 
-        if (options.title) {
-            html += '<h2>';
-            html += options.title;
-            html += '</h2>';
-        }
+        dlg.querySelector('.btnCancel').addEventListener('click', function (e) {
+            dialogHelper.close(dlg);
+        });
 
-        html += '<form>';
-
-        html += '<paper-input autoFocus class="txtPromptValue" value="' + (options.value || '') + '" label="' + (options.label || '') + '"></paper-input>';
+        dlg.querySelector('.formDialogHeaderTitle').innerHTML = options.title || '';
 
         if (options.description) {
-            html += '<div class="fieldDescription">';
-            html += options.description;
-            html += '</div>';
-        }
-
-        html += '<br/>';
-        if (raisedButtons) {
-            html += '<paper-button raised class="btnSubmit"><iron-icon icon="dialog:check"></iron-icon><span>' + dialogText.get('Ok') + '</span></paper-button>';
+            dlg.querySelector('.fieldDescription').innerHTML = options.description;
         } else {
-            html += '<div class="buttons">';
-            html += '<paper-button class="btnSubmit">' + dialogText.get('Ok') + '</paper-button>';
-            html += '<paper-button class="btnPromptExit">' + dialogText.get('Cancel') + '</paper-button>';
-            html += '</div>';
+            dlg.querySelector('.fieldDescription').classList.add('hide');
         }
-        html += '</form>';
 
-        html += '</div>';
+        setInputProperties(dlg, options);
 
-        dlg.innerHTML = html;
-
-        document.body.appendChild(dlg);
+        var submitValue;
 
         dlg.querySelector('form').addEventListener('submit', function (e) {
 
-            submitValue = dlg.querySelector('.txtPromptValue').value;
+            submitValue = dlg.querySelector('#txtInput').value;
             e.preventDefault();
             e.stopPropagation();
 
@@ -86,24 +66,14 @@ define(['dialogHelper', 'layoutManager', 'dialogText', 'html!./icons.html', 'css
             return false;
         });
 
-        dlg.querySelector('.btnSubmit').addEventListener('click', function (e) {
-
-            // Do a fake form submit this the button isn't a real submit button
-            var fakeSubmit = document.createElement('input');
-            fakeSubmit.setAttribute('type', 'submit');
-            fakeSubmit.style.display = 'none';
-            var form = dlg.querySelector('form');
-            form.appendChild(fakeSubmit);
-            fakeSubmit.click();
-            form.removeChild(fakeSubmit);
-        });
-
-        dlg.querySelector('.btnPromptExit').addEventListener('click', function (e) {
-
-            dialogHelper.close(dlg);
-        });
+        dlg.style.minWidth = (Math.min(400, dom.getWindowSize().innerWidth - 50)) + 'px';
 
         return dialogHelper.open(dlg).then(function () {
+
+            if (layoutManager.tv) {
+                scrollHelper.centerFocus.off(dlg.querySelector('.formDialogContent'), false);
+            }
+
             var value = submitValue;
 
             if (value) {
@@ -111,6 +81,22 @@ define(['dialogHelper', 'layoutManager', 'dialogText', 'html!./icons.html', 'css
             } else {
                 return Promise.reject();
             }
+        });
+    }
+
+    return function (options) {
+
+        return new Promise(function (resolve, reject) {
+            require(['text!./prompt.template.html'], function (template) {
+
+                if (typeof options === 'string') {
+                    options = {
+                        title: '',
+                        text: options
+                    };
+                }
+                showDialog(options, template).then(resolve, reject);
+            });
         });
     };
 });

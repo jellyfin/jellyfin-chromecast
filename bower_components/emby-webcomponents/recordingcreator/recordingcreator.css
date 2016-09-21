@@ -1,0 +1,28 @@
+.recordingDialogSubmitIcon {
+    color: #cc3333;
+}
+
+.recordingDialog-imageContainer {
+    flex-shrink: 0;
+    padding: 1em 1em 1em 0;
+    max-width: 25%;
+}
+
+.recordingDialog-img {
+    max-width: 100%;
+}
+
+.recordingDialog-itemName {
+    margin-top: .5em;
+}
+
+.recordingDialog-btnRecord {
+    background-color: #cc3333;
+}
+
+@media all and (max-width: 800px) {
+
+    .programDialog-itemName {
+        display: none;
+    }
+}

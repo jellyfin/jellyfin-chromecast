@@ -13,6 +13,15 @@ define(['appStorage', 'events'], function (appStorage, events) {
 
         var self = this;
 
+        self.enableAutoLogin = function (val) {
+
+            if (val != null) {
+                self.set('enableAutoLogin', val.toString());
+            }
+
+            return self.get('enableAutoLogin') != 'false';
+        };
+
         self.enableAutomaticBitrateDetection = function (val) {
 
             if (val != null) {
@@ -28,7 +37,16 @@ define(['appStorage', 'events'], function (appStorage, events) {
                 self.set('preferredVideoBitrate', val);
             }
 
-            return parseInt(self.get('preferredVideoBitrate') || '') || 1500000;
+            return parseInt(self.get('preferredVideoBitrate') || '0') || 1500000;
+        };
+
+        self.maxStaticMusicBitrate = function (val) {
+
+            if (val !== undefined) {
+                self.set('maxStaticMusicBitrate', val);
+            }
+
+            return parseInt(self.get('maxStaticMusicBitrate') || '0') || null;
         };
 
         self.maxChromecastBitrate = function (val) {

@@ -4,16 +4,8 @@ define(['cryptojs-md5'], function () {
 
         if (elem.tagName !== "IMG") {
 
-            return new Promise(function (resolve, reject) {
-
-                var tmp = new Image();
-
-                tmp.onload = function () {
-                    elem.style.backgroundImage = "url('" + url + "')";
-                    resolve(elem);
-                };
-                tmp.src = url;
-            });
+            elem.style.backgroundImage = "url('" + url + "')";
+            return Promise.resolve(elem);
 
         } else {
             elem.setAttribute("src", url);
@@ -97,20 +89,49 @@ define(['cryptojs-md5'], function () {
         }
 
         fileEntry.file(function (file) {
-            var elapsed = new Date().getTime() - file.lastModifiedDate.getTime();
-            // 60 days
-            var maxElapsed = 5184000000;
-            if (elapsed >= maxElapsed) {
 
-                var fullPath = fileEntry.fullPath;
-                console.log('deleting file: ' + fullPath);
+            getLastModified(file, fileEntry).then(function (lastModifiedDate) {
 
-                fileEntry.remove(function () {
-                    console.log('File deleted: ' + fullPath);
-                }, function () {
-                    console.log('Failed to delete file: ' + fullPath);
-                });
+                var elapsed = new Date().getTime() - lastModifiedDate;
+                // 40 days
+                var maxElapsed = 3456000000;
+                if (elapsed >= maxElapsed) {
+
+                    var fullPath = fileEntry.fullPath;
+                    console.log('deleting file: ' + fullPath);
+
+                    fileEntry.remove(function () {
+                        console.log('File deleted: ' + fullPath);
+                    }, function () {
+                        console.log('Failed to delete file: ' + fullPath);
+                    });
+                }
+            });
+
+        });
+    }
+
+    function getLastModified(file, fileEntry) {
+
+        var lastModifiedDate = file.lastModified || file.lastModifiedDate || file.modificationTime;
+        if (lastModifiedDate) {
+            if (lastModifiedDate.getTime) {
+                lastModifiedDate = lastModifiedDate.getTime();
             }
+            return Promise.resolve(lastModifiedDate);
+        }
+
+        return new Promise(function (resolve, reject) {
+
+            fileEntry.getMetadata(function (metadata) {
+                var lastModifiedDate = metadata.lastModified || metadata.lastModifiedDate || metadata.modificationTime;
+                if (lastModifiedDate) {
+                    if (lastModifiedDate.getTime) {
+                        lastModifiedDate = lastModifiedDate.getTime();
+                    }
+                }
+                resolve(lastModifiedDate);
+            });
         });
     }
 

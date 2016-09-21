@@ -81,6 +81,11 @@ define(['connectionManager', 'userSettings', 'events'], function (connectionMana
             return 'ca';
         }
 
+        // normalize Swedish
+        if (lower == 'sv-se') {
+            return 'sv';
+        }
+
         return lower;
     }
 
@@ -99,16 +104,24 @@ define(['connectionManager', 'userSettings', 'events'], function (connectionMana
         return translations.dictionaries[getCurrentLocale()];
     }
 
-    function loadTranslations(options) {
+    function register(options) {
 
         allTranslations[options.name] = {
-            translations: options.translations,
+            translations: options.strings || options.translations,
             dictionaries: {}
         };
+    }
+
+    function loadStrings(options) {
 
         var locale = getCurrentLocale();
 
-        return ensureTranslation(allTranslations[options.name], locale);
+        if (typeof options === 'string') {
+            return ensureTranslation(allTranslations[options], locale);
+        } else {
+            register(options);
+            return ensureTranslation(allTranslations[options.name], locale);
+        }
     }
 
     var cacheParam = new Date().getTime();
@@ -144,8 +157,9 @@ define(['connectionManager', 'userSettings', 'events'], function (connectionMana
             xhr.onload = function (e) {
                 if (this.status < 400) {
                     resolve(JSON.parse(this.response));
+                } else {
+                    resolve({});
                 }
-                resolve({});
             };
 
             xhr.onerror = function () {
@@ -246,7 +260,9 @@ define(['connectionManager', 'userSettings', 'events'], function (connectionMana
         translate: translate,
         translateDocument: translateHtml,
         translateHtml: translateHtml,
-        loadStrings: loadTranslations,
-        defaultModule: defaultModule
+        loadStrings: loadStrings,
+        defaultModule: defaultModule,
+        getCurrentLocale: getCurrentLocale,
+        register: register
     };
 });

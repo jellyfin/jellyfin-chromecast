@@ -1,12 +1,21 @@
-﻿define(['browser', 'css!./style'], function (browser) {
+﻿define(['browser', 'connectionManager', 'playbackManager', 'dom', 'css!./style'], function (browser, connectionManager, playbackManager, dom) {
 
     function enableAnimation(elem) {
 
-        if (browser.mobile) {
+        if (browser.slow) {
             return false;
         }
 
         return elem.animate;
+    }
+
+    function enableRotation() {
+
+        if (browser.tv) {
+            return false;
+        }
+
+        return true;
     }
 
     function backdrop() {
@@ -68,7 +77,6 @@
         function cancelAnimation() {
             var animation = currentAnimation;
             if (animation) {
-                console.log('Cancelling backdrop animation');
                 animation.cancel();
                 currentAnimation = null;
             }
@@ -99,6 +107,8 @@
 
     function clearBackdrop(clearAll) {
 
+        clearRotation();
+
         if (currentLoadingBackdrop) {
             currentLoadingBackdrop.destroy();
             currentLoadingBackdrop = null;
@@ -113,30 +123,32 @@
         internalBackdrop(false);
     }
 
-    var skinContainer;
-    function setSkinContainerBackgroundEnabled() {
-
-        if (!skinContainer) {
-            skinContainer = document.querySelector('.skinContainer');
+    var backgroundContainer;
+    function getBackgroundContainer() {
+        if (!backgroundContainer) {
+            backgroundContainer = document.querySelector('.backgroundContainer');
         }
+        return backgroundContainer;
+    }
+    function setBackgroundContainerBackgroundEnabled() {
 
         if (hasInternalBackdrop || hasExternalBackdrop) {
-            skinContainer.classList.add('withBackdrop');
+            getBackgroundContainer().classList.add('withBackdrop');
         } else {
-            skinContainer.classList.remove('withBackdrop');
+            getBackgroundContainer().classList.remove('withBackdrop');
         }
     }
 
     var hasInternalBackdrop;
     function internalBackdrop(enabled) {
         hasInternalBackdrop = enabled;
-        setSkinContainerBackgroundEnabled();
+        setBackgroundContainerBackgroundEnabled();
     }
 
     var hasExternalBackdrop;
     function externalBackdrop(enabled) {
         hasExternalBackdrop = enabled;
-        setSkinContainerBackgroundEnabled();
+        setBackgroundContainerBackgroundEnabled();
     }
 
     function getRandom(min, max) {
@@ -166,58 +178,137 @@
         currentLoadingBackdrop = instance;
     }
 
-    function setBackdrops(items) {
+    function getItemImageUrls(item) {
 
-        var images = items.map(function (i) {
+        var apiClient = connectionManager.getApiClient(item.ServerId);
 
-            if (i.BackdropImageTags && i.BackdropImageTags.length > 0) {
-                return {
-                    id: i.Id,
-                    tag: i.BackdropImageTags[0],
-                    serverId: i.ServerId
-                };
-            }
+        if (item.BackdropImageTags && item.BackdropImageTags.length > 0) {
 
-            if (i.ParentBackdropItemId && i.ParentBackdropImageTags && i.ParentBackdropImageTags.length) {
+            return item.BackdropImageTags.map(function (imgTag, index) {
 
-                return {
-                    id: i.ParentBackdropItemId,
-                    tag: i.ParentBackdropImageTags[0],
-                    serverId: i.ServerId
-                };
-            }
-            return null;
+                return apiClient.getScaledImageUrl(item.Id, {
+                    type: "Backdrop",
+                    tag: imgTag,
+                    maxWidth: Math.min(dom.getWindowSize().innerWidth, 1920),
+                    index: index
+                });
+            });
+        }
 
-        }).filter(function (i) {
-            return i != null;
-        });
+        if (item.ParentBackdropItemId && item.ParentBackdropImageTags && item.ParentBackdropImageTags.length) {
 
+            return item.ParentBackdropImageTags.map(function (imgTag, index) {
+
+                return apiClient.getScaledImageUrl(item.ParentBackdropItemId, {
+                    type: "Backdrop",
+                    tag: imgTag,
+                    maxWidth: Math.min(dom.getWindowSize().innerWidth, 1920),
+                    index: index
+                });
+            });
+        }
+
+        return [];
+    }
+
+    function getImageUrls(items) {
+
+        var list = [];
+
+        for (var i = 0, length = items.length; i < length; i++) {
+
+            var itemImages = getItemImageUrls(items[i]);
+
+            itemImages.forEach(function (img) {
+                list.push(img);
+            });
+        }
+
+        return list;
+    }
+
+    function arraysEqual(a, b) {
+        if (a === b) return true;
+        if (a == null || b == null) return false;
+        if (a.length != b.length) return false;
+
+        // If you don't care about the order of the elements inside
+        // the array, you should sort both arrays here.
+
+        for (var i = 0; i < a.length; ++i) {
+            if (a[i] !== b[i]) return false;
+        }
+        return true;
+    }
+
+    var rotationInterval;
+    var currentRotatingImages = [];
+    var currentRotationIndex = -1;
+    function setBackdrops(items, imageSetId) {
+
+        var images = getImageUrls(items);
+
+        imageSetId = imageSetId || new Date().getTime();
         if (images.length) {
 
-            var index = getRandom(0, images.length - 1);
-            var item = images[index];
-
-            require(['connectionManager'], function (connectionManager) {
-
-                var apiClient = connectionManager.getApiClient(item.serverId);
-                var imgUrl = apiClient.getScaledImageUrl(item.id, {
-                    type: "Backdrop",
-                    tag: item.tag,
-                    //maxWidth: window.innerWidth,
-                    quality: 100
-                });
-
-                setBackdrop(imgUrl);
-            });
+            startRotation(images, imageSetId);
 
         } else {
             clearBackdrop();
         }
     }
 
+    function startRotation(images) {
+
+        if (arraysEqual(images, currentRotatingImages)) {
+            return;
+        }
+
+        clearRotation();
+
+        currentRotatingImages = images;
+        currentRotationIndex = -1;
+
+        if (images.length > 1 && enableRotation()) {
+            rotationInterval = setInterval(onRotationInterval, 20000);
+        }
+        onRotationInterval();
+    }
+
+    function onRotationInterval() {
+
+        if (playbackManager.isPlayingVideo()) {
+            return;
+        }
+
+        var newIndex = currentRotationIndex + 1;
+        if (newIndex >= currentRotatingImages.length) {
+            newIndex = 0;
+        }
+
+        currentRotationIndex = newIndex;
+        setBackdropImage(currentRotatingImages[newIndex]);
+    }
+
+    function clearRotation() {
+        var interval = rotationInterval;
+        if (interval) {
+            clearInterval(interval);
+        }
+        rotationInterval = null;
+        currentRotatingImages = [];
+        currentRotationIndex = -1;
+    }
+
     function setBackdrop(url) {
 
+        if (typeof url !== 'string') {
+            url = getImageUrls([url])[0];
+        }
+
         if (url) {
+            clearRotation();
+
             setBackdropImage(url);
 
         } else {
