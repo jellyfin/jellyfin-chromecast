@@ -50,7 +50,7 @@ body {
 
     #video-player::-webkit-media-text-track-display {
         /* Move them up to avoid them getting cut off at the bottom on some displays */
-        margin-top: -1.5em;
+        margin-top: -1.25em;
     }
 
 .hide {
