@@ -48,11 +48,6 @@ body {
     display: none;
 }
 
-    #video-player::-webkit-media-text-track-display {
-        /* Move them up to avoid them getting cut off at the bottom on some displays */
-        margin-top: -.5em;
-    }
-
 .hide {
     display: none !important;
 }
@@ -566,6 +561,9 @@ body {
 ::cue {
     background-color: transparent;
     text-shadow: 2px 2px 2px rgba(0, 0, 0, 1);
+    -webkit-font-smoothing: antialiased;
+    font-family: inherit;
+	font-size: 120%;
 }
 
 @-webkit-keyframes rotateSpinner {
