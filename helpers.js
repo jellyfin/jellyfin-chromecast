@@ -667,6 +667,24 @@ function getItemsForPlayback(serverAddress, accessToken, userId, query) {
 
     var url = getUrl(serverAddress, "Users/" + userId + "/Items");
 
+    if (query.Ids && query.Ids.split(',').length == 1) {
+
+        url += '/' + query.Ids.split(',')[0];
+        return fetchhelper.ajax({
+
+            url: url,
+            headers: getSecurityHeaders(accessToken, userId),
+            type: 'GET',
+            dataType: 'json'
+
+        }).then(function (item) {
+            return {
+                Items: [item],
+                TotalRecordCount: 1
+            };
+        });
+    }
+
     return fetchhelper.ajax({
 
         url: url,
@@ -775,6 +793,10 @@ function translateRequestedItems(serverAddress, accessToken, userId, items, smar
             }).then(function (result) {
 
                 var episode = result.Items[0];
+
+                if (!episode.SeriesId) {
+                    return result;
+                }
 
                 return getEpisodesForPlayback(serverAddress, accessToken, userId, episode.SeriesId, {
                     IsVirtualUnaired: false,
