@@ -667,8 +667,13 @@
 
     function getDeviceProfile(maxBitrate) {
 
+        var transcodingAudioChannels = document.createElement('video').canPlayType('audio/mp4; codecs="ac-3"').replace(/no/, '') ?
+            6 :
+            2;
+
         var profile = deviceProfileBuilder({
-            supportsCustomSeeking: true
+            supportsCustomSeeking: true,
+            audioChannels: transcodingAudioChannels
         });
 
         profile.MaxStreamingBitrate = maxBitrate;
