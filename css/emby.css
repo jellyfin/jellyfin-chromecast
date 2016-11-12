@@ -563,7 +563,7 @@ body {
     text-shadow: 2px 2px 2px rgba(0, 0, 0, 1);
     -webkit-font-smoothing: antialiased;
     font-family: inherit;
-	font-size: 125%;
+	font-size: 115%;
 }
 
 @-webkit-keyframes rotateSpinner {
