@@ -1,4 +1,5 @@
-﻿define(['dialogHelper', 'globalize', 'layoutManager', 'mediaInfo', 'apphost', 'connectionManager', 'require', 'loading', 'scrollHelper', 'imageLoader', 'datetime', 'scrollStyles', 'emby-button', 'emby-collapse', 'emby-input', 'emby-select', 'paper-icon-button-light', 'css!./../formdialog', 'css!./recordingcreator', 'material-icons'], function (dialogHelper, globalize, layoutManager, mediaInfo, appHost, connectionManager, require, loading, scrollHelper, imageLoader, datetime) {
+﻿define(['dialogHelper', 'globalize', 'layoutManager', 'mediaInfo', 'apphost', 'connectionManager', 'require', 'loading', 'scrollHelper', 'imageLoader', 'datetime', 'scrollStyles', 'emby-button', 'emby-checkbox', 'emby-input', 'emby-select', 'paper-icon-button-light', 'css!./../formdialog', 'css!./recordingcreator', 'material-icons'], function (dialogHelper, globalize, layoutManager, mediaInfo, appHost, connectionManager, require, loading, scrollHelper, imageLoader, datetime) {
+    'use strict';
 
     var currentDialog;
     var recordingUpdated = false;
@@ -10,30 +11,9 @@
 
         return new Promise(function (resolve, reject) {
 
-            require(['confirm'], function (confirm) {
+            require(['recordingHelper'], function (recordingHelper) {
 
-                confirm({
-
-                    title: globalize.translate('sharedcomponents#HeaderConfirmRecordingCancellation'),
-                    text: globalize.translate('sharedcomponents#MessageConfirmRecordingCancellation'),
-                    confirmText: globalize.translate('sharedcomponents#HeaderCancelRecording'),
-                    cancelText: globalize.translate('sharedcomponents#HeaderKeepRecording'),
-                    primary: 'cancel'
-
-                }).then(function () {
-
-                    loading.show();
-
-                    apiClient.cancelLiveSeriesTvTimer(timerId).then(function () {
-
-                        require(['toast'], function (toast) {
-                            toast(globalize.translate('sharedcomponents#RecordingCancelled'));
-                        });
-
-                        loading.hide();
-                        resolve();
-                    });
-                });
+                recordingHelper.cancelSeriesTimerWithConfirmation(timerId, apiClient.serverId()).then(resolve, reject);
             });
         });
     }
@@ -48,10 +28,14 @@
         context.querySelector('.selectChannels').value = item.RecordAnyChannel ? 'all' : 'one';
         context.querySelector('.selectAirTime').value = item.RecordAnyTime ? 'any' : 'original';
 
+        context.querySelector('.selectShowType').value = item.RecordNewOnly ? 'new' : 'all';
+        context.querySelector('.chkSkipEpisodesInLibrary').checked = item.SkipEpisodesInLibrary;
+        context.querySelector('.selectKeepUpTo').value = item.KeepUpTo || 0;
+
         if (item.ChannelName || item.ChannelNumber) {
             context.querySelector('.optionChannelOnly').innerHTML = globalize.translate('sharedcomponents#ChannelNameOnly', item.ChannelName || item.ChannelNumber);
         } else {
-            context.querySelector('.optionChannelOnly').innerHTML = globalize.translate('sharedcomponents#AllChannels');
+            context.querySelector('.optionChannelOnly').innerHTML = globalize.translate('sharedcomponents#OneChannel');
         }
 
         context.querySelector('.optionAroundTime').innerHTML = globalize.translate('sharedcomponents#AroundTime', datetime.getDisplayTime(datetime.parseISO8601Date(item.StartDate)));
@@ -77,8 +61,11 @@
 
             item.PrePaddingSeconds = form.querySelector('#txtPrePaddingMinutes').value * 60;
             item.PostPaddingSeconds = form.querySelector('#txtPostPaddingMinutes').value * 60;
-            item.RecordAnyChannel = form.querySelector('.selectChannels').value == 'all';
-            item.RecordAnyTime = form.querySelector('.selectAirTime').value == 'any';
+            item.RecordAnyChannel = form.querySelector('.selectChannels').value === 'all';
+            item.RecordAnyTime = form.querySelector('.selectAirTime').value === 'any';
+            item.RecordNewOnly = form.querySelector('.selectShowType').value === 'new';
+            item.SkipEpisodesInLibrary = form.querySelector('.chkSkipEpisodesInLibrary').checked;
+            item.KeepUpTo = form.querySelector('.selectKeepUpTo').value;
 
             apiClient.updateLiveTvSeriesTimer(item);
         });
@@ -90,6 +77,8 @@
     }
 
     function init(context) {
+
+        fillKeepUpTo(context);
 
         context.querySelector('.btnCancel').addEventListener('click', function () {
 
@@ -117,6 +106,72 @@
 
             renderTimer(context, result, apiClient);
             loading.hide();
+        });
+    }
+
+    function fillKeepUpTo(context) {
+
+        var html = '';
+
+        for (var i = 0; i <= 50; i++) {
+
+            var text;
+
+            if (i === 0) {
+                text = globalize.translate('sharedcomponents#AsManyAsPossible');
+            } else if (i === 1) {
+                text = globalize.translate('sharedcomponents#ValueOneEpisode');
+            } else {
+                text = globalize.translate('sharedcomponents#ValueEpisodeCount', i);
+            }
+
+            html += '<option value="' + i + '">' + text + '</option>';
+        }
+
+        context.querySelector('.selectKeepUpTo').innerHTML = html;
+    }
+
+    function embed(itemId, serverId, options) {
+
+        recordingUpdated = false;
+        recordingDeleted = false;
+        currentServerId = serverId;
+        loading.show();
+        options = options || {};
+
+        require(['text!./seriesrecordingeditor.template.html'], function (template) {
+
+            var dialogOptions = {
+                removeOnClose: true,
+                scrollY: false
+            };
+
+            if (layoutManager.tv) {
+                dialogOptions.size = 'fullscreen';
+            } else {
+                dialogOptions.size = 'small';
+            }
+
+            var dlg = options.context;
+
+            dlg.classList.add('hide');
+            dlg.innerHTML = globalize.translateDocument(template, 'sharedcomponents');
+
+            dlg.querySelector('.formDialogHeader').classList.add('hide');
+            dlg.querySelector('.formDialogFooter').classList.add('hide');
+            dlg.querySelector('.formDialogContent').className = '';
+            dlg.querySelector('.dialogContentInner').className = '';
+            dlg.classList.remove('hide');
+
+            dlg.addEventListener('change', function () {
+                dlg.querySelector('.btnSubmit').click();
+            });
+
+            currentDialog = dlg;
+
+            init(dlg);
+
+            reload(dlg, itemId);
         });
     }
 
@@ -164,7 +219,7 @@
 
                 currentDialog = dlg;
 
-                dlg.addEventListener('close', function () {
+                dlg.addEventListener('closing', function () {
 
                     if (!recordingDeleted) {
                         this.querySelector('.btnSubmit').click();
@@ -197,6 +252,7 @@
     }
 
     return {
-        show: showEditor
+        show: showEditor,
+        embed: embed
     };
 });

@@ -1,4 +1,5 @@
 define(['dialogHelper', 'dom', 'layoutManager', 'scrollHelper', 'globalize', 'require', 'material-icons', 'emby-button', 'paper-icon-button-light', 'emby-input', 'formDialogStyle'], function (dialogHelper, dom, layoutManager, scrollHelper, globalize, require) {
+    'use strict';
 
     function showDialog(options, template) {
 
@@ -11,8 +12,6 @@ define(['dialogHelper', 'dom', 'layoutManager', 'scrollHelper', 'globalize', 're
 
         if (enableTvLayout) {
             dialogOptions.size = 'fullscreen';
-        } else {
-            //dialogOptions.size = 'mini';
         }
 
         var dlg = dialogHelper.createDialog(dialogOptions);
@@ -21,16 +20,18 @@ define(['dialogHelper', 'dom', 'layoutManager', 'scrollHelper', 'globalize', 're
 
         dlg.innerHTML = globalize.translateHtml(template, 'sharedcomponents');
 
+        dlg.style['align-items'] = 'center';
+        dlg.style['justify-content'] = 'center';
+        var formDialogContent = dlg.querySelector('.formDialogContent');
+        formDialogContent.style['flex-grow'] = 'initial';
+
         if (enableTvLayout) {
-            dlg.style['align-items'] = 'center';
-            dlg.style['justify-content'] = 'center';
-            var formDialogContent = dlg.querySelector('.formDialogContent');
-            formDialogContent.style['flex-grow'] = 'initial';
             formDialogContent.style['max-width'] = '50%';
             formDialogContent.style['max-height'] = '60%';
             scrollHelper.centerFocus.on(formDialogContent, false);
         } else {
-            dlg.style.maxWidth = (Math.min((options.buttons.length * 150) + 200, dom.getWindowSize().innerWidth - 50)) + 'px';
+            formDialogContent.style.maxWidth = (Math.min((options.buttons.length * 150) + 200, dom.getWindowSize().innerWidth - 50)) + 'px';
+            dlg.classList.add('dialog-fullscreen-lowres');
         }
 
         //dlg.querySelector('.btnCancel').addEventListener('click', function (e) {
@@ -50,7 +51,7 @@ define(['dialogHelper', 'dom', 'layoutManager', 'scrollHelper', 'globalize', 're
         for (i = 0, length = options.buttons.length; i < length; i++) {
 
             var item = options.buttons[i];
-            var autoFocus = i == 0 ? ' autofocus' : '';
+            var autoFocus = i === 0 ? ' autofocus' : '';
 
             var buttonClass = 'btnOption raised formDialogFooterItem formDialogFooterItem-autosize';
 

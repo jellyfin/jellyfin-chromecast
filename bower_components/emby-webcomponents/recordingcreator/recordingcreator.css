@@ -5,6 +5,7 @@
 .recordingDialog-imageContainer {
     flex-shrink: 0;
     padding: 1em 1em 1em 0;
+    min-width: 17%;
     max-width: 25%;
 }
 
@@ -13,16 +14,9 @@
 }
 
 .recordingDialog-itemName {
-    margin-top: .5em;
+    margin-top: .7em;
 }
 
 .recordingDialog-btnRecord {
     background-color: #cc3333;
-}
-
-@media all and (max-width: 800px) {
-
-    .programDialog-itemName {
-        display: none;
-    }
 }

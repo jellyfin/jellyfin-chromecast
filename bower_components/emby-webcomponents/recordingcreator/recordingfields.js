@@ -1,4 +1,5 @@
-﻿define(['globalize', 'connectionManager', 'require', 'loading', 'apphost', 'recordingHelper', 'paper-icon-button-light', 'emby-button'], function (globalize, connectionManager, require, loading, appHost, recordingHelper) {
+﻿define(['globalize', 'connectionManager', 'require', 'loading', 'apphost', 'dom', 'recordingHelper', 'events', 'registrationServices', 'paper-icon-button-light', 'emby-button'], function (globalize, connectionManager, require, loading, appHost, dom, recordingHelper, events, registrationServices) {
+    'use strict';
 
     function getRegistration(apiClient, programId, feature) {
 
@@ -45,23 +46,29 @@
     function showSeriesRecordingFields(context, programId, apiClient) {
 
         getRegistration(apiClient, programId, 'seriesrecordings').then(function (regInfo) {
-
             if (regInfo.IsRegistered) {
                 context.querySelector('.supporterContainer').classList.add('hide');
                 context.querySelector('.convertRecordingsContainer').classList.add('hide');
+                context.querySelector('.recordSeriesContainer').classList.remove('hide');
 
             } else {
 
                 context.querySelector('.supporterContainerText').innerHTML = globalize.translate('sharedcomponents#MessageActiveSubscriptionRequiredSeriesRecordings');
                 context.querySelector('.supporterContainer').classList.remove('hide');
+                context.querySelector('.recordSeriesContainer').classList.add('hide');
                 context.querySelector('.convertRecordingsContainer').classList.add('hide');
             }
         });
     }
 
+    function getDvrFeatureCode() {
+
+        return appHost.dvrFeatureCode || 'dvr';
+    }
+
     function showSingleRecordingFields(context, programId, apiClient) {
 
-        getRegistration(apiClient, programId, 'dvr').then(function (regInfo) {
+        getRegistration(apiClient, programId, getDvrFeatureCode()).then(function (regInfo) {
 
             if (regInfo.IsRegistered) {
                 context.querySelector('.supporterContainer').classList.add('hide');
@@ -77,7 +84,7 @@
 
     function showRecordingFieldsContainer(context, programId, apiClient) {
 
-        getRegistration(apiClient, programId, 'dvr').then(function (regInfo) {
+        getRegistration(apiClient, programId, getDvrFeatureCode()).then(function (regInfo) {
 
             if (regInfo.IsRegistered) {
                 context.querySelector('.recordingFields').classList.remove('hide');
@@ -92,13 +99,9 @@
 
         if (program.IsSeries) {
             parent.querySelector('.recordSeriesContainer').classList.remove('hide');
-        } else {
-            parent.querySelector('.recordSeriesContainer').classList.add('hide');
-        }
-
-        if (program.SeriesTimerId != null) {
             showSeriesRecordingFields(parent, program.Id, apiClient);
         } else {
+            parent.querySelector('.recordSeriesContainer').classList.add('hide');
             showSingleRecordingFields(parent, program.Id, apiClient);
         }
 
@@ -112,7 +115,7 @@
             parent.querySelector('.seriesRecordingButton .buttonText').innerHTML = globalize.translate('sharedcomponents#RecordSeries');
         }
 
-        if (program.TimerId) {
+        if (program.TimerId && program.Status !== 'Cancelled') {
             parent.querySelector('.btnManageRecording').classList.remove('visibilityHide');
             parent.querySelector('.singleRecordingButton .recordingIcon').classList.add('recordingIcon-active');
             parent.querySelector('.singleRecordingButton .buttonText').innerHTML = globalize.translate('sharedcomponents#DoNotRecord');
@@ -133,30 +136,27 @@
         return apiClient.getLiveTvProgram(options.programId, apiClient.getCurrentUserId()).then(function (program) {
 
             instance.TimerId = program.TimerId;
+            instance.Status = program.Status;
             instance.SeriesTimerId = program.SeriesTimerId;
 
             loadData(options.parent, program, apiClient);
         });
     }
 
-    function recordingEditor(options) {
+    function RecordingEditor(options) {
         this.options = options;
         this.embed();
     }
 
     function onSupporterButtonClick() {
-        if (appHost.supports('externalpremium')) {
-            shell.openUrl('https://emby.media/premiere');
-        } else {
-
-        }
+        registrationServices.showPremiereInfo();
     }
 
     function onManageRecordingClick(e) {
 
         var options = this.options;
 
-        if (!this.TimerId) {
+        if (!this.TimerId || this.Status === 'Cancelled') {
             return;
         }
 
@@ -204,21 +204,36 @@
         var options = this.options;
         var apiClient = connectionManager.getApiClient(options.serverId);
 
-        var isChecked = !e.target.querySelector('i').classList.contains('recordingIcon-active');
+        var button = dom.parentWithTag(e.target, 'BUTTON');
+        var isChecked = !button.querySelector('i').classList.contains('recordingIcon-active');
+
+        var hasEnabledTimer = this.TimerId && this.Status !== 'Cancelled';
 
         if (isChecked) {
-            if (!this.TimerId && !this.SeriesTimerId) {
+            if (!hasEnabledTimer) {
+                loading.show();
                 recordingHelper.createRecording(apiClient, options.programId, false).then(function () {
+                    events.trigger(self, 'recordingchanged');
                     fetchData(self);
+                    loading.hide();
                 });
             }
         } else {
-            if (this.TimerId) {
+            if (hasEnabledTimer) {
+                loading.show();
                 recordingHelper.cancelTimer(apiClient, this.TimerId, true).then(function () {
+                    events.trigger(self, 'recordingchanged');
                     fetchData(self);
+                    loading.hide();
                 });
             }
         }
+    }
+
+    function sendToast(msg) {
+        require(['toast'], function (toast) {
+            toast(msg);
+        });
     }
 
     function onRecordSeriesChange(e) {
@@ -229,7 +244,8 @@
         var options = this.options;
         var apiClient = connectionManager.getApiClient(options.serverId);
 
-        var isChecked = !e.target.querySelector('i').classList.contains('recordingIcon-active');
+        var button = dom.parentWithTag(e.target, 'BUTTON');
+        var isChecked = !button.querySelector('i').classList.contains('recordingIcon-active');
 
         if (isChecked) {
             showSeriesRecordingFields(options.parent, options.programId, apiClient);
@@ -250,13 +266,14 @@
 
             if (this.SeriesTimerId) {
                 apiClient.cancelLiveTvSeriesTimer(this.SeriesTimerId).then(function () {
+                    sendToast(globalize.translate('sharedcomponents#RecordingCancelled'));
                     fetchData(self);
                 });
             }
         }
     }
 
-    recordingEditor.prototype.embed = function () {
+    RecordingEditor.prototype.embed = function () {
 
         var self = this;
 
@@ -270,11 +287,6 @@
 
                 var supporterButtons = context.querySelectorAll('.btnSupporter');
                 for (var i = 0, length = supporterButtons.length; i < length; i++) {
-                    if (appHost.supports('externalpremium')) {
-                        supporterButtons[i].classList.remove('hide');
-                    } else {
-                        supporterButtons[i].classList.add('hide');
-                    }
                     supporterButtons[i].addEventListener('click', onSupporterButtonClick);
                 }
 
@@ -288,10 +300,19 @@
         });
     };
 
-    recordingEditor.prototype.hasChanged = function () {
+    RecordingEditor.prototype.hasChanged = function () {
 
         return this.changed;
     };
 
-    return recordingEditor;
+    RecordingEditor.prototype.refresh = function () {
+
+        fetchData(this);
+    };
+
+    RecordingEditor.prototype.destroy = function () {
+
+    };
+
+    return RecordingEditor;
 });
