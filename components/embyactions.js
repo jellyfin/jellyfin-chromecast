@@ -243,7 +243,7 @@
 
                 // Although we're limiting to what the user has access to,
                 // not everyone will want to see adult backdrops rotating on their TV.
-                MaxOfficialRating: 'R',
+                MaxOfficialRating: 'PG-13',
 
                 Limit: 1
             }
