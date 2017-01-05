@@ -47,7 +47,16 @@
             return;
         }
 
-        embyActions.reportPlaybackProgress($scope, getReportingParams($scope));
+        reportEvent('playstatechange', true);
+    }
+
+    function onMediaElementPlaying() {
+
+        if ($scope.isChangingStream) {
+            return;
+        }
+
+        reportEvent('playstatechange', true);
     }
 
     function onMediaElementVolumeChange() {
@@ -64,10 +73,12 @@
             window.mediaElement.addEventListener('timeupdate', onMediaElementTimeUpdate);
             window.mediaElement.addEventListener('volumechange', onMediaElementVolumeChange);
             window.mediaElement.addEventListener('pause', onMediaElementPause);
+            window.mediaElement.addEventListener('playing', onMediaElementPlaying);
         } else {
             window.mediaElement.removeEventListener('timeupdate', onMediaElementTimeUpdate);
             window.mediaElement.removeEventListener('volumechange', onMediaElementVolumeChange);
             window.mediaElement.removeEventListener('pause', onMediaElementPause);
+            window.mediaElement.removeEventListener('playing', onMediaElementPlaying);
         }
     }
 
@@ -282,12 +293,10 @@
             } else {
                 window.mediaElement.pause();
             }
-            reportEventType = 'playstatechange';
         }
         else if (data.command == 'Pause') {
 
             window.mediaElement.pause();
-            reportEventType = 'playstatechange';
         }
         else if (data.command == 'SetRepeatMode') {
 
@@ -297,7 +306,6 @@
         else if (data.command == 'Unpause') {
 
             window.mediaElement.play();
-            reportEventType = 'playstatechange';
         }
         else {
 
