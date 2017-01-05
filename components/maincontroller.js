@@ -271,6 +271,7 @@
 
             // TODO
             window.mediaElement.volume = 0;
+            reportEventType = 'volumechange';
         }
         else if (data.command == 'Stop') {
 
@@ -293,7 +294,7 @@
         else if (data.command == 'SetRepeatMode') {
 
             window.repeatMode = data.options.RepeatMode;
-
+            reportEventType = 'repeatmodechange';
         }
         else if (data.command == 'Unpause') {
 
