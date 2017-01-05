@@ -55,6 +55,8 @@
         var volume = window.mediaElement.volume;
         window.VolumeInfo.Level = volume * 100;
         window.VolumeInfo.IsMuted = volume == 0;
+
+        reportEvent('volumechange', true);
     }
 
     function enableTimeUpdateListener(enabled) {
@@ -150,6 +152,8 @@
 
         window.VolumeInfo.Level = (event.data['level'] || 1) * 100;
         window.VolumeInfo.IsMuted = event.data['muted'] || false;
+
+        reportEvent('volumechange', true);
     }
 
     console.log('Application is ready, starting system');
@@ -238,18 +242,15 @@
         else if (data.command == 'VolumeUp') {
 
             window.mediaElement.volume = Math.min(1, window.mediaElement.volume + .2);
-            reportEventType = 'volumechange';
         }
         else if (data.command == 'VolumeDown') {
 
             // TODO
             window.mediaElement.volume = Math.max(0, window.mediaElement.volume - .2);
-            reportEventType = 'volumechange';
         }
         else if (data.command == 'ToggleMute') {
 
-            // TODO
-            reportEventType = 'volumechange';
+            window.mediaElement.muted = !window.mediaElement.muted;
 
         }
         else if (data.command == 'Identify') {
@@ -262,16 +263,13 @@
 
             // Scale 0-100
             window.mediaElement.volume = data.options.volume / 100;
-            reportEventType = 'volumechange';
         }
         else if (data.command == 'Seek') {
             seek(data.options.position * 10000000);
         }
         else if (data.command == 'Mute') {
 
-            // TODO
-            window.mediaElement.volume = 0;
-            reportEventType = 'volumechange';
+            window.mediaElement.muted = true;
         }
         else if (data.command == 'Stop') {
 
@@ -315,6 +313,10 @@
             setTimeout(report, 100);
             setTimeout(report, 500);
         }
+    }
+
+    function reportEvent(name, reportToServer) {
+        embyActions.reportPlaybackProgress($scope, getReportingParams($scope), reportToServer, name);
     }
 
     function setSubtitleStreamIndex($scope, index, serverAddress) {
