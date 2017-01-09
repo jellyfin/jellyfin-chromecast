@@ -73,6 +73,7 @@ function getSenderReportingData($scope, reportingData) {
 
         var nowPlayingItem = state.NowPlayingItem;
 
+        nowPlayingItem.ServerId = item.ServerId;
         nowPlayingItem.Chapters = item.Chapters || [];
 
         // TODO: Fill these
