@@ -282,6 +282,10 @@
 
             window.mediaElement.muted = true;
         }
+        else if (data.command == 'Unmute') {
+
+            window.mediaElement.muted = false;
+        }
         else if (data.command == 'Stop') {
 
             stop();
