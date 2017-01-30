@@ -590,42 +590,17 @@
     // Plays the next item in the list
     function playNextItem(options, stopPlayer) {
 
-        var playlist = window.playlist;
+        var nextItemInfo = getNextPlaybackItemInfo();
 
-        if (!playlist) {
-            return false;
-        }
+        if (nextItemInfo) {
+            window.currentPlaylistIndex = nextItemInfo.index;
 
-        var newIndex;
-
-        if (window.currentPlaylistIndex == -1) {
-            newIndex = 0;
-        } else {
-            switch (window.repeatMode) {
-
-                case 'RepeatOne':
-                    newIndex = window.currentPlaylistIndex;
-                    break;
-                case 'RepeatAll':
-                    newIndex = window.currentPlaylistIndex + 1;
-                    if (newIndex >= window.playlist.length) {
-                        newIndex = 0;
-                    }
-                    break;
-                default:
-                    newIndex = window.currentPlaylistIndex + 1;
-                    break;
-            }
-        }
-
-        if (newIndex < playlist.length) {
-            window.currentPlaylistIndex = newIndex;
-
-            var item = playlist[newIndex];
+            var item = nextItemInfo.item;
 
             playItem(item, options || {}, stopPlayer);
             return true;
         }
+
         return false;
     }
 

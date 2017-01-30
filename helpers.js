@@ -47,6 +47,48 @@ function getReportingParams($scope) {
     };
 }
 
+function getNextPlaybackItemInfo() {
+
+    var playlist = window.playlist;
+
+    if (!playlist) {
+        return null;
+    }
+
+    var newIndex;
+
+    if (window.currentPlaylistIndex == -1) {
+        newIndex = 0;
+    } else {
+        switch (window.repeatMode) {
+
+            case 'RepeatOne':
+                newIndex = window.currentPlaylistIndex;
+                break;
+            case 'RepeatAll':
+                newIndex = window.currentPlaylistIndex + 1;
+                if (newIndex >= window.playlist.length) {
+                    newIndex = 0;
+                }
+                break;
+            default:
+                newIndex = window.currentPlaylistIndex + 1;
+                break;
+        }
+    }
+
+    if (newIndex < playlist.length) {
+
+        var item = playlist[newIndex];
+
+        return {
+            item: item,
+            index: newIndex
+        };
+    }
+    return null;
+}
+
 function getSenderReportingData($scope, reportingData) {
 
     var state = {
@@ -123,7 +165,7 @@ function getSenderReportingData($scope, reportingData) {
 
             nowPlayingItem.BackdropItemId = item.Id;
             nowPlayingItem.BackdropImageTag = item.BackdropImageTags[0];
-        } 
+        }
         else if (item.ParentBackdropImageTags && item.ParentBackdropImageTags.length) {
 
             nowPlayingItem.BackdropItemId = item.ParentBackdropItemId;
@@ -145,6 +187,12 @@ function getSenderReportingData($scope, reportingData) {
 
             nowPlayingItem.LogoItemId = item.ParentLogoItemId;
             nowPlayingItem.LogoImageTag = item.ParentLogoImageTag;
+        }
+
+        var nextItemInfo = getNextPlaybackItemInfo();
+
+        if (nextItemInfo) {
+            state.NextMediaType = nextItemInfo.item.MediaType;
         }
     }
 
