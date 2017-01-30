@@ -380,7 +380,7 @@ define(['browser'], function (browser) {
             });
         }
 
-        ['opus', 'mp3', 'aac', 'wav'].filter(canPlayAudioFormat).forEach(function (audioFormat) {
+        ['mp3', 'aac', 'opus', 'wav'].filter(canPlayAudioFormat).forEach(function (audioFormat) {
 
             profile.TranscodingProfiles.push({
                 Container: audioFormat,
