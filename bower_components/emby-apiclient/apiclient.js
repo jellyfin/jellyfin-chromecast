@@ -22,6 +22,27 @@
         var self = this;
         var webSocket;
         var serverInfo = {};
+        var lastDetectedBitrate;
+        var lastDetectedBitrateTime;
+
+        var detectTimeout;
+        function redetectBitrate() {
+            stopBitrateDetection();
+
+            if (self.accessToken() && self.enableAutomaticBitrateDetection !== false) {
+                setTimeout(redetectBitrateInternal, 6000);
+            }
+        }
+
+        function redetectBitrateInternal() {
+            self.detectBitrate();
+        }
+
+        function stopBitrateDetection() {
+            if (detectTimeout) {
+                clearTimeout(detectTimeout);
+            }
+        }
 
         /**
          * Gets the server address.
@@ -38,9 +59,14 @@
 
                 serverAddress = val;
 
+                lastDetectedBitrate = 0;
+                lastDetectedBitrateTime = 0;
+
                 if (changed) {
                     events.trigger(this, 'serveraddresschanged');
                 }
+
+                redetectBitrate();
             }
 
             return serverAddress;
@@ -128,6 +154,7 @@
 
             serverInfo.AccessToken = accessKey;
             serverInfo.UserId = userId;
+            redetectBitrate();
         };
 
         self.encodeName = function (name) {
@@ -239,7 +266,7 @@
                     resolve(response);
                 }, function (error) {
                     clearTimeout(timeout);
-                    reject();
+                    reject(error);
                 });
             });
         }
@@ -421,11 +448,14 @@
 
             }, function (error) {
 
-                console.log("Request failed to " + request.url);
+                if (error) {
+                    console.log("Request failed to " + request.url + ' ' + error.toString());
+                } else {
+                    console.log("Request timed out to " + request.url + ' ' + error.toString());
+                }
 
-                // http://api.jquery.com/jQuery.ajax/
-                if (enableReconnection) {
-
+                // http://api.jquery.com/jQuery.ajax/		     
+                if (!error && enableReconnection) {
                     console.log("Attempting reconnection");
 
                     var previousServerAddress = self.serverAddress();
@@ -559,7 +589,8 @@
             var url = self.getUrl("socket");
 
             url = replaceAll(url, 'emby/socket', 'embywebsocket');
-            url = replaceAll(url, 'http', 'ws');
+            url = replaceAll(url, 'https:', 'wss:');
+            url = replaceAll(url, 'http:', 'ws:');
 
             url += "?api_key=" + accessToken;
             url += "&deviceId=" + deviceId;
@@ -669,23 +700,67 @@
             });
         };
 
-        self.detectBitrate = function () {
+        function normalizeReturnBitrate(bitrate) {
 
-            // First try a small amount so that we don't hang up their mobile connection
-            return self.getDownloadSpeed(1000000).then(function (bitrate) {
+            if (!bitrate) {
 
-                if (bitrate < 1000000) {
-                    return Math.round(bitrate * 0.8);
-                } else {
-
-                    // If that produced a fairly high speed, try again with a larger size to get a more accurate result
-                    return self.getDownloadSpeed(2400000).then(function (bitrate) {
-
-                        return Math.round(bitrate * 0.8);
-                    });
+                if (lastDetectedBitrate) {
+                    return lastDetectedBitrate;
                 }
 
+                return Promise.reject();
+            }
+
+            var result = Math.round(bitrate * 0.8);
+
+            lastDetectedBitrate = result;
+            lastDetectedBitrateTime = new Date().getTime();
+
+            return result;
+        }
+
+        function detectBitrateInternal(tests, index, currentBitrate) {
+
+            if (index >= tests.length) {
+
+                return normalizeReturnBitrate(currentBitrate);
+            }
+
+            var test = tests[index];
+
+            return self.getDownloadSpeed(test.bytes).then(function (bitrate) {
+
+                if (bitrate < test.threshold) {
+
+                    return normalizeReturnBitrate(bitrate);
+                } else {
+                    return detectBitrateInternal(tests, index + 1, bitrate);
+                }
+
+            }, function () {
+                return normalizeReturnBitrate(currentBitrate);
             });
+        }
+
+        self.detectBitrate = function (force) {
+
+            if (!force && lastDetectedBitrate && (new Date().getTime() - (lastDetectedBitrateTime || 0)) <= 3600000) {
+                return Promise.resolve(lastDetectedBitrate);
+            }
+
+            return detectBitrateInternal([
+            {
+                bytes: 100000,
+                threshold: 5000000
+            },
+            {
+                bytes: 1000000,
+                threshold: 50000000
+            },
+            {
+                bytes: 3000000,
+                threshold: 50000000
+            }], 0);
         };
 
         /**
@@ -768,6 +843,7 @@
 
         self.logout = function () {
 
+            stopBitrateDetection();
             self.closeWebSocket();
 
             var done = function () {
@@ -1330,6 +1406,26 @@
             var url = self.getUrl("Plugins/SecurityInfo");
 
             return self.getJSON(url);
+        };
+
+        self.getPlaybackInfo = function(itemId, options, deviceProfile) {
+
+            var postData = {
+                DeviceProfile: deviceProfile
+            };
+
+            return self.ajax({
+                url: self.getUrl('Items/' + itemId + '/PlaybackInfo', options),
+                type: 'POST',
+                data: JSON.stringify(postData),
+                contentType: "application/json",
+                dataType: "json"
+            });
+        };
+
+        self.getIntros = function(itemId) {
+
+            return self.getJSON(self.getUrl('Users/' + self.getCurrentUserId() + '/Items/' + itemId + '/Intros'));
         };
 
         /**
@@ -2047,6 +2143,19 @@
             return self.getJSON(url);
         };
 
+        self.getItemDownloadUrl = function (itemId) {
+
+            if (!itemId) {
+                throw new Error("itemId cannot be empty");
+            }
+
+            var url = "Items/" + itemId + "/Download";
+
+            return self.getUrl(url, {
+                api_key: self.accessToken()
+            });
+        };
+
         self.getSessions = function (options) {
 
             var url = self.getUrl("Sessions", options);
@@ -2542,9 +2651,10 @@
 
                 var url = self.getUrl("Users/authenticatebyname");
 
-                require(["cryptojs-sha1"], function () {
+                require(["cryptojs-sha1", "cryptojs-md5"], function () {
                     var postData = {
-                        password: CryptoJS.SHA1(password || "").toString(),
+                        Password: CryptoJS.SHA1(password || "").toString(),
+                        PasswordMd5: CryptoJS.MD5(password || "").toString(),
                         Username: name
                     };
 
@@ -2560,6 +2670,8 @@
                         if (self.onAuthenticated) {
                             self.onAuthenticated(self, result);
                         }
+
+                        redetectBitrate();
 
                         resolve(result);
 
@@ -3311,6 +3423,8 @@
                 throw new Error("null options");
             }
 
+            stopBitrateDetection();
+
             var url = self.getUrl("Sessions/Playing");
 
             return self.ajax({
@@ -3438,6 +3552,8 @@
             if (!options) {
                 throw new Error("null options");
             }
+
+            redetectBitrate();
 
             var url = self.getUrl("Sessions/Playing/Stopped");
 
