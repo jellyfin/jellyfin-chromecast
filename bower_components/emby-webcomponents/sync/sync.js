@@ -1,9 +1,9 @@
-﻿define(['apphost', 'globalize', 'connectionManager', 'layoutManager', 'shell', 'focusManager', 'scrollHelper', 'appSettings', 'paper-icon-button-light', 'formDialogStyle'], function (appHost, globalize, connectionManager, layoutManager, shell, focusManager, scrollHelper, appSettings) {
+﻿define(['apphost', 'globalize', 'connectionManager', 'layoutManager', 'shell', 'focusManager', 'scrollHelper', 'appSettings', 'registrationServices', 'dialogHelper', 'paper-icon-button-light', 'formDialogStyle'], function (appHost, globalize, connectionManager, layoutManager, shell, focusManager, scrollHelper, appSettings, registrationServices, dialogHelper) {
     'use strict';
 
     var currentDialogOptions;
 
-    function submitJob(dlg, apiClient, userId, syncOptions, form, dialogHelper) {
+    function submitJob(dlg, apiClient, userId, syncOptions, form) {
 
         if (!userId) {
             throw new Error('userId cannot be null');
@@ -135,6 +135,8 @@
         var selectQuality = form.querySelector('#selectQuality');
         if (selectQuality) {
             job.Quality = selectQuality.value;
+
+            appSettings.set('sync-lastquality', job.Quality || '');
         }
 
         var selectProfile = form.querySelector('#selectProfile');
@@ -227,7 +229,7 @@
         html += '</div>';
 
         html += '<div class="fldQuality selectContainer hide">';
-        html += '<select is="emby-select" id="selectQuality" data-mini="true" required="required" label="' + globalize.translate('sharedcomponents#LabelQuality') + '">';
+        html += '<select is="emby-select" id="selectQuality" required="required" label="' + globalize.translate('sharedcomponents#LabelQuality') + '">';
         html += '</select>';
         html += '<div class="fieldDescription qualityDescription"></div>';
         html += '</div>';
@@ -311,15 +313,8 @@
 
     function showSyncMenu(options) {
 
-        return new Promise(function (resolve, reject) {
-
-            require(["registrationServices", 'dialogHelper', 'formDialogStyle'], function (registrationServices, dialogHelper) {
-                registrationServices.validateFeature('sync').then(function () {
-
-                    showSyncMenuInternal(dialogHelper, options).then(resolve, reject);
-
-                }, reject);
-            });
+        return registrationServices.validateFeature('sync').then(function () {
+            return showSyncMenuInternal(options);
         });
     }
 
@@ -343,11 +338,14 @@
         if (firstItem.Type === 'MusicGenre') {
             return true;
         }
+        if (firstItem.Type === 'Playlist' && firstItem.MediaType === 'Audio') {
+            return true;
+        }
 
         return false;
     }
 
-    function showSyncMenuInternal(dialogHelper, options) {
+    function showSyncMenuInternal(options) {
 
         var apiClient = connectionManager.getApiClient(options.serverId);
         var userId = apiClient.getCurrentUserId();
@@ -426,7 +424,7 @@
 
             dlg.querySelector('form').addEventListener('submit', function (e) {
 
-                submitted = submitJob(dlg, apiClient, userId, options, this, dialogHelper);
+                submitted = submitJob(dlg, apiClient, userId, options, this);
 
                 e.preventDefault();
                 return false;
@@ -450,6 +448,10 @@
             });
 
             return promise.then(function () {
+                if (layoutManager.tv) {
+                    scrollHelper.centerFocus.off(dlg.querySelector('.formDialogContent'), false);
+                }
+
                 if (submitted) {
                     return Promise.resolve();
                 }
@@ -477,7 +479,10 @@
                 fldQuality.classList.remove('hide');
             }
             if (selectQuality) {
-                selectQuality.setAttribute('required', 'required');
+                //selectQuality.setAttribute('required', 'required');
+
+                // This is a hack due to what appears to be a edge bug but it shoudln't matter as the list always has selectable items
+                selectQuality.removeAttribute('required');
             }
         } else {
             if (fldQuality) {
@@ -589,6 +594,15 @@
                 return '<option value="' + o.Id + '"' + selectedAttribute + '>' + o.Name + '</option>';
 
             }).join('');
+
+            var lastQuality = appSettings.get('sync-lastquality');
+            if (lastQuality && options.QualityOptions.filter(function (i) {
+
+                return i.Id === lastQuality;
+
+            }).length) {
+                selectQuality.value = lastQuality;
+            }
 
             selectQuality.dispatchEvent(new CustomEvent('change', {
                 bubbles: true

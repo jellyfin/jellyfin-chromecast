@@ -1,4 +1,4 @@
-define(['loading', 'dom', 'viewManager', 'skinManager', 'pluginManager', 'backdrop', 'browser', 'pageJs', 'appSettings', 'apphost'], function (loading, dom, viewManager, skinManager, pluginManager, backdrop, browser, page, appSettings, appHost) {
+define(['loading', 'viewManager', 'skinManager', 'pluginManager', 'backdrop', 'browser', 'pageJs', 'appSettings', 'apphost'], function (loading, viewManager, skinManager, pluginManager, backdrop, browser, page, appSettings, appHost) {
     'use strict';
 
     var embyRouter = {
@@ -178,6 +178,7 @@ define(['loading', 'dom', 'viewManager', 'skinManager', 'pluginManager', 'backdr
             isBack: isBackNav,
             state: ctx.state,
             type: route.type,
+            fullscreen: route.fullscreen,
             controllerFactory: controllerFactory,
             options: {
                 supportsThemeMedia: route.supportsThemeMedia || false
@@ -471,6 +472,10 @@ define(['loading', 'dom', 'viewManager', 'skinManager', 'pluginManager', 'backdr
     }
     function show(path, options) {
 
+        if (path.indexOf('/') !== 0 && path.indexOf('://') === -1) {
+            path = '/' + path;
+        }
+
         var baseRoute = baseUrl();
         path = path.replace(baseRoute, '');
 
@@ -491,16 +496,12 @@ define(['loading', 'dom', 'viewManager', 'skinManager', 'pluginManager', 'backdr
     }
 
     var resolveOnNextShow;
-    dom.addEventListener(document, 'viewshow', function () {
-
+    document.addEventListener('viewshow', function () {
         var resolve = resolveOnNextShow;
         if (resolve) {
             resolveOnNextShow = null;
             resolve();
         }
-    }, {
-        passive: true,
-        once: true
     });
 
     var currentRouteInfo;

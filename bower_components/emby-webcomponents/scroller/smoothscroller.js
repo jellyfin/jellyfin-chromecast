@@ -106,7 +106,7 @@ define(['browser', 'layoutManager', 'dom', 'focusManager', 'scrollStyles'], func
             // transform is the only way to guarantee animation
             options.enableNativeScroll = false;
         }
-        else if (layoutManager.desktop || !browser.animate) {
+        else if (!layoutManager.tv || !browser.animate) {
 
             options.enableNativeScroll = true;
         }
@@ -605,7 +605,7 @@ define(['browser', 'layoutManager', 'dom', 'focusManager', 'scrollStyles'], func
                         passive: true
                     });
                 });
-            } else {
+            } else if (!transform) {
                 dragMouseEvents.forEach(function (eventName) {
                     dom.addEventListener(document, eventName, dragHandler, {
                         passive: true
@@ -806,7 +806,9 @@ define(['browser', 'layoutManager', 'dom', 'focusManager', 'scrollStyles'], func
                 capture: true
             });
 
-            dragSourceElement.removeEventListener('mousedown', dragInitSlidee);
+            dom.removeEventListener(dragSourceElement, 'mousedown', dragInitSlidee, {
+                //passive: true
+            });
 
             // Reset initialized status and return the instance
             self.initialized = 0;
@@ -873,9 +875,19 @@ define(['browser', 'layoutManager', 'dom', 'focusManager', 'scrollStyles'], func
                 }
             } else {
                 slideeElement.style['will-change'] = 'transform';
+                if (o.horizontal) {
+                    slideeElement.classList.add('animatedScrollX');
+                } else {
+                    slideeElement.classList.add('animatedScrollY');
+                }
             }
 
-            dragSourceElement.addEventListener('mousedown', dragInitSlidee);
+            if (o.horizontal || transform) {
+                // This can prevent others from being able to listen to mouse events
+                dom.addEventListener(dragSourceElement, 'mousedown', dragInitSlidee, {
+                    //passive: true
+                });
+            }
 
             if (transform) {
 
