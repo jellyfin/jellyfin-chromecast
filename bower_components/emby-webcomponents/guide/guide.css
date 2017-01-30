@@ -7,9 +7,18 @@
 .tvGuideHeader {
     white-space: nowrap;
     width: 100%;
+    flex-direction: column;
     flex-shrink: 0;
     display: flex;
-    padding-left: 3.4em;
+}
+
+.guideHeaderDateSelection {
+    font-size: 86%;
+    padding: .4em 0;
+}
+
+.guideHeaderTimeslots {
+    display: flex;
 }
 
 .tvProgramSectionHeader {
@@ -38,6 +47,7 @@
 
 .channelTimeslotHeader {
     flex-shrink: 0;
+    justify-content: center;
 }
 
 .timeslotHeaders {
@@ -49,12 +59,15 @@
     position: relative;
     display: flex;
     align-items: flex-start;
+    flex-grow: 1;
 }
 
 .channelPrograms {
     white-space: nowrap;
     position: relative;
     contain: strict;
+    box-sizing: border-box;
+    border-bottom: .2em solid #121212;
 }
 
 .timeslotHeadersInner {
@@ -68,7 +81,7 @@
     width: 100%;
     height: 2px;
     display: flex;
-    margin-left: .65vh;
+    margin-left: .25em;
     background-color: #52B54B;
     height: 2px;
     transform-origin: left;
@@ -77,10 +90,10 @@
 
 .currentTimeIndicatorArrowContainer {
     position: absolute;
-    bottom: -1.3vh;
+    bottom: -.4em;
     width: 100%;
     color: #52B54B;
-    margin-left: .65vh;
+    margin-left: .25em;
     transform-origin: left;
     transition: transform 500ms ease-out;
 }
@@ -91,11 +104,11 @@
 }
 
 .currentTimeIndicatorArrow {
-    width: 4vh;
-    height: 4vh;
-    font-size: 4vh;
+    width: 1em;
+    height: 1em;
+    font-size: 1.2em;
     color: #52B54B;
-    margin-left: -2vh;
+    margin-left: -.52em;
 }
 
 .channelPrograms, .timeslotHeadersInner {
@@ -133,8 +146,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     border-right: 1px solid #121212;
-    width: 24vw;
-    background: rgba(40, 40, 40, .9);
+    background: rgb(38, 38, 38);
     display: flex;
     align-items: center;
     text-decoration: none;
@@ -143,54 +155,38 @@
     contain: strict;
 }
 
-@media all and (min-width: 500px) {
+/* Important - have to put the fixed width on channelsContainer, not the individual channelHeaderCell
+   This was causing channelsContainer to extend beyond the fixed width on ps4, tizen, lg and opera tv.
+*/
+.channelsContainer, .channelTimeslotHeader {
+    width: 24vw;
+}
 
-    .channelHeaderCell, .channelTimeslotHeader {
+.channelHeaderCell {
+    width: 100%;
+}
+
+@media all and (min-width:500px) {
+    .channelsContainer, .channelTimeslotHeader {
         width: 16vw;
     }
 }
 
-@media all and (min-width: 600px) {
-
-    .channelHeaderCell, .channelTimeslotHeader {
+@media all and (min-width:600px) {
+    .channelsContainer, .channelTimeslotHeader {
         width: 16vw;
     }
 }
 
-@media all and (min-width: 800px) {
-
-    .channelHeaderCell, .channelTimeslotHeader {
+@media all and (min-width:800px) {
+    .channelsContainer, .channelTimeslotHeader {
         width: 14vw;
     }
 }
 
-@media all and (min-width: 1280px) {
-
-    .channelHeaderCell, .channelTimeslotHeader {
+@media all and (min-width:1280px) {
+    .channelsContainer, .channelTimeslotHeader {
         width: 12vw;
-    }
-}
-
-.btnSelectDate {
-    padding-left: .5em;
-    text-transform: none;
-    font-weight: normal;
-}
-
-.btnSelectDateContent {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.guideDateText {
-    font-size: 80%;
-}
-
-@media all and (min-width: 1600px) {
-
-    .guideDateText {
-        font-size: 92%;
     }
 }
 
@@ -203,19 +199,12 @@
     font-size: 1.5em !important;
 }
 
-@media all and (max-width: 1280px) {
-
-    .btnGuideViewSettings {
-        display: none;
-    }
-}
-
 .selectDateIcon {
     flex-shrink: 0;
 }
 
 .channelHeaderCell {
-    border-bottom: .65vh solid #121212 !important;
+    border-bottom: .2em solid #121212 !important;
     background-size: auto 70%;
     background-position: 92% center;
     background-repeat: no-repeat;
@@ -228,15 +217,8 @@
     }
 }
 
-@media all and (max-width: 1200px) {
-
-    .guideChannelNumberWithImage {
-        display: none;
-    }
-}
-
 .channelPrograms, .channelHeaderCell {
-    height: 4em;
+    height: 4.4em;
     contain: strict;
 }
 
@@ -246,7 +228,7 @@
 }
 
 .channelPrograms-tv, .channelHeaderCell-tv {
-    height: 3.2em;
+    height: 3.4em;
 }
 
 .channelTimeslotHeader {
@@ -255,14 +237,12 @@
 
 .channelTimeslotHeader, .timeslotHeader {
     background: transparent;
-}
-
-.timeslotHeader, .channelTimeslotHeader {
-    height: 3em;
+    height: 2.2em;
 }
 
 .programGrid {
     padding-bottom: 4px;
+    flex-grow: 1;
 }
 
 .timeslotHeader {
@@ -272,10 +252,9 @@
 .programCell {
     position: absolute;
     top: 0;
-    /* Unfortunately the borders using vh get rounded while the bottom property doesn't. So this is a little hack to try and make them even*/
-    bottom: .59vh;
-    border-left: .65vh solid #121212 !important;
-    background-color: rgba(32, 32, 32, .95);
+    bottom: 0;
+    border-left: .2em solid #121212 !important;
+    background-color: rgb(30, 30, 30);
     display: flex;
     text-decoration: none;
     overflow: hidden;
@@ -283,6 +262,9 @@
     /* Needed for Firefox */
     text-align: left;
     contain: strict;
+    flex-grow: 1;
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
 .programAccent {
@@ -322,11 +304,25 @@
     display: block;
 }
 
+.guideProgramNameText {
+    margin: 0;
+    font-weight: normal;
+}
+
+.guideProgramSecondaryInfo {
+    display: flex;
+    align-items: center;
+}
+
+.programSecondaryTitle {
+    opacity: .6;
+}
+
 .programIcon {
     margin-left: auto;
     margin-right: .25em;
-    height: auto;
-    width: auto;
+    height: 1em;
+    width: 1em;
     font-size: 1.6em;
     color: #ddd;
     flex-shrink: 0;
@@ -344,6 +340,8 @@
     padding: .18em .32em;
     border-radius: .25em;
     margin-right: .35em;
+    width: auto;
+    height: auto;
 }
 
 .programTextIcon-tv {
@@ -355,6 +353,8 @@
     max-width: 30%;
     text-overflow: ellipsis;
     overflow: hidden;
+    font-weight: normal;
+    margin: 0;
 }
 
 .guideChannelName {
@@ -382,45 +382,18 @@
 .channelsContainer {
     display: flex;
     flex-shrink: 0;
-}
-
-.btnCategories {
-    margin: 0 .3em 0 .5em !important;
-    padding: 0 !important;
-    flex-shrink: 0;
-    background: rgba(40, 40, 40, .9);
-    border-radius: 0 !important;
-    width: 2.6em;
-    font-weight: normal !important;
-    position: relative;
-}
-
-.btnCategoriesText {
-    transform: rotate(90deg);
-    text-transform: uppercase;
-    transform-origin: left;
-    margin-left: 1.2em;
-    letter-spacing: .25em;
-    position: absolute;
-    top: 0;
-    margin-top: 1em;
-    white-space: nowrap;
-}
-
-.channelList {
-    display: flex;
     flex-direction: column;
 }
 
-.channelList, .programGrid {
+.channelsContainer, .programGrid {
     contain: layout style;
 }
 
-.programCell, .channelHeaderCell, .btnSelectDate {
+.programCell, .channelHeaderCell {
     outline: none !important;
 }
 
-    .programCell:focus, .channelHeaderCell:focus, .btnSelectDate:focus {
+    .programCell:focus, .channelHeaderCell:focus {
         background-color: #555;
     }
 
@@ -431,25 +404,6 @@
 .seriesTimerIcon-inactive {
     color: inherit !important;
     opacity: .7;
-}
-
-.visibleGuideScroller::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
-}
-
-.visibleGuideScroller::-webkit-scrollbar-button:start:decrement,
-.visibleGuideScroller::-webkit-scrollbar-button:end:increment {
-    display: none;
-}
-
-.visibleGuideScroller::-webkit-scrollbar-track-piece {
-    background-color: #3b3b3b;
-}
-
-.visibleGuideScroller::-webkit-scrollbar-thumb:vertical, .visibleGuideScroller::-webkit-scrollbar-thumb:horizontal {
-    -webkit-border-radius: 2px;
-    background: #888 no-repeat center;
 }
 
 .guideOptions {
@@ -464,8 +418,46 @@
     .tvGuideHeader {
         padding-left: 0;
     }
+}
 
-    .btnCategories {
-        display: none;
+.guideRequiresUnlock {
+    margin: 1em auto;
+    text-align: center;
+    padding: 1em;
+    flex-shrink: 0;
+}
+
+.noRubberBanding {
+    /* This is needed to combat the rubber banding in iOS */
+    padding-bottom: 100px;
+}
+
+.guideDateTabsSlider {
+    text-align: center;
+}
+
+.guide-date-tab-button {
+    font-weight: normal !important;
+    color: inherit !important;
+    padding: .3em .7em !important;
+    margin: 0 .3em !important;
+    opacity: .25;
+}
+
+    .guide-date-tab-button.emby-tab-button-active {
+        color: #52B54B !important;
+        border-color: transparent !important;
+        opacity: 1;
+        font-weight: normal !important;
     }
+
+    .guide-date-tab-button:focus {
+        color: #52B54B !important;
+        opacity: 1;
+    }
+
+.layout-tv .guide-date-tab-button:focus {
+    background-color: #52B54B !important;
+    border-radius: .15em !important;
+    color: #fff !important;
 }

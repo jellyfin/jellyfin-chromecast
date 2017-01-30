@@ -147,12 +147,11 @@
                 DisplayOrder: form.querySelector('#selectDisplayOrder').value,
                 Players: form.querySelector('#txtPlayers').value,
                 Album: form.querySelector('#txtAlbum').value,
-                AlbumArtist: getAlbumArtists(form),
+                AlbumArtists: getAlbumArtists(form),
                 ArtistItems: getArtists(form),
                 Metascore: form.querySelector('#txtMetascore').value,
                 AwardSummary: form.querySelector('#txtAwardSummary').value,
                 Overview: form.querySelector('#txtOverview').value,
-                ShortOverview: form.querySelector('#txtShortOverview').value,
                 Status: form.querySelector('#selectStatus').value,
                 AirDays: getSelectedAirDays(form),
                 AirTime: form.querySelector('#txtAirTime').value,
@@ -700,14 +699,14 @@
             showElement('#fldCustomRating', context);
         }
 
+        showElement('#tagsCollapsible', context);
+
         if (item.Type === "TvChannel") {
-            hideElement('#tagsCollapsible', context);
             hideElement('#metadataSettingsCollapsible', context);
             hideElement('#fldPremiereDate', context);
             hideElement('#fldDateAdded', context);
             hideElement('#fldYear', context);
         } else {
-            showElement('#tagsCollapsible', context);
             showElement('#metadataSettingsCollapsible', context);
             showElement('#fldPremiereDate', context);
             showElement('#fldDateAdded', context);
@@ -765,11 +764,11 @@
             showElement('#fldParentIndexNumber');
 
             if (item.Type === "Episode") {
-                context.querySelector('#txtParentIndexNumber').label(globalize.translate('LabelSeasonNumber'));
+                context.querySelector('#txtParentIndexNumber').label(globalize.translate('sharedcomponents#LabelSeasonNumber'));
             } else if (item.Type === "Audio") {
-                context.querySelector('#txtParentIndexNumber').label(globalize.translate('LabelDiscNumber'));
+                context.querySelector('#txtParentIndexNumber').label(globalize.translate('sharedcomponents#LabelDiscNumber'));
             } else {
-                context.querySelector('#txtParentIndexNumber').label(globalize.translate('LabelParentNumber'));
+                context.querySelector('#txtParentIndexNumber').label(globalize.translate('sharedcomponents#LabelParentNumber'));
             }
         } else {
             hideElement('#fldParentIndexNumber', context);
@@ -842,7 +841,6 @@
         context.querySelector('#txtName').value = item.Name || "";
         context.querySelector('#txtOriginalName').value = item.OriginalTitle || "";
         context.querySelector('#txtOverview').value = item.Overview || '';
-        context.querySelector('#txtShortOverview').value = item.ShortOverview || "";
         context.querySelector('#txtTagline').value = (item.Taglines && item.Taglines.length ? item.Taglines[0] : '');
         context.querySelector('#txtSortName').value = item.ForcedSortName || "";
         context.querySelector('#txtDisplayMediaType').value = item.DisplayMediaType || "";
@@ -1134,12 +1132,6 @@
 
             setFieldVisibilities(context, item);
             fillItemInfo(context, item, metadataEditorInfo.ParentalRatingOptions);
-
-            if (item.MediaType === "Video" && item.Type !== "Episode") {
-                showElement('#fldShortOverview', context);
-            } else {
-                hideElement('#fldShortOverview', context);
-            }
 
             if (item.MediaType === "Video" && item.Type !== "Episode") {
                 showElement('#fldTagline', context);

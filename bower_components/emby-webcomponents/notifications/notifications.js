@@ -88,7 +88,7 @@ define(['serverNotifications', 'playbackManager', 'events', 'globalize', 'requir
 
     function showNewItemNotification(item, apiClient) {
 
-        if (playbackManager.isPlayingVideo()) {
+        if (playbackManager.isPlayingLocally(['Video'])) {
             return;
         }
 
@@ -139,7 +139,8 @@ define(['serverNotifications', 'playbackManager', 'events', 'globalize', 'requir
             Filters: "IsNotFolder",
             SortBy: "DateCreated",
             SortOrder: "Descending",
-            Ids: newItems.join(',')
+            Ids: newItems.join(','),
+            MediaTypes: "Audio,Video"
 
         }).then(function (result) {
 
