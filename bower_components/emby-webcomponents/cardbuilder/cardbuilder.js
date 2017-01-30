@@ -1,12 +1,10 @@
-define(['datetime', 'imageLoader', 'connectionManager', 'itemHelper', 'mediaInfo', 'focusManager', 'indicators', 'globalize', 'layoutManager', 'apphost', 'dom', 'emby-button', 'css!./card', 'paper-icon-button-light', 'clearButtonStyle'],
-    function (datetime, imageLoader, connectionManager, itemHelper, mediaInfo, focusManager, indicators, globalize, layoutManager, appHost, dom) {
+define(['datetime', 'imageLoader', 'connectionManager', 'itemHelper', 'focusManager', 'indicators', 'globalize', 'layoutManager', 'apphost', 'dom', 'browser', 'emby-button', 'css!./card', 'paper-icon-button-light', 'clearButtonStyle'],
+    function (datetime, imageLoader, connectionManager, itemHelper, focusManager, indicators, globalize, layoutManager, appHost, dom, browser) {
         'use strict';
 
         var devicePixelRatio = window.devicePixelRatio || 1;
 
         function getCardsHtml(items, options) {
-
-            var apiClient = connectionManager.currentApiClient();
 
             if (arguments.length === 1) {
 
@@ -14,7 +12,7 @@ define(['datetime', 'imageLoader', 'connectionManager', 'itemHelper', 'mediaInfo
                 items = options.items;
             }
 
-            var html = buildCardsHtmlInternal(items, apiClient, options);
+            var html = buildCardsHtmlInternal(items, options);
 
             return html;
         }
@@ -144,6 +142,20 @@ define(['datetime', 'imageLoader', 'connectionManager', 'itemHelper', 'mediaInfo
                         return 100 / 64;
                     }
                     return 100 / 72;
+                case 'overflowSmallBackdrop':
+                    if (screenWidth >= 1200) {
+                        return 100 / 18;
+                    }
+                    if (screenWidth >= 1000) {
+                        return 100 / 24;
+                    }
+                    if (screenWidth >= 770) {
+                        return 100 / 30;
+                    }
+                    if (screenWidth >= 540) {
+                        return 100 / 40;
+                    }
+                    return 100 / 60;
                 default:
                     return 4;
             }
@@ -235,12 +247,15 @@ define(['datetime', 'imageLoader', 'connectionManager', 'itemHelper', 'mediaInfo
                 else if (options.shape === 'square') {
                     options.width = options.width || 243;
                 }
+                else if (options.shape === 'banner') {
+                    options.width = options.width || 800;
+                }
             }
 
             options.width = options.width || getImageWidth(options.shape);
         }
 
-        function buildCardsHtmlInternal(items, apiClient, options) {
+        function buildCardsHtmlInternal(items, options) {
 
             var isVertical;
 
@@ -255,7 +270,7 @@ define(['datetime', 'imageLoader', 'connectionManager', 'itemHelper', 'mediaInfo
             setCardData(items, options);
 
             if (options.indexBy === 'Genres') {
-                return buildCardsByGenreHtmlInternal(items, apiClient, options);
+                return buildCardsByGenreHtmlInternal(items, options);
             }
 
             var className = 'card';
@@ -276,10 +291,18 @@ define(['datetime', 'imageLoader', 'connectionManager', 'itemHelper', 'mediaInfo
             var hasOpenSection;
 
             var sectionTitleTagName = options.sectionTitleTagName || 'div';
+            var apiClient;
+            var lastServerId;
 
             for (var i = 0, length = items.length; i < length; i++) {
 
                 var item = items[i];
+                var serverId = item.ServerId || options.serverId;
+
+                if (serverId !== lastServerId) {
+                    lastServerId = serverId;
+                    apiClient = connectionManager.getApiClient(lastServerId);
+                }
 
                 if (options.indexBy) {
                     var newIndexValue = '';
@@ -390,7 +413,7 @@ define(['datetime', 'imageLoader', 'connectionManager', 'itemHelper', 'mediaInfo
             });
         }
 
-        function buildCardsByGenreHtmlInternal(items, apiClient, options) {
+        function buildCardsByGenreHtmlInternal(items, options) {
 
             var className = 'card';
 
@@ -421,7 +444,7 @@ define(['datetime', 'imageLoader', 'connectionManager', 'itemHelper', 'mediaInfo
                 }
 
                 var cardClass = className;
-                currentItemHtml += buildCard(i, renderItem, apiClient, options, cardClass);
+                currentItemHtml += buildCard(i, renderItem, connectionManager.getApiClient(renderItem.ServerId || options.serverId), options, cardClass);
 
                 itemsInRow++;
 
@@ -483,6 +506,9 @@ define(['datetime', 'imageLoader', 'connectionManager', 'itemHelper', 'mediaInfo
                 }
                 if (shape.indexOf('square') !== -1) {
                     return 1;
+                }
+                if (shape.indexOf('banner') !== -1) {
+                    return (1000 / 185);
                 }
             }
             return null;
@@ -569,7 +595,7 @@ define(['datetime', 'imageLoader', 'connectionManager', 'itemHelper', 'mediaInfo
 
                 height = width && primaryImageAspectRatio ? Math.round(width / primaryImageAspectRatio) : null;
 
-                imgUrl = apiClient.getScaledImageUrl(item.Id || item.ItemId, {
+                imgUrl = apiClient.getScaledImageUrl(item.PrimaryImageItemId || item.Id || item.ItemId, {
                     type: "Primary",
                     maxHeight: height,
                     maxWidth: width,
@@ -799,7 +825,9 @@ define(['datetime', 'imageLoader', 'connectionManager', 'itemHelper', 'mediaInfo
 
             if (showMediaTitle) {
 
-                var name = options.showTitle === 'auto' && !item.IsFolder && item.MediaType === 'Photo' ? '' : itemHelper.getDisplayName(item);
+                var name = options.showTitle === 'auto' && !item.IsFolder && item.MediaType === 'Photo' ? '' : itemHelper.getDisplayName(item, {
+                    includeParentInfo: options.includeParentInfoInTitle
+                });
 
                 lines.push(name);
             }
@@ -1275,7 +1303,12 @@ define(['datetime', 'imageLoader', 'connectionManager', 'itemHelper', 'mediaInfo
                     cardContentClose = '</button>';
                 }
 
-                if (options.vibrant && imgUrl && !vibrantSwatch) {
+                var vibrantAttributes = options.vibrant && imgUrl && !vibrantSwatch ?
+                    (' data-vibrant="' + cardFooterId + '" data-swatch="db"') :
+                    '';
+
+                // Don't use the IMG tag with safari because it puts a white border around it
+                if (vibrantAttributes && !browser.safari) {
                     cardImageContainerOpen = '<div class="' + cardImageContainerClass + '">';
 
                     var imgClass = 'cardImage cardImage-img lazy';
@@ -1286,10 +1319,10 @@ define(['datetime', 'imageLoader', 'connectionManager', 'itemHelper', 'mediaInfo
                             imgClass += ' coveredImage-img';
                         }
                     }
-                    cardImageContainerOpen += '<img crossOrigin="Anonymous" class="' + imgClass + '" data-vibrant="' + cardFooterId + '" data-swatch="db" data-src="' + imgUrl + '" src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==" />';
+                    cardImageContainerOpen += '<img crossOrigin="Anonymous" class="' + imgClass + '"' + vibrantAttributes + ' data-src="' + imgUrl + '" src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==" />';
 
                 } else {
-                    cardImageContainerOpen = imgUrl ? ('<div class="' + cardImageContainerClass + ' lazy" data-src="' + imgUrl + '">') : ('<div class="' + cardImageContainerClass + '">');
+                    cardImageContainerOpen = imgUrl ? ('<div class="' + cardImageContainerClass + ' lazy"' + vibrantAttributes + ' data-src="' + imgUrl + '">') : ('<div class="' + cardImageContainerClass + '">');
                 }
 
                 var cardScalableClass = options.cardLayout ? 'cardScalable visualCardBox-cardScalable' : 'cardScalable';
@@ -1391,9 +1424,7 @@ define(['datetime', 'imageLoader', 'connectionManager', 'itemHelper', 'mediaInfo
                 }
             }
 
-            var apiClient = connectionManager.currentApiClient();
-
-            var html = buildCardsHtmlInternal(items, apiClient, options);
+            var html = buildCardsHtmlInternal(items, options);
 
             if (html) {
 

@@ -5,20 +5,16 @@
 
     function enableAnimation() {
 
-        if (browser.animate) {
-            return true;
-        }
-
-        if (browser.edge) {
-            return true;
-        }
-
-        // An indication of an older browser
-        if (browser.noFlex) {
+        // too slow
+        if (browser.tv) {
             return false;
         }
 
-        return true;
+        if (browser.noAnimation) {
+            return false;
+        }
+
+        return browser.supportsCssAnimation();
     }
 
     function removeCenterFocus(dlg) {
@@ -246,12 +242,12 @@
         if (enableAnimation()) {
 
             var onFinish = function () {
-                dom.removeEventListener(dlg, 'animationend', onFinish, {
+                dom.removeEventListener(dlg, dom.whichAnimationEvent(), onFinish, {
                     once: true
                 });
                 onAnimationFinish();
             };
-            dom.addEventListener(dlg, 'animationend', onFinish, {
+            dom.addEventListener(dlg, dom.whichAnimationEvent(), onFinish, {
                 once: true
             });
             return;
@@ -265,6 +261,7 @@
         if (enableAnimation()) {
 
             var animated = true;
+
             switch (dlg.animationConfig.exit.name) {
 
                 case 'fadeout':
@@ -281,12 +278,12 @@
                     break;
             }
             var onFinish = function () {
-                dom.removeEventListener(dlg, 'animationend', onFinish, {
+                dom.removeEventListener(dlg, dom.whichAnimationEvent(), onFinish, {
                     once: true
                 });
                 onAnimationFinish();
             };
-            dom.addEventListener(dlg, 'animationend', onFinish, {
+            dom.addEventListener(dlg, dom.whichAnimationEvent(), onFinish, {
                 once: true
             });
 
@@ -436,6 +433,7 @@
         }
 
         if (enableAnimation()) {
+
             switch (dlg.animationConfig.entry.name) {
 
                 case 'fadein':

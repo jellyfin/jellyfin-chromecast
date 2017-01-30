@@ -140,7 +140,7 @@
         var html = '';
 
         var scrollType = layoutManager.desktop ? 'smoothScrollY' : 'hiddenScrollY';
-        var style = (browser.noFlex || browser.firefox) ? 'max-height:400px;' : '';
+        var style = (browser.firefox) ? 'max-height:400px;' : '';
 
         // Admittedly a hack but right now the scrollbar is being factored into the width which is causing truncation
         if (options.items.length > 20) {
@@ -193,17 +193,17 @@
 
         html += '<div class="actionSheetScroller ' + scrollType + '" style="' + style + '">';
 
-        var menuItemClass = browser.noFlex || browser.firefox ? 'actionSheetMenuItem actionSheetMenuItem-noflex' : 'actionSheetMenuItem';
+        var menuItemClass = browser.firefox ? 'actionSheetMenuItem actionSheetMenuItem-noflex' : 'actionSheetMenuItem';
 
         if (options.menuItemClass) {
             menuItemClass += ' ' + options.menuItemClass;
         }
 
-        var actionSheetItemTextClass = 'actionSheetItemText';
-
         if (extraSpacing) {
-            actionSheetItemTextClass += ' actionSheetItemText-extraspacing';
+            menuItemClass += ' actionSheetMenuItem-extraspacing';
         }
+
+        var actionSheetItemTextClass = 'actionSheetItemText';
 
         for (i = 0, length = options.items.length; i < length; i++) {
 
@@ -219,6 +219,11 @@
                 html += '<i class="actionSheetItemIcon md-icon" style="visibility:hidden;">check</i>';
             }
             html += '<div class="' + actionSheetItemTextClass + '">' + (option.name || option.textContent || option.innerText) + '</div>';
+
+            if (option.secondaryText) {
+                html += '<div class="actionSheetItemSecondaryText">' + (option.secondaryText) + '</div>';
+            }
+
             html += '</button>';
         }
 

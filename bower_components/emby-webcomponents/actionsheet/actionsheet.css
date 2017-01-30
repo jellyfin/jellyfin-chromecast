@@ -42,7 +42,7 @@
 }
 
 .actionSheetMenuItem {
-    padding: 0 1.6em;
+    padding: .7em 1.6em;
     margin: 0;
     text-transform: none;
     text-align: inherit;
@@ -54,20 +54,35 @@
     box-shadow: none;
 }
 
+    .actionSheetMenuItem:focus {
+        transform: none !important;
+    }
+
 .actionSheetMenuItem-noflex {
     display: block;
 }
 
+.actionSheetMenuItem-extraspacing {
+    padding: .9em 1.6em;
+}
+
 .actionSheetItemText {
-    padding: .7em 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     vertical-align: middle;
+    flex-grow: 1;
+    display: flex;
+    justify-content: flex-start;
 }
 
-.actionSheetItemText-extraspacing {
-    padding: .9em 0;
+.actionSheetItemSecondaryText {
+    opacity: .6;
+    font-size: 90%;
+    display: flex;
+    justify-content: flex-end;
+    flex-shrink: 0;
+    margin-left: 5em;
 }
 
 .emby-button-noflex .actionSheetItemText {
@@ -93,7 +108,7 @@
 }
 
 .actionSheetTitle {
-    margin: .5em 0 1em !important;
+    margin: .5em 0 !important;
     padding: 0 1em;
     flex-grow: 0;
 }
