@@ -189,10 +189,12 @@ function getSenderReportingData($scope, reportingData) {
             nowPlayingItem.LogoImageTag = item.ParentLogoImageTag;
         }
 
-        var nextItemInfo = getNextPlaybackItemInfo();
+        if ($scope.playNextItem) {
+            var nextItemInfo = getNextPlaybackItemInfo();
 
-        if (nextItemInfo) {
-            state.NextMediaType = nextItemInfo.item.MediaType;
+            if (nextItemInfo) {
+                state.NextMediaType = nextItemInfo.item.MediaType;
+            }
         }
     }
 
@@ -225,6 +227,7 @@ function resetPlaybackScope($scope) {
     $scope.canSeek = false;
     $scope.canClientSeek = false;
     $scope.isChangingStream = false;
+    $scope.playNextItem = true;
 
     $scope.item = null;
     $scope.liveStreamId = '';

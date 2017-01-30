@@ -133,6 +133,7 @@
 
     function stop(nextMode) {
 
+        $scope.playNextItem = false;
         embyActions.stop($scope);
         enableTimeUpdateListener(false);
 
