@@ -164,9 +164,11 @@
 
         window.VolumeInfo.Level = (event.data['level'] || 1) * 100;
         window.VolumeInfo.IsMuted = event.data['muted'] || false;
-
-        reportEvent('volumechange', true);
-    }
+        
+        if ($scope.userId != null) {
+            reportEvent('volumechange', true);
+        }
+    };
 
     console.log('Application is ready, starting system');
 
