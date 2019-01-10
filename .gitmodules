@@ -1,0 +1,3 @@
+[submodule "jellyfin-web"]
+	path = jellyfin-web
+	url = https://github.com/jellyfin/jellyfin-web.git
