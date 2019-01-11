@@ -48,7 +48,7 @@ function initRequire(customPaths) {
 
     console.log('Initializing requirejs');
 
-    var bowerPath = "bower_components";
+    var bowerPath = "jellyfin-web/src/bower_components";
     var embyWebComponentsBowerPath = bowerPath + '/emby-webcomponents';
 
     var paths = {
@@ -68,18 +68,6 @@ function initRequire(customPaths) {
 
     var urlArgs = "t=" + new Date().getTime();
 
-    var sha1Path = bowerPath + "/cryptojslib/components/sha1-min";
-    var md5Path = bowerPath + "/cryptojslib/components/md5-min";
-    var shim = {};
-
-    shim[sha1Path] = {
-        deps: [bowerPath + "/cryptojslib/components/core-min"]
-    };
-
-    shim[md5Path] = {
-        deps: [bowerPath + "/cryptojslib/components/core-min"]
-    };
-
     var config = {
 
         waitSeconds: 0,
@@ -91,24 +79,11 @@ function initRequire(customPaths) {
                 'css': embyWebComponentsBowerPath + '/requirecss',
                 'html': embyWebComponentsBowerPath + '/requirehtml'
             }
-        },
-        shim: shim
+        }
     };
 
-    var baseRoute = window.location.href.split('?')[0].replace('/index.html', '');
-    if (baseRoute.lastIndexOf('/') == baseRoute.length - 1) {
-        baseRoute = baseRoute.substring(0, baseRoute.length - 1);
-    }
-
-    console.log('Setting require baseUrl to ' + baseRoute);
-
-    config.baseUrl = baseRoute;
-
     requirejs.config(config);
-
-    define("cryptojs-sha1", [sha1Path]);
-    define("cryptojs-md5", [md5Path]);
-
+    
     // mock this for now. not used in this app
     define("globalize", [], function () {
         return {

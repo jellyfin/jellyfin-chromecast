@@ -1,4 +1,4 @@
-﻿define(['datetime', 'embyactions', 'browserdeviceprofile', '//www.gstatic.com/cast/sdk/libs/receiver/2.0.0/cast_receiver.js', '//www.gstatic.com/cast/sdk/libs/mediaplayer/1.0.0/media_player.js', 'cryptojs-sha1'], function (datetime, embyActions, deviceProfileBuilder) {
+﻿define(['datetime', 'embyactions', 'browserdeviceprofile', '//www.gstatic.com/cast/sdk/libs/receiver/2.0.0/cast_receiver.js', '//www.gstatic.com/cast/sdk/libs/mediaplayer/1.0.0/media_player.js'], function (datetime, embyActions, deviceProfileBuilder) {
 
     window.mediaManager = new cast.receiver.MediaManager(window.mediaElement);
     setInterval(updateTimeOfDay, 40000);
@@ -201,7 +201,8 @@
         data.options = data.options || {};
         var cleanReceiverName = cleanName(data.receiverName || '');
         window.deviceInfo.deviceName = cleanReceiverName || window.deviceInfo.deviceName;
-        window.deviceInfo.deviceId = cleanReceiverName ? CryptoJS.SHA1(cleanReceiverName).toString() : window.deviceInfo.deviceId;
+        // deviceId just needs to be unique-ish
+        window.deviceInfo.deviceId = cleanReceiverName ? btoa(cleanReceiverName) : window.deviceInfo.deviceId;
 
         if (data.maxBitrate) {
             window.MaxBitrate = data.maxBitrate;
