@@ -1,6 +1,7 @@
-﻿define(['datetime', 'embyactions', 'browserdeviceprofile', '//www.gstatic.com/cast/sdk/libs/receiver/2.0.0/cast_receiver.js', '//www.gstatic.com/cast/sdk/libs/mediaplayer/1.0.0/media_player.js'], function (datetime, embyActions, deviceProfileBuilder) {
+﻿define(['datetime', 'embyactions', 'browserdeviceprofile', '//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js'], function (datetime, embyActions, deviceProfileBuilder) {
 
-    window.mediaManager = new cast.receiver.MediaManager(window.mediaElement);
+    window.castReceiverContext = cast.framework.CastReceiverContext.getInstance();
+    window.mediaManager = window.castReceiverContext.getPlayerManager();
     setInterval(updateTimeOfDay, 40000);
 
     // According to cast docs this should be disabled when not needed
@@ -154,9 +155,7 @@
         return promise;
     }
 
-    window.castReceiverManager = cast.receiver.CastReceiverManager.getInstance();
-
-    window.castReceiverManager.onSystemVolumeChanged = function (event) {
+    window.castReceiverContext.onSystemVolumeChanged = function (event) {
         console.log("### Cast Receiver Manager - System Volume Changed : " + JSON.stringify(event));
 
         // See cast.receiver.media.Volume
@@ -171,10 +170,6 @@
     };
 
     console.log('Application is ready, starting system');
-
-    // Create a custom namespace channel to receive commands from the sender
-    // app to add items to a playlist
-    window.playlistMessageBus = window.castReceiverManager.getCastMessageBus('urn:x-cast:com.connectsdk', cast.receiver.CastMessageBus.MessageType.JSON);
 
     function cleanName(name) {
 
@@ -490,17 +485,19 @@
     }
 
     // Create a message handler for the custome namespace channel
-    window.playlistMessageBus.onMessage = function (event) {
+    // TODO save namespace somewhere global?
+    window.castReceiverContext.addCustomMessageListener('urn:x-cast:com.jellyfin.cast', function(evt) {
+        console.log('Playlist message: ' + JSON.stringify(evt));
 
-        console.log('Playlist message: ' + JSON.stringify(event));
-
-        var data = event.data;
+        var data = evt.data;
 
         data.options = data.options || {};
-        data.options.senderId = event.senderId;
+        data.options.senderId = evt.senderId;
+        // TODO set it somewhere better perhaps
+        window.senderId = evt.senderId;
 
         processMessage(data);
-    };
+    });
 
     function tagItems(items, data) {
 
@@ -832,7 +829,7 @@
             window.mediaElement.removeChild(window.mediaElement.firstChild);
         }
         var track;
-        if (window.mediaElement.textTracks.length == 0) {
+        if (window.mediaManager.getTextTracksManager().getTracks().length == 0) {
             window.mediaElement.addTextTrack("subtitles");
         }
         track = window.mediaElement.textTracks[0];
@@ -861,32 +858,32 @@
         var streamInfo = createStreamInfo(item, mediaSource, options.startPositionTicks);
 
         var url = streamInfo.url;
+        //window.mediaManager.getTextTracksManager().addTracks(streamInfo.tracks);
         console.log('setting setTextTrack to ' + (streamInfo.subtitleStreamUrl || ''));
-        setTextTrack($scope, streamInfo.subtitleStreamUrl);
+        //setTextTrack($scope, streamInfo.subtitleStreamUrl);
 
-        var mediaInfo = {
-            customData: {
-                startPositionTicks: options.startPositionTicks || 0,
-                serverAddress: item.serverAddress,
-                userId: item.userId,
-                itemId: item.Id,
-                mediaSourceId: streamInfo.mediaSource.Id,
-                audioStreamIndex: streamInfo.audioStreamIndex,
-                subtitleStreamIndex: streamInfo.subtitleStreamIndex,
-                playMethod: streamInfo.isStatic ? 'DirectStream' : 'Transcode',
-                runtimeTicks: streamInfo.mediaSource.RunTimeTicks,
-                liveStreamId: streamInfo.mediaSource.LiveStreamId,
-                accessToken: item.accessToken,
-                canSeek: streamInfo.canSeek,
-                canClientSeek: streamInfo.canClientSeek,
-                playSessionId: playSessionId
-            },
-            metadata: {},
-            contentId: url,
-            contentType: streamInfo.contentType,
-            tracks: undefined,
-            streamType: cast.receiver.media.StreamType.BUFFERED
-        };
+        var mediaInfo = new cast.framework.messages.MediaInformation();
+        mediaInfo.contentId = url;
+        mediaInfo.contentType = streamInfo.contentType;
+        mediaInfo.customData = {
+            startPositionTicks: options.startPositionTicks || 0,
+            serverAddress: item.serverAddress,
+            userId: item.userId,
+            itemId: item.Id,
+            mediaSourceId: streamInfo.mediaSource.Id,
+            audioStreamIndex: streamInfo.audioStreamIndex,
+            subtitleStreamIndex: streamInfo.subtitleStreamIndex,
+            playMethod: streamInfo.isStatic ? 'DirectStream' : 'Transcode',
+            runtimeTicks: streamInfo.mediaSource.RunTimeTicks,
+            liveStreamId: streamInfo.mediaSource.LiveStreamId,
+            accessToken: item.accessToken,
+            canSeek: streamInfo.canSeek,
+            canClientSeek: streamInfo.canClientSeek,
+            playSessionId: playSessionId
+        }
+        mediaInfo.metadata = new cast.framework.messages.GenericMediaMetadata();
+        mediaInfo.streamType = cast.framework.messages.StreamType.BUFFERED;
+        mediaInfo.tracks = streamInfo.tracks;
 
         if (streamInfo.mediaSource.RunTimeTicks) {
             mediaInfo.duration = Math.floor(streamInfo.mediaSource.RunTimeTicks / 10000000);
@@ -894,25 +891,28 @@
 
         mediaInfo.customData.startPositionTicks = streamInfo.startPosition || 0;
 
+        var loadRequestData = new cast.framework.messages.LoadRequestData();
+        loadRequestData.media = mediaInfo;
+        loadRequestData.autoplay = true;
+
         embyActions.load($scope, mediaInfo.customData, item);
+        window.mediaManager.load(loadRequestData);
         $scope.PlaybackMediaSource = mediaSource;
 
         var autoplay = true;
 
-        mediaElement.autoplay = autoplay;
-
         console.log('setting src to ' + url);
-        window.mediaElement.autoplay = true;
-        window.mediaElement.src = url;
+        // window.mediaElement.autoplay = true;
+        // window.mediaElement.src = url;
         $scope.mediaSource = mediaSource;
 
-        console.log('calling mediaElement.load');
-        window.mediaElement.load();
+        // console.log('calling mediaElement.load');
+        // window.mediaElement.load();
 
         if (autoplay) {
-            window.mediaElement.pause();
+            //window.mediaElement.pause();
             console.log('calling embyActions.delayStart');
-            embyActions.delayStart($scope);
+            //embyActions.delayStart($scope);
         }
         enableTimeUpdateListener(false);
         enableTimeUpdateListener(true);
@@ -925,5 +925,5 @@
         window.mediaManager.setMediaInformation(mediaInfo, false);
     }
 
-    window.castReceiverManager.start();
+    window.castReceiverContext.start();
 });

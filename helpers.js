@@ -367,9 +367,7 @@ function createStreamInfo(item, mediaSource, startPosition) {
         if (mediaSource.enableDirectPlay) {
             mediaUrl = mediaSource.Path;
             isStatic = true;
-        } else {
-
-            if (mediaSource.SupportsDirectStream) {
+        } else if (mediaSource.SupportsDirectStream) {
 
                 mediaUrl = getUrl(item.serverAddress, 'Videos/' + item.Id + '/stream.' + mediaSource.Container);
                 mediaUrl += "?mediaSourceId=" + mediaSource.Id;
@@ -378,24 +376,23 @@ function createStreamInfo(item, mediaSource, startPosition) {
                 isStatic = true;
                 playerStartPositionTicks = startPosition || 0;
 
+        } else {
+
+            mediaUrl = getUrl(item.serverAddress, mediaSource.TranscodingUrl);
+
+            if (mediaSource.TranscodingSubProtocol == 'hls') {
+
+                mediaUrl += seekParam;
+                playerStartPositionTicks = startPosition || 0;
+                contentType = 'application/x-mpegURL';
+                streamContainer = 'm3u8';
             } else {
 
-                mediaUrl = getUrl(item.serverAddress, mediaSource.TranscodingUrl);
+                contentType = 'video/' + mediaSource.TranscodingContainer;
+                streamContainer = mediaSource.TranscodingContainer;
 
-                if (mediaSource.TranscodingSubProtocol == 'hls') {
-
-                    mediaUrl += seekParam;
-                    playerStartPositionTicks = startPosition || 0;
-                    contentType = 'application/x-mpegURL';
-                    streamContainer = 'm3u8';
-                } else {
-
-                    contentType = 'video/' + mediaSource.TranscodingContainer;
-                    streamContainer = mediaSource.TranscodingContainer;
-
-                    if (mediaUrl.toLowerCase().indexOf('copytimestamps=true') != -1) {
-                        startPosition = 0;
-                    }
+                if (mediaUrl.toLowerCase().indexOf('copytimestamps=true') != -1) {
+                    startPosition = 0;
                 }
             }
         }
@@ -453,13 +450,19 @@ function createStreamInfo(item, mediaSource, startPosition) {
     };
 
     if (info.subtitleStreamIndex != null) {
+        debugger;
+        var subtitleStream = mediaSource.MediaStreams.find(function (stream) { return stream.Type === "Subtitle"; });
+        //getStreamByIndex(mediaSource.MediaStreams, 'Subtitle', info.subtitleStreamIndex);
+        if (subtitleStream) { // && subtitleStream.DeliveryMethod == 'External') {
 
-        var subtitleStream = getStreamByIndex(mediaSource.MediaStreams, 'Subtitle', info.subtitleStreamIndex);
-        if (subtitleStream && subtitleStream.DeliveryMethod == 'External') {
+            //var textStreamUrl = subtitleStream.IsExternalUrl ? subtitleStream.DeliveryUrl : (getUrl(item.serverAddress, subtitleStream.DeliveryUrl));
 
-            var textStreamUrl = subtitleStream.IsExternalUrl ? subtitleStream.DeliveryUrl : (getUrl(item.serverAddress, subtitleStream.DeliveryUrl));
-
-            info.subtitleStreamUrl = textStreamUrl;
+            //info.subtitleStreamUrl = textStreamUrl;
+            var track = new cast.framework.messages.Track(info.subtitleStreamIndex, 'TEXT')
+            track.language = subtitleStream.Language;
+            track.name = subtitleStream.DisplayTitle;
+            track.subtype = "SUBTITLES";
+            info.tracks = [track]
             console.log('Subtitle url: ' + info.subtitleStreamUrl);
         }
     }

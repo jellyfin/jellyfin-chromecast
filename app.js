@@ -33,7 +33,7 @@ function clearMediaElement() {
 
 function broadcastToMessageBus(msg) {
 
-    window.playlistMessageBus.broadcast(msg);
+    window.castReceiverContext.sendCustomMessage('urn:x-cast:com.jellyfin.cast', window.senderId, msg);
 }
 
 function broadcastConnectionErrorMessage() {
