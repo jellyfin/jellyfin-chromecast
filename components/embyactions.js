@@ -130,7 +130,7 @@
         }
 
         var url = getUrl($scope.serverAddress, "Sessions/Playing/Progress");
-        debugger;
+
         restartPingInterval($scope, options);
         lastTranscoderPing = new Date().getTime();
 
@@ -412,7 +412,6 @@
             factory.reportPlaybackStart($scope, getReportingParams($scope)).then(function () {
 
                 console.log('calling mediaElement.play');
-                debugger;
                 window.mediaManager.play();
                 setAppStatus('playing-with-controls');
                 if ($scope.mediaType == "Audio") {

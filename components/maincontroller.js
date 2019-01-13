@@ -157,20 +157,14 @@
             promise = embyActions.reportPlaybackStopped($scope, reportingParams);
         }
 
+        window.mediaManager.stop();
         promise = promise || Promise.resolve();
 
         return promise;
     }
 
     window.castReceiverContext.addEventListener(cast.framework.system.EventType.SYSTEM_VOLUME_CHANGED, function (event) {
-        debugger;
         console.log("### Cast Receiver Manager - System Volume Changed : " + JSON.stringify(event.data));
-
-        // See cast.receiver.media.Volume
-        console.log("### Volume: " + event.data['level'] + " is muted? " + event.data['muted']);
-
-        window.VolumeInfo.Level = (event.data['level'] || 1) * 100;
-        window.VolumeInfo.IsMuted = event.data['muted'] || false;
         
         if ($scope.userId != null) {
             reportEvent('volumechange', true);
@@ -214,6 +208,7 @@
         // Items will have properties - Id, Name, Type, MediaType, IsFolder
 
         var reportEventType;
+        var systemVolume = window.castReceiverContext.getSystemVolume();
 
         if (data.command == 'PlayLast' || data.command == 'PlayNext') {
 
@@ -250,7 +245,6 @@
 
         }
         else if (data.command == 'SetAudioStreamIndex') {
-
             setAudioStreamIndex($scope, data.options.index, data.serverAddress);
         }
         else if (data.command == 'SetSubtitleStreamIndex') {
@@ -258,18 +252,13 @@
             setSubtitleStreamIndex($scope, data.options.index, data.serverAddress);
         }
         else if (data.command == 'VolumeUp') {
-
-            window.mediaElement.volume = Math.min(1, window.mediaElement.volume + .2);
+            window.castReceiverContext.setSystemVolumeLevel(Math.min(1, systemVolume.level + 0.2));
         }
         else if (data.command == 'VolumeDown') {
-
-            // TODO
-            window.mediaElement.volume = Math.max(0, window.mediaElement.volume - .2);
+            window.castReceiverContext.setSystemVolumeLevel(Math.max(0, systemVolume.level - 0.2));
         }
         else if (data.command == 'ToggleMute') {
-
-            window.mediaElement.muted = !window.mediaElement.muted;
-
+            window.castReceiverContext.setSystemVolumeMuted(!systemVolume.muted);
         }
         else if (data.command == 'Identify') {
 
@@ -278,23 +267,19 @@
             }
         }
         else if (data.command == 'SetVolume') {
-
             // Scale 0-100
-            window.mediaElement.volume = data.options.volume / 100;
+            window.castReceiverContext.setSystemVolumeLevel(data.options.volume / 100);
         }
         else if (data.command == 'Seek') {
             seek(data.options.position * 10000000);
         }
         else if (data.command == 'Mute') {
-
-            window.mediaElement.muted = true;
-        }
+            window.castReceiverContext.setSystemVolumeMuted(true);
+         }
         else if (data.command == 'Unmute') {
-
-            window.mediaElement.muted = false;
+            window.castReceiverContext.setSystemVolumeMuted(false);
         }
         else if (data.command == 'Stop') {
-
             stop();
         }
         else if (data.command == 'PlayPause') {
@@ -306,17 +291,14 @@
             }
         }
         else if (data.command == 'Pause') {
-
-            window.mediaElement.pause();
+            window.mediaManager.pause();
         }
         else if (data.command == 'SetRepeatMode') {
-
             window.repeatMode = data.options.RepeatMode;
             reportEventType = 'repeatmodechange';
         }
         else if (data.command == 'Unpause') {
-
-            window.mediaElement.play();
+            window.mediaManager.play();
         }
         else {
 
@@ -372,12 +354,12 @@
 
         console.log('setSubtitleStreamIndex DeliveryMethod:' + subtitleStream.DeliveryMethod);
 
-        if (subtitleStream.DeliveryMethod == 'External' && currentDeliveryMethod != 'Encode') {
+        if (subtitleStream.DeliveryMethod == 'External' || currentDeliveryMethod == 'Encode') {
 
             var textStreamUrl = subtitleStream.IsExternalUrl ? subtitleStream.DeliveryUrl : (getUrl(serverAddress, subtitleStream.DeliveryUrl));
 
             console.log('Subtitle url: ' + textStreamUrl);
-            setTextTrack($scope, textStreamUrl);
+            setTextTrack($scope, textStreamUrl, index);
             $scope.subtitleStreamIndex = subtitleStream.Index;
             return;
         } else {
@@ -810,30 +792,42 @@
         return false;
     }
 
-    function setTextTrack($scope, subtitleStreamUrl) {
+    function setTextTrack($scope, subtitleStreamUrl, index) {
 
-        while (window.mediaElement.firstChild) {
-            window.mediaElement.removeChild(window.mediaElement.firstChild);
-        }
-        var track;
-        if (window.mediaManager.getTextTracksManager().getTracks().length == 0) {
-            window.mediaElement.addTextTrack("subtitles");
-        }
-        track = window.mediaElement.textTracks[0];
-        var cues = track.cues;
-        for (var i = cues.length - 1 ; i >= 0 ; i--) {
-            track.removeCue(cues[i]);
-        }
-        if (subtitleStreamUrl) {
-            embyActions.getSubtitle($scope, subtitleStreamUrl).then(function (data) {
-
-                track.mode = "showing";
-
-                data.TrackEvents.forEach(function (trackEvent) {
-                    track.addCue(new VTTCue(trackEvent.StartPositionTicks / 10000000, trackEvent.EndPositionTicks / 10000000, trackEvent.Text.replace(/\\N/gi, '\n')));
-                });
+        try {
+            var tracks = window.mediaManager.getTextTracksManager().getTracks();
+            var subtitleTrack = tracks.filter(function(track) {
+                return track.Index === index && track.Type === 'SUBTITLES'
             });
+            if (subtitleTrack) {
+                window.mediaManager.getTextTracksManager().setActiveByIds([subtitleTrack.Index]);
+            }
+        } catch(e) {
+            console.log("Setting subtitle track failed: " + e);
         }
+
+        // while (window.mediaElement.firstChild) {
+        //     window.mediaElement.removeChild(window.mediaElement.firstChild);
+        // }
+        // var track;
+        // if (window.mediaManager.getTextTracksManager().getTracks().length == 0) {
+        //     window.mediaElement.addTextTrack("subtitles");
+        // }
+        // track = window.mediaElement.textTracks[0];
+        // var cues = track.cues;
+        // for (var i = cues.length - 1 ; i >= 0 ; i--) {
+        //     track.removeCue(cues[i]);
+        // }
+        // if (subtitleStreamUrl) {
+        //     embyActions.getSubtitle($scope, subtitleStreamUrl).then(function (data) {
+
+        //         track.mode = "showing";
+
+        //         data.TrackEvents.forEach(function (trackEvent) {
+        //             track.addCue(new VTTCue(trackEvent.StartPositionTicks / 10000000, trackEvent.EndPositionTicks / 10000000, trackEvent.Text.replace(/\\N/gi, '\n')));
+        //         });
+        //     });
+        // }
     }
 
     function playMediaSource(playSessionId, item, mediaSource, options) {

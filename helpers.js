@@ -35,7 +35,7 @@ function getReportingParams($scope) {
         IsMuted: volumeInfo.muted,
         AudioStreamIndex: $scope.audioStreamIndex,
         SubtitleStreamIndex: $scope.subtitleStreamIndex,
-        VolumeLevel: volumeInfo.Level,
+        VolumeLevel: volumeInfo.level * 100,
         ItemId: $scope.itemId,
         MediaSourceId: $scope.mediaSourceId,
         QueueableMediaTypes: ['Audio', 'Video'],
@@ -90,7 +90,6 @@ function getNextPlaybackItemInfo() {
 }
 
 function getSenderReportingData($scope, reportingData) {
-    debugger;
     var state = {
         ItemId: reportingData.ItemId,
         PlayState: extend({}, reportingData),
