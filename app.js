@@ -27,10 +27,6 @@ window.VolumeInfo = {
     Level: 100
 };
 
-function clearMediaElement() {
-    document.getElementById('video-player').src = "";
-}
-
 function broadcastToMessageBus(msg) {
 
     window.castReceiverContext.sendCustomMessage('urn:x-cast:com.jellyfin.cast', window.senderId, msg);

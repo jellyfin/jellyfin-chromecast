@@ -17,7 +17,7 @@ function getUrl(serverAddress, name) {
 
 function getCurrentPositionTicks($scope) {
 
-    var positionTicks = window.mediaElement.currentTime * 10000000;
+    var positionTicks = window.mediaManager.getCurrentTimeSec() * 10000000;
 
     if (!$scope.canClientSeek) {
 
@@ -28,14 +28,14 @@ function getCurrentPositionTicks($scope) {
 }
 
 function getReportingParams($scope) {
-
+    var volumeInfo = window.castReceiverContext.getSystemVolume();
     return {
         PositionTicks: getCurrentPositionTicks($scope),
-        IsPaused: window.mediaElement.paused,
-        IsMuted: window.VolumeInfo.IsMuted,
+        IsPaused: window.mediaManager.getPlayerState() === cast.framework.messages.PlayerState.PAUSED,
+        IsMuted: volumeInfo.muted,
         AudioStreamIndex: $scope.audioStreamIndex,
         SubtitleStreamIndex: $scope.subtitleStreamIndex,
-        VolumeLevel: window.VolumeInfo.Level,
+        VolumeLevel: volumeInfo.Level,
         ItemId: $scope.itemId,
         MediaSourceId: $scope.mediaSourceId,
         QueueableMediaTypes: ['Audio', 'Video'],
@@ -90,7 +90,7 @@ function getNextPlaybackItemInfo() {
 }
 
 function getSenderReportingData($scope, reportingData) {
-
+    debugger;
     var state = {
         ItemId: reportingData.ItemId,
         PlayState: extend({}, reportingData),
@@ -451,19 +451,26 @@ function createStreamInfo(item, mediaSource, startPosition) {
 
     if (info.subtitleStreamIndex != null) {
         debugger;
-        var subtitleStream = mediaSource.MediaStreams.find(function (stream) { return stream.Type === "Subtitle"; });
+        var subtitleStreams = mediaSource.MediaStreams.filter(function (stream) { return stream.Type === "Subtitle"; });
+        var subtitleTracks = []
         //getStreamByIndex(mediaSource.MediaStreams, 'Subtitle', info.subtitleStreamIndex);
-        if (subtitleStream) { // && subtitleStream.DeliveryMethod == 'External') {
+        subtitleStreams.forEach(function(subtitleStream) {
+            // && subtitleStream.DeliveryMethod == 'External') {
 
             //var textStreamUrl = subtitleStream.IsExternalUrl ? subtitleStream.DeliveryUrl : (getUrl(item.serverAddress, subtitleStream.DeliveryUrl));
 
             //info.subtitleStreamUrl = textStreamUrl;
             var track = new cast.framework.messages.Track(info.subtitleStreamIndex, 'TEXT')
+            track.trackId = subtitleStream.Index;
             track.language = subtitleStream.Language;
             track.name = subtitleStream.DisplayTitle;
             track.subtype = "SUBTITLES";
-            info.tracks = [track]
+            subtitleTracks.push(track)
             console.log('Subtitle url: ' + info.subtitleStreamUrl);
+        });
+
+        if (subtitleTracks) {
+            info.tracks = subtitleTracks;
         }
     }
 

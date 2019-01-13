@@ -2,6 +2,18 @@
 
     window.castReceiverContext = cast.framework.CastReceiverContext.getInstance();
     window.mediaManager = window.castReceiverContext.getPlayerManager();
+    window.mediaManager.addEventListener(cast.framework.events.category.CORE,
+        event => {
+          console.log("Core event: " + event.type);
+          console.log(event);
+        });
+      
+    const playbackConfig = new cast.framework.PlaybackConfig();
+
+    // Set the player to start playback as soon as there are five seconds of
+    // media content buffered. Default is 10.
+    playbackConfig.autoResumeDuration = 5;
+
     setInterval(updateTimeOfDay, 40000);
 
     // According to cast docs this should be disabled when not needed
@@ -10,7 +22,6 @@
     var init = function () {
 
         resetPlaybackScope($scope);
-        clearMediaElement();
     };
 
     init();
@@ -22,7 +33,6 @@
     var broadcastToServer = new Date();
 
     function onMediaElementTimeUpdate(e) {
-
         if ($scope.isChangingStream) {
             return;
         }
@@ -32,12 +42,12 @@
         var elapsed = now - broadcastToServer;
 
         if (elapsed > 5000) {
-
+            // TODO use status as input
             embyActions.reportPlaybackProgress($scope, getReportingParams($scope));
             broadcastToServer = now;
         }
         else if (elapsed > 1500) {
-
+            // TODO use status as input
             embyActions.reportPlaybackProgress($scope, getReportingParams($scope), false);
         }
     }
@@ -71,20 +81,20 @@
 
     function enableTimeUpdateListener(enabled) {
         if (enabled) {
-            window.mediaElement.addEventListener('timeupdate', onMediaElementTimeUpdate);
-            window.mediaElement.addEventListener('volumechange', onMediaElementVolumeChange);
-            window.mediaElement.addEventListener('pause', onMediaElementPause);
-            window.mediaElement.addEventListener('playing', onMediaElementPlaying);
+            window.mediaManager.addEventListener(cast.framework.events.EventType.TIME_UPDATE, onMediaElementTimeUpdate);
+            window.mediaManager.addEventListener(cast.framework.events.EventType.REQUEST_VOLUME_CHANGE, onMediaElementVolumeChange);
+            window.mediaManager.addEventListener(cast.framework.events.EventType.PAUSE, onMediaElementPause);
+            window.mediaManager.addEventListener(cast.framework.events.EventType.PLAYING, onMediaElementPlaying);
         } else {
-            window.mediaElement.removeEventListener('timeupdate', onMediaElementTimeUpdate);
-            window.mediaElement.removeEventListener('volumechange', onMediaElementVolumeChange);
-            window.mediaElement.removeEventListener('pause', onMediaElementPause);
-            window.mediaElement.removeEventListener('playing', onMediaElementPlaying);
+            window.mediaManager.removeEventListener(cast.framework.events.EventType.TIME_UPDATE, onMediaElementTimeUpdate);
+            window.mediaManager.removeEventListener(cast.framework.events.EventType.REQUEST_VOLUME_CHANGE, onMediaElementVolumeChange);
+            window.mediaManager.removeEventListener(cast.framework.events.EventType.PAUSE, onMediaElementPause);
+            window.mediaManager.removeEventListener(cast.framework.events.EventType.PLAYING, onMediaElementPlaying);
         }
     }
 
     function isPlaying() {
-        return window.playlist.length > 0;
+        return window.mediaManager.getPlayerState() === cast.framework.messages.PlayerState.PLAYING;
     }
 
     window.addEventListener('beforeunload', function () {
@@ -94,26 +104,25 @@
         embyActions.reportPlaybackStopped($scope, getReportingParams($scope));
     });
 
-    mgr.defaultOnPlay = mgr.onPlay;
-    mgr.onPlay = function (event) {
+    mgr.defaultOnPlay = function (event) {
 
         embyActions.play($scope, event);
         embyActions.reportPlaybackProgress($scope, getReportingParams($scope));
     };
+    mgr.addEventListener('PLAY', mgr.defaultOnPlay);
 
-    mgr.defaultOnPause = mgr.onPause;
-    mgr.onPause = function (event) {
-        mgr.defaultOnPause(event);
+    mgr.defaultOnPause = function (event) {
         embyActions.pause($scope);
         embyActions.reportPlaybackProgress($scope, getReportingParams($scope));
     };
+    mgr.addEventListener('PAUSE', mgr.defaultOnPause);
 
-    mgr.defaultOnStop = mgr.onStop;
-    mgr.onStop = function (event) {
+    mgr.defaultOnStop = function (event) {
         stop();
     };
+    mgr.addEventListener('ABORT', mgr.defaultOnStop);
 
-    mgr.onEnded = function () {
+    mgr.addEventListener('ENDED', function () {
 
         // Ignore
         if ($scope.isChangingStream) {
@@ -130,7 +139,7 @@
             window.currentPlaylistIndex = -1;
             embyActions.displayUserInfo($scope, $scope.serverAddress, $scope.accessToken, $scope.userId);
         }
-    };
+    });
 
     function stop(nextMode) {
 
@@ -148,15 +157,14 @@
             promise = embyActions.reportPlaybackStopped($scope, reportingParams);
         }
 
-        clearMediaElement();
-
         promise = promise || Promise.resolve();
 
         return promise;
     }
 
-    window.castReceiverContext.onSystemVolumeChanged = function (event) {
-        console.log("### Cast Receiver Manager - System Volume Changed : " + JSON.stringify(event));
+    window.castReceiverContext.addEventListener(cast.framework.system.EventType.SYSTEM_VOLUME_CHANGED, function (event) {
+        debugger;
+        console.log("### Cast Receiver Manager - System Volume Changed : " + JSON.stringify(event.data));
 
         // See cast.receiver.media.Volume
         console.log("### Volume: " + event.data['level'] + " is muted? " + event.data['muted']);
@@ -167,7 +175,7 @@
         if ($scope.userId != null) {
             reportEvent('volumechange', true);
         }
-    };
+    });
 
     console.log('Application is ready, starting system');
 
@@ -291,10 +299,10 @@
         }
         else if (data.command == 'PlayPause') {
 
-            if (window.mediaElement.paused) {
-                window.mediaElement.play();
+            if (window.mediaManager.getPlayerState() === cast.framework.messages.PlayerState.PAUSED) {
+                window.mediaManager.play();
             } else {
-                window.mediaElement.pause();
+                window.mediaManager.pause();
             }
         }
         else if (data.command == 'Pause') {
@@ -390,6 +398,7 @@
     }
 
     function changeStream(ticks, params) {
+        debugger;
 
         if (ticks) {
             ticks = parseInt(ticks);
@@ -460,28 +469,6 @@
 
             setSrcIntoRenderer(streamInfo);
         }
-    }
-
-    function setSrcIntoRenderer(streamInfo) {
-
-        var url = streamInfo.url;
-
-        console.log('new media url: ' + url);
-        window.mediaElement.src = url;
-        window.mediaElement.autoplay = true;
-
-        setStartPositionTicks(streamInfo.startPositionTicks || 0);
-
-        window.mediaElement.play();
-
-        $scope.mediaSource = streamInfo.mediaSource;
-        setTextTrack($scope, streamInfo.subtitleStreamUrl);
-
-        setTimeout(function () {
-
-            $scope.isChangingStream = false;
-
-        }, 1000);
     }
 
     // Create a message handler for the custome namespace channel
@@ -893,10 +880,11 @@
 
         var loadRequestData = new cast.framework.messages.LoadRequestData();
         loadRequestData.media = mediaInfo;
-        loadRequestData.autoplay = true;
+        loadRequestData.autoplay = false;
 
         embyActions.load($scope, mediaInfo.customData, item);
         window.mediaManager.load(loadRequestData);
+
         $scope.PlaybackMediaSource = mediaSource;
 
         var autoplay = true;
@@ -912,7 +900,7 @@
         if (autoplay) {
             //window.mediaElement.pause();
             console.log('calling embyActions.delayStart');
-            //embyActions.delayStart($scope);
+            embyActions.delayStart($scope);
         }
         enableTimeUpdateListener(false);
         enableTimeUpdateListener(true);

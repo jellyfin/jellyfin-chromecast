@@ -130,7 +130,7 @@
         }
 
         var url = getUrl($scope.serverAddress, "Sessions/Playing/Progress");
-
+        debugger;
         restartPingInterval($scope, options);
         lastTranscoderPing = new Date().getTime();
 
@@ -412,7 +412,8 @@
             factory.reportPlaybackStart($scope, getReportingParams($scope)).then(function () {
 
                 console.log('calling mediaElement.play');
-                window.mediaElement.play();
+                debugger;
+                window.mediaManager.play();
                 setAppStatus('playing-with-controls');
                 if ($scope.mediaType == "Audio") {
                     setAppStatus('audio');
@@ -433,17 +434,7 @@
             setTimeout(function () {
 
                 var startTime = new Date();
-                window.mediaElement.play();
-                window.mediaElement.pause();
-                while (typeof (window.mediaElement.buffered) === 'undefined' || window.mediaElement.buffered.length === 0) {
-                    if ((new Date()) - startTime > 25000) {
-                        setAppStatus('waiting');
-                        factory.setApplicationClose();
-                        return;
-                    }
-                }
-
-                window.mediaManager.defaultOnPlay(event);
+                window.mediaManager.play();
 
                 setAppStatus('playing-with-controls');
                 if ($scope.mediaType == "Audio") {
