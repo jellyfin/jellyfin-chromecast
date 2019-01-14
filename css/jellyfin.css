@@ -575,3 +575,7 @@ body {
         -webkit-transform: rotate(360deg);
     }
 }
+
+.overlay, .breakOverlay {
+    display: none !important;
+}

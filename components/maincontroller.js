@@ -660,8 +660,6 @@
         $scope.isChangingStream = false;
         setAppStatus('loading');
 
-        unloadPlayer();
-
         getMaxBitrate(item.MediaType).then(function (maxBitrate) {
 
             var deviceProfile = getDeviceProfile(maxBitrate);
@@ -834,8 +832,6 @@
 
         setAppStatus('loading');
 
-        unloadPlayer();
-
         var streamInfo = createStreamInfo(item, mediaSource, options.startPositionTicks);
 
         var url = streamInfo.url;
@@ -874,7 +870,7 @@
 
         var loadRequestData = new cast.framework.messages.LoadRequestData();
         loadRequestData.media = mediaInfo;
-        loadRequestData.autoplay = false;
+        loadRequestData.autoplay = true;
 
         embyActions.load($scope, mediaInfo.customData, item);
         window.mediaManager.load(loadRequestData);

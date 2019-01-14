@@ -412,7 +412,7 @@
             factory.reportPlaybackStart($scope, getReportingParams($scope)).then(function () {
 
                 console.log('calling mediaElement.play');
-                window.mediaManager.play();
+                //window.mediaManager.play();
                 setAppStatus('playing-with-controls');
                 if ($scope.mediaType == "Audio") {
                     setAppStatus('audio');

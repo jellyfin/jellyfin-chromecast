@@ -15,18 +15,6 @@ window.playlist = [];
 window.currentPlaylistIndex = -1;
 window.repeatMode = "RepeatNone";
 
-function unloadPlayer() {
-    if (window.player !== null && window.player !== undefined) {
-        window.player.unload();    // Must unload before starting again.
-        window.player = null;
-    }
-}
-
-window.VolumeInfo = {
-    IsMuted: false,
-    Level: 100
-};
-
 function broadcastToMessageBus(msg) {
 
     window.castReceiverContext.sendCustomMessage('urn:x-cast:com.jellyfin.cast', window.senderId, msg);
