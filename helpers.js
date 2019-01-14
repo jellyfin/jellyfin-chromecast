@@ -154,11 +154,6 @@ function getSenderReportingData($scope, reportingData) {
             nowPlayingItem.PrimaryImageItemId = item.AlbumId;
             nowPlayingItem.PrimaryImageTag = item.AlbumPrimaryImageTag;
         }
-        else if (item.SeriesPrimaryImageTag) {
-
-            nowPlayingItem.PrimaryImageItemId = item.SeriesId;
-            nowPlayingItem.PrimaryImageTag = item.SeriesPrimaryImageTag;
-        }
 
         if (item.BackdropImageTags && item.BackdropImageTags.length) {
 
@@ -204,17 +199,9 @@ function resetPlaybackScope($scope) {
     setAppStatus('waiting');
 
     setStartPositionTicks(0);
-    setRuntimeTicks(0);
-    setPoster('');
-    setBackdrop('');
     setWaitingBackdrop('');
-    setMediaTitle('');
-    setSecondaryTitle('');
-    setCurrentPlayingTime(0);
     $scope.mediaType = '';
     $scope.itemId = '';
-    setArtist('');
-    setAlbumTitle('');
 
     $scope.audioStreamIndex = null;
     $scope.subtitleStreamIndex = null;
@@ -235,62 +222,62 @@ function resetPlaybackScope($scope) {
     // Detail content
     setLogo('');
     setDetailImage('');
-    setOverview('');
-    setGenres('');
-    setDisplayName('');
-    document.getElementById('miscInfo').innerHTML = '';
-    document.getElementById('playedIndicator').style.display = 'none';
-    setHasPlayedPercentage(false);
-    setPlayedPercentage(0);
 }
 
-function setMetadata(item, metadata, datetime) {
+function getMetadata(item, datetime) {
+    var metadata;
+    var posterUrl = '';
 
+    if (item.SeriesPrimaryImageTag) {
+        posterUrl = $scope.serverAddress + '/mediabrowser/Items/' + item.SeriesId + '/Images/Primary?tag=' + item.SeriesPrimaryImageTag;
+    }
+    else if (item.AlbumPrimaryImageTag) {
+        posterUrl = $scope.serverAddress + '/mediabrowser/Items/' + item.AlbumId + '/Images/Primary?tag=' + (item.AlbumPrimaryImageTag);
+    }
+    else if (item.PrimaryImageTag) {
+        posterUrl = $scope.serverAddress + '/mediabrowser/Items/' + item.Id + '/Images/Primary?tag=' + (item.PrimaryImageTag);
+    }
+    else if (item.ImageTags.Primary) {
+        posterUrl = $scope.serverAddress + '/mediabrowser/Items/' + item.Id + '/Images/Primary?tag=' + (item.ImageTags.Primary);
+    }
+    
     if (item.Type == 'Episode') {
-
-        //metadata.type = chrome.cast.media.MetadataType.TV_SHOW;
-
-        metadata.episodeTitle = item.Name;
+        metadata = new cast.framework.messages.TvShowMediaMetadata();
+        metadata.seriesTitle = item.SeriesName;
 
         if (item.PremiereDate) {
             metadata.originalAirdate = datetime.parseISO8601Date(item.PremiereDate).toISOString();
         }
 
-        metadata.seriesTitle = item.SeriesName;
-
         if (item.IndexNumber != null) {
-            metadata.episode = metadata.episodeNumber = item.IndexNumber;
+            metadata.episode = item.IndexNumber;
         }
 
         if (item.ParentIndexNumber != null) {
-            metadata.season = metadata.seasonNumber = item.ParentIndexNumber;
+            metadata.season = item.ParentIndexNumber;
         }
     }
 
     else if (item.Type == 'Photo') {
 
-        //metadata.type = chrome.cast.media.MetadataType.PHOTO;
+        metadata = new cast.framework.messages.PhotoMediaMetadata();
 
         if (item.PremiereDate) {
             metadata.creationDateTime = datetime.parseISO8601Date(item.PremiereDate).toISOString();
         }
+        // TODO more metadata?
     }
 
     else if (item.MediaType == 'Audio') {
 
-        //metadata.type = chrome.cast.media.MetadataType.MUSIC_TRACK;
-
-        if (item.ProductionYear) {
-            metadata.releaseYear = item.ProductionYear;
-        }
+        metadata = new cast.framework.messages.MusicTrackMediaMetadata();
+        metadata.songName = item.Name;
+        metadata.artist = item.Artists & item.Artists.length ? item.Artists[0] : '';
+        metadata.albumArtist = item.AlbumArtist;
 
         if (item.PremiereDate) {
             metadata.releaseDate = datetime.parseISO8601Date(item.PremiereDate).toISOString();
         }
-
-        metadata.songName = item.Name;
-        metadata.artist = item.Artists & item.Artists.length ? item.Artists[0] : '';
-        metadata.albumArtist = item.AlbumArtist;
 
         if (item.IndexNumber != null) {
             metadata.trackNumber = item.IndexNumber;
@@ -311,36 +298,25 @@ function setMetadata(item, metadata, datetime) {
 
     else if (item.MediaType == 'Movie') {
 
-        //metadata.type = chrome.cast.media.MetadataType.MOVIE;
-
-        if (item.ProductionYear) {
-            metadata.releaseYear = item.ProductionYear;
-        }
-
+        metadata = new cast.framework.messages.MovieMediaMetadata();
         if (item.PremiereDate) {
             metadata.releaseDate = datetime.parseISO8601Date(item.PremiereDate).toISOString();
         }
     }
 
     else {
-
-        //metadata.type = chrome.cast.media.MetadataType.GENERIC;
-
-        if (item.ProductionYear) {
-            metadata.releaseYear = item.ProductionYear;
-        }
+        metadata = new cast.framework.messages.GenericMediaMetadata();
 
         if (item.PremiereDate) {
             metadata.releaseDate = datetime.parseISO8601Date(item.PremiereDate).toISOString();
         }
+        if (item.Studios && item.Studios.length) {
+            metadata.Studio = item.Studios[0];
+        }
     }
 
     metadata.title = item.Name;
-
-    if (item.Studios && item.Studios.length) {
-        metadata.Studio = item.Studios[0];
-    }
-
+    metadata.images = [new cast.framework.messages.Image(posterUrl)];
     return metadata;
 }
 
@@ -1013,18 +989,6 @@ function setAppStatus(status) {
     $scope.status = status;
     document.body.className = status;
 }
-function setDisplayName(name) {
-    $scope.displayName = name;
-    document.querySelector('.displayName').innerHTML = name || '';
-}
-function setGenres(name) {
-    $scope.genres = name;
-    document.querySelector('.genres').innerHTML = name || '';
-}
-function setOverview(name) {
-    $scope.overview = name;
-    document.querySelector('.overview').innerHTML = name || '';
-}
 function setInnerHTML(selector, html, autoHide) {
     var elems = document.querySelectorAll(selector);
     for (var i = 0, length = elems.length; i < length; i++) {
@@ -1040,126 +1004,21 @@ function setInnerHTML(selector, html, autoHide) {
         }
     }
 }
-function setMediaTitle(name) {
-    $scope.mediaTitle = name;
-    setInnerHTML('.media-title', name);
-}
-function setSecondaryTitle(name) {
-    $scope.secondaryTitle = name;
-    setInnerHTML('.media-secondary-title', name, true);
-}
-function setArtist(name) {
-    $scope.artist = name;
-    setInnerHTML('.media-artist', name, true);
-}
-function setAlbumTitle(name) {
-
-    $scope.albumTitle = name;
-    var elems = document.querySelectorAll('.media-album-title');
-    for (var i = 0, length = elems.length; i < length; i++) {
-
-        if (elems[i].classList.contains('musicTitle')) {
-            elems[i].innerHTML = '(from the album "' + (name || '') + '")';
-        } else {
-            elems[i].innerHTML = name || ''
-        }
-
-        if (name) {
-            elems[i].classList.remove('hide');
-        } else {
-            elems[i].classList.add('hide');
-        }
-    }
-}
-function setPlayedPercentage(value) {
-    $scope.playedPercentage = value;
-    document.querySelector('.itemProgressBar').value = value || 0;
-}
-function setPoster(src) {
-    $scope.poster = src;
-    var elems = document.querySelectorAll('.media-poster');
-    for (var i = 0, length = elems.length; i < length; i++) {
-
-        elems[i].src = src || ''
-
-        if (src) {
-            elems[i].classList.remove('hide');
-        } else {
-            elems[i].classList.add('hide');
-        }
-    }
-}
 
 function setStartPositionTicks(value) {
-
     $scope.startPositionTicks = value;
-
-    updateCurrentPlaybackProgress();
-    updateProgressBar();
-}
-
-function setCurrentPlayingTime(value) {
-
-    updateCurrentPlaybackProgress();
-    updateProgressBar();
-}
-
-function setRuntimeTicks(value) {
-
-    $scope.runtimeTicks = value;
-    document.querySelector('.player-duration').innerHTML = $scope.runtimeTicks ? datetime.getDisplayRunningTime($scope.runtimeTicks) : '';
-    updateProgressBar();
-}
-
-function updateCurrentPlaybackProgress() {
-
-    var ticks = getCurrentPositionTicks($scope);
-
-    document.querySelector('.player-current-time').innerHTML = ticks ? datetime.getDisplayRunningTime(ticks) : '';
 }
 
 function setWaitingBackdrop(src) {
     document.querySelector('#waiting-container-backdrop').style.backgroundImage = src ? 'url(' + src + ')' : ''
 }
 
-function setBackdrop(src) {
-    document.querySelector('#backdrop').style.backgroundImage = src ? 'url(' + src + ')' : ''
-}
-
-function setPaused(value) {
-    $scope.paused = value;
-
-    if (value) {
-        document.querySelector('.glyphicon-pause').classList.remove('hide');
-        document.querySelector('.glyphicon-play').classList.add('hide');
-    } else {
-        document.querySelector('.glyphicon-pause').classList.add('hide');
-        document.querySelector('.glyphicon-play').classList.remove('hide');
-    }
-}
-
-function setHasPlayedPercentage(value) {
-    if (value) {
-        document.querySelector('.detailImageProgressContainer').classList.remove('hide');
-    } else {
-        document.querySelector('.detailImageProgressContainer').classList.add('hide');
-    }
-}
-
 function setLogo(src) {
-    document.querySelector('.detailLogo').style.backgroundImage = src ? 'url(' + src + ')' : ''
+    //document.querySelector('.detailLogo').style.backgroundImage = src ? 'url(' + src + ')' : ''
 }
 
 function setDetailImage(src) {
-    document.querySelector('.detailImage').style.backgroundImage = src ? 'url(' + src + ')' : ''
-}
-
-function updateProgressBar() {
-
-    var ticks = getCurrentPositionTicks($scope);
-
-    var width = (100 * ticks / $scope.runtimeTicks) + '%';
-    document.querySelector('#player-progress-bar').style.width = width;
+    //document.querySelector('.detailImage').style.backgroundImage = src ? 'url(' + src + ')' : ''
 }
 
 function extend(target, source) {

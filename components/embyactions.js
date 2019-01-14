@@ -1,51 +1,6 @@
 ﻿define(['datetime', 'fetchhelper'], function (datetime, fetchhelper) {
 
     var factory = {};
-    var controlsPromise, closeAppPromise;
-
-    var setControls = function ($scope) {
-        clearTimeout(controlsPromise);
-        controlsPromise = setTimeout(function () {
-            if ($scope.status == 'playing-with-controls') {
-                setAppStatus('playing');
-            }
-        }, 8000);
-    };
-
-    var setApplicationClose = function () {
-        clearTimeout(closeAppPromise);
-        closeAppPromise = setTimeout(function () {
-            window.close();
-        }, 3600000, false);
-    };
-
-    var clearTimeouts = function () {
-        clearTimeout(controlsPromise);
-        clearTimeout(closeAppPromise);
-    };
-
-    var fallBackBackdropImg = function ($scope, src) {
-        if (!src) {
-            setBackdrop("img/bg.jpg");
-            return;
-        }
-
-        var imageOnload = function () {
-            var imageSrc = this.src;
-            setBackdrop(imageSrc);
-        };
-
-        var loadElement = document.createElement('img');
-        loadElement.src = src;
-        loadElement.addEventListener('error', function () {
-            loadElement.removeEventListener('load', imageOnload);
-        });
-
-        loadElement.addEventListener('load', imageOnload);
-        setTimeout(function () {
-            loadElement.removeEventListener('load', imageOnload);
-        }, 30000);
-    };
 
     var pingInterval;
     var lastTranscoderPing = 0;
@@ -283,9 +238,6 @@
         setWaitingBackdrop(backdropUrl);
 
         setLogo(getLogoUrl(item, serverAddress) || '');
-        setOverview(item.Overview || '');
-        setGenres(item.Genres.join(' / '));
-        setDisplayName(getDisplayName(item));
         document.getElementById('miscInfo').innerHTML = getMiscInfoHtml(item, datetime) || '';
         document.getElementById('detailRating').innerHTML = getRatingHtml(item);
 
@@ -306,14 +258,7 @@
         }
 
         if (item.UserData.PlayedPercentage && item.UserData.PlayedPercentage < 100 && !item.IsFolder) {
-            setHasPlayedPercentage(false);
-            setPlayedPercentage(item.UserData.PlayedPercentage);
-
             detailImageUrl += "&PercentPlayed=" + parseInt(item.UserData.PlayedPercentage);
-
-        } else {
-            setHasPlayedPercentage(false);
-            setPlayedPercentage(0);
         }
 
         setDetailImage(detailImageUrl);
@@ -352,84 +297,18 @@
 
         resetPlaybackScope($scope);
 
-        clearTimeouts();
-
         extend($scope, customData);
 
         var data = serverItem;
 
         $scope.item = data;
 
-        var isSeries = !!data.SeriesName;
-        var backdropUrl = '';
-
-        if (data.BackdropImageTags && data.BackdropImageTags.length) {
-            backdropUrl = $scope.serverAddress + '/mediabrowser/Items/' + data.Id + '/Images/Backdrop/0?tag=' + data.BackdropImageTags[0];
-        } else {
-            if (data.ParentBackdropItemId && data.ParentBackdropImageTags && data.ParentBackdropImageTags.length) {
-                backdropUrl = $scope.serverAddress + '/mediabrowser/Items/' + data.ParentBackdropItemId + '/Images/Backdrop/0?tag=' + data.ParentBackdropImageTags[0];
-            }
-        }
-
-        var posterUrl = '';
-
-        if (isSeries && data.SeriesPrimaryImageTag) {
-            posterUrl = $scope.serverAddress + '/mediabrowser/Items/' + data.SeriesId + '/Images/Primary?tag=' + data.SeriesPrimaryImageTag;
-        }
-        else if (data.AlbumPrimaryImageTag) {
-            posterUrl = $scope.serverAddress + '/mediabrowser/Items/' + data.AlbumId + '/Images/Primary?tag=' + (data.AlbumPrimaryImageTag);
-        }
-        else if (data.PrimaryImageTag) {
-            posterUrl = $scope.serverAddress + '/mediabrowser/Items/' + data.Id + '/Images/Primary?tag=' + (data.PrimaryImageTag);
-        }
-        else if (data.ImageTags.Primary) {
-            posterUrl = $scope.serverAddress + '/mediabrowser/Items/' + data.Id + '/Images/Primary?tag=' + (data.ImageTags.Primary);
-        }
-
-        setPoster(posterUrl);
-        fallBackBackdropImg($scope, backdropUrl);
-        setMediaTitle(isSeries ? data.SeriesName : data.Name);
-        setSecondaryTitle(isSeries ? data.Name : '');
-
-        if (data.MediaType == "Audio" && data.Artists && data.Album) {
-            setArtist(data.Artists[0]);
-            setAlbumTitle(data.Album);
-        }
-
         setAppStatus('backdrop');
         $scope.mediaType = data.MediaType;
-
-        setLogo(getLogoUrl(data, $scope.serverAddress) || '');
-
-        clearTimeouts();
-    };
-
-    factory.delayStart = function ($scope) {
-        setTimeout(function () {
-
-            console.log('reporting playback start');
-
-            factory.reportPlaybackStart($scope, getReportingParams($scope)).then(function () {
-
-                console.log('calling mediaElement.play');
-                //window.mediaManager.play();
-                setAppStatus('playing-with-controls');
-                if ($scope.mediaType == "Audio") {
-                    setAppStatus('audio');
-                }
-                setPaused(false);
-            });
-
-            setControls($scope);
-
-        }, 700);
     };
 
     factory.play = function ($scope, event) {
-        setPaused(false);
-
         if ($scope.status == 'backdrop' || $scope.status == 'playing-with-controls' || $scope.status == 'playing' || $scope.status == 'audio') {
-            clearTimeouts();
             setTimeout(function () {
 
                 var startTime = new Date();
@@ -439,31 +318,14 @@
                 if ($scope.mediaType == "Audio") {
                     setAppStatus('audio');
                 }
-
-                setControls($scope);
-
             }, 20);
         }
-    };
-
-    factory.pause = function ($scope) {
-        setAppStatus('playing-with-controls');
-        if ($scope.mediaType == "Audio") {
-            setAppStatus('audio');
-        }
-        setPaused(true);
-        setCurrentPlayingTime(window.mediaElement.currentTime);
-        clearTimeouts();
     };
 
     factory.stop = function ($scope) {
 
         setTimeout(function () {
-
-            clearTimeouts();
             setAppStatus('waiting');
-            setApplicationClose();
-
         }, 20);
     };
 
@@ -632,8 +494,6 @@
             query: options
         });
     };
-
-    factory.setApplicationClose = setApplicationClose;
 
     return factory;
 });

@@ -26,8 +26,6 @@
 
     init();
 
-    embyActions.setApplicationClose();
-
     var mgr = window.mediaManager;
 
     var broadcastToServer = new Date();
@@ -66,7 +64,6 @@
         if ($scope.isChangingStream) {
             return;
         }
-
         reportEvent('playstatechange', true);
     }
 
@@ -112,7 +109,6 @@
     mgr.addEventListener('PLAY', mgr.defaultOnPlay);
 
     mgr.defaultOnPause = function (event) {
-        embyActions.pause($scope);
         embyActions.reportPlaybackProgress($scope, getReportingParams($scope));
     };
     mgr.addEventListener('PAUSE', mgr.defaultOnPause);
@@ -129,7 +125,6 @@
             return;
         }
 
-        embyActions.setApplicationClose();
         enableTimeUpdateListener(false);
         embyActions.reportPlaybackStopped($scope, getReportingParams($scope));
         init();
@@ -858,7 +853,9 @@
             canClientSeek: streamInfo.canClientSeek,
             playSessionId: playSessionId
         }
-        mediaInfo.metadata = new cast.framework.messages.GenericMediaMetadata();
+        debugger;
+        mediaInfo.metadata = getMetadata(item, datetime);
+        
         mediaInfo.streamType = cast.framework.messages.StreamType.BUFFERED;
         mediaInfo.tracks = streamInfo.tracks;
 
@@ -877,8 +874,6 @@
 
         $scope.PlaybackMediaSource = mediaSource;
 
-        var autoplay = true;
-
         console.log('setting src to ' + url);
         // window.mediaElement.autoplay = true;
         // window.mediaElement.src = url;
@@ -886,16 +881,22 @@
 
         // console.log('calling mediaElement.load');
         // window.mediaElement.load();
-
-        if (autoplay) {
-            //window.mediaElement.pause();
-            console.log('calling embyActions.delayStart');
-            embyActions.delayStart($scope);
+        if (item.BackdropImageTags && item.BackdropImageTags.length) {
+            backdropUrl = $scope.serverAddress + '/mediabrowser/Items/' + item.Id + '/Images/Backdrop/0?tag=' + item.BackdropImageTags[0];
+        } else if (item.ParentBackdropItemId && item.ParentBackdropImageTags && item.ParentBackdropImageTags.length) {
+            backdropUrl = $scope.serverAddress + '/mediabrowser/Items/' + item.ParentBackdropItemId + '/Images/Backdrop/0?tag=' + item.ParentBackdropImageTags[0];
         }
+        var logoUrl = getLogoUrl(item, item.serverAddress);
+        let playerElement = document.getElementsByTagName("cast-media-player")[0];
+        playerElement.style.setProperty('--background-image', 'url("' + backdropUrl + '")');
+        // TODO why you no work???
+        document.body.style.setProperty('--playback-logo-image', 'url("' + logoUrl + '")');
+
+        embyActions.reportPlaybackStart($scope, getReportingParams($scope));
+
+        // TODO stupid hack, should probably just always have the listeners active until app close
         enableTimeUpdateListener(false);
         enableTimeUpdateListener(true);
-
-        setMetadata(item, mediaInfo.metadata, datetime);
 
         // We use false as we do not want to broadcast the new status yet
         // we will broadcast manually when the media has been loaded, this
