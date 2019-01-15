@@ -14,8 +14,6 @@
     // media content buffered. Default is 10.
     playbackConfig.autoResumeDuration = 5;
 
-    setInterval(updateTimeOfDay, 40000);
-
     // According to cast docs this should be disabled when not needed
     //cast.receiver.logger.setLevelValue(cast.receiver.LoggerLevel.ERROR);
 

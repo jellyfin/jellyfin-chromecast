@@ -460,38 +460,6 @@ function getStreamByIndex(streams, type, index) {
     })[0];
 }
 
-function updateTimeOfDay() {
-
-    var now = new Date();
-
-    var time = now.toLocaleTimeString().toLowerCase();
-
-    var text = time.split(':');
-    var suffix = '';
-
-    if (text.length == 3) {
-
-        // Fix for toLocaleTimeString returning wrong hour
-        if (time.indexOf('pm') != -1 || time.indexOf('am') != -1) {
-            text[0] = (now.getHours() % 12) || 12;
-        }
-
-        text = text[0] + ':' + text[1];
-
-        if (time.indexOf('pm') != -1) {
-            suffix = 'pm';
-        }
-        else if (time.indexOf('am') != -1) {
-            suffix = 'am';
-        }
-
-        time = text;
-    }
-
-    setInnerHTML('.timePrefix', time);
-    setInnerHTML('.timeSuffix', suffix);
-}
-
 function getSecurityHeaders(accessToken, userId) {
 
     var auth = 'MediaBrowser Client="Chromecast", Device="' + deviceInfo.deviceName + '", DeviceId="' + deviceInfo.deviceId + '", Version="' + deviceInfo.versionNumber + '"';
@@ -989,6 +957,18 @@ function setAppStatus(status) {
     $scope.status = status;
     document.body.className = status;
 }
+function setDisplayName(name) {
+    $scope.displayName = name;
+    document.querySelector('.displayName').innerHTML = name || '';
+}
+function setGenres(name) {
+    $scope.genres = name;
+    document.querySelector('.genres').innerHTML = name || '';
+}
+function setOverview(name) {
+    $scope.overview = name;
+    document.querySelector('.overview').innerHTML = name || '';
+}
 function setInnerHTML(selector, html, autoHide) {
     var elems = document.querySelectorAll(selector);
     for (var i = 0, length = elems.length; i < length; i++) {
@@ -1004,6 +984,10 @@ function setInnerHTML(selector, html, autoHide) {
         }
     }
 }
+function setPlayedPercentage(value) {
+    $scope.playedPercentage = value;
+    document.querySelector('.itemProgressBar').value = value || 0;
+}
 
 function setStartPositionTicks(value) {
     $scope.startPositionTicks = value;
@@ -1013,12 +997,20 @@ function setWaitingBackdrop(src) {
     document.querySelector('#waiting-container-backdrop').style.backgroundImage = src ? 'url(' + src + ')' : ''
 }
 
+function setHasPlayedPercentage(value) {
+    if (value) {
+        document.querySelector('.detailImageProgressContainer').classList.remove('hide');
+    } else {
+        document.querySelector('.detailImageProgressContainer').classList.add('hide');
+    }
+}
+
 function setLogo(src) {
-    //document.querySelector('.detailLogo').style.backgroundImage = src ? 'url(' + src + ')' : ''
+    document.querySelector('.detailLogo').style.backgroundImage = src ? 'url(' + src + ')' : ''
 }
 
 function setDetailImage(src) {
-    //document.querySelector('.detailImage').style.backgroundImage = src ? 'url(' + src + ')' : ''
+    document.querySelector('.detailImage').style.backgroundImage = src ? 'url(' + src + ')' : ''
 }
 
 function extend(target, source) {

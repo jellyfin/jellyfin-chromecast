@@ -238,6 +238,9 @@
         setWaitingBackdrop(backdropUrl);
 
         setLogo(getLogoUrl(item, serverAddress) || '');
+        setOverview(item.Overview || '');
+        setGenres(item.Genres.join(' / '));
+        setDisplayName(getDisplayName(item));
         document.getElementById('miscInfo').innerHTML = getMiscInfoHtml(item, datetime) || '';
         document.getElementById('detailRating').innerHTML = getRatingHtml(item);
 
@@ -258,7 +261,14 @@
         }
 
         if (item.UserData.PlayedPercentage && item.UserData.PlayedPercentage < 100 && !item.IsFolder) {
+            setHasPlayedPercentage(false);
+            setPlayedPercentage(item.UserData.PlayedPercentage);
+
             detailImageUrl += "&PercentPlayed=" + parseInt(item.UserData.PlayedPercentage);
+
+        } else {
+            setHasPlayedPercentage(false);
+            setPlayedPercentage(0);
         }
 
         setDetailImage(detailImageUrl);

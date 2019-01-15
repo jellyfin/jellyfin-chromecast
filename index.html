@@ -16,6 +16,21 @@
         </div>
     </div>
     <cast-media-player id="video-player" crossorigin="anonymous" preload="auto"></cast-media-player>
+    <div class="detailContent">		
+        <div class="detailImage">
+            <div id="playedIndicator"></div>
+			
+            <div class="detailImageProgressContainer"><progress class="itemProgressBar" min="0" max="100"></progress></div>
+        </div>
+		
+        <div class="detailInfo">
+            <p class="displayNameContainer"><span class="displayName"></span><span id="miscInfo"></span></p>
+            <div id="detailRating"></div>
+            <p class="genres"></p>
+            <p class="overview"></p>
+        </div>
+    </div>
+    <div class="detailLogo"></div>
     <script src="jellyfin-web/src/bower_components/requirejs/require.js"></script>
     <script>
         require(['app.js?t=' + new Date().getTime()]);
