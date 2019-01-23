@@ -164,6 +164,13 @@
         }
     });
 
+    window.mediaManager.addEventListener(
+        cast.framework.events.EventType.PLAYER_LOAD_COMPLETE, () => {
+            const textTracksManager = window.mediaManager.getTextTracksManager();
+            var activeId = window.mediaManager.getMediaInformation().customData.subtitleStreamIndex;
+            textTracksManager.setActiveByIds([activeId]);
+        });
+
     console.log('Application is ready, starting system');
 
     function cleanName(name) {
@@ -379,9 +386,9 @@
             ticks = parseInt(ticks);
         }
 
-        if ($scope.canClientSeek && params == null) {
+        if (window.mediaManager.getMediaInformation().customData.canClientSeek && params == null) {
 
-            window.mediaElement.currentTime = ticks / 10000000;
+            window.mediaManager.seek(ticks / 10000000);
             embyActions.reportPlaybackProgress($scope, getReportingParams($scope));
             return;
         }
@@ -436,13 +443,15 @@
             window.mediaElement.pause();
 
             embyActions.stopActiveEncodings(playSessionId).then(function () {
-
-                setSrcIntoRenderer(streamInfo);
+                window.mediaManager.getMediaInformation().contentId = streamInfo.url;
+                window.mediaManager.play();
+                //setSrcIntoRenderer(streamInfo);
             });
 
         } else {
-
-            setSrcIntoRenderer(streamInfo);
+            window.mediaManager.getMediaInformation().contentId = streamInfo.url;
+            window.mediaManager.play();
+            //setSrcIntoRenderer(streamInfo);
         }
     }
 
@@ -640,10 +649,16 @@
         });
 
         profile.SubtitleProfiles = [];
-        profile.SubtitleProfiles.push({
-            Format: 'js',
-            Method: 'External'
-        });
+        profile.SubtitleProfiles.push(
+            {
+                Format: 'vtt',
+                Method: 'External'
+            },
+            {
+                Format: 'vtt',
+                Method: 'Hls'
+            }
+        );
 
         return profile;
     }
@@ -787,11 +802,11 @@
 
         try {
             var tracks = window.mediaManager.getTextTracksManager().getTracks();
-            var subtitleTrack = tracks.filter(function(track) {
-                return track.Index === index && track.Type === 'SUBTITLES'
+            var subtitleTrack = tracks.find(function(track) {
+                return track.trackId === index;
             });
             if (subtitleTrack) {
-                window.mediaManager.getTextTracksManager().setActiveByIds([subtitleTrack.Index]);
+                window.mediaManager.getTextTracksManager().setActiveByIds([subtitleTrack.trackId]);
             }
         } catch(e) {
             console.log("Setting subtitle track failed: " + e);
@@ -820,23 +835,12 @@
         //     });
         // }
     }
-
-    function playMediaSource(playSessionId, item, mediaSource, options) {
-
-        setAppStatus('loading');
-
-        var streamInfo = createStreamInfo(item, mediaSource, options.startPositionTicks);
-
-        var url = streamInfo.url;
-        //window.mediaManager.getTextTracksManager().addTracks(streamInfo.tracks);
-        console.log('setting setTextTrack to ' + (streamInfo.subtitleStreamUrl || ''));
-        //setTextTrack($scope, streamInfo.subtitleStreamUrl);
-
+    function createMediaInformation(playSessionId, item, streamInfo) {
         var mediaInfo = new cast.framework.messages.MediaInformation();
-        mediaInfo.contentId = url;
+        mediaInfo.contentId = streamInfo.url;
         mediaInfo.contentType = streamInfo.contentType;
         mediaInfo.customData = {
-            startPositionTicks: options.startPositionTicks || 0,
+            startPositionTicks: streamInfo.startPositionTicks || 0,
             serverAddress: item.serverAddress,
             userId: item.userId,
             itemId: item.Id,
@@ -863,6 +867,21 @@
 
         mediaInfo.customData.startPositionTicks = streamInfo.startPosition || 0;
 
+        return mediaInfo;
+    }
+
+    function playMediaSource(playSessionId, item, mediaSource, options) {
+
+        setAppStatus('loading');
+
+        var streamInfo = createStreamInfo(item, mediaSource, options.startPositionTicks);
+
+        var url = streamInfo.url;
+        //window.mediaManager.getTextTracksManager().addTracks(streamInfo.tracks);
+        console.log('setting setTextTrack to ' + (streamInfo.subtitleStreamUrl || ''));
+        //setTextTrack($scope, streamInfo.subtitleStreamUrl);
+
+        var mediaInfo = createMediaInformation(playSessionId, item, streamInfo);
         var loadRequestData = new cast.framework.messages.LoadRequestData();
         loadRequestData.media = mediaInfo;
         loadRequestData.autoplay = true;
@@ -873,12 +892,8 @@
         $scope.PlaybackMediaSource = mediaSource;
 
         console.log('setting src to ' + url);
-        // window.mediaElement.autoplay = true;
-        // window.mediaElement.src = url;
         $scope.mediaSource = mediaSource;
 
-        // console.log('calling mediaElement.load');
-        // window.mediaElement.load();
         if (item.BackdropImageTags && item.BackdropImageTags.length) {
             backdropUrl = $scope.serverAddress + '/mediabrowser/Items/' + item.Id + '/Images/Backdrop/0?tag=' + item.BackdropImageTags[0];
         } else if (item.ParentBackdropItemId && item.ParentBackdropImageTags && item.ParentBackdropImageTags.length) {

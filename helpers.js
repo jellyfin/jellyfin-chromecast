@@ -18,9 +18,8 @@ function getUrl(serverAddress, name) {
 function getCurrentPositionTicks($scope) {
 
     var positionTicks = window.mediaManager.getCurrentTimeSec() * 10000000;
-
-    if (!$scope.canClientSeek) {
-
+    var mediaInformation = window.mediaManager.getMediaInformation();
+    if (mediaInformation && !mediaInformation.customData.canClientSeek) {
         positionTicks += ($scope.startPositionTicks || 0);
     }
 
@@ -424,29 +423,24 @@ function createStreamInfo(item, mediaSource, startPosition) {
         startPositionTicks: startPosition
     };
 
-    if (info.subtitleStreamIndex != null) {
-        debugger;
-        var subtitleStreams = mediaSource.MediaStreams.filter(function (stream) { return stream.Type === "Subtitle"; });
-        var subtitleTracks = []
-        //getStreamByIndex(mediaSource.MediaStreams, 'Subtitle', info.subtitleStreamIndex);
-        subtitleStreams.forEach(function(subtitleStream) {
-            // && subtitleStream.DeliveryMethod == 'External') {
+    var subtitleStreams = mediaSource.MediaStreams.filter(function (stream) { return stream.Type === "Subtitle"; });
+    var subtitleTracks = []
+    subtitleStreams.forEach(function(subtitleStream) {
+        var textStreamUrl = subtitleStream.IsExternalUrl ? subtitleStream.DeliveryUrl : (getUrl(item.serverAddress, subtitleStream.DeliveryUrl));
 
-            //var textStreamUrl = subtitleStream.IsExternalUrl ? subtitleStream.DeliveryUrl : (getUrl(item.serverAddress, subtitleStream.DeliveryUrl));
+        var track = new cast.framework.messages.Track(info.subtitleStreamIndex, 'TEXT')
+        track.trackId = subtitleStream.Index;
+        track.trackContentId = textStreamUrl;
+        track.language = subtitleStream.Language;
+        track.name = subtitleStream.DisplayTitle;
+        track.trackContentType = 'text/vtt';
+        track.subtype = "SUBTITLES";
+        subtitleTracks.push(track)
+        console.log('Subtitle url: ' + info.subtitleStreamUrl);
+    });
 
-            //info.subtitleStreamUrl = textStreamUrl;
-            var track = new cast.framework.messages.Track(info.subtitleStreamIndex, 'TEXT')
-            track.trackId = subtitleStream.Index;
-            track.language = subtitleStream.Language;
-            track.name = subtitleStream.DisplayTitle;
-            track.subtype = "SUBTITLES";
-            subtitleTracks.push(track)
-            console.log('Subtitle url: ' + info.subtitleStreamUrl);
-        });
-
-        if (subtitleTracks) {
-            info.tracks = subtitleTracks;
-        }
+    if (subtitleTracks) {
+        info.tracks = subtitleTracks;
     }
 
     return info;
