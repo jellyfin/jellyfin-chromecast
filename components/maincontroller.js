@@ -1,5 +1,4 @@
 ﻿define(['datetime', 'embyactions', 'browserdeviceprofile', '//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js'], function (datetime, embyActions, deviceProfileBuilder) {
-
     window.castReceiverContext = cast.framework.CastReceiverContext.getInstance();
     window.mediaManager = window.castReceiverContext.getPlayerManager();
     window.mediaManager.addEventListener(cast.framework.events.category.CORE,
@@ -9,7 +8,6 @@
         });
       
     const playbackConfig = new cast.framework.PlaybackConfig();
-
     // Set the player to start playback as soon as there are five seconds of
     // media content buffered. Default is 10.
     playbackConfig.autoResumeDuration = 5;
@@ -164,11 +162,14 @@
         }
     });
 
+    // Set the active subtitle track once the player has loaded
     window.mediaManager.addEventListener(
         cast.framework.events.EventType.PLAYER_LOAD_COMPLETE, () => {
             const textTracksManager = window.mediaManager.getTextTracksManager();
-            var activeId = window.mediaManager.getMediaInformation().customData.subtitleStreamIndex;
-            textTracksManager.setActiveByIds([activeId]);
+            if (textTracksManager.getTracks().length > 0) {
+                var activeId = window.mediaManager.getMediaInformation().customData.subtitleStreamIndex;
+                textTracksManager.setActiveByIds([activeId]);
+            }
         });
 
     console.log('Application is ready, starting system');
@@ -401,6 +402,7 @@
         var item = $scope.item;
         var mediaType = item.MediaType;
 
+        // TODO untangle this shitty callback mess
         getMaxBitrate(mediaType).then(function (maxBitrate) {
 
             var deviceProfile = getDeviceProfile(maxBitrate);
@@ -421,38 +423,32 @@
                         //self.nextTrack();
                         return;
                     }
+                    
+                    var mediaInformation = createMediaInformation(playSessionId, item, streamInfo);
+                    var loadRequest = new cast.framework.messages.LoadRequestData();
+                    loadRequest.media = mediaInformation;
+                    loadRequest.autoplay = true;
 
-                    changeStreamToUrl(playSessionId, mediaType, streamInfo);
-                    $scope.subtitleStreamIndex = subtitleStreamIndex;
-                    $scope.audioStreamIndex = audioStreamIndex;
+                    new Promise((resolve, reject) => {
+                        // TODO something to do with HLS?
+                        var requiresStoppingTranscoding = false;
+                        if (requiresStoppingTranscoding) {
+                            window.mediaManager.pause();
+                            embyActions.stopActiveEncodings(playSessionId).then(function () {
+                                resolve();
+                            });
+                        } else {
+                            resolve();
+                        }
+                    }).then(() => {
+                        window.mediaManager.load(loadRequest);
+                        window.mediaManager.play();
+                        $scope.subtitleStreamIndex = subtitleStreamIndex;
+                        $scope.audioStreamIndex = audioStreamIndex;
+                    });
                 }
             });
         });
-    }
-
-    function changeStreamToUrl(playSessionId, mediaType, streamInfo) {
-
-        $scope.isChangingStream = true;
-
-        var requiresStoppingTranscoding = mediaType == "Video";
-        // TODO: Reactivate for HLS
-        requiresStoppingTranscoding = false;
-
-        if (requiresStoppingTranscoding) {
-
-            window.mediaElement.pause();
-
-            embyActions.stopActiveEncodings(playSessionId).then(function () {
-                window.mediaManager.getMediaInformation().contentId = streamInfo.url;
-                window.mediaManager.play();
-                //setSrcIntoRenderer(streamInfo);
-            });
-
-        } else {
-            window.mediaManager.getMediaInformation().contentId = streamInfo.url;
-            window.mediaManager.play();
-            //setSrcIntoRenderer(streamInfo);
-        }
     }
 
     // Create a message handler for the custome namespace channel
@@ -855,9 +851,9 @@
             canClientSeek: streamInfo.canClientSeek,
             playSessionId: playSessionId
         }
-        debugger;
+
         mediaInfo.metadata = getMetadata(item, datetime);
-        
+
         mediaInfo.streamType = cast.framework.messages.StreamType.BUFFERED;
         mediaInfo.tracks = streamInfo.tracks;
 
@@ -877,9 +873,6 @@
         var streamInfo = createStreamInfo(item, mediaSource, options.startPositionTicks);
 
         var url = streamInfo.url;
-        //window.mediaManager.getTextTracksManager().addTracks(streamInfo.tracks);
-        console.log('setting setTextTrack to ' + (streamInfo.subtitleStreamUrl || ''));
-        //setTextTrack($scope, streamInfo.subtitleStreamUrl);
 
         var mediaInfo = createMediaInformation(playSessionId, item, streamInfo);
         var loadRequestData = new cast.framework.messages.LoadRequestData();
@@ -917,5 +910,5 @@
         window.mediaManager.setMediaInformation(mediaInfo, false);
     }
 
-    window.castReceiverContext.start();
+    window.castReceiverContext.start(playbackConfig);
 });

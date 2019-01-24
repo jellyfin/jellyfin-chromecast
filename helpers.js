@@ -433,6 +433,7 @@ function createStreamInfo(item, mediaSource, startPosition) {
         track.trackContentId = textStreamUrl;
         track.language = subtitleStream.Language;
         track.name = subtitleStream.DisplayTitle;
+        // TODO this should not be hardcoded but we only support VTT currently
         track.trackContentType = 'text/vtt';
         track.subtype = "SUBTITLES";
         subtitleTracks.push(track)
