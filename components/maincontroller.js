@@ -171,7 +171,8 @@
                     textTracksManager.setActiveByIds([activeId]);
                 }
             }
-        });
+        }
+    );
 
     console.log('Application is ready, starting system');
 
@@ -213,7 +214,6 @@
         var systemVolume = window.castReceiverContext.getSystemVolume();
 
         if (data.command == 'PlayLast' || data.command == 'PlayNext') {
-
             translateItems(data, data.options, data.options.items, data.command);
         }
         else if (data.command == 'Shuffle') {
@@ -222,35 +222,20 @@
         else if (data.command == 'InstantMix') {
             instantMix(data, data.options, data.options.items[0]);
         }
-        else if (data.command == 'DisplayContent') {
-
-            if (!isPlaying()) {
-
-                console.log('DisplayContent');
-
-                jellyfinActions.displayItem($scope, data.serverAddress, data.accessToken, data.userId, data.options.ItemId);
-            }
-
+        else if (data.command == 'DisplayContent' && !isPlaying()) {
+            console.log('DisplayContent');
+            jellyfinActions.displayItem($scope, data.serverAddress, data.accessToken, data.userId, data.options.ItemId);
         }
-        else if (data.command == 'NextTrack') {
-
-            if (window.playlist && window.currentPlaylistIndex < window.playlist.length - 1) {
-                playNextItem({}, true);
-            }
-
+        else if (data.command == 'NextTrack' && window.playlist && window.currentPlaylistIndex < window.playlist.length - 1) {
+            playNextItem({}, true);
         }
-        else if (data.command == 'PreviousTrack') {
-
-            if (window.playlist && window.currentPlaylistIndex > 0) {
-                playPreviousItem({});
-            }
-
+        else if (data.command == 'PreviousTrack' && window.playlist && window.currentPlaylistIndex > 0) {
+            playPreviousItem({});
         }
         else if (data.command == 'SetAudioStreamIndex') {
-            setAudioStreamIndex($scope, data.options.index, data.serverAddress);
+            setAudioStreamIndex($scope, data.options.index);
         }
         else if (data.command == 'SetSubtitleStreamIndex') {
-
             setSubtitleStreamIndex($scope, data.options.index, data.serverAddress);
         }
         else if (data.command == 'VolumeUp') {
@@ -262,11 +247,8 @@
         else if (data.command == 'ToggleMute') {
             window.castReceiverContext.setSystemVolumeMuted(!systemVolume.muted);
         }
-        else if (data.command == 'Identify') {
-
-            if (!isPlaying()) {
-                jellyfinActions.displayUserInfo($scope, data.serverAddress, data.accessToken, data.userId);
-            }
+        else if (data.command == 'Identify' && !isPlaying()) {
+            jellyfinActions.displayUserInfo($scope, data.serverAddress, data.accessToken, data.userId);
         }
         else if (data.command == 'SetVolume') {
             // Scale 0-100
@@ -303,12 +285,10 @@
             window.mediaManager.play();
         }
         else {
-
             translateItems(data, data.options, data.options.items, 'play');
         }
 
         if (reportEventType) {
-
             var report = function () {
                 jellyfinActions.reportPlaybackProgress($scope, getReportingParams($scope));
             };
@@ -323,7 +303,6 @@
     }
 
     function setSubtitleStreamIndex($scope, index, serverAddress) {
-
         console.log('setSubtitleStreamIndex. index: ' + index);
 
         var currentSubtitleStream = $scope.mediaSource.MediaStreams.filter(function (m) {
@@ -332,7 +311,6 @@
         var currentDeliveryMethod = currentSubtitleStream ? currentSubtitleStream.DeliveryMethod : null;
 
         if (index == -1 || index == null) {
-
             // Need to change the stream to turn off the subs
             if (currentDeliveryMethod == 'Encode') {
                 console.log('setSubtitleStreamIndex video url change required');
@@ -358,7 +336,7 @@
 
         if (subtitleStream.DeliveryMethod == 'External' || currentDeliveryMethod == 'Encode') {
 
-            var textStreamUrl = subtitleStream.IsExternalUrl ? subtitleStream.DeliveryUrl : (getUrl(serverAddress, subtitleStream.DeliveryUrl));
+            var textStreamUrl = subtitleStream.IsExternalUrl ? subtitleStream.DeliveryUrl : getUrl(serverAddress, subtitleStream.DeliveryUrl);
 
             console.log('Subtitle url: ' + textStreamUrl);
             setTextTrack(index);
@@ -371,8 +349,7 @@
         }
     }
 
-    function setAudioStreamIndex($scope, index, serverAddress) {
-
+    function setAudioStreamIndex($scope, index) {
         var positionTicks = getCurrentPositionTicks($scope);
         changeStream(positionTicks, { AudioStreamIndex: index });
     }
@@ -382,8 +359,6 @@
     }
 
     function changeStream(ticks, params) {
-        debugger;
-
         if (ticks) {
             ticks = parseInt(ticks);
         }
@@ -405,23 +380,19 @@
 
         // TODO untangle this shitty callback mess
         getMaxBitrate(mediaType).then(function (maxBitrate) {
-
             var deviceProfile = getDeviceProfile(maxBitrate);
 
             var audioStreamIndex = params.AudioStreamIndex == null ? $scope.audioStreamIndex : params.AudioStreamIndex;
             var subtitleStreamIndex = params.SubtitleStreamIndex == null ? $scope.subtitleStreamIndex : params.SubtitleStreamIndex;
 
             jellyfinActions.getPlaybackInfo(item, maxBitrate, deviceProfile, ticks, $scope.mediaSourceId, audioStreamIndex, subtitleStreamIndex, liveStreamId).then(function (result) {
-
                 if (validatePlaybackInfoResult(result)) {
-
                     var mediaSource = result.MediaSources[0];
 
                     var streamInfo = createStreamInfo(item, mediaSource, ticks);
 
                     if (!streamInfo.url) {
                         showPlaybackInfoErrorMessage('NoCompatibleStream');
-                        //self.nextTrack();
                         return;
                     }
                     
@@ -468,11 +439,9 @@
     });
 
     function tagItems(items, data) {
-
         // Attach server data to the items
         // Once day the items could be coming from multiple servers, each with their own security info
         for (var i = 0, length = items.length; i < length; i++) {
-
             items[i].userId = data.userId;
             items[i].accessToken = data.accessToken;
             items[i].serverAddress = data.serverAddress;
@@ -480,9 +449,7 @@
     }
 
     function translateItems(data, options, items, method) {
-
         var callback = function (result) {
-
             options.items = result.Items;
             tagItems(options.items, data);
 
@@ -498,7 +465,6 @@
     }
 
     function instantMix(data, options, item) {
-
         getInstantMixItems(data.serverAddress, data.accessToken, data.userId, item).then(function (result) {
 
             options.items = result.Items;
@@ -508,25 +474,20 @@
     }
 
     function shuffle(data, options, item) {
-
         getShuffleItems(data.serverAddress, data.accessToken, data.userId, item).then(function (result) {
-
             options.items = result.Items;
             tagItems(options.items, data);
             playFromOptions(data.options);
         });
     }
 
-    function queue(items, method) {
-
+    function queue(items) {
         for (var i = 0, length = items.length; i < length; i++) {
-
             window.playlist.push(items[i]);
         }
     }
 
     function playFromOptions(options) {
-
         var firstItem = options.items[0];
 
         if (options.startPositionTicks || firstItem.MediaType !== 'Video') {

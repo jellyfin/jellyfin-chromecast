@@ -428,14 +428,14 @@ function createStreamInfo(item, mediaSource, startPosition) {
     subtitleStreams.forEach(function(subtitleStream) {
         var textStreamUrl = subtitleStream.IsExternalUrl ? subtitleStream.DeliveryUrl : (getUrl(item.serverAddress, subtitleStream.DeliveryUrl));
 
-        var track = new cast.framework.messages.Track(info.subtitleStreamIndex, 'TEXT')
+        var track = new cast.framework.messages.Track(info.subtitleStreamIndex, cast.framework.messages.TrackType.TEXT)
         track.trackId = subtitleStream.Index;
         track.trackContentId = textStreamUrl;
         track.language = subtitleStream.Language;
         track.name = subtitleStream.DisplayTitle;
         // TODO this should not be hardcoded but we only support VTT currently
         track.trackContentType = 'text/vtt';
-        track.subtype = "SUBTITLES";
+        track.subtype = cast.framework.messages.TextTrackType.SUBTITLES;
         subtitleTracks.push(track)
         console.log('Subtitle url: ' + info.subtitleStreamUrl);
     });
@@ -486,9 +486,7 @@ function getBackdropUrl(item, serverAddress) {
 }
 
 function getLogoUrl(item, serverAddress) {
-
     var url;
-
     if (item.ImageTags && item.ImageTags.Logo) {
         url = getUrl(serverAddress, 'Items/' + item.Id + '/Images/Logo/0?tag=' + item.ImageTags.Logo);
     } else if (item.ParentLogoItemId && item.ParentLogoImageTag) {
@@ -499,9 +497,7 @@ function getLogoUrl(item, serverAddress) {
 }
 
 function getPrimaryImageUrl(item, serverAddress) {
-
     var posterUrl = '';
-
     if (item.AlbumPrimaryImageTag) {
         posterUrl = getUrl(serverAddress, 'Items/' + item.AlbumId + '/Images/Primary?tag=' + (item.AlbumPrimaryImageTag));
     }
@@ -527,7 +523,6 @@ function getDisplayName(item) {
     }
 
     if (item.Type == "Episode" && item.IndexNumber != null && item.ParentIndexNumber != null) {
-
         var displayIndexNumber = item.IndexNumber;
 
         var number = "E" + displayIndexNumber;
@@ -567,18 +562,6 @@ function getRatingHtml(item) {
 
         html += '<div class="criticRating">' + item.CriticRating + '%</div>';
     }
-
-    //if (item.Metascore && metascore !== false) {
-
-    //    if (item.Metascore >= 60) {
-    //        html += '<div class="metascore metascorehigh" title="Metascore">' + item.Metascore + '</div>';
-    //    }
-    //    else if (item.Metascore >= 40) {
-    //        html += '<div class="metascore metascoremid" title="Metascore">' + item.Metascore + '</div>';
-    //    } else {
-    //        html += '<div class="metascore metascorelow" title="Metascore">' + item.Metascore + '</div>';
-    //    }
-    //}
 
     return html;
 }
@@ -753,7 +736,6 @@ function translateRequestedItems(serverAddress, accessToken, userId, items, smar
         });
 
     } else if (firstItem.Type == "MusicArtist") {
-
         return getItemsForPlayback(serverAddress, accessToken, userId, {
             ArtistIds: firstItem.Id,
             Filters: "IsNotFolder",
@@ -763,7 +745,6 @@ function translateRequestedItems(serverAddress, accessToken, userId, items, smar
         });
 
     } else if (firstItem.Type == "MusicGenre") {
-
         return getItemsForPlayback(serverAddress, accessToken, userId, {
             Genres: firstItem.Name,
             Filters: "IsNotFolder",
@@ -773,7 +754,6 @@ function translateRequestedItems(serverAddress, accessToken, userId, items, smar
         });
 
     } else if (firstItem.IsFolder) {
-
         return getItemsForPlayback(serverAddress, accessToken, userId, {
             ParentId: firstItem.Id,
             Filters: "IsNotFolder",
@@ -781,9 +761,7 @@ function translateRequestedItems(serverAddress, accessToken, userId, items, smar
             SortBy: "SortName",
             MediaTypes: "Audio,Video"
         });
-    }
-    else if (smart && firstItem.Type == "Episode" && items.length == 1) {
-
+    } else if (smart && firstItem.Type == "Episode" && items.length == 1) {
         return getUser(serverAddress, accessToken, userId).then(function (user) {
 
             if (!user.Configuration.EnableNextEpisodeAutoPlay) {
@@ -855,17 +833,11 @@ function getMiscInfoHtml(item, datetime) {
     }
 
     if (item.StartDate) {
-
         try {
             date = datetime.parseISO8601Date(item.StartDate);
 
             text = date.toLocaleDateString();
             miscInfo.push(text);
-
-            if (item.Type != "Recording") {
-                //text = LiveTvHelpers.getDisplayTime(date);
-                //miscInfo.push(text);
-            }
         }
         catch (e) {
             console.log("Error parsing date: " + item.PremiereDate);
@@ -879,13 +851,9 @@ function getMiscInfoHtml(item, datetime) {
 
         }
         else if (item.ProductionYear) {
-
             text = item.ProductionYear;
-
             if (item.EndDate) {
-
                 try {
-
                     var endYear = datetime.parseISO8601Date(item.EndDate).getFullYear();
 
                     if (endYear != item.ProductionYear) {
