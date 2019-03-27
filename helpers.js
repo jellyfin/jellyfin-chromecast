@@ -467,7 +467,7 @@ function getSecurityHeaders(accessToken, userId) {
         Authorization: auth
     }
 
-    headers["X-Emby-Token"] = accessToken;
+    headers["X-MediaBrowser-Token"] = accessToken;
 
     return headers;
 }
