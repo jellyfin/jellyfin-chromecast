@@ -788,8 +788,27 @@
                     if (subtitleAppearance.textBackground === "transparent") {
                         textTrackStyle.backgroundColor = "#00000000" // RGBA
                     }
-                    // TODO
-                    // textSize
+
+                    switch(subtitleAppearance.textSize) {
+                        case 'smaller':
+                            textTrackStyle.fontScale = 0.6;
+                            break;
+                        case 'small':
+                            textTrackStyle.fontScale = 0.8;
+                            break;
+                        case 'large':
+                            textTrackStyle.fontScale = 1.15;
+                            break;
+                        case 'larger':
+                            textTrackStyle.fontScale = 1.3;
+                            break;
+                        case 'extralarge':
+                            textTrackStyle.fontScale = 1.45;
+                            break;
+                        default:
+                            textTrackStyle.fontScale = 1.0;
+                            break;
+                    }
                     textTracksManager.setTextTrackStyle(textTrackStyle);
                 }
             }
