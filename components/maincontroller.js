@@ -164,13 +164,7 @@
     // Set the active subtitle track once the player has loaded
     window.mediaManager.addEventListener(
         cast.framework.events.EventType.PLAYER_LOAD_COMPLETE, () => {
-            const textTracksManager = window.mediaManager.getTextTracksManager();
-            if (textTracksManager.getTracks().length > 0) {
-                var activeId = window.mediaManager.getMediaInformation().customData.subtitleStreamIndex;
-                if (activeId != null && activeId != -1) {
-                    textTracksManager.setActiveByIds([activeId]);
-                }
-            }
+            setTextTrack(window.mediaManager.getMediaInformation().customData.subtitleStreamIndex);
         }
     );
 
@@ -197,6 +191,9 @@
         $scope.userId = data.userId;
         $scope.accessToken = data.accessToken;
         $scope.serverAddress = data.serverAddress;
+        if (data.subtitleAppearance) {
+            window.subtitleAppearance = data.subtitleAppearance;
+        }
 
         data.options = data.options || {};
         var cleanReceiverName = cleanName(data.receiverName || '');
@@ -758,17 +755,43 @@
 
     function setTextTrack(index) {
         try {
+            var textTracksManager = window.mediaManager.getTextTracksManager();
             if (index == null) {
-                window.mediaManager.getTextTracksManager().setActiveByIds(null);
+                textTracksManager.setActiveByIds(null);
                 return;
             }
 
-            var tracks = window.mediaManager.getTextTracksManager().getTracks();
+            var tracks = textTracksManager.getTracks();
             var subtitleTrack = tracks.find(function(track) {
                 return track.trackId === index;
             });
             if (subtitleTrack) {
-                window.mediaManager.getTextTracksManager().setActiveByIds([subtitleTrack.trackId]);
+                textTracksManager.setActiveByIds([subtitleTrack.trackId]);
+                var subtitleAppearance = window.subtitleAppearance;
+                if (subtitleAppearance) {
+                    var textTrackStyle = new cast.framework.messages.TextTrackStyle();
+                    if (subtitleAppearance.dropShadow != null) {
+                        // Empty string is DROP_SHADOW
+                        textTrackStyle.edgeType = subtitleAppearance.dropShadow.toUpperCase() || cast.framework.messages.TextTrackEdgeType.DROP_SHADOW;
+                        textTrackStyle.edgeColor = "#000000FF";
+                    }
+
+                    if (subtitleAppearance.font) {
+                        textTrackStyle.fontFamily = subtitleAppearance.font;
+                    }
+
+                    if (subtitleAppearance.textColor) {
+                        // Append the transparency, hardcoded to 100%
+                        textTrackStyle.foregroundColor = subtitleAppearance.textColor + "FF";
+                    }
+
+                    if (subtitleAppearance.textBackground === "transparent") {
+                        textTrackStyle.backgroundColor = "#00000000" // RGBA
+                    }
+                    // TODO
+                    // textSize
+                    textTracksManager.setTextTrackStyle(textTrackStyle);
+                }
             }
         } catch(e) {
             console.log("Setting subtitle track failed: " + e);
