@@ -167,7 +167,7 @@
             const textTracksManager = window.mediaManager.getTextTracksManager();
             if (textTracksManager.getTracks().length > 0) {
                 var activeId = window.mediaManager.getMediaInformation().customData.subtitleStreamIndex;
-                if (activeId != null) {
+                if (activeId != null && activeId != -1) {
                     textTracksManager.setActiveByIds([activeId]);
                 }
             }
