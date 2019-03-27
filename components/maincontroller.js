@@ -1,4 +1,4 @@
-﻿define(['datetime', 'embyactions', 'browserdeviceprofile', '//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js'], function (datetime, embyActions, deviceProfileBuilder) {
+﻿define(['datetime', 'jellyfinactions', 'browserdeviceprofile', '//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js'], function (datetime, jellyfinActions, deviceProfileBuilder) {
     window.castReceiverContext = cast.framework.CastReceiverContext.getInstance();
     window.mediaManager = window.castReceiverContext.getPlayerManager();
     window.mediaManager.addEventListener(cast.framework.events.category.CORE,
@@ -13,7 +13,7 @@
     playbackConfig.autoResumeDuration = 5;
 
     // According to cast docs this should be disabled when not needed
-    //cast.receiver.logger.setLevelValue(cast.receiver.LoggerLevel.ERROR);
+    cast.framework.CastReceiverContext.getInstance().setLoggerLevel(cast.framework.LoggerLevel.DEBUG);
 
     var init = function () {
 
@@ -37,12 +37,12 @@
 
         if (elapsed > 5000) {
             // TODO use status as input
-            embyActions.reportPlaybackProgress($scope, getReportingParams($scope));
+            jellyfinActions.reportPlaybackProgress($scope, getReportingParams($scope));
             broadcastToServer = now;
         }
         else if (elapsed > 1500) {
             // TODO use status as input
-            embyActions.reportPlaybackProgress($scope, getReportingParams($scope), false);
+            jellyfinActions.reportPlaybackProgress($scope, getReportingParams($scope), false);
         }
     }
 
@@ -72,40 +72,41 @@
         reportEvent('volumechange', true);
     }
 
-    function enableTimeUpdateListener(enabled) {
-        if (enabled) {
-            window.mediaManager.addEventListener(cast.framework.events.EventType.TIME_UPDATE, onMediaElementTimeUpdate);
-            window.mediaManager.addEventListener(cast.framework.events.EventType.REQUEST_VOLUME_CHANGE, onMediaElementVolumeChange);
-            window.mediaManager.addEventListener(cast.framework.events.EventType.PAUSE, onMediaElementPause);
-            window.mediaManager.addEventListener(cast.framework.events.EventType.PLAYING, onMediaElementPlaying);
-        } else {
-            window.mediaManager.removeEventListener(cast.framework.events.EventType.TIME_UPDATE, onMediaElementTimeUpdate);
-            window.mediaManager.removeEventListener(cast.framework.events.EventType.REQUEST_VOLUME_CHANGE, onMediaElementVolumeChange);
-            window.mediaManager.removeEventListener(cast.framework.events.EventType.PAUSE, onMediaElementPause);
-            window.mediaManager.removeEventListener(cast.framework.events.EventType.PLAYING, onMediaElementPlaying);
-        }
+    function enableTimeUpdateListener() {
+        window.mediaManager.addEventListener(cast.framework.events.EventType.TIME_UPDATE, onMediaElementTimeUpdate);
+        window.mediaManager.addEventListener(cast.framework.events.EventType.REQUEST_VOLUME_CHANGE, onMediaElementVolumeChange);
+        window.mediaManager.addEventListener(cast.framework.events.EventType.PAUSE, onMediaElementPause);
+        window.mediaManager.addEventListener(cast.framework.events.EventType.PLAYING, onMediaElementPlaying);
     }
+
+    function disableTimeUpdateListener() {
+        window.mediaManager.removeEventListener(cast.framework.events.EventType.TIME_UPDATE, onMediaElementTimeUpdate);
+        window.mediaManager.removeEventListener(cast.framework.events.EventType.REQUEST_VOLUME_CHANGE, onMediaElementVolumeChange);
+        window.mediaManager.removeEventListener(cast.framework.events.EventType.PAUSE, onMediaElementPause);
+        window.mediaManager.removeEventListener(cast.framework.events.EventType.PLAYING, onMediaElementPlaying);
+    }
+    
+    enableTimeUpdateListener();
 
     function isPlaying() {
         return window.mediaManager.getPlayerState() === cast.framework.messages.PlayerState.PLAYING;
     }
 
     window.addEventListener('beforeunload', function () {
-
         // Try to cleanup after ourselves before the page closes
-        enableTimeUpdateListener(false);
-        embyActions.reportPlaybackStopped($scope, getReportingParams($scope));
+        disableTimeUpdateListener();
+        jellyfinActions.reportPlaybackStopped($scope, getReportingParams($scope));
     });
 
     mgr.defaultOnPlay = function (event) {
 
-        embyActions.play($scope, event);
-        embyActions.reportPlaybackProgress($scope, getReportingParams($scope));
+        jellyfinActions.play($scope, event);
+        jellyfinActions.reportPlaybackProgress($scope, getReportingParams($scope));
     };
     mgr.addEventListener('PLAY', mgr.defaultOnPlay);
 
     mgr.defaultOnPause = function (event) {
-        embyActions.reportPlaybackProgress($scope, getReportingParams($scope));
+        jellyfinActions.reportPlaybackProgress($scope, getReportingParams($scope));
     };
     mgr.addEventListener('PAUSE', mgr.defaultOnPause);
 
@@ -121,31 +122,29 @@
             return;
         }
 
-        enableTimeUpdateListener(false);
-        embyActions.reportPlaybackStopped($scope, getReportingParams($scope));
+        jellyfinActions.reportPlaybackStopped($scope, getReportingParams($scope));
         init();
 
         if (!playNextItem()) {
             window.playlist = [];
             window.currentPlaylistIndex = -1;
-            embyActions.displayUserInfo($scope, $scope.serverAddress, $scope.accessToken, $scope.userId);
+            jellyfinActions.displayUserInfo($scope, $scope.serverAddress, $scope.accessToken, $scope.userId);
         }
     });
 
     function stop(nextMode) {
 
         $scope.playNextItem = nextMode ? true : false;
-        embyActions.stop($scope);
-        enableTimeUpdateListener(false);
+        jellyfinActions.stop($scope);
 
         var reportingParams = getReportingParams($scope);
 
         var promise;
 
-        embyActions.stopPingInterval();
+        jellyfinActions.stopPingInterval();
 
         if (reportingParams.ItemId) {
-            promise = embyActions.reportPlaybackStopped($scope, reportingParams);
+            promise = jellyfinActions.reportPlaybackStopped($scope, reportingParams);
         }
 
         window.mediaManager.stop();
@@ -168,7 +167,9 @@
             const textTracksManager = window.mediaManager.getTextTracksManager();
             if (textTracksManager.getTracks().length > 0) {
                 var activeId = window.mediaManager.getMediaInformation().customData.subtitleStreamIndex;
-                textTracksManager.setActiveByIds([activeId]);
+                if (activeId != null) {
+                    textTracksManager.setActiveByIds([activeId]);
+                }
             }
         });
 
@@ -227,7 +228,7 @@
 
                 console.log('DisplayContent');
 
-                embyActions.displayItem($scope, data.serverAddress, data.accessToken, data.userId, data.options.ItemId);
+                jellyfinActions.displayItem($scope, data.serverAddress, data.accessToken, data.userId, data.options.ItemId);
             }
 
         }
@@ -264,7 +265,7 @@
         else if (data.command == 'Identify') {
 
             if (!isPlaying()) {
-                embyActions.displayUserInfo($scope, data.serverAddress, data.accessToken, data.userId);
+                jellyfinActions.displayUserInfo($scope, data.serverAddress, data.accessToken, data.userId);
             }
         }
         else if (data.command == 'SetVolume') {
@@ -309,16 +310,16 @@
         if (reportEventType) {
 
             var report = function () {
-                embyActions.reportPlaybackProgress($scope, getReportingParams($scope));
+                jellyfinActions.reportPlaybackProgress($scope, getReportingParams($scope));
             };
-            embyActions.reportPlaybackProgress($scope, getReportingParams($scope), true, reportEventType);
+            jellyfinActions.reportPlaybackProgress($scope, getReportingParams($scope), true, reportEventType);
             setTimeout(report, 100);
             setTimeout(report, 500);
         }
     }
 
     function reportEvent(name, reportToServer) {
-        embyActions.reportPlaybackProgress($scope, getReportingParams($scope), reportToServer, name);
+        jellyfinActions.reportPlaybackProgress($scope, getReportingParams($scope), reportToServer, name);
     }
 
     function setSubtitleStreamIndex($scope, index, serverAddress) {
@@ -339,7 +340,7 @@
                 changeStream(positionTicks, { SubtitleStreamIndex: -1 });
             } else {
                 $scope.subtitleStreamIndex = -1;
-                setTextTrack($scope);
+                setTextTrack(null);
             }
             return;
         }
@@ -360,7 +361,7 @@
             var textStreamUrl = subtitleStream.IsExternalUrl ? subtitleStream.DeliveryUrl : (getUrl(serverAddress, subtitleStream.DeliveryUrl));
 
             console.log('Subtitle url: ' + textStreamUrl);
-            setTextTrack($scope, textStreamUrl, index);
+            setTextTrack(index);
             $scope.subtitleStreamIndex = subtitleStream.Index;
             return;
         } else {
@@ -390,7 +391,7 @@
         if (window.mediaManager.getMediaInformation().customData.canClientSeek && params == null) {
 
             window.mediaManager.seek(ticks / 10000000);
-            embyActions.reportPlaybackProgress($scope, getReportingParams($scope));
+            jellyfinActions.reportPlaybackProgress($scope, getReportingParams($scope));
             return;
         }
 
@@ -410,7 +411,7 @@
             var audioStreamIndex = params.AudioStreamIndex == null ? $scope.audioStreamIndex : params.AudioStreamIndex;
             var subtitleStreamIndex = params.SubtitleStreamIndex == null ? $scope.subtitleStreamIndex : params.SubtitleStreamIndex;
 
-            embyActions.getPlaybackInfo(item, maxBitrate, deviceProfile, ticks, $scope.mediaSourceId, audioStreamIndex, subtitleStreamIndex, liveStreamId).then(function (result) {
+            jellyfinActions.getPlaybackInfo(item, maxBitrate, deviceProfile, ticks, $scope.mediaSourceId, audioStreamIndex, subtitleStreamIndex, liveStreamId).then(function (result) {
 
                 if (validatePlaybackInfoResult(result)) {
 
@@ -434,7 +435,7 @@
                         var requiresStoppingTranscoding = false;
                         if (requiresStoppingTranscoding) {
                             window.mediaManager.pause();
-                            embyActions.stopActiveEncodings(playSessionId).then(function () {
+                            jellyfinActions.stopActiveEncodings(playSessionId).then(function () {
                                 resolve();
                             });
                         } else {
@@ -453,7 +454,7 @@
 
     // Create a message handler for the custome namespace channel
     // TODO save namespace somewhere global?
-    window.castReceiverContext.addCustomMessageListener('urn:x-cast:com.jellyfin.cast', function(evt) {
+    window.castReceiverContext.addCustomMessageListener('urn:x-cast:com.connectsdk', function(evt) {
         console.log('Playlist message: ' + JSON.stringify(evt));
 
         var data = evt.data;
@@ -668,17 +669,17 @@
 
             var deviceProfile = getDeviceProfile(maxBitrate);
 
-            embyActions.getPlaybackInfo(item, maxBitrate, deviceProfile, options.startPositionTicks, options.mediaSourceId, options.audioStreamIndex, options.subtitleStreamIndex).then(function (result) {
+            jellyfinActions.getPlaybackInfo(item, maxBitrate, deviceProfile, options.startPositionTicks, options.mediaSourceId, options.audioStreamIndex, options.subtitleStreamIndex).then(function (result) {
 
                 if (validatePlaybackInfoResult(result)) {
 
-                    var mediaSource = getOptimalMediaSource(item.MediaType, result.MediaSources);
+                    var mediaSource = getOptimalMediaSource(result.MediaSources);
 
                     if (mediaSource) {
 
                         if (mediaSource.RequiresOpening) {
 
-                            embyActions.getLiveStream(item, result.PlaySessionId, maxBitrate, deviceProfile, options.startPositionTicks, mediaSource, null, null).then(function (openLiveStreamResult) {
+                            jellyfinActions.getLiveStream(item, result.PlaySessionId, maxBitrate, deviceProfile, options.startPositionTicks, mediaSource, null, null).then(function (openLiveStreamResult) {
 
                                 openLiveStreamResult.MediaSource.enableDirectPlay = supportsDirectPlay(openLiveStreamResult.MediaSource);
                                 playMediaSource(result.PlaySessionId, item, openLiveStreamResult.MediaSource, options);
@@ -707,13 +708,13 @@
             if (window.MaxBitrate) {
                 console.log('bitrate is set to ' + window.MaxBitrate);
 
-                resolve(Math.min(window.MaxBitrate || window.BitrateCap, window.BitrateCap));
+                resolve(window.MaxBitrate);
                 return;
             }
 
             if (detectedBitrate && (new Date().getTime() - lastBitrateDetect) < 600000) {
                 console.log('returning previous detected bitrate of ' + detectedBitrate);
-                resolve(Math.min(detectedBitrate, window.DetectedBitrateCap));
+                resolve(detectedBitrate);
                 return;
             }
 
@@ -725,13 +726,13 @@
 
             console.log('detecting bitrate');
 
-            embyActions.detectBitrate($scope).then(function (bitrate) {
+            jellyfinActions.detectBitrate($scope).then(function (bitrate) {
 
                 console.log('Max bitrate auto detected to ' + bitrate);
                 lastBitrateDetect = new Date().getTime();
                 detectedBitrate = bitrate;
 
-                resolve(Math.min(detectedBitrate, window.DetectedBitrateCap));
+                resolve(detectedBitrate);
 
             }, function () {
 
@@ -760,7 +761,7 @@
         });
     }
 
-    function getOptimalMediaSource(mediaType, versions) {
+    function getOptimalMediaSource(versions) {
 
         var optimalVersion = versions.filter(function (v) {
 
@@ -794,9 +795,13 @@
         return false;
     }
 
-    function setTextTrack($scope, subtitleStreamUrl, index) {
-
+    function setTextTrack(index) {
         try {
+            if (index == null) {
+                window.mediaManager.getTextTracksManager().setActiveByIds(null);
+                return;
+            }
+
             var tracks = window.mediaManager.getTextTracksManager().getTracks();
             var subtitleTrack = tracks.find(function(track) {
                 return track.trackId === index;
@@ -807,30 +812,8 @@
         } catch(e) {
             console.log("Setting subtitle track failed: " + e);
         }
-
-        // while (window.mediaElement.firstChild) {
-        //     window.mediaElement.removeChild(window.mediaElement.firstChild);
-        // }
-        // var track;
-        // if (window.mediaManager.getTextTracksManager().getTracks().length == 0) {
-        //     window.mediaElement.addTextTrack("subtitles");
-        // }
-        // track = window.mediaElement.textTracks[0];
-        // var cues = track.cues;
-        // for (var i = cues.length - 1 ; i >= 0 ; i--) {
-        //     track.removeCue(cues[i]);
-        // }
-        // if (subtitleStreamUrl) {
-        //     embyActions.getSubtitle($scope, subtitleStreamUrl).then(function (data) {
-
-        //         track.mode = "showing";
-
-        //         data.TrackEvents.forEach(function (trackEvent) {
-        //             track.addCue(new VTTCue(trackEvent.StartPositionTicks / 10000000, trackEvent.EndPositionTicks / 10000000, trackEvent.Text.replace(/\\N/gi, '\n')));
-        //         });
-        //     });
-        // }
     }
+
     function createMediaInformation(playSessionId, item, streamInfo) {
         var mediaInfo = new cast.framework.messages.MediaInformation();
         mediaInfo.contentId = streamInfo.url;
@@ -879,7 +862,7 @@
         loadRequestData.media = mediaInfo;
         loadRequestData.autoplay = true;
 
-        embyActions.load($scope, mediaInfo.customData, item);
+        jellyfinActions.load($scope, mediaInfo.customData, item);
         window.mediaManager.load(loadRequestData);
 
         $scope.PlaybackMediaSource = mediaSource;
@@ -898,11 +881,7 @@
         // TODO why you no work???
         document.body.style.setProperty('--playback-logo-image', 'url("' + logoUrl + '")');
 
-        embyActions.reportPlaybackStart($scope, getReportingParams($scope));
-
-        // TODO stupid hack, should probably just always have the listeners active until app close
-        enableTimeUpdateListener(false);
-        enableTimeUpdateListener(true);
+        jellyfinActions.reportPlaybackStart($scope, getReportingParams($scope));
 
         // We use false as we do not want to broadcast the new status yet
         // we will broadcast manually when the media has been loaded, this
