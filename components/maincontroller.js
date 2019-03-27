@@ -832,9 +832,9 @@
         $scope.mediaSource = mediaSource;
 
         if (item.BackdropImageTags && item.BackdropImageTags.length) {
-            backdropUrl = $scope.serverAddress + '/mediabrowser/Items/' + item.Id + '/Images/Backdrop/0?tag=' + item.BackdropImageTags[0];
+            backdropUrl = $scope.serverAddress + '/emby/Items/' + item.Id + '/Images/Backdrop/0?tag=' + item.BackdropImageTags[0];
         } else if (item.ParentBackdropItemId && item.ParentBackdropImageTags && item.ParentBackdropImageTags.length) {
-            backdropUrl = $scope.serverAddress + '/mediabrowser/Items/' + item.ParentBackdropItemId + '/Images/Backdrop/0?tag=' + item.ParentBackdropImageTags[0];
+            backdropUrl = $scope.serverAddress + '/emby/Items/' + item.ParentBackdropItemId + '/Images/Backdrop/0?tag=' + item.ParentBackdropImageTags[0];
         }
         var logoUrl = getLogoUrl(item, item.serverAddress);
         let playerElement = document.getElementsByTagName("cast-media-player")[0];

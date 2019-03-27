@@ -228,16 +228,16 @@ function getMetadata(item, datetime) {
     var posterUrl = '';
 
     if (item.SeriesPrimaryImageTag) {
-        posterUrl = $scope.serverAddress + '/mediabrowser/Items/' + item.SeriesId + '/Images/Primary?tag=' + item.SeriesPrimaryImageTag;
+        posterUrl = $scope.serverAddress + '/emby/Items/' + item.SeriesId + '/Images/Primary?tag=' + item.SeriesPrimaryImageTag;
     }
     else if (item.AlbumPrimaryImageTag) {
-        posterUrl = $scope.serverAddress + '/mediabrowser/Items/' + item.AlbumId + '/Images/Primary?tag=' + (item.AlbumPrimaryImageTag);
+        posterUrl = $scope.serverAddress + '/emby/Items/' + item.AlbumId + '/Images/Primary?tag=' + (item.AlbumPrimaryImageTag);
     }
     else if (item.PrimaryImageTag) {
-        posterUrl = $scope.serverAddress + '/mediabrowser/Items/' + item.Id + '/Images/Primary?tag=' + (item.PrimaryImageTag);
+        posterUrl = $scope.serverAddress + '/emby/Items/' + item.Id + '/Images/Primary?tag=' + (item.PrimaryImageTag);
     }
     else if (item.ImageTags.Primary) {
-        posterUrl = $scope.serverAddress + '/mediabrowser/Items/' + item.Id + '/Images/Primary?tag=' + (item.ImageTags.Primary);
+        posterUrl = $scope.serverAddress + '/emby/Items/' + item.Id + '/Images/Primary?tag=' + (item.ImageTags.Primary);
     }
     
     if (item.Type == 'Episode') {
@@ -457,7 +457,7 @@ function getStreamByIndex(streams, type, index) {
 
 function getSecurityHeaders(accessToken, userId) {
 
-    var auth = 'MediaBrowser Client="Chromecast", Device="' + deviceInfo.deviceName + '", DeviceId="' + deviceInfo.deviceId + '", Version="' + deviceInfo.versionNumber + '"';
+    var auth = 'Emby Client="Chromecast", Device="' + deviceInfo.deviceName + '", DeviceId="' + deviceInfo.deviceId + '", Version="' + deviceInfo.versionNumber + '"';
 
     if (userId) {
         auth += ', UserId="' + userId + '"';
@@ -467,7 +467,7 @@ function getSecurityHeaders(accessToken, userId) {
         Authorization: auth
     }
 
-    headers["X-MediaBrowser-Token"] = accessToken;
+    headers["X-Emby-Token"] = accessToken;
 
     return headers;
 }
