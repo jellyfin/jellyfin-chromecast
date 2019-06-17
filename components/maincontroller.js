@@ -1,4 +1,4 @@
-﻿define(['datetime', 'embyactions', 'browserdeviceprofile', '//www.gstatic.com/cast/sdk/libs/receiver/2.0.0/cast_receiver.js', '//www.gstatic.com/cast/sdk/libs/mediaplayer/1.0.0/media_player.js'], function (datetime, embyActions, deviceProfileBuilder) {
+define(['datetime', 'embyactions', 'browserdeviceprofile', '//www.gstatic.com/cast/sdk/libs/receiver/2.0.0/cast_receiver.js', '//www.gstatic.com/cast/sdk/libs/mediaplayer/1.0.0/media_player.js'], function (datetime, embyActions, deviceProfileBuilder) {
 
     window.mediaManager = new cast.receiver.MediaManager(window.mediaElement);
     setInterval(updateTimeOfDay, 40000);
@@ -149,6 +149,11 @@
 
         clearMediaElement();
 
+        window.playlist = [];
+        window.currentPlaylistIndex = -1;
+        embyActions.displayUserInfo($scope, $scope.serverAddress, $scope.accessToken, $scope.userId);
+
+
         promise = promise || Promise.resolve();
 
         return promise;
@@ -272,6 +277,9 @@
 
             if (!isPlaying()) {
                 embyActions.displayUserInfo($scope, data.serverAddress, data.accessToken, data.userId);
+            }
+            else {
+                embyActions.reportPlaybackProgress($scope, getReportingParams($scope), true, reportEventType);
             }
         }
         else if (data.command == 'SetVolume') {
