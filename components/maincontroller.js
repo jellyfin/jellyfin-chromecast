@@ -153,7 +153,6 @@ define(['datetime', 'embyactions', 'browserdeviceprofile', '//www.gstatic.com/ca
         window.currentPlaylistIndex = -1;
         embyActions.displayUserInfo($scope, $scope.serverAddress, $scope.accessToken, $scope.userId);
 
-
         promise = promise || Promise.resolve();
 
         return promise;
