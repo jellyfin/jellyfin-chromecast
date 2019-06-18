@@ -10,6 +10,8 @@
 
         resetPlaybackScope($scope);
         clearMediaElement();
+        window.VolumeInfo.Level = cast.receiver.media.Volume.level * 100;
+        window.VolumeInfo.IsMuted = cast.receiver.media.Volume.muted;
     };
 
     init();
@@ -273,6 +275,8 @@
             if (!isPlaying()) {
                 embyActions.displayUserInfo($scope, data.serverAddress, data.accessToken, data.userId);
             }
+            // when a client connects send back the initial device state (volume etc) via a playbackstop message
+            embyActions.reportPlaybackProgress($scope, getReportingParams($scope), true, "playbackstop");
         }
         else if (data.command == 'SetVolume') {
 
