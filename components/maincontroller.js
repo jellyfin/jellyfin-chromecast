@@ -151,6 +151,10 @@
 
         clearMediaElement();
 
+        window.playlist = [];
+        window.currentPlaylistIndex = -1;
+        embyActions.displayUserInfo($scope, $scope.serverAddress, $scope.accessToken, $scope.userId);
+
         promise = promise || Promise.resolve();
 
         return promise;
@@ -271,15 +275,14 @@
 
         }
         else if (data.command == 'Identify') {
-
             if (!isPlaying()) {
                 embyActions.displayUserInfo($scope, data.serverAddress, data.accessToken, data.userId);
+            } else {
+                // when a client connects send back the initial device state (volume etc) via a playbackstop message
+                embyActions.reportPlaybackProgress($scope, getReportingParams($scope), true, "playbackstop");
             }
-            // when a client connects send back the initial device state (volume etc) via a playbackstop message
-            embyActions.reportPlaybackProgress($scope, getReportingParams($scope), true, "playbackstop");
         }
         else if (data.command == 'SetVolume') {
-
             // Scale 0-100
             window.mediaElement.volume = data.options.volume / 100;
         }
