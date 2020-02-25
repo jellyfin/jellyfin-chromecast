@@ -271,9 +271,10 @@ function getMetadata(item, datetime) {
 
         metadata = new cast.framework.messages.MusicTrackMediaMetadata();
         metadata.songName = item.Name;
-        metadata.artist = item.Artists & item.Artists.length ? item.Artists[0] : '';
+        metadata.artist = item.Artists && item.Artists.length ? item.Artists.join(', ') : '';
         metadata.albumArtist = item.AlbumArtist;
-
+        metadata.albumName = item.Album;
+        
         if (item.PremiereDate) {
             metadata.releaseDate = datetime.parseISO8601Date(item.PremiereDate).toISOString();
         }
