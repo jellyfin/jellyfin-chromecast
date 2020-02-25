@@ -426,6 +426,11 @@ function createStreamInfo(item, mediaSource, startPosition) {
     var subtitleStreams = mediaSource.MediaStreams.filter(function (stream) { return stream.Type === "Subtitle"; });
     var subtitleTracks = []
     subtitleStreams.forEach(function(subtitleStream) {
+        if(subtitleStream.Codec !== 'vtt' && subtitleStream.Codec !== 'webvtt') {
+            /* the CAF v3 player only supports vtt currently,
+            support for more could be added with a custom implementation*/
+            return;
+        }
         var textStreamUrl = subtitleStream.IsExternalUrl ? subtitleStream.DeliveryUrl : (getUrl(item.serverAddress, subtitleStream.DeliveryUrl));
 
         var track = new cast.framework.messages.Track(info.subtitleStreamIndex, cast.framework.messages.TrackType.TEXT)
