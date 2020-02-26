@@ -211,11 +211,11 @@ body {
 }
 
 .fresh {
-    background-image: url(../img/fresh.png);
+    background-image: url(../img/fresh.svg);
 }
 
 .rotten {
-    background-image: url(../img/rotten.png);
+    background-image: url(../img/rotten.svg);
 }
 
 .metascore {
