@@ -426,7 +426,8 @@ function createStreamInfo(item, mediaSource, startPosition) {
     var subtitleStreams = mediaSource.MediaStreams.filter(function (stream) { return stream.Type === "Subtitle"; });
     var subtitleTracks = []
     subtitleStreams.forEach(function(subtitleStream) {
-        if(subtitleStream.Codec !== 'vtt' && subtitleStream.Codec !== 'webvtt') {
+        let subStreamCodec = subtitleStream.Codec.toLowerCase();
+        if (subStreamCodec !== 'vtt' && subStreamCodec !== 'webvtt') {
             /* the CAF v3 player only supports vtt currently,
             support for more could be added with a custom implementation*/
             return;
