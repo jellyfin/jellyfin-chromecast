@@ -327,4 +327,7 @@ cast-media-player {
     --watermark-image: url("img/banner-reverse.png");
     --watermark-size: 225px;
     --watermark-position: top right;
+
+    --theme-hue: 195.3; /* Jellyfin blue */
+    --progress-color: #00a4dc;
 }
