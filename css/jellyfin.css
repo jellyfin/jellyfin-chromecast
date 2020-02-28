@@ -322,6 +322,5 @@ body {
 
 cast-media-player {
     --spinner-image: url("img/spinner.png");
-    --logo-image: url(' ');
-    --splash-image: url(' ');
+    --playback-logo-image: url("img/banner.png");
 }
