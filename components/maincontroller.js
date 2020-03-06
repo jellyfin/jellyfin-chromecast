@@ -878,11 +878,13 @@
         } else if (item.ParentBackdropItemId && item.ParentBackdropImageTags && item.ParentBackdropImageTags.length) {
             backdropUrl = $scope.serverAddress + '/emby/Items/' + item.ParentBackdropItemId + '/Images/Backdrop/0?tag=' + item.ParentBackdropImageTags[0];
         }
-        var logoUrl = getLogoUrl(item, item.serverAddress);
-        let playerElement = document.getElementsByTagName("cast-media-player")[0];
-        playerElement.style.setProperty('--background-image', 'url("' + backdropUrl + '")');
-        // TODO why you no work???
-        document.body.style.setProperty('--playback-logo-image', 'url("' + logoUrl + '")');
+        
+        if (backdropUrl) {
+            window.mediaElement.style.setProperty('--background-image', 'url("' + backdropUrl + '")');
+        } else {
+            //Replace with a placeholder?
+            window.mediaElement.style.removeProperty('--background-image');
+        }
 
         jellyfinActions.reportPlaybackStart($scope, getReportingParams($scope));
 
