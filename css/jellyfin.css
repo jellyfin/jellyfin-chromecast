@@ -322,6 +322,12 @@ body {
 
 cast-media-player {
     --spinner-image: url("img/spinner.png");
-    --logo-image: url(' ');
-    --splash-image: url(' ');
+    --playback-logo-image: url("img/banner.png");
+
+    --watermark-image: url("img/banner-reverse.png");
+    --watermark-size: 225px;
+    --watermark-position: top right;
+
+    --theme-hue: 195.3; /* Jellyfin blue */
+    --progress-color: #00a4dc;
 }
