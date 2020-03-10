@@ -894,5 +894,26 @@
         window.mediaManager.setMediaInformation(mediaInfo, false);
     }
 
+    playbackConfig.supportedCommands = cast.framework.messages.Command.ALL_BASIC_MEDIA;
+
+    // Set the available buttons in the UI controls.
+    const controls = cast.framework.ui.Controls.getInstance();
+    controls.clearDefaultSlotAssignments();
+
+    // Assign buttons to control slots.
+    controls.assignButton(
+        cast.framework.ui.ControlsSlot.SLOT_SECONDARY_1,
+        cast.framework.ui.ControlsButton.CAPTIONS
+    );
+    
+    controls.assignButton(
+        cast.framework.ui.ControlsSlot.SLOT_PRIMARY_1,
+        cast.framework.ui.ControlsButton.SEEK_BACKWARD_15
+    );
+    controls.assignButton(
+        cast.framework.ui.ControlsSlot.SLOT_PRIMARY_2,
+        cast.framework.ui.ControlsButton.SEEK_FORWARD_15
+    );
+
     window.castReceiverContext.start(playbackConfig);
 });
