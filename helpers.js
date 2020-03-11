@@ -267,7 +267,7 @@ function getMetadata(item, datetime) {
         // TODO more metadata?
     }
 
-    else if (item.MediaType == 'Audio') {
+    else if (item.Type == 'Audio') {
 
         metadata = new cast.framework.messages.MusicTrackMediaMetadata();
         metadata.songName = item.Name;
@@ -296,7 +296,7 @@ function getMetadata(item, datetime) {
         }
     }
 
-    else if (item.MediaType == 'Movie') {
+    else if (item.Type == 'Movie') {
 
         metadata = new cast.framework.messages.MovieMediaMetadata();
         if (item.PremiereDate) {
