@@ -195,9 +195,8 @@
             window.subtitleAppearance = data.subtitleAppearance;
         }
 
-        //Report device capabilities
+        // Report device capabilities
         if (!window.hasReportedCapabilities) {
-            //Kinda dirty solution but it'll do for now
             getMaxBitrate("Video").then((maxBitrate) => {
                 let capabilitiesUrl = $scope.serverAddress + "/Sessions/Capabilities/Full";
                 let deviceProfile = getDeviceProfile(maxBitrate);
