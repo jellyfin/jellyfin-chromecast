@@ -638,6 +638,12 @@
             }
         );
 
+        // Temporary solution until we can make a custom browserdeviceprofile
+        // webm support is currently mistaken for mkv support
+        profile.DirectPlayProfiles = profile.DirectPlayProfiles.filter(item => item.Container !== "mkv");
+
+        profile.TranscodingProfiles = profile.TranscodingProfiles.filter(item => item.Container !== "mkv");
+
         return profile;
     }
 
