@@ -195,6 +195,29 @@
             window.subtitleAppearance = data.subtitleAppearance;
         }
 
+        // Report device capabilities
+        if (!window.hasReportedCapabilities) {
+            getMaxBitrate("Video").then((maxBitrate) => {
+                let capabilitiesUrl = $scope.serverAddress + "/Sessions/Capabilities/Full";
+                let deviceProfile = getDeviceProfile(maxBitrate);
+    
+                let capabilities = {
+                    PlayableMediaTypes: ["Audio", "Video"],
+                    SupportsPersistentIdentifier: false,
+                    SupportsMediaControl: true,
+                    DeviceProfile: deviceProfile
+                };
+                window.hasReportedCapabilities = true;
+                return fetchhelper.ajax({
+                    url: capabilitiesUrl,
+                    headers: getSecurityHeaders($scope.accessToken, $scope.userId),
+                    type: 'POST',
+                    data: JSON.stringify(capabilities),
+                    contentType: 'application/json'
+                });
+            });
+        }
+
         data.options = data.options || {};
         var cleanReceiverName = cleanName(data.receiverName || '');
         window.deviceInfo.deviceName = cleanReceiverName || window.deviceInfo.deviceName;
