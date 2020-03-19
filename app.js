@@ -4,7 +4,7 @@ var MaxBitrate = null;
 window.deviceInfo = {
     deviceId: "chromecast_" + new Date().getTime(),
     deviceName: 'Chromecast',
-    versionNumber: '2.1.0'
+    versionNumber: '3.0.0'
 };
 
 window.mediaElement = document.getElementById('video-player');
