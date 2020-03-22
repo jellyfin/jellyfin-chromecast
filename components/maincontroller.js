@@ -929,11 +929,12 @@
     const controls = cast.framework.ui.Controls.getInstance();
     controls.clearDefaultSlotAssignments();
 
+    /* Disabled for now, dynamically set controls for each media type in the future.
     // Assign buttons to control slots.
     controls.assignButton(
         cast.framework.ui.ControlsSlot.SLOT_SECONDARY_1,
         cast.framework.ui.ControlsButton.CAPTIONS
-    );
+    );*/
     
     controls.assignButton(
         cast.framework.ui.ControlsSlot.SLOT_PRIMARY_1,
