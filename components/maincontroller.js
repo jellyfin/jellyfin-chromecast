@@ -148,6 +148,11 @@
         }
 
         window.mediaManager.stop();
+
+        window.playlist = [];
+        window.currentPlaylistIndex = -1;
+        jellyfinActions.displayUserInfo($scope, $scope.serverAddress, $scope.accessToken, $scope.userId);
+
         promise = promise || Promise.resolve();
 
         return promise;
@@ -267,8 +272,13 @@
         else if (data.command == 'ToggleMute') {
             window.castReceiverContext.setSystemVolumeMuted(!systemVolume.muted);
         }
-        else if (data.command == 'Identify' && !isPlaying()) {
-            jellyfinActions.displayUserInfo($scope, data.serverAddress, data.accessToken, data.userId);
+        else if (data.command == 'Identify') {
+            if (!isPlaying()) {
+                jellyfinActions.displayUserInfo($scope, data.serverAddress, data.accessToken, data.userId);
+            } else {
+                // when a client connects send back the initial device state (volume etc) via a playbackstop message
+                jellyfinActions.reportPlaybackProgress($scope, getReportingParams($scope), true, "playbackstop");
+            }
         }
         else if (data.command == 'SetVolume') {
             // Scale 0-100
