@@ -644,6 +644,25 @@
 
         profile.TranscodingProfiles = profile.TranscodingProfiles.filter(item => item.Container !== "mkv");
 
+        // TODO: Another temporary solution until we can make a custom browserdeviceprofile
+        // 1st and 2nd gen only support h264 4.1 but browserdeviceprofile is reporting 4.2
+        let context = cast.framework.CastReceiverContext.getInstance();
+        if (context.canDisplayType('video/mp4;codecs=avc1.64002A')) {
+            return profile;
+        }
+        
+        for (prof of profile.CodecProfiles) {
+            if (prof.Codec && prof.Codec.indexOf("h264") == -1) {
+                continue;
+            }
+
+            for (condition of prof.Conditions) {
+                if (condition.Property == "VideoLevel" && condition.Value > 41) {
+                    condition.Value = 41;
+                }
+            }
+        }
+
         return profile;
     }
 
