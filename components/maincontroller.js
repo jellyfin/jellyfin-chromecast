@@ -1,4 +1,4 @@
-﻿define(['datetime', 'jellyfinactions', 'browserdeviceprofile', '//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js'], function (datetime, jellyfinActions, deviceProfileBuilder) {
+﻿define(['jellyfinactions', 'browserdeviceprofile', '//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js'], function (jellyfinActions, deviceProfileBuilder) {
     window.castReceiverContext = cast.framework.CastReceiverContext.getInstance();
     window.mediaManager = window.castReceiverContext.getPlayerManager();
     window.mediaManager.addEventListener(cast.framework.events.category.CORE,
@@ -896,7 +896,7 @@
             playSessionId: playSessionId
         }
 
-        mediaInfo.metadata = getMetadata(item, datetime);
+        mediaInfo.metadata = getMetadata(item);
 
         mediaInfo.streamType = cast.framework.messages.StreamType.BUFFERED;
         mediaInfo.tracks = streamInfo.tracks;
