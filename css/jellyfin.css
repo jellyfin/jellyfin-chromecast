@@ -14,11 +14,10 @@ body {
 
 #waiting-container,
 #waiting-container-backdrop,
-#backdrop,
-#controls,
+.waiting > #video-player,
+.details > #video-player,
 .detailContent,
-.detailLogo,
-#video-player {
+.detailLogo {
     /* There is an open bug on the chromecast, transitions are buggy and sometimes are not triggered.
     opacity: 0;
     -webkit-transition: opacity .25s ease-in-out;
@@ -43,8 +42,7 @@ body {
     background-repeat: no-repeat;
 }
 
-#waiting-container,
-#backdrop {
+#waiting-container {
     background-position: center;
     background-size: cover;
     background-repeat: no-repeat;
@@ -85,7 +83,7 @@ body {
     background-repeat: no-repeat;
     position: absolute;
     top: 22%;
-    height: 63%;
+    height: 20%;
     left: 8%;
     width: 20%;
 }
@@ -115,13 +113,12 @@ body {
     text-align: center;
 }
 
-    .detailImageProgressContainer progress {
-        width: 100%;
-        margin: 0 auto;
-        height: 6px;
-    }
-
-/* Chrome */
+.detailImageProgressContainer progress {
+    width: 100%;
+    margin: 0 auto;
+    height: 6px;
+}
+    /* Chrome */
 .itemProgressBar::-webkit-progress-value {
     border-radius: 0;
     background-image: none;
@@ -154,9 +151,9 @@ body {
     width: 60%;
 }
 
-    .detailInfo p {
-        margin: 10px 0;
-    }
+.detailInfo p {
+    margin: 10px 0;
+}
 
 
 #detailRating {
@@ -261,100 +258,6 @@ body {
     background-color: rgba(15, 15,15, .82);
 }
 
-.timeOfDay {
-    position: absolute;
-    top: 35px;
-    right: 45px;
-    color: #fff;
-    font-size: 24px;
-}
-
-.timeSuffix {
-}
-
-#backdrop {
-    background-color: #000;
-}
-
-.spinner {
-    display: none;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    margin-top: -32px;
-    margin-left: -32px;
-    -webkit-animation-name: rotateSpinner;
-    -webkit-animation-duration: 1.0s;
-    -webkit-animation-iteration-count: infinite;
-    -webkit-animation-timing-function: linear;
-}
-
-#backdrop h2 {
-    position: absolute;
-    bottom: 32px;
-    right: 64px;
-    text-align: right;
-}
-
-.gradient {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    top: 70%;
-    background: -moz-linear-gradient(top, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0) 5%, rgba(0, 0, 0, 0.4) 100%);
-    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, rgba(0, 0, 0, 0)), color-stop(5%, rgba(0, 0, 0, 0)), color-stop(100%, rgba(0, 0, 0, 0.4)));
-    background: -webkit-linear-gradient(top, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0) 5%, rgba(0, 0, 0, 0.4) 100%);
-    background: -o-linear-gradient(top, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0) 5%, rgba(0, 0, 0, 0.4) 100%);
-    background: -ms-linear-gradient(top, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0) 5%, rgba(0, 0, 0, 0.4) 100%);
-    background: linear-gradient(to bottom, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0) 5%, rgba(0, 0, 0, 0.4) 100%);
-    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#00000000', endColorstr='#66000000', GradientType=0);
-}
-
-.audio .gradient {
-    background: -moz-linear-gradient(top, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.2) 15%, rgba(0, 0, 0, 0.8) 100%);
-    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, rgba(0, 0, 0, 0)), color-stop(15%, rgba(0, 0, 0, 0.2)), color-stop(100%, rgba(0, 0, 0, 0.8)));
-    background: -webkit-linear-gradient(top, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.2) 15%, rgba(0, 0, 0, 0.8) 100%);
-    background: -o-linear-gradient(top, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.2) 15%, rgba(0, 0, 0, 0.8) 100%);
-    background: -ms-linear-gradient(top, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.2) 15%, rgba(0, 0, 0, 0.8) 100%);
-    background: linear-gradient(to bottom, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.2) 15%, rgba(0, 0, 0, 0.8) 100%);
-    filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#00000000', endColorstr='#66000000', GradientType=0);
-}
-
-#backdrop h2 .media-title {
-    display: inline-block;
-    max-width: 400px;
-    vertical-align: middle;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    color: #fff;
-    white-space: nowrap;
-}
-
-#backdrop h2 .media-secondary-title {
-    display: inline-block;
-    vertical-align: middle;
-    max-width: 320px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    margin-left: 10px;
-    color: #ccc;
-    margin-top: 4px;
-    font-size: 0.85em;
-}
-
-#backdrop h2 .media-artist,
-#backdrop h2 .media-album-title {
-    display: block;
-    font-size: .9em;
-    max-width: 720px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    color: #ccc;
-}
-
 .waitingContent {
     position: fixed;
     top: 50%;
@@ -387,35 +290,8 @@ body {
     display: block;
 }
 
-#video-player {
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 100%;
-    width: 100%;
-    background: black;
-}
-
-#controls {
-    position: absolute;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    z-index: 2;
-    padding: 32px 64px;
-    background-color: rgba(0, 0, 0, 0.7);
-}
-
 .waiting > #waiting-container-backdrop,
 .waiting > #waiting-container,
-.playing > #video-player,
-.playing-with-controls > #video-player,
-.playing-with-controls > #controls,
-.playing-with-controls > .detailLogo,
-.loading > #backdrop,
-.loading .spinner,
-.backdrop > #backdrop,
-.audio > #backdrop,
 .details .detailContent,
 .details .detailLogo,
 .details #waiting-container-backdrop {
@@ -423,134 +299,14 @@ body {
     display: initial;
 }
 
-#player-controls-center {
-    overflow: hidden;
-}
+cast-media-player {
+    --spinner-image: url("img/spinner.png");
+    --playback-logo-image: url("img/banner.png");
 
-#player-progress-track {
-    position: relative;
-    height: 10px;
-    margin: 12px 0 0 0;
-    overflow: hidden;
-    background: rgba(255, 255, 255, 0.2);
-    -webkit-border-radius: 5px;
-    -moz-border-radius: 5px;
-    border-radius: 5px;
-}
+    --watermark-image: url("img/banner-reverse.png");
+    --watermark-size: 225px;
+    --watermark-position: top right;
 
-.player-time {
-    font-size: 26px;
-    color: #ddd;
-    padding: 3px 15px 0;
-    font-weight: 400;
-}
-
-#player-progress-bar {
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 10px;
-}
-
-#player-controls-left {
-    float: left;
-}
-
-#player-controls-right {
-    float: right;
-}
-
-#player-progress-bar {
-    width: 5px;
-    position: absolute;
-    left: 0;
-    height: 10px;
-    cursor: pointer;
-    background-color: #006ea6;
-    background-image: -moz-linear-gradient(top, #0086cb, #004a70);
-    background-image: -ms-linear-gradient(top, #0086cb, #004a70);
-    background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#0086cb), to(#004a70));
-    background-image: -webkit-linear-gradient(top, #0086cb, #004a70);
-    background-image: -o-linear-gradient(top, #0086cb, #004a70);
-    background-image: linear-gradient(top, #0086cb, #004a70);
-    background-repeat: repeat-x;
-    -webkit-border-radius: 5px;
-    -moz-border-radius: 5px;
-    border-radius: 5px;
-}
-
-#right-controls {
-    margin-left: 160px;
-}
-
-    #right-controls > h1 {
-        margin-top: 0;
-        text-align: left;
-        font-weight: 500 !important;
-    }
-
-        #right-controls > h1 > .media-title {
-            display: inline-block;
-            max-width: 400px;
-            vertical-align: middle;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        #right-controls > h1 > .media-secondary-title {
-            display: inline-block;
-            vertical-align: middle;
-            max-width: 320px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            color: #999;
-            margin-left: 10px;
-        }
-
-        #right-controls > h1 > .media-artist,
-        #right-controls > h1 > .media-album-title {
-            display: block;
-            font-size: .9em;
-            max-width: 720px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        #right-controls > h1 .glyphicon {
-            top: 7px;
-        }
-
-.media-poster {
-    position: fixed;
-    bottom: 32px;
-    left: 64px;
-    width: 128px;
-}
-
-.version-number {
-    position: absolute;
-    right: 32px;
-    bottom: 5px;
-    color: #ccc;
-}
-
-::cue {
-    background-color: transparent;
-    text-shadow: 2px 2px 2px rgba(0, 0, 0, 1);
-    -webkit-font-smoothing: antialiased;
-    font-family: inherit;
-	font-size: 115%;
-}
-
-@-webkit-keyframes rotateSpinner {
-    0% {
-        -webkit-transform: rotate(0deg);
-    }
-
-    100% {
-        -webkit-transform: rotate(360deg);
-    }
+    --theme-hue: 195.3; /* Jellyfin blue */
+    --progress-color: #00a4dc;
 }

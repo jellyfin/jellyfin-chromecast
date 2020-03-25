@@ -1,29 +1,32 @@
-﻿define(['datetime', 'embyactions', 'browserdeviceprofile', '//www.gstatic.com/cast/sdk/libs/receiver/2.0.0/cast_receiver.js', '//www.gstatic.com/cast/sdk/libs/mediaplayer/1.0.0/media_player.js'], function (datetime, embyActions, deviceProfileBuilder) {
-
-    window.mediaManager = new cast.receiver.MediaManager(window.mediaElement);
-    setInterval(updateTimeOfDay, 40000);
+﻿define(['datetime', 'jellyfinactions', 'browserdeviceprofile', '//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js'], function (datetime, jellyfinActions, deviceProfileBuilder) {
+    window.castReceiverContext = cast.framework.CastReceiverContext.getInstance();
+    window.mediaManager = window.castReceiverContext.getPlayerManager();
+    window.mediaManager.addEventListener(cast.framework.events.category.CORE,
+        event => {
+          console.log("Core event: " + event.type);
+          console.log(event);
+        });
+      
+    const playbackConfig = new cast.framework.PlaybackConfig();
+    // Set the player to start playback as soon as there are five seconds of
+    // media content buffered. Default is 10.
+    playbackConfig.autoResumeDuration = 5;
 
     // According to cast docs this should be disabled when not needed
-    //cast.receiver.logger.setLevelValue(cast.receiver.LoggerLevel.ERROR);
+    cast.framework.CastReceiverContext.getInstance().setLoggerLevel(cast.framework.LoggerLevel.DEBUG);
 
     var init = function () {
 
         resetPlaybackScope($scope);
-        clearMediaElement();
-        window.VolumeInfo.Level = cast.receiver.media.Volume.level * 100;
-        window.VolumeInfo.IsMuted = cast.receiver.media.Volume.muted;
     };
 
     init();
-
-    embyActions.setApplicationClose();
 
     var mgr = window.mediaManager;
 
     var broadcastToServer = new Date();
 
     function onMediaElementTimeUpdate(e) {
-
         if ($scope.isChangingStream) {
             return;
         }
@@ -33,13 +36,13 @@
         var elapsed = now - broadcastToServer;
 
         if (elapsed > 5000) {
-
-            embyActions.reportPlaybackProgress($scope, getReportingParams($scope));
+            // TODO use status as input
+            jellyfinActions.reportPlaybackProgress($scope, getReportingParams($scope));
             broadcastToServer = now;
         }
         else if (elapsed > 1500) {
-
-            embyActions.reportPlaybackProgress($scope, getReportingParams($scope), false);
+            // TODO use status as input
+            jellyfinActions.reportPlaybackProgress($scope, getReportingParams($scope), false);
         }
     }
 
@@ -57,7 +60,6 @@
         if ($scope.isChangingStream) {
             return;
         }
-
         reportEvent('playstatechange', true);
     }
 
@@ -70,117 +72,108 @@
         reportEvent('volumechange', true);
     }
 
-    function enableTimeUpdateListener(enabled) {
-        if (enabled) {
-            window.mediaElement.addEventListener('timeupdate', onMediaElementTimeUpdate);
-            window.mediaElement.addEventListener('volumechange', onMediaElementVolumeChange);
-            window.mediaElement.addEventListener('pause', onMediaElementPause);
-            window.mediaElement.addEventListener('playing', onMediaElementPlaying);
-        } else {
-            window.mediaElement.removeEventListener('timeupdate', onMediaElementTimeUpdate);
-            window.mediaElement.removeEventListener('volumechange', onMediaElementVolumeChange);
-            window.mediaElement.removeEventListener('pause', onMediaElementPause);
-            window.mediaElement.removeEventListener('playing', onMediaElementPlaying);
-        }
+    function enableTimeUpdateListener() {
+        window.mediaManager.addEventListener(cast.framework.events.EventType.TIME_UPDATE, onMediaElementTimeUpdate);
+        window.mediaManager.addEventListener(cast.framework.events.EventType.REQUEST_VOLUME_CHANGE, onMediaElementVolumeChange);
+        window.mediaManager.addEventListener(cast.framework.events.EventType.PAUSE, onMediaElementPause);
+        window.mediaManager.addEventListener(cast.framework.events.EventType.PLAYING, onMediaElementPlaying);
     }
 
+    function disableTimeUpdateListener() {
+        window.mediaManager.removeEventListener(cast.framework.events.EventType.TIME_UPDATE, onMediaElementTimeUpdate);
+        window.mediaManager.removeEventListener(cast.framework.events.EventType.REQUEST_VOLUME_CHANGE, onMediaElementVolumeChange);
+        window.mediaManager.removeEventListener(cast.framework.events.EventType.PAUSE, onMediaElementPause);
+        window.mediaManager.removeEventListener(cast.framework.events.EventType.PLAYING, onMediaElementPlaying);
+    }
+    
+    enableTimeUpdateListener();
+
     function isPlaying() {
-        return window.playlist.length > 0;
+        return window.mediaManager.getPlayerState() === cast.framework.messages.PlayerState.PLAYING;
     }
 
     window.addEventListener('beforeunload', function () {
-
         // Try to cleanup after ourselves before the page closes
-        enableTimeUpdateListener(false);
-        embyActions.reportPlaybackStopped($scope, getReportingParams($scope));
+        disableTimeUpdateListener();
+        jellyfinActions.reportPlaybackStopped($scope, getReportingParams($scope));
     });
 
-    mgr.defaultOnPlay = mgr.onPlay;
-    mgr.onPlay = function (event) {
+    mgr.defaultOnPlay = function (event) {
 
-        embyActions.play($scope, event);
-        embyActions.reportPlaybackProgress($scope, getReportingParams($scope));
+        jellyfinActions.play($scope, event);
+        jellyfinActions.reportPlaybackProgress($scope, getReportingParams($scope));
     };
+    mgr.addEventListener('PLAY', mgr.defaultOnPlay);
 
-    mgr.defaultOnPause = mgr.onPause;
-    mgr.onPause = function (event) {
-        mgr.defaultOnPause(event);
-        embyActions.pause($scope);
-        embyActions.reportPlaybackProgress($scope, getReportingParams($scope));
+    mgr.defaultOnPause = function (event) {
+        jellyfinActions.reportPlaybackProgress($scope, getReportingParams($scope));
     };
+    mgr.addEventListener('PAUSE', mgr.defaultOnPause);
 
-    mgr.defaultOnStop = mgr.onStop;
-    mgr.onStop = function (event) {
+    mgr.defaultOnStop = function (event) {
         stop();
     };
+    mgr.addEventListener('ABORT', mgr.defaultOnStop);
 
-    mgr.onEnded = function () {
+    mgr.addEventListener('ENDED', function () {
 
         // Ignore
         if ($scope.isChangingStream) {
             return;
         }
 
-        embyActions.setApplicationClose();
-        enableTimeUpdateListener(false);
-        embyActions.reportPlaybackStopped($scope, getReportingParams($scope));
+        jellyfinActions.reportPlaybackStopped($scope, getReportingParams($scope));
         init();
 
         if (!playNextItem()) {
             window.playlist = [];
             window.currentPlaylistIndex = -1;
-            embyActions.displayUserInfo($scope, $scope.serverAddress, $scope.accessToken, $scope.userId);
+            jellyfinActions.displayUserInfo($scope, $scope.serverAddress, $scope.accessToken, $scope.userId);
         }
-    };
+    });
 
     function stop(nextMode) {
 
         $scope.playNextItem = nextMode ? true : false;
-        embyActions.stop($scope);
-        enableTimeUpdateListener(false);
+        jellyfinActions.stop($scope);
 
         var reportingParams = getReportingParams($scope);
 
         var promise;
 
-        embyActions.stopPingInterval();
+        jellyfinActions.stopPingInterval();
 
         if (reportingParams.ItemId) {
-            promise = embyActions.reportPlaybackStopped($scope, reportingParams);
+            promise = jellyfinActions.reportPlaybackStopped($scope, reportingParams);
         }
 
-        clearMediaElement();
+        window.mediaManager.stop();
 
         window.playlist = [];
         window.currentPlaylistIndex = -1;
-        embyActions.displayUserInfo($scope, $scope.serverAddress, $scope.accessToken, $scope.userId);
+        jellyfinActions.displayUserInfo($scope, $scope.serverAddress, $scope.accessToken, $scope.userId);
 
         promise = promise || Promise.resolve();
 
         return promise;
     }
 
-    window.castReceiverManager = cast.receiver.CastReceiverManager.getInstance();
-
-    window.castReceiverManager.onSystemVolumeChanged = function (event) {
-        console.log("### Cast Receiver Manager - System Volume Changed : " + JSON.stringify(event));
-
-        // See cast.receiver.media.Volume
-        console.log("### Volume: " + event.data['level'] + " is muted? " + event.data['muted']);
-
-        window.VolumeInfo.Level = (event.data['level'] || 1) * 100;
-        window.VolumeInfo.IsMuted = event.data['muted'] || false;
+    window.castReceiverContext.addEventListener(cast.framework.system.EventType.SYSTEM_VOLUME_CHANGED, function (event) {
+        console.log("### Cast Receiver Manager - System Volume Changed : " + JSON.stringify(event.data));
         
         if ($scope.userId != null) {
             reportEvent('volumechange', true);
         }
-    };
+    });
+
+    // Set the active subtitle track once the player has loaded
+    window.mediaManager.addEventListener(
+        cast.framework.events.EventType.PLAYER_LOAD_COMPLETE, () => {
+            setTextTrack(window.mediaManager.getMediaInformation().customData.subtitleStreamIndex);
+        }
+    );
 
     console.log('Application is ready, starting system');
-
-    // Create a custom namespace channel to receive commands from the sender
-    // app to add items to a playlist
-    window.playlistMessageBus = window.castReceiverManager.getCastMessageBus('urn:x-cast:com.connectsdk', cast.receiver.CastMessageBus.MessageType.JSON);
 
     function cleanName(name) {
 
@@ -203,6 +196,32 @@
         $scope.userId = data.userId;
         $scope.accessToken = data.accessToken;
         $scope.serverAddress = data.serverAddress;
+        if (data.subtitleAppearance) {
+            window.subtitleAppearance = data.subtitleAppearance;
+        }
+
+        // Report device capabilities
+        if (!window.hasReportedCapabilities) {
+            getMaxBitrate("Video").then((maxBitrate) => {
+                let capabilitiesUrl = $scope.serverAddress + "/Sessions/Capabilities/Full";
+                let deviceProfile = getDeviceProfile(maxBitrate);
+    
+                let capabilities = {
+                    PlayableMediaTypes: ["Audio", "Video"],
+                    SupportsPersistentIdentifier: false,
+                    SupportsMediaControl: true,
+                    DeviceProfile: deviceProfile
+                };
+                window.hasReportedCapabilities = true;
+                return fetchhelper.ajax({
+                    url: capabilitiesUrl,
+                    headers: getSecurityHeaders($scope.accessToken, $scope.userId),
+                    type: 'POST',
+                    data: JSON.stringify(capabilities),
+                    contentType: 'application/json'
+                });
+            });
+        }
 
         data.options = data.options || {};
         var cleanReceiverName = cleanName(data.receiverName || '');
@@ -217,9 +236,9 @@
         // Items will have properties - Id, Name, Type, MediaType, IsFolder
 
         var reportEventType;
+        var systemVolume = window.castReceiverContext.getSystemVolume();
 
         if (data.command == 'PlayLast' || data.command == 'PlayNext') {
-
             translateItems(data, data.options, data.options.items, data.command);
         }
         else if (data.command == 'Shuffle') {
@@ -228,122 +247,92 @@
         else if (data.command == 'InstantMix') {
             instantMix(data, data.options, data.options.items[0]);
         }
-        else if (data.command == 'DisplayContent') {
-
-            if (!isPlaying()) {
-
-                console.log('DisplayContent');
-
-                embyActions.displayItem($scope, data.serverAddress, data.accessToken, data.userId, data.options.ItemId);
-            }
-
+        else if (data.command == 'DisplayContent' && !isPlaying()) {
+            console.log('DisplayContent');
+            jellyfinActions.displayItem($scope, data.serverAddress, data.accessToken, data.userId, data.options.ItemId);
         }
-        else if (data.command == 'NextTrack') {
-
-            if (window.playlist && window.currentPlaylistIndex < window.playlist.length - 1) {
-                playNextItem({}, true);
-            }
-
+        else if (data.command == 'NextTrack' && window.playlist && window.currentPlaylistIndex < window.playlist.length - 1) {
+            playNextItem({}, true);
         }
-        else if (data.command == 'PreviousTrack') {
-
-            if (window.playlist && window.currentPlaylistIndex > 0) {
-                playPreviousItem({});
-            }
-
+        else if (data.command == 'PreviousTrack' && window.playlist && window.currentPlaylistIndex > 0) {
+            playPreviousItem({});
         }
         else if (data.command == 'SetAudioStreamIndex') {
-
-            setAudioStreamIndex($scope, data.options.index, data.serverAddress);
+            setAudioStreamIndex($scope, data.options.index);
         }
         else if (data.command == 'SetSubtitleStreamIndex') {
-
             setSubtitleStreamIndex($scope, data.options.index, data.serverAddress);
         }
         else if (data.command == 'VolumeUp') {
-
-            window.mediaElement.volume = Math.min(1, window.mediaElement.volume + .2);
+            window.castReceiverContext.setSystemVolumeLevel(Math.min(1, systemVolume.level + 0.2));
         }
         else if (data.command == 'VolumeDown') {
-
-            // TODO
-            window.mediaElement.volume = Math.max(0, window.mediaElement.volume - .2);
+            window.castReceiverContext.setSystemVolumeLevel(Math.max(0, systemVolume.level - 0.2));
         }
         else if (data.command == 'ToggleMute') {
-
-            window.mediaElement.muted = !window.mediaElement.muted;
-
+            window.castReceiverContext.setSystemVolumeMuted(!systemVolume.muted);
         }
         else if (data.command == 'Identify') {
             if (!isPlaying()) {
-                embyActions.displayUserInfo($scope, data.serverAddress, data.accessToken, data.userId);
+                jellyfinActions.displayUserInfo($scope, data.serverAddress, data.accessToken, data.userId);
             } else {
                 // when a client connects send back the initial device state (volume etc) via a playbackstop message
-                embyActions.reportPlaybackProgress($scope, getReportingParams($scope), true, "playbackstop");
+                jellyfinActions.reportPlaybackProgress($scope, getReportingParams($scope), true, "playbackstop");
             }
         }
         else if (data.command == 'SetVolume') {
             // Scale 0-100
-            window.mediaElement.volume = data.options.volume / 100;
+            window.castReceiverContext.setSystemVolumeLevel(data.options.volume / 100);
         }
         else if (data.command == 'Seek') {
             seek(data.options.position * 10000000);
         }
         else if (data.command == 'Mute') {
-
-            window.mediaElement.muted = true;
-        }
+            window.castReceiverContext.setSystemVolumeMuted(true);
+         }
         else if (data.command == 'Unmute') {
-
-            window.mediaElement.muted = false;
+            window.castReceiverContext.setSystemVolumeMuted(false);
         }
         else if (data.command == 'Stop') {
-
             stop();
         }
         else if (data.command == 'PlayPause') {
 
-            if (window.mediaElement.paused) {
-                window.mediaElement.play();
+            if (window.mediaManager.getPlayerState() === cast.framework.messages.PlayerState.PAUSED) {
+                window.mediaManager.play();
             } else {
-                window.mediaElement.pause();
+                window.mediaManager.pause();
             }
         }
         else if (data.command == 'Pause') {
-
-            window.mediaElement.pause();
+            window.mediaManager.pause();
         }
         else if (data.command == 'SetRepeatMode') {
-
             window.repeatMode = data.options.RepeatMode;
             reportEventType = 'repeatmodechange';
         }
         else if (data.command == 'Unpause') {
-
-            window.mediaElement.play();
+            window.mediaManager.play();
         }
         else {
-
             translateItems(data, data.options, data.options.items, 'play');
         }
 
         if (reportEventType) {
-
             var report = function () {
-                embyActions.reportPlaybackProgress($scope, getReportingParams($scope));
+                jellyfinActions.reportPlaybackProgress($scope, getReportingParams($scope));
             };
-            embyActions.reportPlaybackProgress($scope, getReportingParams($scope), true, reportEventType);
+            jellyfinActions.reportPlaybackProgress($scope, getReportingParams($scope), true, reportEventType);
             setTimeout(report, 100);
             setTimeout(report, 500);
         }
     }
 
     function reportEvent(name, reportToServer) {
-        embyActions.reportPlaybackProgress($scope, getReportingParams($scope), reportToServer, name);
+        jellyfinActions.reportPlaybackProgress($scope, getReportingParams($scope), reportToServer, name);
     }
 
     function setSubtitleStreamIndex($scope, index, serverAddress) {
-
         console.log('setSubtitleStreamIndex. index: ' + index);
 
         var currentSubtitleStream = $scope.mediaSource.MediaStreams.filter(function (m) {
@@ -352,7 +341,6 @@
         var currentDeliveryMethod = currentSubtitleStream ? currentSubtitleStream.DeliveryMethod : null;
 
         if (index == -1 || index == null) {
-
             // Need to change the stream to turn off the subs
             if (currentDeliveryMethod == 'Encode') {
                 console.log('setSubtitleStreamIndex video url change required');
@@ -360,7 +348,7 @@
                 changeStream(positionTicks, { SubtitleStreamIndex: -1 });
             } else {
                 $scope.subtitleStreamIndex = -1;
-                setTextTrack($scope);
+                setTextTrack(null);
             }
             return;
         }
@@ -376,12 +364,12 @@
 
         console.log('setSubtitleStreamIndex DeliveryMethod:' + subtitleStream.DeliveryMethod);
 
-        if (subtitleStream.DeliveryMethod == 'External' && currentDeliveryMethod != 'Encode') {
+        if (subtitleStream.DeliveryMethod == 'External' || currentDeliveryMethod == 'Encode') {
 
-            var textStreamUrl = subtitleStream.IsExternalUrl ? subtitleStream.DeliveryUrl : (getUrl(serverAddress, subtitleStream.DeliveryUrl));
+            var textStreamUrl = subtitleStream.IsExternalUrl ? subtitleStream.DeliveryUrl : getUrl(serverAddress, subtitleStream.DeliveryUrl);
 
             console.log('Subtitle url: ' + textStreamUrl);
-            setTextTrack($scope, textStreamUrl);
+            setTextTrack(index);
             $scope.subtitleStreamIndex = subtitleStream.Index;
             return;
         } else {
@@ -391,8 +379,7 @@
         }
     }
 
-    function setAudioStreamIndex($scope, index, serverAddress) {
-
+    function setAudioStreamIndex($scope, index) {
         var positionTicks = getCurrentPositionTicks($scope);
         changeStream(positionTicks, { AudioStreamIndex: index });
     }
@@ -402,15 +389,14 @@
     }
 
     function changeStream(ticks, params) {
-
         if (ticks) {
             ticks = parseInt(ticks);
         }
 
-        if ($scope.canClientSeek && params == null) {
+        if (window.mediaManager.getMediaInformation().customData.canClientSeek && params == null) {
 
-            window.mediaElement.currentTime = ticks / 10000000;
-            embyActions.reportPlaybackProgress($scope, getReportingParams($scope));
+            window.mediaManager.seek(ticks / 10000000);
+            jellyfinActions.reportPlaybackProgress($scope, getReportingParams($scope));
             return;
         }
 
@@ -422,99 +408,70 @@
         var item = $scope.item;
         var mediaType = item.MediaType;
 
+        // TODO untangle this shitty callback mess
         getMaxBitrate(mediaType).then(function (maxBitrate) {
-
             var deviceProfile = getDeviceProfile(maxBitrate);
 
             var audioStreamIndex = params.AudioStreamIndex == null ? $scope.audioStreamIndex : params.AudioStreamIndex;
             var subtitleStreamIndex = params.SubtitleStreamIndex == null ? $scope.subtitleStreamIndex : params.SubtitleStreamIndex;
 
-            embyActions.getPlaybackInfo(item, maxBitrate, deviceProfile, ticks, $scope.mediaSourceId, audioStreamIndex, subtitleStreamIndex, liveStreamId).then(function (result) {
-
+            jellyfinActions.getPlaybackInfo(item, maxBitrate, deviceProfile, ticks, $scope.mediaSourceId, audioStreamIndex, subtitleStreamIndex, liveStreamId).then(function (result) {
                 if (validatePlaybackInfoResult(result)) {
-
                     var mediaSource = result.MediaSources[0];
 
                     var streamInfo = createStreamInfo(item, mediaSource, ticks);
 
                     if (!streamInfo.url) {
                         showPlaybackInfoErrorMessage('NoCompatibleStream');
-                        //self.nextTrack();
                         return;
                     }
+                    
+                    var mediaInformation = createMediaInformation(playSessionId, item, streamInfo);
+                    var loadRequest = new cast.framework.messages.LoadRequestData();
+                    loadRequest.media = mediaInformation;
+                    loadRequest.autoplay = true;
 
-                    changeStreamToUrl(playSessionId, mediaType, streamInfo);
-                    $scope.subtitleStreamIndex = subtitleStreamIndex;
-                    $scope.audioStreamIndex = audioStreamIndex;
+                    new Promise((resolve, reject) => {
+                        // TODO something to do with HLS?
+                        var requiresStoppingTranscoding = false;
+                        if (requiresStoppingTranscoding) {
+                            window.mediaManager.pause();
+                            jellyfinActions.stopActiveEncodings(playSessionId).then(function () {
+                                resolve();
+                            });
+                        } else {
+                            resolve();
+                        }
+                    }).then(() => {
+                        window.mediaManager.load(loadRequest);
+                        window.mediaManager.play();
+                        $scope.subtitleStreamIndex = subtitleStreamIndex;
+                        $scope.audioStreamIndex = audioStreamIndex;
+                    });
                 }
             });
         });
     }
 
-    function changeStreamToUrl(playSessionId, mediaType, streamInfo) {
-
-        $scope.isChangingStream = true;
-
-        var requiresStoppingTranscoding = mediaType == "Video";
-        // TODO: Reactivate for HLS
-        requiresStoppingTranscoding = false;
-
-        if (requiresStoppingTranscoding) {
-
-            window.mediaElement.pause();
-
-            embyActions.stopActiveEncodings(playSessionId).then(function () {
-
-                setSrcIntoRenderer(streamInfo);
-            });
-
-        } else {
-
-            setSrcIntoRenderer(streamInfo);
-        }
-    }
-
-    function setSrcIntoRenderer(streamInfo) {
-
-        var url = streamInfo.url;
-
-        console.log('new media url: ' + url);
-        window.mediaElement.src = url;
-        window.mediaElement.autoplay = true;
-
-        setStartPositionTicks(streamInfo.startPositionTicks || 0);
-
-        window.mediaElement.play();
-
-        $scope.mediaSource = streamInfo.mediaSource;
-        setTextTrack($scope, streamInfo.subtitleStreamUrl);
-
-        setTimeout(function () {
-
-            $scope.isChangingStream = false;
-
-        }, 1000);
-    }
-
     // Create a message handler for the custome namespace channel
-    window.playlistMessageBus.onMessage = function (event) {
+    // TODO save namespace somewhere global?
+    window.castReceiverContext.addCustomMessageListener('urn:x-cast:com.connectsdk', function(evt) {
+        console.log('Playlist message: ' + JSON.stringify(evt));
 
-        console.log('Playlist message: ' + JSON.stringify(event));
-
-        var data = event.data;
+        var data = evt.data;
 
         data.options = data.options || {};
-        data.options.senderId = event.senderId;
+        data.options.senderId = evt.senderId;
+        // TODO set it somewhere better perhaps
+        window.senderId = evt.senderId;
 
         processMessage(data);
-    };
+    });
 
     function tagItems(items, data) {
-
         // Attach server data to the items
         // Once day the items could be coming from multiple servers, each with their own security info
         for (var i = 0, length = items.length; i < length; i++) {
-
             items[i].userId = data.userId;
             items[i].accessToken = data.accessToken;
             items[i].serverAddress = data.serverAddress;
@@ -522,9 +479,7 @@
     }
 
     function translateItems(data, options, items, method) {
-
         var callback = function (result) {
-
             options.items = result.Items;
             tagItems(options.items, data);
 
@@ -540,7 +495,6 @@
     }
 
     function instantMix(data, options, item) {
-
         getInstantMixItems(data.serverAddress, data.accessToken, data.userId, item).then(function (result) {
 
             options.items = result.Items;
@@ -550,25 +504,20 @@
     }
 
     function shuffle(data, options, item) {
-
         getShuffleItems(data.serverAddress, data.accessToken, data.userId, item).then(function (result) {
-
             options.items = result.Items;
             tagItems(options.items, data);
             playFromOptions(data.options);
         });
     }
 
-    function queue(items, method) {
-
+    function queue(items) {
         for (var i = 0, length = items.length; i < length; i++) {
-
             window.playlist.push(items[i]);
         }
     }
 
     function playFromOptions(options) {
-
         var firstItem = options.items[0];
 
         if (options.startPositionTicks || firstItem.MediaType !== 'Video') {
@@ -688,10 +637,41 @@
         });
 
         profile.SubtitleProfiles = [];
-        profile.SubtitleProfiles.push({
-            Format: 'js',
-            Method: 'External'
-        });
+        profile.SubtitleProfiles.push(
+            {
+                Format: 'vtt',
+                Method: 'External'
+            },
+            {
+                Format: 'vtt',
+                Method: 'Hls'
+            }
+        );
+
+        // Temporary solution until we can make a custom browserdeviceprofile
+        // webm support is currently mistaken for mkv support
+        profile.DirectPlayProfiles = profile.DirectPlayProfiles.filter(item => item.Container !== "mkv");
+
+        profile.TranscodingProfiles = profile.TranscodingProfiles.filter(item => item.Container !== "mkv");
+
+        // TODO: Another temporary solution until we can make a custom browserdeviceprofile
+        // 1st and 2nd gen only support h264 4.1 but browserdeviceprofile is reporting 4.2
+        let context = cast.framework.CastReceiverContext.getInstance();
+        if (context.canDisplayType('video/mp4;codecs=avc1.64002A')) {
+            return profile;
+        }
+        
+        for (prof of profile.CodecProfiles) {
+            if (prof.Codec && prof.Codec.indexOf("h264") == -1) {
+                continue;
+            }
+
+            for (condition of prof.Conditions) {
+                if (condition.Property == "VideoLevel" && condition.Value > 41) {
+                    condition.Value = 41;
+                }
+            }
+        }
 
         return profile;
     }
@@ -701,23 +681,21 @@
         $scope.isChangingStream = false;
         setAppStatus('loading');
 
-        unloadPlayer();
-
         getMaxBitrate(item.MediaType).then(function (maxBitrate) {
 
             var deviceProfile = getDeviceProfile(maxBitrate);
 
-            embyActions.getPlaybackInfo(item, maxBitrate, deviceProfile, options.startPositionTicks, options.mediaSourceId, options.audioStreamIndex, options.subtitleStreamIndex).then(function (result) {
+            jellyfinActions.getPlaybackInfo(item, maxBitrate, deviceProfile, options.startPositionTicks, options.mediaSourceId, options.audioStreamIndex, options.subtitleStreamIndex).then(function (result) {
 
                 if (validatePlaybackInfoResult(result)) {
 
-                    var mediaSource = getOptimalMediaSource(item.MediaType, result.MediaSources);
+                    var mediaSource = getOptimalMediaSource(result.MediaSources);
 
                     if (mediaSource) {
 
                         if (mediaSource.RequiresOpening) {
 
-                            embyActions.getLiveStream(item, result.PlaySessionId, maxBitrate, deviceProfile, options.startPositionTicks, mediaSource, null, null).then(function (openLiveStreamResult) {
+                            jellyfinActions.getLiveStream(item, result.PlaySessionId, maxBitrate, deviceProfile, options.startPositionTicks, mediaSource, null, null).then(function (openLiveStreamResult) {
 
                                 openLiveStreamResult.MediaSource.enableDirectPlay = supportsDirectPlay(openLiveStreamResult.MediaSource);
                                 playMediaSource(result.PlaySessionId, item, openLiveStreamResult.MediaSource, options);
@@ -746,13 +724,13 @@
             if (window.MaxBitrate) {
                 console.log('bitrate is set to ' + window.MaxBitrate);
 
-                resolve(Math.min(window.MaxBitrate || window.BitrateCap, window.BitrateCap));
+                resolve(window.MaxBitrate);
                 return;
             }
 
             if (detectedBitrate && (new Date().getTime() - lastBitrateDetect) < 600000) {
                 console.log('returning previous detected bitrate of ' + detectedBitrate);
-                resolve(Math.min(detectedBitrate, window.DetectedBitrateCap));
+                resolve(detectedBitrate);
                 return;
             }
 
@@ -764,13 +742,13 @@
 
             console.log('detecting bitrate');
 
-            embyActions.detectBitrate($scope).then(function (bitrate) {
+            jellyfinActions.detectBitrate($scope).then(function (bitrate) {
 
                 console.log('Max bitrate auto detected to ' + bitrate);
                 lastBitrateDetect = new Date().getTime();
                 detectedBitrate = bitrate;
 
-                resolve(Math.min(detectedBitrate, window.DetectedBitrateCap));
+                resolve(detectedBitrate);
 
             }, function () {
 
@@ -799,7 +777,7 @@
         });
     }
 
-    function getOptimalMediaSource(mediaType, versions) {
+    function getOptimalMediaSource(versions) {
 
         var optimalVersion = versions.filter(function (v) {
 
@@ -833,67 +811,95 @@
         return false;
     }
 
-    function setTextTrack($scope, subtitleStreamUrl) {
+    function setTextTrack(index) {
+        try {
+            var textTracksManager = window.mediaManager.getTextTracksManager();
+            if (index == null) {
+                textTracksManager.setActiveByIds(null);
+                return;
+            }
 
-        while (window.mediaElement.firstChild) {
-            window.mediaElement.removeChild(window.mediaElement.firstChild);
-        }
-        var track;
-        if (window.mediaElement.textTracks.length == 0) {
-            window.mediaElement.addTextTrack("subtitles");
-        }
-        track = window.mediaElement.textTracks[0];
-        var cues = track.cues;
-        for (var i = cues.length - 1 ; i >= 0 ; i--) {
-            track.removeCue(cues[i]);
-        }
-        if (subtitleStreamUrl) {
-            embyActions.getSubtitle($scope, subtitleStreamUrl).then(function (data) {
-
-                track.mode = "showing";
-
-                data.TrackEvents.forEach(function (trackEvent) {
-                    track.addCue(new VTTCue(trackEvent.StartPositionTicks / 10000000, trackEvent.EndPositionTicks / 10000000, trackEvent.Text.replace(/\\N/gi, '\n')));
-                });
+            var tracks = textTracksManager.getTracks();
+            var subtitleTrack = tracks.find(function(track) {
+                return track.trackId === index;
             });
+            if (subtitleTrack) {
+                textTracksManager.setActiveByIds([subtitleTrack.trackId]);
+                var subtitleAppearance = window.subtitleAppearance;
+                if (subtitleAppearance) {
+                    var textTrackStyle = new cast.framework.messages.TextTrackStyle();
+                    if (subtitleAppearance.dropShadow != null) {
+                        // Empty string is DROP_SHADOW
+                        textTrackStyle.edgeType = subtitleAppearance.dropShadow.toUpperCase() || cast.framework.messages.TextTrackEdgeType.DROP_SHADOW;
+                        textTrackStyle.edgeColor = "#000000FF";
+                    }
+
+                    if (subtitleAppearance.font) {
+                        textTrackStyle.fontFamily = subtitleAppearance.font;
+                    }
+
+                    if (subtitleAppearance.textColor) {
+                        // Append the transparency, hardcoded to 100%
+                        textTrackStyle.foregroundColor = subtitleAppearance.textColor + "FF";
+                    }
+
+                    if (subtitleAppearance.textBackground === "transparent") {
+                        textTrackStyle.backgroundColor = "#00000000" // RGBA
+                    }
+
+                    switch(subtitleAppearance.textSize) {
+                        case 'smaller':
+                            textTrackStyle.fontScale = 0.6;
+                            break;
+                        case 'small':
+                            textTrackStyle.fontScale = 0.8;
+                            break;
+                        case 'large':
+                            textTrackStyle.fontScale = 1.15;
+                            break;
+                        case 'larger':
+                            textTrackStyle.fontScale = 1.3;
+                            break;
+                        case 'extralarge':
+                            textTrackStyle.fontScale = 1.45;
+                            break;
+                        default:
+                            textTrackStyle.fontScale = 1.0;
+                            break;
+                    }
+                    textTracksManager.setTextTrackStyle(textTrackStyle);
+                }
+            }
+        } catch(e) {
+            console.log("Setting subtitle track failed: " + e);
         }
     }
 
-    function playMediaSource(playSessionId, item, mediaSource, options) {
+    function createMediaInformation(playSessionId, item, streamInfo) {
+        var mediaInfo = new cast.framework.messages.MediaInformation();
+        mediaInfo.contentId = streamInfo.url;
+        mediaInfo.contentType = streamInfo.contentType;
+        mediaInfo.customData = {
+            startPositionTicks: streamInfo.startPositionTicks || 0,
+            serverAddress: item.serverAddress,
+            userId: item.userId,
+            itemId: item.Id,
+            mediaSourceId: streamInfo.mediaSource.Id,
+            audioStreamIndex: streamInfo.audioStreamIndex,
+            subtitleStreamIndex: streamInfo.subtitleStreamIndex,
+            playMethod: streamInfo.isStatic ? 'DirectStream' : 'Transcode',
+            runtimeTicks: streamInfo.mediaSource.RunTimeTicks,
+            liveStreamId: streamInfo.mediaSource.LiveStreamId,
+            accessToken: item.accessToken,
+            canSeek: streamInfo.canSeek,
+            canClientSeek: streamInfo.canClientSeek,
+            playSessionId: playSessionId
+        }
 
-        setAppStatus('loading');
+        mediaInfo.metadata = getMetadata(item, datetime);
 
-        unloadPlayer();
-
-        var streamInfo = createStreamInfo(item, mediaSource, options.startPositionTicks);
-
-        var url = streamInfo.url;
-        console.log('setting setTextTrack to ' + (streamInfo.subtitleStreamUrl || ''));
-        setTextTrack($scope, streamInfo.subtitleStreamUrl);
-
-        var mediaInfo = {
-            customData: {
-                startPositionTicks: options.startPositionTicks || 0,
-                serverAddress: item.serverAddress,
-                userId: item.userId,
-                itemId: item.Id,
-                mediaSourceId: streamInfo.mediaSource.Id,
-                audioStreamIndex: streamInfo.audioStreamIndex,
-                subtitleStreamIndex: streamInfo.subtitleStreamIndex,
-                playMethod: streamInfo.isStatic ? 'DirectStream' : 'Transcode',
-                runtimeTicks: streamInfo.mediaSource.RunTimeTicks,
-                liveStreamId: streamInfo.mediaSource.LiveStreamId,
-                accessToken: item.accessToken,
-                canSeek: streamInfo.canSeek,
-                canClientSeek: streamInfo.canClientSeek,
-                playSessionId: playSessionId
-            },
-            metadata: {},
-            contentId: url,
-            contentType: streamInfo.contentType,
-            tracks: undefined,
-            streamType: cast.receiver.media.StreamType.BUFFERED
-        };
+        mediaInfo.streamType = cast.framework.messages.StreamType.BUFFERED;
+        mediaInfo.tracks = streamInfo.tracks;
 
         if (streamInfo.mediaSource.RunTimeTicks) {
             mediaInfo.duration = Math.floor(streamInfo.mediaSource.RunTimeTicks / 10000000);
@@ -901,30 +907,44 @@
 
         mediaInfo.customData.startPositionTicks = streamInfo.startPosition || 0;
 
-        embyActions.load($scope, mediaInfo.customData, item);
+        return mediaInfo;
+    }
+
+    function playMediaSource(playSessionId, item, mediaSource, options) {
+
+        setAppStatus('loading');
+
+        var streamInfo = createStreamInfo(item, mediaSource, options.startPositionTicks);
+
+        var url = streamInfo.url;
+
+        var mediaInfo = createMediaInformation(playSessionId, item, streamInfo);
+        var loadRequestData = new cast.framework.messages.LoadRequestData();
+        loadRequestData.media = mediaInfo;
+        loadRequestData.autoplay = true;
+
+        jellyfinActions.load($scope, mediaInfo.customData, item);
+        window.mediaManager.load(loadRequestData);
+
         $scope.PlaybackMediaSource = mediaSource;
 
-        var autoplay = true;
-
-        mediaElement.autoplay = autoplay;
-
         console.log('setting src to ' + url);
-        window.mediaElement.autoplay = true;
-        window.mediaElement.src = url;
         $scope.mediaSource = mediaSource;
 
-        console.log('calling mediaElement.load');
-        window.mediaElement.load();
-
-        if (autoplay) {
-            window.mediaElement.pause();
-            console.log('calling embyActions.delayStart');
-            embyActions.delayStart($scope);
+        if (item.BackdropImageTags && item.BackdropImageTags.length) {
+            backdropUrl = $scope.serverAddress + '/emby/Items/' + item.Id + '/Images/Backdrop/0?tag=' + item.BackdropImageTags[0];
+        } else if (item.ParentBackdropItemId && item.ParentBackdropImageTags && item.ParentBackdropImageTags.length) {
+            backdropUrl = $scope.serverAddress + '/emby/Items/' + item.ParentBackdropItemId + '/Images/Backdrop/0?tag=' + item.ParentBackdropImageTags[0];
         }
-        enableTimeUpdateListener(false);
-        enableTimeUpdateListener(true);
+        
+        if (backdropUrl) {
+            window.mediaElement.style.setProperty('--background-image', 'url("' + backdropUrl + '")');
+        } else {
+            //Replace with a placeholder?
+            window.mediaElement.style.removeProperty('--background-image');
+        }
 
-        setMetadata(item, mediaInfo.metadata, datetime);
+        jellyfinActions.reportPlaybackStart($scope, getReportingParams($scope));
 
         // We use false as we do not want to broadcast the new status yet
         // we will broadcast manually when the media has been loaded, this
@@ -932,5 +952,27 @@
         window.mediaManager.setMediaInformation(mediaInfo, false);
     }
 
-    window.castReceiverManager.start();
+    playbackConfig.supportedCommands = cast.framework.messages.Command.ALL_BASIC_MEDIA;
+
+    // Set the available buttons in the UI controls.
+    const controls = cast.framework.ui.Controls.getInstance();
+    controls.clearDefaultSlotAssignments();
+
+    /* Disabled for now, dynamically set controls for each media type in the future.
+    // Assign buttons to control slots.
+    controls.assignButton(
+        cast.framework.ui.ControlsSlot.SLOT_SECONDARY_1,
+        cast.framework.ui.ControlsButton.CAPTIONS
+    );*/
+    
+    controls.assignButton(
+        cast.framework.ui.ControlsSlot.SLOT_PRIMARY_1,
+        cast.framework.ui.ControlsButton.SEEK_BACKWARD_15
+    );
+    controls.assignButton(
+        cast.framework.ui.ControlsSlot.SLOT_PRIMARY_2,
+        cast.framework.ui.ControlsButton.SEEK_FORWARD_15
+    );
+
+    window.castReceiverContext.start(playbackConfig);
 });

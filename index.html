@@ -17,45 +17,9 @@
             <h1>Ready to cast</h1>
             <h2>Select your media in Jellyfin and play it here</h2>
         </div>
-        <div class="timeOfDay"><span class="timePrefix"></span> <span class="timeSuffix"></span></div>
     </div>
-    <video id="video-player" crossorigin="anonymous" preload="auto"></video>
-    <img id="photo">
-    <div id="backdrop">
-        <img class="spinner" src="img/spinner.png" />
-        <div class="gradient">
-            <img class="media-poster" />
-            <h2>
-                <span class="media-title"></span>
-                <span class="media-secondary-title"></span>
-                <span class="media-artist"></span>
-                <span class="media-album-title"><em></em></span>
-            </h2>
-        </div>
-    </div>
-    <div id="controls">
-        <img class="media-poster" />
-        <div id="right-controls">
-            <h1>
-                <i class="glyphicon glyphicon-pause"></i>
-                <i class="glyphicon glyphicon-play"></i>
-                <span class="media-title"></span>
-                <span class="media-secondary-title"></span>
-                <span class="media-artist"></span>
-                <span class="media-album-title musicTitle"><em></em></span>
-            </h1>
-            <div id="player-controls-left"><span class="player-time player-current-time"></span></div>
-            <div id="player-controls-right"><span class="player-time player-duration"></span></div>
-            <div id="player-controls-center">
-                <div id="player-progress-track">
-                    <div id="player-progress-bar"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="detailContent">
-        <div class="timeOfDay"><span class="timePrefix"></span> <span class="timeSuffix"></span></div>
-		
+    <cast-media-player id="video-player" crossorigin="anonymous" preload="auto"></cast-media-player>
+    <div class="detailContent">		
         <div class="detailImage">
             <div id="playedIndicator"></div>
 			

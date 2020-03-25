@@ -17,10 +17,9 @@ function getUrl(serverAddress, name) {
 
 function getCurrentPositionTicks($scope) {
 
-    var positionTicks = window.mediaElement.currentTime * 10000000;
-
-    if (!$scope.canClientSeek) {
-
+    var positionTicks = window.mediaManager.getCurrentTimeSec() * 10000000;
+    var mediaInformation = window.mediaManager.getMediaInformation();
+    if (mediaInformation && !mediaInformation.customData.canClientSeek) {
         positionTicks += ($scope.startPositionTicks || 0);
     }
 
@@ -28,14 +27,14 @@ function getCurrentPositionTicks($scope) {
 }
 
 function getReportingParams($scope) {
-
+    var volumeInfo = window.castReceiverContext.getSystemVolume();
     return {
         PositionTicks: getCurrentPositionTicks($scope),
-        IsPaused: window.mediaElement.paused,
-        IsMuted: window.VolumeInfo.IsMuted,
+        IsPaused: window.mediaManager.getPlayerState() === cast.framework.messages.PlayerState.PAUSED,
+        IsMuted: volumeInfo.muted,
         AudioStreamIndex: $scope.audioStreamIndex,
         SubtitleStreamIndex: $scope.subtitleStreamIndex,
-        VolumeLevel: window.VolumeInfo.Level,
+        VolumeLevel: volumeInfo.level * 100,
         ItemId: $scope.itemId,
         MediaSourceId: $scope.mediaSourceId,
         QueueableMediaTypes: ['Audio', 'Video'],
@@ -90,7 +89,6 @@ function getNextPlaybackItemInfo() {
 }
 
 function getSenderReportingData($scope, reportingData) {
-
     var state = {
         ItemId: reportingData.ItemId,
         PlayState: extend({}, reportingData),
@@ -155,11 +153,6 @@ function getSenderReportingData($scope, reportingData) {
             nowPlayingItem.PrimaryImageItemId = item.AlbumId;
             nowPlayingItem.PrimaryImageTag = item.AlbumPrimaryImageTag;
         }
-        else if (item.SeriesPrimaryImageTag) {
-
-            nowPlayingItem.PrimaryImageItemId = item.SeriesId;
-            nowPlayingItem.PrimaryImageTag = item.SeriesPrimaryImageTag;
-        }
 
         if (item.BackdropImageTags && item.BackdropImageTags.length) {
 
@@ -205,17 +198,9 @@ function resetPlaybackScope($scope) {
     setAppStatus('waiting');
 
     setStartPositionTicks(0);
-    setRuntimeTicks(0);
-    setPoster('');
-    setBackdrop('');
     setWaitingBackdrop('');
-    setMediaTitle('');
-    setSecondaryTitle('');
-    setCurrentPlayingTime(0);
     $scope.mediaType = '';
     $scope.itemId = '';
-    setArtist('');
-    setAlbumTitle('');
 
     $scope.audioStreamIndex = null;
     $scope.subtitleStreamIndex = null;
@@ -236,62 +221,63 @@ function resetPlaybackScope($scope) {
     // Detail content
     setLogo('');
     setDetailImage('');
-    setOverview('');
-    setGenres('');
-    setDisplayName('');
-    document.getElementById('miscInfo').innerHTML = '';
-    document.getElementById('playedIndicator').style.display = 'none';
-    setHasPlayedPercentage(false);
-    setPlayedPercentage(0);
 }
 
-function setMetadata(item, metadata, datetime) {
+function getMetadata(item, datetime) {
+    var metadata;
+    var posterUrl = '';
 
+    if (item.SeriesPrimaryImageTag) {
+        posterUrl = $scope.serverAddress + '/emby/Items/' + item.SeriesId + '/Images/Primary?tag=' + item.SeriesPrimaryImageTag;
+    }
+    else if (item.AlbumPrimaryImageTag) {
+        posterUrl = $scope.serverAddress + '/emby/Items/' + item.AlbumId + '/Images/Primary?tag=' + (item.AlbumPrimaryImageTag);
+    }
+    else if (item.PrimaryImageTag) {
+        posterUrl = $scope.serverAddress + '/emby/Items/' + item.Id + '/Images/Primary?tag=' + (item.PrimaryImageTag);
+    }
+    else if (item.ImageTags.Primary) {
+        posterUrl = $scope.serverAddress + '/emby/Items/' + item.Id + '/Images/Primary?tag=' + (item.ImageTags.Primary);
+    }
+    
     if (item.Type == 'Episode') {
-
-        //metadata.type = chrome.cast.media.MetadataType.TV_SHOW;
-
-        metadata.episodeTitle = item.Name;
+        metadata = new cast.framework.messages.TvShowMediaMetadata();
+        metadata.seriesTitle = item.SeriesName;
 
         if (item.PremiereDate) {
             metadata.originalAirdate = datetime.parseISO8601Date(item.PremiereDate).toISOString();
         }
 
-        metadata.seriesTitle = item.SeriesName;
-
         if (item.IndexNumber != null) {
-            metadata.episode = metadata.episodeNumber = item.IndexNumber;
+            metadata.episode = item.IndexNumber;
         }
 
         if (item.ParentIndexNumber != null) {
-            metadata.season = metadata.seasonNumber = item.ParentIndexNumber;
+            metadata.season = item.ParentIndexNumber;
         }
     }
 
     else if (item.Type == 'Photo') {
 
-        //metadata.type = chrome.cast.media.MetadataType.PHOTO;
+        metadata = new cast.framework.messages.PhotoMediaMetadata();
 
         if (item.PremiereDate) {
             metadata.creationDateTime = datetime.parseISO8601Date(item.PremiereDate).toISOString();
         }
+        // TODO more metadata?
     }
 
-    else if (item.MediaType == 'Audio') {
+    else if (item.Type == 'Audio') {
 
-        //metadata.type = chrome.cast.media.MetadataType.MUSIC_TRACK;
-
-        if (item.ProductionYear) {
-            metadata.releaseYear = item.ProductionYear;
-        }
-
+        metadata = new cast.framework.messages.MusicTrackMediaMetadata();
+        metadata.songName = item.Name;
+        metadata.artist = item.Artists && item.Artists.length ? item.Artists.join(', ') : '';
+        metadata.albumArtist = item.AlbumArtist;
+        metadata.albumName = item.Album;
+        
         if (item.PremiereDate) {
             metadata.releaseDate = datetime.parseISO8601Date(item.PremiereDate).toISOString();
         }
-
-        metadata.songName = item.Name;
-        metadata.artist = item.Artists & item.Artists.length ? item.Artists[0] : '';
-        metadata.albumArtist = item.AlbumArtist;
 
         if (item.IndexNumber != null) {
             metadata.trackNumber = item.IndexNumber;
@@ -310,38 +296,27 @@ function setMetadata(item, metadata, datetime) {
         }
     }
 
-    else if (item.MediaType == 'Movie') {
+    else if (item.Type == 'Movie') {
 
-        //metadata.type = chrome.cast.media.MetadataType.MOVIE;
-
-        if (item.ProductionYear) {
-            metadata.releaseYear = item.ProductionYear;
-        }
-
+        metadata = new cast.framework.messages.MovieMediaMetadata();
         if (item.PremiereDate) {
             metadata.releaseDate = datetime.parseISO8601Date(item.PremiereDate).toISOString();
         }
     }
 
     else {
-
-        //metadata.type = chrome.cast.media.MetadataType.GENERIC;
-
-        if (item.ProductionYear) {
-            metadata.releaseYear = item.ProductionYear;
-        }
+        metadata = new cast.framework.messages.GenericMediaMetadata();
 
         if (item.PremiereDate) {
             metadata.releaseDate = datetime.parseISO8601Date(item.PremiereDate).toISOString();
         }
+        if (item.Studios && item.Studios.length) {
+            metadata.Studio = item.Studios[0];
+        }
     }
 
     metadata.title = item.Name;
-
-    if (item.Studios && item.Studios.length) {
-        metadata.Studio = item.Studios[0];
-    }
-
+    metadata.images = [new cast.framework.messages.Image(posterUrl)];
     return metadata;
 }
 
@@ -367,9 +342,7 @@ function createStreamInfo(item, mediaSource, startPosition) {
         if (mediaSource.enableDirectPlay) {
             mediaUrl = mediaSource.Path;
             isStatic = true;
-        } else {
-
-            if (mediaSource.SupportsDirectStream) {
+        } else if (mediaSource.SupportsDirectStream) {
 
                 mediaUrl = getUrl(item.serverAddress, 'Videos/' + item.Id + '/stream.' + mediaSource.Container);
                 mediaUrl += "?mediaSourceId=" + mediaSource.Id;
@@ -378,24 +351,23 @@ function createStreamInfo(item, mediaSource, startPosition) {
                 isStatic = true;
                 playerStartPositionTicks = startPosition || 0;
 
+        } else {
+
+            mediaUrl = getUrl(item.serverAddress, mediaSource.TranscodingUrl);
+
+            if (mediaSource.TranscodingSubProtocol == 'hls') {
+
+                mediaUrl += seekParam;
+                playerStartPositionTicks = startPosition || 0;
+                contentType = 'application/x-mpegURL';
+                streamContainer = 'm3u8';
             } else {
 
-                mediaUrl = getUrl(item.serverAddress, mediaSource.TranscodingUrl);
+                contentType = 'video/' + mediaSource.TranscodingContainer;
+                streamContainer = mediaSource.TranscodingContainer;
 
-                if (mediaSource.TranscodingSubProtocol == 'hls') {
-
-                    mediaUrl += seekParam;
-                    playerStartPositionTicks = startPosition || 0;
-                    contentType = 'application/x-mpegURL';
-                    streamContainer = 'm3u8';
-                } else {
-
-                    contentType = 'video/' + mediaSource.TranscodingContainer;
-                    streamContainer = mediaSource.TranscodingContainer;
-
-                    if (mediaUrl.toLowerCase().indexOf('copytimestamps=true') != -1) {
-                        startPosition = 0;
-                    }
+                if (mediaUrl.toLowerCase().indexOf('copytimestamps=true') != -1) {
+                    startPosition = 0;
                 }
             }
         }
@@ -452,16 +424,31 @@ function createStreamInfo(item, mediaSource, startPosition) {
         startPositionTicks: startPosition
     };
 
-    if (info.subtitleStreamIndex != null) {
-
-        var subtitleStream = getStreamByIndex(mediaSource.MediaStreams, 'Subtitle', info.subtitleStreamIndex);
-        if (subtitleStream && subtitleStream.DeliveryMethod == 'External') {
-
-            var textStreamUrl = subtitleStream.IsExternalUrl ? subtitleStream.DeliveryUrl : (getUrl(item.serverAddress, subtitleStream.DeliveryUrl));
-
-            info.subtitleStreamUrl = textStreamUrl;
-            console.log('Subtitle url: ' + info.subtitleStreamUrl);
+    var subtitleStreams = mediaSource.MediaStreams.filter(function (stream) { return stream.Type === "Subtitle"; });
+    var subtitleTracks = []
+    subtitleStreams.forEach(function(subtitleStream) {
+        let subStreamCodec = subtitleStream.Codec.toLowerCase();
+        if (subStreamCodec !== 'vtt' && subStreamCodec !== 'webvtt') {
+            /* the CAF v3 player only supports vtt currently,
+            support for more could be added with a custom implementation*/
+            return;
         }
+        var textStreamUrl = subtitleStream.IsExternalUrl ? subtitleStream.DeliveryUrl : (getUrl(item.serverAddress, subtitleStream.DeliveryUrl));
+
+        var track = new cast.framework.messages.Track(info.subtitleStreamIndex, cast.framework.messages.TrackType.TEXT)
+        track.trackId = subtitleStream.Index;
+        track.trackContentId = textStreamUrl;
+        track.language = subtitleStream.Language;
+        track.name = subtitleStream.DisplayTitle;
+        // TODO this should not be hardcoded but we only support VTT currently
+        track.trackContentType = 'text/vtt';
+        track.subtype = cast.framework.messages.TextTrackType.SUBTITLES;
+        subtitleTracks.push(track)
+        console.log('Subtitle url: ' + info.subtitleStreamUrl);
+    });
+
+    if (subtitleTracks) {
+        info.tracks = subtitleTracks;
     }
 
     return info;
@@ -475,41 +462,9 @@ function getStreamByIndex(streams, type, index) {
     })[0];
 }
 
-function updateTimeOfDay() {
-
-    var now = new Date();
-
-    var time = now.toLocaleTimeString().toLowerCase();
-
-    var text = time.split(':');
-    var suffix = '';
-
-    if (text.length == 3) {
-
-        // Fix for toLocaleTimeString returning wrong hour
-        if (time.indexOf('pm') != -1 || time.indexOf('am') != -1) {
-            text[0] = (now.getHours() % 12) || 12;
-        }
-
-        text = text[0] + ':' + text[1];
-
-        if (time.indexOf('pm') != -1) {
-            suffix = 'pm';
-        }
-        else if (time.indexOf('am') != -1) {
-            suffix = 'am';
-        }
-
-        time = text;
-    }
-
-    setInnerHTML('.timePrefix', time);
-    setInnerHTML('.timeSuffix', suffix);
-}
-
 function getSecurityHeaders(accessToken, userId) {
 
-    var auth = 'MediaBrowser Client="Chromecast", Device="' + deviceInfo.deviceName + '", DeviceId="' + deviceInfo.deviceId + '", Version="' + deviceInfo.versionNumber + '"';
+    var auth = 'Emby Client="Chromecast", Device="' + deviceInfo.deviceName + '", DeviceId="' + deviceInfo.deviceId + '", Version="' + deviceInfo.versionNumber + '"';
 
     if (userId) {
         auth += ', UserId="' + userId + '"';
@@ -538,9 +493,7 @@ function getBackdropUrl(item, serverAddress) {
 }
 
 function getLogoUrl(item, serverAddress) {
-
     var url;
-
     if (item.ImageTags && item.ImageTags.Logo) {
         url = getUrl(serverAddress, 'Items/' + item.Id + '/Images/Logo/0?tag=' + item.ImageTags.Logo);
     } else if (item.ParentLogoItemId && item.ParentLogoImageTag) {
@@ -551,9 +504,7 @@ function getLogoUrl(item, serverAddress) {
 }
 
 function getPrimaryImageUrl(item, serverAddress) {
-
     var posterUrl = '';
-
     if (item.AlbumPrimaryImageTag) {
         posterUrl = getUrl(serverAddress, 'Items/' + item.AlbumId + '/Images/Primary?tag=' + (item.AlbumPrimaryImageTag));
     }
@@ -579,7 +530,6 @@ function getDisplayName(item) {
     }
 
     if (item.Type == "Episode" && item.IndexNumber != null && item.ParentIndexNumber != null) {
-
         var displayIndexNumber = item.IndexNumber;
 
         var number = "E" + displayIndexNumber;
@@ -619,18 +569,6 @@ function getRatingHtml(item) {
 
         html += '<div class="criticRating">' + item.CriticRating + '%</div>';
     }
-
-    //if (item.Metascore && metascore !== false) {
-
-    //    if (item.Metascore >= 60) {
-    //        html += '<div class="metascore metascorehigh" title="Metascore">' + item.Metascore + '</div>';
-    //    }
-    //    else if (item.Metascore >= 40) {
-    //        html += '<div class="metascore metascoremid" title="Metascore">' + item.Metascore + '</div>';
-    //    } else {
-    //        html += '<div class="metascore metascorelow" title="Metascore">' + item.Metascore + '</div>';
-    //    }
-    //}
 
     return html;
 }
@@ -805,7 +743,6 @@ function translateRequestedItems(serverAddress, accessToken, userId, items, smar
         });
 
     } else if (firstItem.Type == "MusicArtist") {
-
         return getItemsForPlayback(serverAddress, accessToken, userId, {
             ArtistIds: firstItem.Id,
             Filters: "IsNotFolder",
@@ -815,7 +752,6 @@ function translateRequestedItems(serverAddress, accessToken, userId, items, smar
         });
 
     } else if (firstItem.Type == "MusicGenre") {
-
         return getItemsForPlayback(serverAddress, accessToken, userId, {
             Genres: firstItem.Name,
             Filters: "IsNotFolder",
@@ -825,7 +761,6 @@ function translateRequestedItems(serverAddress, accessToken, userId, items, smar
         });
 
     } else if (firstItem.IsFolder) {
-
         return getItemsForPlayback(serverAddress, accessToken, userId, {
             ParentId: firstItem.Id,
             Filters: "IsNotFolder",
@@ -833,9 +768,7 @@ function translateRequestedItems(serverAddress, accessToken, userId, items, smar
             SortBy: "SortName",
             MediaTypes: "Audio,Video"
         });
-    }
-    else if (smart && firstItem.Type == "Episode" && items.length == 1) {
-
+    } else if (smart && firstItem.Type == "Episode" && items.length == 1) {
         return getUser(serverAddress, accessToken, userId).then(function (user) {
 
             if (!user.Configuration.EnableNextEpisodeAutoPlay) {
@@ -907,17 +840,11 @@ function getMiscInfoHtml(item, datetime) {
     }
 
     if (item.StartDate) {
-
         try {
             date = datetime.parseISO8601Date(item.StartDate);
 
             text = date.toLocaleDateString();
             miscInfo.push(text);
-
-            if (item.Type != "Recording") {
-                //text = LiveTvHelpers.getDisplayTime(date);
-                //miscInfo.push(text);
-            }
         }
         catch (e) {
             console.log("Error parsing date: " + item.PremiereDate);
@@ -931,13 +858,9 @@ function getMiscInfoHtml(item, datetime) {
 
         }
         else if (item.ProductionYear) {
-
             text = item.ProductionYear;
-
             if (item.EndDate) {
-
                 try {
-
                     var endYear = datetime.parseISO8601Date(item.EndDate).getFullYear();
 
                     if (endYear != item.ProductionYear) {
@@ -1031,102 +954,17 @@ function setInnerHTML(selector, html, autoHide) {
         }
     }
 }
-function setMediaTitle(name) {
-    $scope.mediaTitle = name;
-    setInnerHTML('.media-title', name);
-}
-function setSecondaryTitle(name) {
-    $scope.secondaryTitle = name;
-    setInnerHTML('.media-secondary-title', name, true);
-}
-function setArtist(name) {
-    $scope.artist = name;
-    setInnerHTML('.media-artist', name, true);
-}
-function setAlbumTitle(name) {
-
-    $scope.albumTitle = name;
-    var elems = document.querySelectorAll('.media-album-title');
-    for (var i = 0, length = elems.length; i < length; i++) {
-
-        if (elems[i].classList.contains('musicTitle')) {
-            elems[i].innerHTML = '(from the album "' + (name || '') + '")';
-        } else {
-            elems[i].innerHTML = name || ''
-        }
-
-        if (name) {
-            elems[i].classList.remove('hide');
-        } else {
-            elems[i].classList.add('hide');
-        }
-    }
-}
 function setPlayedPercentage(value) {
     $scope.playedPercentage = value;
     document.querySelector('.itemProgressBar').value = value || 0;
 }
-function setPoster(src) {
-    $scope.poster = src;
-    var elems = document.querySelectorAll('.media-poster');
-    for (var i = 0, length = elems.length; i < length; i++) {
-
-        elems[i].src = src || ''
-
-        if (src) {
-            elems[i].classList.remove('hide');
-        } else {
-            elems[i].classList.add('hide');
-        }
-    }
-}
 
 function setStartPositionTicks(value) {
-
     $scope.startPositionTicks = value;
-
-    updateCurrentPlaybackProgress();
-    updateProgressBar();
-}
-
-function setCurrentPlayingTime(value) {
-
-    updateCurrentPlaybackProgress();
-    updateProgressBar();
-}
-
-function setRuntimeTicks(value) {
-
-    $scope.runtimeTicks = value;
-    document.querySelector('.player-duration').innerHTML = $scope.runtimeTicks ? datetime.getDisplayRunningTime($scope.runtimeTicks) : '';
-    updateProgressBar();
-}
-
-function updateCurrentPlaybackProgress() {
-
-    var ticks = getCurrentPositionTicks($scope);
-
-    document.querySelector('.player-current-time').innerHTML = ticks ? datetime.getDisplayRunningTime(ticks) : '';
 }
 
 function setWaitingBackdrop(src) {
     document.querySelector('#waiting-container-backdrop').style.backgroundImage = src ? 'url(' + src + ')' : ''
-}
-
-function setBackdrop(src) {
-    document.querySelector('#backdrop').style.backgroundImage = src ? 'url(' + src + ')' : ''
-}
-
-function setPaused(value) {
-    $scope.paused = value;
-
-    if (value) {
-        document.querySelector('.glyphicon-pause').classList.remove('hide');
-        document.querySelector('.glyphicon-play').classList.add('hide');
-    } else {
-        document.querySelector('.glyphicon-pause').classList.add('hide');
-        document.querySelector('.glyphicon-play').classList.remove('hide');
-    }
 }
 
 function setHasPlayedPercentage(value) {
@@ -1143,14 +981,6 @@ function setLogo(src) {
 
 function setDetailImage(src) {
     document.querySelector('.detailImage').style.backgroundImage = src ? 'url(' + src + ')' : ''
-}
-
-function updateProgressBar() {
-
-    var ticks = getCurrentPositionTicks($scope);
-
-    var width = (100 * ticks / $scope.runtimeTicks) + '%';
-    document.querySelector('#player-progress-bar').style.width = width;
 }
 
 function extend(target, source) {

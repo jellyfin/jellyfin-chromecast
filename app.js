@@ -1,12 +1,10 @@
-var BitrateCap = 20000000;
-var DetectedBitrateCap = 11000000;
-var DefaultMaxBitrate = 3000000;
+var DefaultMaxBitrate = 10000000;
 var MaxBitrate = null;
 
 window.deviceInfo = {
     deviceId: "chromecast_" + new Date().getTime(),
     deviceName: 'Chromecast',
-    versionNumber: '2.1.0'
+    versionNumber: '3.0.0'
 };
 
 window.mediaElement = document.getElementById('video-player');
@@ -15,25 +13,8 @@ window.playlist = [];
 window.currentPlaylistIndex = -1;
 window.repeatMode = "RepeatNone";
 
-function unloadPlayer() {
-    if (window.player !== null && window.player !== undefined) {
-        window.player.unload();    // Must unload before starting again.
-        window.player = null;
-    }
-}
-
-window.VolumeInfo = {
-    IsMuted: false,
-    Level: 100
-};
-
-function clearMediaElement() {
-    document.getElementById('video-player').src = "";
-}
-
 function broadcastToMessageBus(msg) {
-
-    window.playlistMessageBus.broadcast(msg);
+    window.castReceiverContext.sendCustomMessage('urn:x-cast:com.connectsdk', window.senderId, msg);
 }
 
 function broadcastConnectionErrorMessage() {
@@ -55,14 +36,9 @@ function initRequire(customPaths) {
         datetime: embyWebComponentsBowerPath + "/datetime",
         browserdeviceprofile: embyWebComponentsBowerPath + "/browserdeviceprofile",
         browser: embyWebComponentsBowerPath + "/browser",
-        qualityoptions: embyWebComponentsBowerPath + "/qualityoptions",
-        embyactions: 'components/embyactions',
+        jellyfinactions: 'components/jellyfinactions',
         maincontroller: 'components/maincontroller',
-        events: 'bower_components/emby-apiclient/events',
-        credentialprovider: 'bower_components/emby-apiclient/credentials',
         apiclient: 'bower_components/emby-apiclient/apiclient',
-        serverdiscovery: "bower_components/emby-apiclient/serverdiscovery",
-        wakeonlan: "bower_components/emby-apiclient/wakeonlan",
         fetchhelper: embyWebComponentsBowerPath + "/fetchhelper"
     };
 
