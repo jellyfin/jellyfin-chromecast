@@ -993,3 +993,40 @@ function extend(target, source) {
 function parseISO8601Date(s, toLocal) {
     return new Date(s);
 }
+
+function getDisplayRunningTime(ticks) {
+    var ticksPerHour = 36000000000;
+    var ticksPerMinute = 600000000;
+    var ticksPerSecond = 10000000;
+
+    var parts = [];
+
+    var hours = ticks / ticksPerHour;
+    hours = Math.floor(hours);
+
+    if (hours) {
+        parts.push(hours);
+    }
+
+    ticks -= (hours * ticksPerHour);
+
+    var minutes = ticks / ticksPerMinute;
+    minutes = Math.floor(minutes);
+
+    ticks -= (minutes * ticksPerMinute);
+
+    if (minutes < 10 && hours) {
+        minutes = '0' + minutes;
+    }
+    parts.push(minutes);
+
+    var seconds = ticks / ticksPerSecond;
+    seconds = Math.floor(seconds);
+
+    if (seconds < 10) {
+        seconds = '0' + seconds;
+    }
+    parts.push(seconds);
+
+    return parts.join(':');
+}
