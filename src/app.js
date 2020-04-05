@@ -29,7 +29,7 @@ function initRequire(customPaths) {
 
     console.log('Initializing requirejs');
 
-    var bowerPath = "jellyfin-web/src/bower_components";
+    var bowerPath = "../jellyfin-web/src/bower_components";
     var embyWebComponentsBowerPath = bowerPath + '/emby-webcomponents';
 
     var paths = {
@@ -37,8 +37,8 @@ function initRequire(customPaths) {
         codecsupporthelper: "./components/codecsupporthelper",
         castdevices: "./components/castDevices",
         browser: embyWebComponentsBowerPath + "/browser",
-        jellyfinactions: 'components/jellyfinactions',
-        maincontroller: 'components/maincontroller',
+        jellyfinactions: './components/jellyfinactions',
+        maincontroller: './components/maincontroller',
         apiclient: 'bower_components/emby-apiclient/apiclient',
         fetchhelper: embyWebComponentsBowerPath + "/fetchhelper"
     };
