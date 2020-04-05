@@ -34,6 +34,7 @@ function initRequire(customPaths) {
 
     var paths = {
         browserdeviceprofile: embyWebComponentsBowerPath + "/browserdeviceprofile",
+        castdevices: "./components/castDevices",
         browser: embyWebComponentsBowerPath + "/browser",
         jellyfinactions: 'components/jellyfinactions',
         maincontroller: 'components/maincontroller',
