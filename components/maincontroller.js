@@ -1,4 +1,4 @@
-﻿define(['jellyfinactions', 'browserdeviceprofile', '//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js'], function (jellyfinActions, deviceProfileBuilder) {
+﻿define(['jellyfinactions', 'browserdeviceprofile'], function (jellyfinActions, deviceProfileBuilder) {
     window.castReceiverContext = cast.framework.CastReceiverContext.getInstance();
     window.mediaManager = window.castReceiverContext.getPlayerManager();
     window.mediaManager.addEventListener(cast.framework.events.category.CORE,
