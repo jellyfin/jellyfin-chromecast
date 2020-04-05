@@ -33,7 +33,7 @@ function initRequire(customPaths) {
     var embyWebComponentsBowerPath = bowerPath + '/emby-webcomponents';
 
     var paths = {
-        browserdeviceprofile: embyWebComponentsBowerPath + "/browserdeviceprofile",
+        browserdeviceprofile:  "./components/deviceprofilebuilder",
         codecsupporthelper: "./components/codecsupporthelper",
         castdevices: "./components/castDevices",
         browser: embyWebComponentsBowerPath + "/browser",
