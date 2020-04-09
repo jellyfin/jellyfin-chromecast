@@ -33,8 +33,9 @@ function initRequire(customPaths) {
     var embyWebComponentsBowerPath = bowerPath + '/emby-webcomponents';
 
     var paths = {
-        datetime: embyWebComponentsBowerPath + "/datetime",
-        browserdeviceprofile: embyWebComponentsBowerPath + "/browserdeviceprofile",
+        browserdeviceprofile:  "./components/deviceprofilebuilder",
+        codecsupporthelper: "./components/codecsupporthelper",
+        castdevices: "./components/castDevices",
         browser: embyWebComponentsBowerPath + "/browser",
         jellyfinactions: 'components/jellyfinactions',
         maincontroller: 'components/maincontroller',
@@ -88,8 +89,7 @@ function startApp() {
     // Just until we're able to deprecate this
     window.$scope = {};
 
-    require(['fetchhelper', 'maincontroller', 'datetime', 'helpers'], function (fetchhelper, maincontroller, datetime) {
-        window.datetime = datetime;
+    require(['fetchhelper', 'maincontroller', 'helpers'], function (fetchhelper, maincontroller) {
         window.fetchhelper = fetchhelper;
     });
 }

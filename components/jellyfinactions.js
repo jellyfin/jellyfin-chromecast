@@ -1,4 +1,4 @@
-﻿define(['datetime', 'fetchhelper'], function (datetime, fetchhelper) {
+﻿define(['fetchhelper'], function (fetchhelper) {
 
     var factory = {};
 
@@ -241,7 +241,7 @@
         setOverview(item.Overview || '');
         setGenres(item.Genres.join(' / '));
         setDisplayName(getDisplayName(item));
-        document.getElementById('miscInfo').innerHTML = getMiscInfoHtml(item, datetime) || '';
+        document.getElementById('miscInfo').innerHTML = getMiscInfoHtml(item) || '';
         document.getElementById('detailRating').innerHTML = getRatingHtml(item);
 
         var playedIndicator = document.getElementById('playedIndicator');

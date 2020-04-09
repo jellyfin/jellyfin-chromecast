@@ -1,4 +1,4 @@
-﻿define(['datetime', 'jellyfinactions', 'browserdeviceprofile', '//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js'], function (datetime, jellyfinActions, deviceProfileBuilder) {
+﻿define(['jellyfinactions', 'browserdeviceprofile'], function (jellyfinActions, deviceProfileBuilder) {
     window.castReceiverContext = cast.framework.CastReceiverContext.getInstance();
     window.mediaManager = window.castReceiverContext.getPlayerManager();
     window.mediaManager.addEventListener(cast.framework.events.category.CORE,
@@ -617,63 +617,15 @@
 
     function getDeviceProfile(maxBitrate) {
 
-        var transcodingAudioChannels = document.createElement('video').canPlayType('audio/mp4; codecs="ac-3"').replace(/no/, '') ?
+        let transcodingAudioChannels = document.createElement('video').canPlayType('audio/mp4; codecs="ac-3"').replace(/no/, '') ?
             6 :
             2;
 
-        var profile = deviceProfileBuilder({
+        return deviceProfileBuilder({
             supportsCustomSeeking: true,
             audioChannels: transcodingAudioChannels
         });
 
-        profile.MaxStreamingBitrate = maxBitrate;
-        profile.MaxStaticBitrate = maxBitrate;
-        profile.MusicStreamingTranscodingBitrate = 192000;
-
-        // This needs to be forced
-        profile.DirectPlayProfiles.push({
-            Container: "flac",
-            Type: 'Audio'
-        });
-
-        profile.SubtitleProfiles = [];
-        profile.SubtitleProfiles.push(
-            {
-                Format: 'vtt',
-                Method: 'External'
-            },
-            {
-                Format: 'vtt',
-                Method: 'Hls'
-            }
-        );
-
-        // Temporary solution until we can make a custom browserdeviceprofile
-        // webm support is currently mistaken for mkv support
-        profile.DirectPlayProfiles = profile.DirectPlayProfiles.filter(item => item.Container !== "mkv");
-
-        profile.TranscodingProfiles = profile.TranscodingProfiles.filter(item => item.Container !== "mkv");
-
-        // TODO: Another temporary solution until we can make a custom browserdeviceprofile
-        // 1st and 2nd gen only support h264 4.1 but browserdeviceprofile is reporting 4.2
-        let context = cast.framework.CastReceiverContext.getInstance();
-        if (context.canDisplayType('video/mp4;codecs=avc1.64002A')) {
-            return profile;
-        }
-        
-        for (prof of profile.CodecProfiles) {
-            if (prof.Codec && prof.Codec.indexOf("h264") == -1) {
-                continue;
-            }
-
-            for (condition of prof.Conditions) {
-                if (condition.Property == "VideoLevel" && condition.Value > 41) {
-                    condition.Value = 41;
-                }
-            }
-        }
-
-        return profile;
     }
 
     function playItemInternal(item, options) {
@@ -896,7 +848,7 @@
             playSessionId: playSessionId
         }
 
-        mediaInfo.metadata = getMetadata(item, datetime);
+        mediaInfo.metadata = getMetadata(item);
 
         mediaInfo.streamType = cast.framework.messages.StreamType.BUFFERED;
         mediaInfo.tracks = streamInfo.tracks;

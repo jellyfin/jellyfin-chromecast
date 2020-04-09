@@ -223,7 +223,7 @@ function resetPlaybackScope($scope) {
     setDetailImage('');
 }
 
-function getMetadata(item, datetime) {
+function getMetadata(item) {
     var metadata;
     var posterUrl = '';
 
@@ -245,7 +245,7 @@ function getMetadata(item, datetime) {
         metadata.seriesTitle = item.SeriesName;
 
         if (item.PremiereDate) {
-            metadata.originalAirdate = datetime.parseISO8601Date(item.PremiereDate).toISOString();
+            metadata.originalAirdate = parseISO8601Date(item.PremiereDate).toISOString();
         }
 
         if (item.IndexNumber != null) {
@@ -262,7 +262,7 @@ function getMetadata(item, datetime) {
         metadata = new cast.framework.messages.PhotoMediaMetadata();
 
         if (item.PremiereDate) {
-            metadata.creationDateTime = datetime.parseISO8601Date(item.PremiereDate).toISOString();
+            metadata.creationDateTime = parseISO8601Date(item.PremiereDate).toISOString();
         }
         // TODO more metadata?
     }
@@ -276,7 +276,7 @@ function getMetadata(item, datetime) {
         metadata.albumName = item.Album;
         
         if (item.PremiereDate) {
-            metadata.releaseDate = datetime.parseISO8601Date(item.PremiereDate).toISOString();
+            metadata.releaseDate = parseISO8601Date(item.PremiereDate).toISOString();
         }
 
         if (item.IndexNumber != null) {
@@ -300,7 +300,7 @@ function getMetadata(item, datetime) {
 
         metadata = new cast.framework.messages.MovieMediaMetadata();
         if (item.PremiereDate) {
-            metadata.releaseDate = datetime.parseISO8601Date(item.PremiereDate).toISOString();
+            metadata.releaseDate = parseISO8601Date(item.PremiereDate).toISOString();
         }
     }
 
@@ -308,7 +308,7 @@ function getMetadata(item, datetime) {
         metadata = new cast.framework.messages.GenericMediaMetadata();
 
         if (item.PremiereDate) {
-            metadata.releaseDate = datetime.parseISO8601Date(item.PremiereDate).toISOString();
+            metadata.releaseDate = parseISO8601Date(item.PremiereDate).toISOString();
         }
         if (item.Studios && item.Studios.length) {
             metadata.Studio = item.Studios[0];
@@ -818,7 +818,7 @@ function translateRequestedItems(serverAddress, accessToken, userId, items, smar
     return Promise.resolve({ Items: items });
 }
 
-function getMiscInfoHtml(item, datetime) {
+function getMiscInfoHtml(item) {
 
     var miscInfo = [];
     var text, date;
@@ -828,7 +828,7 @@ function getMiscInfoHtml(item, datetime) {
         if (item.PremiereDate) {
 
             try {
-                date = datetime.parseISO8601Date(item.PremiereDate);
+                date = parseISO8601Date(item.PremiereDate);
 
                 text = date.toLocaleDateString();
                 miscInfo.push(text);
@@ -841,7 +841,7 @@ function getMiscInfoHtml(item, datetime) {
 
     if (item.StartDate) {
         try {
-            date = datetime.parseISO8601Date(item.StartDate);
+            date = parseISO8601Date(item.StartDate);
 
             text = date.toLocaleDateString();
             miscInfo.push(text);
@@ -861,10 +861,10 @@ function getMiscInfoHtml(item, datetime) {
             text = item.ProductionYear;
             if (item.EndDate) {
                 try {
-                    var endYear = datetime.parseISO8601Date(item.EndDate).getFullYear();
+                    var endYear = parseISO8601Date(item.EndDate).getFullYear();
 
                     if (endYear != item.ProductionYear) {
-                        text += "-" + datetime.parseISO8601Date(item.EndDate).getFullYear();
+                        text += "-" + parseISO8601Date(item.EndDate).getFullYear();
                     }
 
                 }
@@ -886,7 +886,7 @@ function getMiscInfoHtml(item, datetime) {
         else if (item.PremiereDate) {
 
             try {
-                text = datetime.parseISO8601Date(item.PremiereDate).getFullYear();
+                text = parseISO8601Date(item.PremiereDate).getFullYear();
                 miscInfo.push(text);
             }
             catch (e) {
@@ -901,7 +901,7 @@ function getMiscInfoHtml(item, datetime) {
 
         if (item.Type == "Audio") {
 
-            miscInfo.push(datetime.getDisplayRunningTime(item.RunTimeTicks));
+            miscInfo.push(getDisplayRunningTime(item.RunTimeTicks));
 
         } else {
             minutes = item.RunTimeTicks / 600000000;
@@ -988,4 +988,45 @@ function extend(target, source) {
         target[i] = source[i];
     }
     return target;
+}
+
+function parseISO8601Date(s, toLocal) {
+    return new Date(s);
+}
+
+function getDisplayRunningTime(ticks) {
+    var ticksPerHour = 36000000000;
+    var ticksPerMinute = 600000000;
+    var ticksPerSecond = 10000000;
+
+    var parts = [];
+
+    var hours = ticks / ticksPerHour;
+    hours = Math.floor(hours);
+
+    if (hours) {
+        parts.push(hours);
+    }
+
+    ticks -= (hours * ticksPerHour);
+
+    var minutes = ticks / ticksPerMinute;
+    minutes = Math.floor(minutes);
+
+    ticks -= (minutes * ticksPerMinute);
+
+    if (minutes < 10 && hours) {
+        minutes = '0' + minutes;
+    }
+    parts.push(minutes);
+
+    var seconds = ticks / ticksPerSecond;
+    seconds = Math.floor(seconds);
+
+    if (seconds < 10) {
+        seconds = '0' + seconds;
+    }
+    parts.push(seconds);
+
+    return parts.join(':');
 }
