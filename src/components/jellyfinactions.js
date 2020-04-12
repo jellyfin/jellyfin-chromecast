@@ -19,7 +19,8 @@ import {
     setHasPlayedPercentage,
     setLogo,
     setDetailImage,
-    extend
+    extend,
+    broadcastToMessageBus
 } from "../helpers"
 
 var factory = {};

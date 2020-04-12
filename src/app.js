@@ -17,15 +17,3 @@ window.mediaElement = document.getElementById('video-player');
 window.playlist = [];
 window.currentPlaylistIndex = -1;
 window.repeatMode = "RepeatNone";
-
-function broadcastToMessageBus(msg) {
-    window.castReceiverContext.sendCustomMessage('urn:x-cast:com.connectsdk', window.senderId, msg);
-}
-
-function broadcastConnectionErrorMessage() {
-
-    broadcastToMessageBus({
-        type: 'connectionerror',
-        message: ""
-    });
-}

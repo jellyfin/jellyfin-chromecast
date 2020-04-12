@@ -1009,3 +1009,15 @@ export function getDisplayRunningTime(ticks) {
 
     return parts.join(':');
 }
+
+export function broadcastToMessageBus(msg) {
+    window.castReceiverContext.sendCustomMessage('urn:x-cast:com.connectsdk', window.senderId, msg);
+}
+
+export function broadcastConnectionErrorMessage() {
+
+    broadcastToMessageBus({
+        type: 'connectionerror',
+        message: ""
+    });
+}
