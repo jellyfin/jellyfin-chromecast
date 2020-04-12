@@ -1,0 +1,14 @@
+{
+  "name": "jellyfin-chromecast",
+  "version": "3.0.0",
+  "description": "Cast receiver for Jellyfin",
+  "license": "GPL-2.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jellyfin/jellyfin-chromecast.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jellyfin/jellyfin-chromecast/issues"
+  },
+  "homepage": "https://jellyfin.org/"
+}
