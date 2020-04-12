@@ -1,11 +1,5 @@
 import "./components/maincontroller";
 
-var DefaultMaxBitrate = 10000000;
-var MaxBitrate = null;
-
-// Just until we're able to deprecate this
-$scope = {};
-
 window.deviceInfo = {
     deviceId: "chromecast_" + new Date().getTime(),
     deviceName: 'Chromecast',
