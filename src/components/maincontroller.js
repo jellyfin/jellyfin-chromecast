@@ -1,4 +1,5 @@
 ﻿import { factory as jellyfinActions } from "./jellyfinactions";
+import { ajax } from "./fetchhelper";
 import { getDeviceProfile as deviceProfileBuilder } from "./deviceprofilebuilder";
 import {
     getUrl,
@@ -233,7 +234,7 @@ function processMessage(data) {
                 DeviceProfile: deviceProfile
             };
             window.hasReportedCapabilities = true;
-            return fetchhelper.ajax({
+            return ajax({
                 url: capabilitiesUrl,
                 headers: getSecurityHeaders($scope.accessToken, $scope.userId),
                 type: 'POST',
@@ -602,7 +603,7 @@ function onStopPlayerBeforePlaybackDone(item, options) {
 
     var requestUrl = getUrl(item.serverAddress, 'Users/' + item.userId + '/Items/' + item.Id);
 
-    return fetchhelper.ajax({
+    return ajax({
 
         url: requestUrl,
         headers: getSecurityHeaders(item.accessToken, item.userId),
