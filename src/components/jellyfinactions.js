@@ -23,7 +23,7 @@ import {
     broadcastToMessageBus
 } from "../helpers"
 
-var factory = {};
+export var factory = {};
 
 var pingInterval;
 var lastTranscoderPing = 0;
@@ -526,5 +526,3 @@ factory.stopActiveEncodings = function ($scope) {
         query: options
     });
 };
-
-export default factory;
