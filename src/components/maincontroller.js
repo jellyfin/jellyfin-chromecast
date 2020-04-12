@@ -34,9 +34,6 @@ const playbackConfig = new cast.framework.PlaybackConfig();
 // media content buffered. Default is 10.
 playbackConfig.autoResumeDuration = 5;
 
-// According to cast docs this should be disabled when not needed
-cast.framework.CastReceiverContext.getInstance().setLoggerLevel(cast.framework.LoggerLevel.DEBUG);
-
 var init = function () {
 
     resetPlaybackScope($scope);
