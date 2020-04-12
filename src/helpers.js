@@ -1,4 +1,6 @@
-function getUrl(serverAddress, name) {
+import { ajax } from "./components/fetchhelper";
+
+export function getUrl(serverAddress, name) {
 
     if (!name) {
         throw new Error("Url name cannot be empty");
@@ -15,7 +17,7 @@ function getUrl(serverAddress, name) {
     return url;
 }
 
-function getCurrentPositionTicks($scope) {
+export function getCurrentPositionTicks($scope) {
 
     var positionTicks = window.mediaManager.getCurrentTimeSec() * 10000000;
     var mediaInformation = window.mediaManager.getMediaInformation();
@@ -26,7 +28,7 @@ function getCurrentPositionTicks($scope) {
     return positionTicks;
 }
 
-function getReportingParams($scope) {
+export function getReportingParams($scope) {
     var volumeInfo = window.castReceiverContext.getSystemVolume();
     return {
         PositionTicks: getCurrentPositionTicks($scope),
@@ -46,7 +48,7 @@ function getReportingParams($scope) {
     };
 }
 
-function getNextPlaybackItemInfo() {
+export function getNextPlaybackItemInfo() {
 
     var playlist = window.playlist;
 
@@ -88,7 +90,7 @@ function getNextPlaybackItemInfo() {
     return null;
 }
 
-function getSenderReportingData($scope, reportingData) {
+export function getSenderReportingData($scope, reportingData) {
     var state = {
         ItemId: reportingData.ItemId,
         PlayState: extend({}, reportingData),
@@ -142,13 +144,11 @@ function getSenderReportingData($scope, reportingData) {
 
             nowPlayingItem.PrimaryImageItemId = item.SeriesId;
             nowPlayingItem.PrimaryImageTag = item.SeriesPrimaryImageTag;
-        }
-        else if (imageTags.Primary) {
+        } else if (imageTags.Primary) {
 
             nowPlayingItem.PrimaryImageItemId = item.Id;
             nowPlayingItem.PrimaryImageTag = imageTags.Primary;
-        }
-        else if (item.AlbumPrimaryImageTag) {
+        } else if (item.AlbumPrimaryImageTag) {
 
             nowPlayingItem.PrimaryImageItemId = item.AlbumId;
             nowPlayingItem.PrimaryImageTag = item.AlbumPrimaryImageTag;
@@ -158,8 +158,7 @@ function getSenderReportingData($scope, reportingData) {
 
             nowPlayingItem.BackdropItemId = item.Id;
             nowPlayingItem.BackdropImageTag = item.BackdropImageTags[0];
-        }
-        else if (item.ParentBackdropImageTags && item.ParentBackdropImageTags.length) {
+        } else if (item.ParentBackdropImageTags && item.ParentBackdropImageTags.length) {
 
             nowPlayingItem.BackdropItemId = item.ParentBackdropItemId;
             nowPlayingItem.BackdropImageTag = item.ParentBackdropImageTags[0];
@@ -175,8 +174,7 @@ function getSenderReportingData($scope, reportingData) {
 
             nowPlayingItem.LogoItemId = item.Id;
             nowPlayingItem.LogoImageTag = imageTags.Logo;
-        }
-        else if (item.ParentLogoImageTag) {
+        } else if (item.ParentLogoImageTag) {
 
             nowPlayingItem.LogoItemId = item.ParentLogoItemId;
             nowPlayingItem.LogoImageTag = item.ParentLogoImageTag;
@@ -194,7 +192,7 @@ function getSenderReportingData($scope, reportingData) {
     return state;
 }
 
-function resetPlaybackScope($scope) {
+export function resetPlaybackScope($scope) {
     setAppStatus('waiting');
 
     setStartPositionTicks(0);
@@ -223,23 +221,20 @@ function resetPlaybackScope($scope) {
     setDetailImage('');
 }
 
-function getMetadata(item) {
+export function getMetadata(item) {
     var metadata;
     var posterUrl = '';
 
     if (item.SeriesPrimaryImageTag) {
         posterUrl = $scope.serverAddress + '/emby/Items/' + item.SeriesId + '/Images/Primary?tag=' + item.SeriesPrimaryImageTag;
-    }
-    else if (item.AlbumPrimaryImageTag) {
+    } else if (item.AlbumPrimaryImageTag) {
         posterUrl = $scope.serverAddress + '/emby/Items/' + item.AlbumId + '/Images/Primary?tag=' + (item.AlbumPrimaryImageTag);
-    }
-    else if (item.PrimaryImageTag) {
+    } else if (item.PrimaryImageTag) {
         posterUrl = $scope.serverAddress + '/emby/Items/' + item.Id + '/Images/Primary?tag=' + (item.PrimaryImageTag);
-    }
-    else if (item.ImageTags.Primary) {
+    } else if (item.ImageTags.Primary) {
         posterUrl = $scope.serverAddress + '/emby/Items/' + item.Id + '/Images/Primary?tag=' + (item.ImageTags.Primary);
     }
-    
+
     if (item.Type == 'Episode') {
         metadata = new cast.framework.messages.TvShowMediaMetadata();
         metadata.seriesTitle = item.SeriesName;
@@ -255,9 +250,7 @@ function getMetadata(item) {
         if (item.ParentIndexNumber != null) {
             metadata.season = item.ParentIndexNumber;
         }
-    }
-
-    else if (item.Type == 'Photo') {
+    } else if (item.Type == 'Photo') {
 
         metadata = new cast.framework.messages.PhotoMediaMetadata();
 
@@ -265,16 +258,14 @@ function getMetadata(item) {
             metadata.creationDateTime = parseISO8601Date(item.PremiereDate).toISOString();
         }
         // TODO more metadata?
-    }
-
-    else if (item.Type == 'Audio') {
+    } else if (item.Type == 'Audio') {
 
         metadata = new cast.framework.messages.MusicTrackMediaMetadata();
         metadata.songName = item.Name;
         metadata.artist = item.Artists && item.Artists.length ? item.Artists.join(', ') : '';
         metadata.albumArtist = item.AlbumArtist;
         metadata.albumName = item.Album;
-        
+
         if (item.PremiereDate) {
             metadata.releaseDate = parseISO8601Date(item.PremiereDate).toISOString();
         }
@@ -294,17 +285,13 @@ function getMetadata(item) {
         if (composer) {
             metadata.composer = composer.Name;
         }
-    }
-
-    else if (item.Type == 'Movie') {
+    } else if (item.Type == 'Movie') {
 
         metadata = new cast.framework.messages.MovieMediaMetadata();
         if (item.PremiereDate) {
             metadata.releaseDate = parseISO8601Date(item.PremiereDate).toISOString();
         }
-    }
-
-    else {
+    } else {
         metadata = new cast.framework.messages.GenericMediaMetadata();
 
         if (item.PremiereDate) {
@@ -320,7 +307,7 @@ function getMetadata(item) {
     return metadata;
 }
 
-function createStreamInfo(item, mediaSource, startPosition) {
+export function createStreamInfo(item, mediaSource, startPosition) {
 
     var mediaUrl;
     var contentType;
@@ -344,12 +331,12 @@ function createStreamInfo(item, mediaSource, startPosition) {
             isStatic = true;
         } else if (mediaSource.SupportsDirectStream) {
 
-                mediaUrl = getUrl(item.serverAddress, 'Videos/' + item.Id + '/stream.' + mediaSource.Container);
-                mediaUrl += "?mediaSourceId=" + mediaSource.Id;
-                mediaUrl += "&api_key=" + item.accessToken;
-                mediaUrl += "&static=true" + seekParam;
-                isStatic = true;
-                playerStartPositionTicks = startPosition || 0;
+            mediaUrl = getUrl(item.serverAddress, 'Videos/' + item.Id + '/stream.' + mediaSource.Container);
+            mediaUrl += "?mediaSourceId=" + mediaSource.Id;
+            mediaUrl += "&api_key=" + item.accessToken;
+            mediaUrl += "&static=true" + seekParam;
+            isStatic = true;
+            playerStartPositionTicks = startPosition || 0;
 
         } else {
 
@@ -424,9 +411,11 @@ function createStreamInfo(item, mediaSource, startPosition) {
         startPositionTicks: startPosition
     };
 
-    var subtitleStreams = mediaSource.MediaStreams.filter(function (stream) { return stream.Type === "Subtitle"; });
+    var subtitleStreams = mediaSource.MediaStreams.filter(function (stream) {
+        return stream.Type === "Subtitle";
+    });
     var subtitleTracks = []
-    subtitleStreams.forEach(function(subtitleStream) {
+    subtitleStreams.forEach(function (subtitleStream) {
         let subStreamCodec = subtitleStream.Codec.toLowerCase();
         if (subStreamCodec !== 'vtt' && subStreamCodec !== 'webvtt') {
             /* the CAF v3 player only supports vtt currently,
@@ -454,7 +443,7 @@ function createStreamInfo(item, mediaSource, startPosition) {
     return info;
 }
 
-function getStreamByIndex(streams, type, index) {
+export function getStreamByIndex(streams, type, index) {
     return streams.filter(function (s) {
 
         return s.Type == type && s.Index == index;
@@ -462,7 +451,7 @@ function getStreamByIndex(streams, type, index) {
     })[0];
 }
 
-function getSecurityHeaders(accessToken, userId) {
+export function getSecurityHeaders(accessToken, userId) {
 
     var auth = 'Emby Client="Chromecast", Device="' + deviceInfo.deviceName + '", DeviceId="' + deviceInfo.deviceId + '", Version="' + deviceInfo.versionNumber + '"';
 
@@ -479,7 +468,7 @@ function getSecurityHeaders(accessToken, userId) {
     return headers;
 }
 
-function getBackdropUrl(item, serverAddress) {
+export function getBackdropUrl(item, serverAddress) {
 
     var url;
 
@@ -492,7 +481,7 @@ function getBackdropUrl(item, serverAddress) {
     return url;
 }
 
-function getLogoUrl(item, serverAddress) {
+export function getLogoUrl(item, serverAddress) {
     var url;
     if (item.ImageTags && item.ImageTags.Logo) {
         url = getUrl(serverAddress, 'Items/' + item.Id + '/Images/Logo/0?tag=' + item.ImageTags.Logo);
@@ -503,22 +492,20 @@ function getLogoUrl(item, serverAddress) {
     return url;
 }
 
-function getPrimaryImageUrl(item, serverAddress) {
+export function getPrimaryImageUrl(item, serverAddress) {
     var posterUrl = '';
     if (item.AlbumPrimaryImageTag) {
         posterUrl = getUrl(serverAddress, 'Items/' + item.AlbumId + '/Images/Primary?tag=' + (item.AlbumPrimaryImageTag));
-    }
-    else if (item.PrimaryImageTag) {
+    } else if (item.PrimaryImageTag) {
         posterUrl = getUrl(serverAddress, 'Items/' + item.Id + '/Images/Primary?tag=' + (item.PrimaryImageTag));
-    }
-    else if (item.ImageTags.Primary) {
+    } else if (item.ImageTags.Primary) {
         posterUrl = getUrl(serverAddress, 'Items/' + item.Id + '/Images/Primary?tag=' + (item.ImageTags.Primary));
     }
 
     return posterUrl;
 }
 
-function getDisplayName(item) {
+export function getDisplayName(item) {
     var name = item.EpisodeTitle || item.Name;
 
     if (item.Type == "TvChannel") {
@@ -548,7 +535,7 @@ function getDisplayName(item) {
     return name;
 }
 
-function getRatingHtml(item) {
+export function getRatingHtml(item) {
     var html = "";
 
     if (item.CommunityRating) {
@@ -575,7 +562,7 @@ function getRatingHtml(item) {
 
 var requiredItemFields = "MediaSources,Chapters";
 
-function getShuffleItems(serverAddress, accessToken, userId, item) {
+export function getShuffleItems(serverAddress, accessToken, userId, item) {
 
     var query = {
         UserId: userId,
@@ -591,21 +578,19 @@ function getShuffleItems(serverAddress, accessToken, userId, item) {
         query.MediaTypes = "Audio";
         query.ArtistIds = item.Id;
 
-    }
-    else if (item.Type == "MusicGenre") {
+    } else if (item.Type == "MusicGenre") {
 
         query.MediaTypes = "Audio";
         query.Genres = item.Name;
 
-    }
-    else {
+    } else {
         query.ParentId = item.Id;
     }
 
     return getItemsForPlayback(serverAddress, accessToken, userId, query);
 }
 
-function getInstantMixItems(serverAddress, accessToken, userId, item) {
+export function getInstantMixItems(serverAddress, accessToken, userId, item) {
 
     var query = {
         UserId: userId,
@@ -620,30 +605,26 @@ function getInstantMixItems(serverAddress, accessToken, userId, item) {
         url = "Artists/InstantMix";
         query.Id = item.Id;
 
-    }
-    else if (item.Type == "MusicGenre") {
+    } else if (item.Type == "MusicGenre") {
 
         url = "MusicGenres/InstantMix";
         query.Id = item.Id;
 
-    }
-    else if (item.Type == "MusicAlbum") {
+    } else if (item.Type == "MusicAlbum") {
 
         url = "Albums/" + item.Id + "/InstantMix";
 
-    }
-    else if (item.Type == "Audio") {
+    } else if (item.Type == "Audio") {
 
         url = "Songs/" + item.Id + "/InstantMix";
-    }
-    else if (item.Type == "Playlist") {
+    } else if (item.Type == "Playlist") {
 
         url = "Playlists/" + item.Id + "/InstantMix";
     }
 
     url = getUrl(serverAddress, url);
 
-    return fetchhelper.ajax({
+    return ajax({
 
         url: url,
         headers: getSecurityHeaders(accessToken, userId),
@@ -653,7 +634,7 @@ function getInstantMixItems(serverAddress, accessToken, userId, item) {
     });
 }
 
-function getItemsForPlayback(serverAddress, accessToken, userId, query) {
+export function getItemsForPlayback(serverAddress, accessToken, userId, query) {
 
     query.UserId = userId;
     query.Limit = query.Limit || 100;
@@ -665,7 +646,7 @@ function getItemsForPlayback(serverAddress, accessToken, userId, query) {
     if (query.Ids && query.Ids.split(',').length == 1) {
 
         url += '/' + query.Ids.split(',')[0];
-        return fetchhelper.ajax({
+        return ajax({
 
             url: url,
             headers: getSecurityHeaders(accessToken, userId),
@@ -680,7 +661,7 @@ function getItemsForPlayback(serverAddress, accessToken, userId, query) {
         });
     }
 
-    return fetchhelper.ajax({
+    return ajax({
 
         url: url,
         headers: getSecurityHeaders(accessToken, userId),
@@ -690,7 +671,7 @@ function getItemsForPlayback(serverAddress, accessToken, userId, query) {
     });
 }
 
-function getEpisodesForPlayback(serverAddress, accessToken, userId, seriesId, query) {
+export function getEpisodesForPlayback(serverAddress, accessToken, userId, seriesId, query) {
 
     query.UserId = userId;
     query.Fields = requiredItemFields;
@@ -698,7 +679,7 @@ function getEpisodesForPlayback(serverAddress, accessToken, userId, seriesId, qu
 
     var url = getUrl(serverAddress, "Shows/" + seriesId + "/Episodes");
 
-    return fetchhelper.ajax({
+    return ajax({
 
         url: url,
         headers: getSecurityHeaders(accessToken, userId),
@@ -708,11 +689,11 @@ function getEpisodesForPlayback(serverAddress, accessToken, userId, seriesId, qu
     });
 }
 
-function getIntros(serverAddress, accessToken, userId, firstItem) {
+export function getIntros(serverAddress, accessToken, userId, firstItem) {
 
     var url = getUrl(serverAddress, 'Users/' + userId + '/Items/' + firstItem.Id + '/Intros');
 
-    return fetchhelper.ajax({
+    return ajax({
         url: url,
         dataType: 'json',
         headers: getSecurityHeaders(accessToken, userId),
@@ -720,11 +701,11 @@ function getIntros(serverAddress, accessToken, userId, firstItem) {
     });
 }
 
-function getUser(serverAddress, accessToken, userId) {
+export function getUser(serverAddress, accessToken, userId) {
 
     var url = getUrl(serverAddress, 'Users/' + userId);
 
-    return fetchhelper.ajax({
+    return ajax({
         url: url,
         dataType: 'json',
         headers: getSecurityHeaders(accessToken, userId),
@@ -732,7 +713,7 @@ function getUser(serverAddress, accessToken, userId) {
     });
 }
 
-function translateRequestedItems(serverAddress, accessToken, userId, items, smart) {
+export function translateRequestedItems(serverAddress, accessToken, userId, items, smart) {
 
     var firstItem = items[0];
 
@@ -773,7 +754,9 @@ function translateRequestedItems(serverAddress, accessToken, userId, items, smar
 
             if (!user.Configuration.EnableNextEpisodeAutoPlay) {
 
-                return { Items: items };
+                return {
+                    Items: items
+                };
             }
 
             return getItemsForPlayback(serverAddress, accessToken, userId, {
@@ -815,10 +798,12 @@ function translateRequestedItems(serverAddress, accessToken, userId, items, smar
         });
     }
 
-    return Promise.resolve({ Items: items });
+    return Promise.resolve({
+        Items: items
+    });
 }
 
-function getMiscInfoHtml(item) {
+export function getMiscInfoHtml(item) {
 
     var miscInfo = [];
     var text, date;
@@ -832,8 +817,7 @@ function getMiscInfoHtml(item) {
 
                 text = date.toLocaleDateString();
                 miscInfo.push(text);
-            }
-            catch (e) {
+            } catch (e) {
                 console.log("Error parsing date: " + item.PremiereDate);
             }
         }
@@ -845,8 +829,7 @@ function getMiscInfoHtml(item) {
 
             text = date.toLocaleDateString();
             miscInfo.push(text);
-        }
-        catch (e) {
+        } catch (e) {
             console.log("Error parsing date: " + item.PremiereDate);
         }
     }
@@ -856,8 +839,7 @@ function getMiscInfoHtml(item) {
         if (item.Status == "Continuing") {
             miscInfo.push(item.ProductionYear + "-Present");
 
-        }
-        else if (item.ProductionYear) {
+        } else if (item.ProductionYear) {
             text = item.ProductionYear;
             if (item.EndDate) {
                 try {
@@ -867,8 +849,7 @@ function getMiscInfoHtml(item) {
                         text += "-" + parseISO8601Date(item.EndDate).getFullYear();
                     }
 
-                }
-                catch (e) {
+                } catch (e) {
                     console.log("Error parsing date: " + item.EndDate);
                 }
             }
@@ -882,14 +863,12 @@ function getMiscInfoHtml(item) {
         if (item.ProductionYear) {
 
             miscInfo.push(item.ProductionYear);
-        }
-        else if (item.PremiereDate) {
+        } else if (item.PremiereDate) {
 
             try {
                 text = parseISO8601Date(item.PremiereDate).getFullYear();
                 miscInfo.push(text);
-            }
-            catch (e) {
+            } catch (e) {
                 console.log("Error parsing date: " + item.PremiereDate);
             }
         }
@@ -923,23 +902,23 @@ function getMiscInfoHtml(item) {
     return miscInfo.join('&nbsp;&nbsp;&nbsp;&nbsp;');
 }
 
-function setAppStatus(status) {
+export function setAppStatus(status) {
     $scope.status = status;
     document.body.className = status;
 }
-function setDisplayName(name) {
+export function setDisplayName(name) {
     $scope.displayName = name;
     document.querySelector('.displayName').innerHTML = name || '';
 }
-function setGenres(name) {
+export function setGenres(name) {
     $scope.genres = name;
     document.querySelector('.genres').innerHTML = name || '';
 }
-function setOverview(name) {
+export function setOverview(name) {
     $scope.overview = name;
     document.querySelector('.overview').innerHTML = name || '';
 }
-function setInnerHTML(selector, html, autoHide) {
+export function setInnerHTML(selector, html, autoHide) {
     var elems = document.querySelectorAll(selector);
     for (var i = 0, length = elems.length; i < length; i++) {
 
@@ -954,20 +933,20 @@ function setInnerHTML(selector, html, autoHide) {
         }
     }
 }
-function setPlayedPercentage(value) {
+export function setPlayedPercentage(value) {
     $scope.playedPercentage = value;
     document.querySelector('.itemProgressBar').value = value || 0;
 }
 
-function setStartPositionTicks(value) {
+export function setStartPositionTicks(value) {
     $scope.startPositionTicks = value;
 }
 
-function setWaitingBackdrop(src) {
+export function setWaitingBackdrop(src) {
     document.querySelector('#waiting-container-backdrop').style.backgroundImage = src ? 'url(' + src + ')' : ''
 }
 
-function setHasPlayedPercentage(value) {
+export function setHasPlayedPercentage(value) {
     if (value) {
         document.querySelector('.detailImageProgressContainer').classList.remove('hide');
     } else {
@@ -975,26 +954,26 @@ function setHasPlayedPercentage(value) {
     }
 }
 
-function setLogo(src) {
+export function setLogo(src) {
     document.querySelector('.detailLogo').style.backgroundImage = src ? 'url(' + src + ')' : ''
 }
 
-function setDetailImage(src) {
+export function setDetailImage(src) {
     document.querySelector('.detailImage').style.backgroundImage = src ? 'url(' + src + ')' : ''
 }
 
-function extend(target, source) {
+export function extend(target, source) {
     for (var i in source) {
         target[i] = source[i];
     }
     return target;
 }
 
-function parseISO8601Date(s, toLocal) {
+export function parseISO8601Date(s, toLocal) {
     return new Date(s);
 }
 
-function getDisplayRunningTime(ticks) {
+export function getDisplayRunningTime(ticks) {
     var ticksPerHour = 36000000000;
     var ticksPerMinute = 600000000;
     var ticksPerSecond = 10000000;

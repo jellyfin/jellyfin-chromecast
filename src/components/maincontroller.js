@@ -1,5 +1,22 @@
 ﻿import { factory as jellyfinActions } from "./jellyfinactions";
 import { getDeviceProfile as deviceProfileBuilder } from "./deviceprofilebuilder";
+import {
+    getUrl,
+    getCurrentPositionTicks,
+    getReportingParams,
+    getNextPlaybackItemInfo,
+    resetPlaybackScope,
+    getMetadata,
+    createStreamInfo,
+    getStreamByIndex,
+    getSecurityHeaders,
+    getShuffleItems,
+    getInstantMixItems,
+    getIntros,
+    translateRequestedItems,
+    setAppStatus,
+    extend
+} from "../helpers";
 
 window.castReceiverContext = cast.framework.CastReceiverContext.getInstance();
 window.mediaManager = window.castReceiverContext.getPlayerManager();
