@@ -231,3 +231,8 @@ pip-log.txt
 .mr.developer.cfg
 MediaBrowser.WebDashboard/dashboard-ui/.idea/
 .vscode
+
+#############
+## Node (NPM/Yarn)
+#############
+node_modules
