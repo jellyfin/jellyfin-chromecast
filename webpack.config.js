@@ -29,5 +29,9 @@ module.exports = (env, argv) => {
         })
     );
 
+    if (!isProduction) {
+        config.devtool = "#inline-source-map";
+    }
+
     return config;
 };
