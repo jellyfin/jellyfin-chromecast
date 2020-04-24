@@ -21,7 +21,8 @@
   "scripts": {
     "prepare": "webpack --config webpack.config.js --mode=production",
     "build:production": "webpack --config webpack.config.js --mode=production",
-    "build:development": "webpack --config webpack.config.js --mode=development"
+    "build:development": "webpack --config webpack.config.js --mode=development",
+    "lint": "eslint ./src/"
   },
   "devDependencies": {
     "eslint": "6.8.0",
