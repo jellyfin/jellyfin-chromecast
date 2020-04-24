@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 import {
     deviceIds,
     getActiveDeviceId
@@ -21,6 +23,8 @@ import {
 
 let profileOptions;
 let currentDeviceId;
+
+/* eslint-disable */
 
 /**
  * @param {string} Property What property the condition should test.

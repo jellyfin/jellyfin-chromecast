@@ -1,4 +1,6 @@
-﻿import { factory as jellyfinActions } from "./jellyfinactions";
+﻿/* eslint-disable */
+
+import { factory as jellyfinActions } from "./jellyfinactions";
 import { ajax } from "./fetchhelper";
 import { getDeviceProfile as deviceProfileBuilder } from "./deviceprofilebuilder";
 import {

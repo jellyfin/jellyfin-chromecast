@@ -1,4 +1,6 @@
-﻿import { ajax } from "./fetchhelper";
+﻿/* eslint-disable */
+
+import { ajax } from "./fetchhelper";
 import {
     getUrl,
     getSenderReportingData,
@@ -21,7 +23,7 @@ import {
     setDetailImage,
     extend,
     broadcastToMessageBus
-} from "../helpers"
+} from "../helpers";
 
 export var factory = {};
 
