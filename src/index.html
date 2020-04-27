@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="utf-8">
     <title>Jellyfin</title>
     <link rel="stylesheet" href="css/glyphicons.css">
     <link rel="stylesheet" href="css/jellyfin.css?hash=001">
@@ -8,6 +9,11 @@
         @import url('https://fonts.googleapis.com/css?family=Quicksand');
     </style>
     <script src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
+    <script>
+    // $scope has to be available before app.js for webpack imported modules to function
+    // TODO: Rework this
+    $scope = {};
+    </script>
 </head>
 <body>
     <div id="waiting-container-backdrop"></div>
@@ -35,6 +41,6 @@
         </div>
     </div>
     <div class="detailLogo"></div>
-    <script src="app.js"></script>
+    <script src="bundle.js"></script>
 </body>
 </html>

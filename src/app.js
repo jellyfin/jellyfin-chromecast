@@ -1,11 +1,5 @@
 import "./components/maincontroller";
 
-var DefaultMaxBitrate = 10000000;
-var MaxBitrate = null;
-
-// Just until we're able to deprecate this
-$scope = {};
-
 window.deviceInfo = {
     deviceId: "chromecast_" + new Date().getTime(),
     deviceName: 'Chromecast',
@@ -18,14 +12,9 @@ window.playlist = [];
 window.currentPlaylistIndex = -1;
 window.repeatMode = "RepeatNone";
 
-function broadcastToMessageBus(msg) {
-    window.castReceiverContext.sendCustomMessage('urn:x-cast:com.connectsdk', window.senderId, msg);
-}
-
-function broadcastConnectionErrorMessage() {
-
-    broadcastToMessageBus({
-        type: 'connectionerror',
-        message: ""
-    });
+// Global variable set by Webpack
+if (!PRODUCTION) {
+    cast.framework.CastReceiverContext.getInstance().setLoggerLevel(cast.framework.LoggerLevel.DEBUG);
+} else {
+    cast.framework.CastReceiverContext.getInstance().setLoggerLevel(cast.framework.LoggerLevel.NONE);
 }

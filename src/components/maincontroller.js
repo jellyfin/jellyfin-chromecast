@@ -1,4 +1,5 @@
 ﻿import { factory as jellyfinActions } from "./jellyfinactions";
+import { ajax } from "./fetchhelper";
 import { getDeviceProfile as deviceProfileBuilder } from "./deviceprofilebuilder";
 import {
     getUrl,
@@ -15,7 +16,9 @@ import {
     getIntros,
     translateRequestedItems,
     setAppStatus,
-    extend
+    extend,
+    broadcastToMessageBus,
+    broadcastConnectionErrorMessage
 } from "../helpers";
 
 window.castReceiverContext = cast.framework.CastReceiverContext.getInstance();
@@ -30,9 +33,6 @@ const playbackConfig = new cast.framework.PlaybackConfig();
 // Set the player to start playback as soon as there are five seconds of
 // media content buffered. Default is 10.
 playbackConfig.autoResumeDuration = 5;
-
-// According to cast docs this should be disabled when not needed
-cast.framework.CastReceiverContext.getInstance().setLoggerLevel(cast.framework.LoggerLevel.DEBUG);
 
 var init = function () {
 
@@ -231,7 +231,7 @@ function processMessage(data) {
                 DeviceProfile: deviceProfile
             };
             window.hasReportedCapabilities = true;
-            return fetchhelper.ajax({
+            return ajax({
                 url: capabilitiesUrl,
                 headers: getSecurityHeaders($scope.accessToken, $scope.userId),
                 type: 'POST',
@@ -600,7 +600,7 @@ function onStopPlayerBeforePlaybackDone(item, options) {
 
     var requestUrl = getUrl(item.serverAddress, 'Users/' + item.userId + '/Items/' + item.Id);
 
-    return fetchhelper.ajax({
+    return ajax({
 
         url: requestUrl,
         headers: getSecurityHeaders(item.accessToken, item.userId),

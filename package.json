@@ -1,0 +1,26 @@
+{
+  "name": "jellyfin-chromecast",
+  "version": "3.0.0",
+  "description": "Cast receiver for Jellyfin",
+  "license": "GPL-2.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jellyfin/jellyfin-chromecast.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jellyfin/jellyfin-chromecast/issues"
+  },
+  "homepage": "https://jellyfin.org/",
+  "dependencies": {
+    "clean-webpack-plugin": "^3.0.0",
+    "copy-webpack-plugin": "^5.1.1",
+    "file-loader": "^6.0.0",
+    "webpack": "4.42.1",
+    "webpack-cli": "^3.3.11"
+  },
+  "scripts": {
+    "prepare": "webpack --config webpack.config.js --mode=production",
+    "build:production": "webpack --config webpack.config.js --mode=production",
+    "build:development": "webpack --config webpack.config.js --mode=development"
+  }
+}
