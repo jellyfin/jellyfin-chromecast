@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 import { ajax } from "./components/fetchhelper";
 
 export function getUrl(serverAddress, name) {

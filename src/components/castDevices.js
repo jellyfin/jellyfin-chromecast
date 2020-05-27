@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 const castContext = cast.framework.CastReceiverContext.getInstance();
 
 // Device Ids

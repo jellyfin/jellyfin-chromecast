@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 export function getFetchPromise(request) {
     var headers = request.headers || {};
     "json" === request.dataType && (headers.accept = "application/json");

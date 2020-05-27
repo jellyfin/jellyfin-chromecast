@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 import { deviceIds } from "./castDevices";
 
 const castContext = cast.framework.CastReceiverContext.getInstance();
