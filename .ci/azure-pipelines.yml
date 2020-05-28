@@ -1,0 +1,195 @@
+trigger:
+  batch: true
+  branches:
+    include:
+    - '*'
+  tags:
+    include:
+    - '*'
+pr:
+  branches:
+    include:
+    - '*'
+
+jobs:
+- job: Build
+  displayName: 'Build'
+
+  strategy:
+    matrix:
+      Development:
+        BuildConfiguration: development
+      Production:
+        BuildConfiguration: production
+
+  pool:
+    vmImage: 'ubuntu-latest'
+
+  steps:
+  - task: NodeTool@0
+    displayName: 'Install Node'
+    inputs:
+      versionSpec: '12.x'
+
+  - task: Cache@2
+    displayName: 'Check Cache'
+    inputs:
+      key: 'yarn | yarn.lock'
+      path: 'node_modules'
+      cacheHitVar: CACHE_RESTORED
+
+  - script: 'yarn install --frozen-lockfile'
+    displayName: 'Install Dependencies'
+    condition: ne(variables.CACHE_RESTORED, 'true')
+
+  - script: 'yarn build:development'
+    displayName: 'Build Development'
+    condition: eq(variables['BuildConfiguration'], 'development')
+
+  - script: 'yarn build:production'
+    displayName: 'Build Bundle'
+    condition: eq(variables['BuildConfiguration'], 'production')
+
+  - script: 'test -d dist'
+    displayName: 'Check Build'
+
+  - script: 'mv dist jellyfin-chromecast'
+    displayName: 'Rename Directory'
+
+  - task: ArchiveFiles@2
+    displayName: 'Archive Directory'
+    inputs:
+      rootFolderOrFile: 'jellyfin-chromecast'
+      includeRootFolder: true
+      archiveFile: 'jellyfin-chromecast-$(BuildConfiguration)'
+
+  - task: PublishPipelineArtifact@1
+    displayName: 'Publish Release'
+    inputs:
+      targetPath: '$(Build.SourcesDirectory)/jellyfin-chromecast-$(BuildConfiguration).zip'
+      artifactName: 'jellyfin-chromecast-$(BuildConfiguration)'
+
+- job: Lint
+  displayName: 'Lint'
+
+  pool:
+    vmImage: 'ubuntu-latest'
+
+  steps:
+  - task: NodeTool@0
+    displayName: 'Install Node'
+    inputs:
+      versionSpec: '12.x'
+
+  - task: Cache@2
+    displayName: 'Check Cache'
+    inputs:
+      key: 'yarn | yarn.lock'
+      path: 'node_modules'
+      cacheHitVar: CACHE_RESTORED
+
+  - script: 'yarn install --frozen-lockfile'
+    displayName: 'Install Dependencies'
+    condition: ne(variables.CACHE_RESTORED, 'true')
+
+  - script: 'yarn run lint --quiet'
+    displayName: 'Run ESLint'
+
+- job: Publish
+  displayName: 'Publish'
+
+  dependsOn: Build
+  condition: or(eq(variables['Build.SourceBranch'], 'refs/heads/master'), startsWith(variables['Build.SourceBranch'], 'refs/tags'))
+
+  strategy:
+    matrix:
+      Development:
+        BuildConfiguration: development
+      Production:
+        BuildConfiguration: production
+
+  pool:
+    vmImage: 'ubuntu-latest'
+
+  steps:
+  - script: 'echo "##vso[task.setvariable variable=TAG]$(git describe --tags)"'
+    displayName: 'Set Tag Variable'
+
+  - task: DownloadPipelineArtifact@2
+    displayName: 'Download Artifact'
+    inputs:
+      source: 'current'
+      artifact: 'jellyfin-chromecast-$(ArtifactSuffix)'
+      path: '$(System.ArtifactsDirectory)'
+      runVersion: 'latest'
+
+  - task: GithubRelease@0
+    displayName: 'GitHub Upload'
+    condition: startsWith(variables['Build.SourceBranch'], 'refs/tags')
+    inputs:
+      gitHubConnection: Jellyfin Release Download
+      repositoryName: jellyfin/jellyfin-chromecast
+      assets: '$(System.ArtifactsDirectory)/*.zip'
+      action: 'edit'
+      assetUploadMode: 'replace'
+      tag: '$(TAG)'
+
+  - task: CopyFilesOverSSH@0
+    displayName: 'Upload to Repository'
+    condition: eq(variables['Build.SourceBranch'], 'refs/heads/master')
+    inputs:
+      sshEndpoint: repository
+      sourceFolder: '$(System.ArtifactsDirectory)'
+      contents: '**'
+      targetFolder: '/srv/repository/releases/client/chromecast/versions/$(TAG)'
+
+  - task: SSH@0
+    displayName: 'Symlink Latest Version'
+    condition: eq(variables['Build.SourceBranch'], 'refs/heads/master')
+    inputs:
+      sshEndpoint: repository
+      runOptions: 'inline'
+      inline: 'cd /srv/repository/releases/client/chromecast && rm -rf *.zip && ln -s versions/$(TAG)/jellyfin-chromecast-$(ArtifactSuffix)-$(TAG).zip .'
+
+- job: Production
+  displayName: 'Production'
+
+  dependsOn: Build
+  condition: or(eq(variables['Build.SourceBranch'], 'refs/heads/master'), startsWith(variables['Build.SourceBranch'], 'refs/tags'))
+
+  pool:
+    vmImage: 'ubuntu-latest'
+
+  steps:
+  - task: DownloadPipelineArtifact@2
+    displayName: 'Download Artifact'
+    inputs:
+      source: 'current'
+      artifact: 'jellyfin-chromecast-production'
+      path: '$(System.ArtifactsDirectory)'
+      runVersion: 'latest'
+
+  - task: ExtractFiles@1
+    displayName: "Extract Source"
+    inputs:
+      archiveFilePatterns: '$(System.ArtifactsDirectory)/*.zip'
+      destinationFolder: '$(System.ArtifactsDirectory)/artifact'
+      cleanDestinationFolder: true
+
+  - task: CopyFilesOverSSH@0
+    displayName: 'Update Nightly'
+    condition: eq(variables['Build.SourceBranch'], 'refs/heads/master')
+    inputs:
+      sshEndpoint: chromecast
+      sourceFolder: '$(System.ArtifactsDirectory)/artifact'
+      contents: '**'
+      targetFolder: '/srv/chromecast/nightly'
+
+  - task: CopyFilesOverSSH@0
+    displayName: 'Update Stable'
+    condition: startsWith(variables['Build.SourceBranch'], 'refs/tags')
+    inputs:
+      sshEndpoint: chromecast
+      sourceFolder: '$(System.ArtifactsDirectory)/artifact'
+      contents: '**'
+      targetFolder: '/srv/chromecast/stable'
