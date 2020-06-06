@@ -25,6 +25,8 @@ import {
     tagItems
 } from "../helpers";
 
+import { commandHandler } from "./commandHandler";
+
 window.castReceiverContext = cast.framework.CastReceiverContext.getInstance();
 window.mediaManager = window.castReceiverContext.getPlayerManager();
 window.mediaManager.addEventListener(cast.framework.events.category.CORE,
@@ -252,73 +254,22 @@ export function processMessage(data) {
 
     // Items will have properties - Id, Name, Type, MediaType, IsFolder
 
-    var reportEventType;
-    var systemVolume = window.castReceiverContext.getSystemVolume();
+    window.reportEventType;
 
-    if (data.command == 'PlayLast' || data.command == 'PlayNext') {
-        translateItems(data, data.options, data.options.items, data.command);
-    } else if (data.command == 'Shuffle') {
-        shuffle(data, data.options, data.options.items[0]);
-    } else if (data.command == 'InstantMix') {
-        instantMix(data, data.options, data.options.items[0]);
-    } else if (data.command == 'DisplayContent' && !isPlaying()) {
-        console.log('DisplayContent');
-        jellyfinActions.displayItem($scope, data.serverAddress, data.accessToken, data.userId, data.options.ItemId);
-    } else if (data.command == 'NextTrack' && window.playlist && window.currentPlaylistIndex < window.playlist.length - 1) {
-        playNextItem({}, true);
-    } else if (data.command == 'PreviousTrack' && window.playlist && window.currentPlaylistIndex > 0) {
-        playPreviousItem({});
-    } else if (data.command == 'SetAudioStreamIndex') {
-        setAudioStreamIndex($scope, data.options.index);
-    } else if (data.command == 'SetSubtitleStreamIndex') {
-        setSubtitleStreamIndex($scope, data.options.index, data.serverAddress);
-    } else if (data.command == 'VolumeUp') {
-        window.castReceiverContext.setSystemVolumeLevel(Math.min(1, systemVolume.level + 0.2));
-    } else if (data.command == 'VolumeDown') {
-        window.castReceiverContext.setSystemVolumeLevel(Math.max(0, systemVolume.level - 0.2));
-    } else if (data.command == 'ToggleMute') {
-        window.castReceiverContext.setSystemVolumeMuted(!systemVolume.muted);
-    } else if (data.command == 'Identify') {
-        if (!isPlaying()) {
-            jellyfinActions.displayUserInfo($scope, data.serverAddress, data.accessToken, data.userId);
-        } else {
-            // when a client connects send back the initial device state (volume etc) via a playbackstop message
-            jellyfinActions.reportPlaybackProgress($scope, getReportingParams($scope), true, "playbackstop");
-        }
-    } else if (data.command == 'SetVolume') {
-        // Scale 0-100
-        window.castReceiverContext.setSystemVolumeLevel(data.options.volume / 100);
-    } else if (data.command == 'Seek') {
-        seek(data.options.position * 10000000);
-    } else if (data.command == 'Mute') {
-        window.castReceiverContext.setSystemVolumeMuted(true);
-    } else if (data.command == 'Unmute') {
-        window.castReceiverContext.setSystemVolumeMuted(false);
-    } else if (data.command == 'Stop') {
-        stop();
-    } else if (data.command == 'PlayPause') {
+    let cmdHandler = window.commandHandler;
 
-        if (window.mediaManager.getPlayerState() === cast.framework.messages.PlayerState.PAUSED) {
-            window.mediaManager.play();
-        } else {
-            window.mediaManager.pause();
-        }
-    } else if (data.command == 'Pause') {
-        window.mediaManager.pause();
-    } else if (data.command == 'SetRepeatMode') {
-        window.repeatMode = data.options.RepeatMode;
-        reportEventType = 'repeatmodechange';
-    } else if (data.command == 'Unpause') {
-        window.mediaManager.play();
-    } else {
-        translateItems(data, data.options, data.options.items, 'play');
+    if (!cmdHandler) {
+        window.commandHandler = new commandHandler(window.castReceiverContext, window.mediaManager);
+        cmdHandler = window.commandHandler;
     }
 
-    if (reportEventType) {
+    cmdHandler.processMessage(data, data.command);
+
+    if (window.reportEventType) {
         var report = function () {
             jellyfinActions.reportPlaybackProgress($scope, getReportingParams($scope));
         };
-        jellyfinActions.reportPlaybackProgress($scope, getReportingParams($scope), true, reportEventType);
+        jellyfinActions.reportPlaybackProgress($scope, getReportingParams($scope), true, window.reportEventType);
         setTimeout(report, 100);
         setTimeout(report, 500);
     }
