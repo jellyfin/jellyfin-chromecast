@@ -20,7 +20,9 @@ import {
     setAppStatus,
     extend,
     broadcastToMessageBus,
-    broadcastConnectionErrorMessage
+    broadcastConnectionErrorMessage,
+    cleanName,
+    tagItems
 } from "../helpers";
 
 window.castReceiverContext = cast.framework.CastReceiverContext.getInstance();
@@ -194,11 +196,6 @@ window.mediaManager.addEventListener(
 );
 
 console.log('Application is ready, starting system');
-
-function cleanName(name) {
-
-    return name.replace(/[^\w\s]/gi, '');
-}
 
 function processMessage(data) {
 
@@ -472,16 +469,6 @@ window.castReceiverContext.addCustomMessageListener('urn:x-cast:com.connectsdk',
 
     processMessage(data);
 });
-
-function tagItems(items, data) {
-    // Attach server data to the items
-    // Once day the items could be coming from multiple servers, each with their own security info
-    for (var i = 0, length = items.length; i < length; i++) {
-        items[i].userId = data.userId;
-        items[i].accessToken = data.accessToken;
-        items[i].serverAddress = data.serverAddress;
-    }
-}
 
 function translateItems(data, options, items, method) {
     var callback = function (result) {

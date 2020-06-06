@@ -1023,3 +1023,17 @@ export function broadcastConnectionErrorMessage() {
         message: ""
     });
 }
+
+export function cleanName(name) {
+    return name.replace(/[^\w\s]/gi, '');
+}
+
+export function tagItems(items, data) {
+    // Attach server data to the items
+    // Once day the items could be coming from multiple servers, each with their own security info
+    for (var i = 0, length = items.length; i < length; i++) {
+        items[i].userId = data.userId;
+        items[i].accessToken = data.accessToken;
+        items[i].serverAddress = data.serverAddress;
+    }
+}
