@@ -199,6 +199,28 @@ window.mediaManager.addEventListener(
 
 console.log('Application is ready, starting system');
 
+export function reportDeviceCapabilities() {
+    getMaxBitrate("Video").then((maxBitrate) => {
+        let capabilitiesUrl = $scope.serverAddress + "/Sessions/Capabilities/Full";
+        let deviceProfile = getDeviceProfile(maxBitrate);
+
+        let capabilities = {
+            PlayableMediaTypes: ["Audio", "Video"],
+            SupportsPersistentIdentifier: false,
+            SupportsMediaControl: true,
+            DeviceProfile: deviceProfile
+        };
+        window.hasReportedCapabilities = true;
+        return ajax({
+            url: capabilitiesUrl,
+            headers: getSecurityHeaders($scope.accessToken, $scope.userId),
+            type: 'POST',
+            data: JSON.stringify(capabilities),
+            contentType: 'application/json'
+        });
+    });
+}
+
 export function processMessage(data) {
 
     if (!data.command || !data.serverAddress || !data.userId || !data.accessToken) {
@@ -212,6 +234,7 @@ export function processMessage(data) {
         return;
     }
 
+    // Items will have properties - Id, Name, Type, MediaType, IsFolder
     $scope.userId = data.userId;
     $scope.accessToken = data.accessToken;
     $scope.serverAddress = data.serverAddress;
@@ -221,25 +244,7 @@ export function processMessage(data) {
 
     // Report device capabilities
     if (!window.hasReportedCapabilities) {
-        getMaxBitrate("Video").then((maxBitrate) => {
-            let capabilitiesUrl = $scope.serverAddress + "/Sessions/Capabilities/Full";
-            let deviceProfile = getDeviceProfile(maxBitrate);
-
-            let capabilities = {
-                PlayableMediaTypes: ["Audio", "Video"],
-                SupportsPersistentIdentifier: false,
-                SupportsMediaControl: true,
-                DeviceProfile: deviceProfile
-            };
-            window.hasReportedCapabilities = true;
-            return ajax({
-                url: capabilitiesUrl,
-                headers: getSecurityHeaders($scope.accessToken, $scope.userId),
-                type: 'POST',
-                data: JSON.stringify(capabilities),
-                contentType: 'application/json'
-            });
-        });
+        reportDeviceCapabilities();
     }
 
     data.options = data.options || {};
@@ -251,8 +256,6 @@ export function processMessage(data) {
     if (data.maxBitrate) {
         window.MaxBitrate = data.maxBitrate;
     }
-
-    // Items will have properties - Id, Name, Type, MediaType, IsFolder
 
     window.reportEventType;
 
