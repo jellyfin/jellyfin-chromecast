@@ -5,8 +5,7 @@ import {
     isPlaying,
     setAudioStreamIndex,
     setSubtitleStreamIndex,
-    seek,
-    stop
+    seek
 } from "./maincontroller";
 
 import { getReportingParams } from "../helpers";
