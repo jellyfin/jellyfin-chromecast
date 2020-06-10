@@ -132,7 +132,7 @@ mgr.defaultOnPause = function (event) {
 mgr.addEventListener('PAUSE', mgr.defaultOnPause);
 
 mgr.defaultOnStop = function (event) {
-    stop();
+    playbackMgr.stop();
 };
 mgr.addEventListener('ABORT', mgr.defaultOnStop);
 
@@ -152,32 +152,6 @@ mgr.addEventListener('ENDED', function () {
         jellyfinActions.displayUserInfo($scope, $scope.serverAddress, $scope.accessToken, $scope.userId);
     }
 });
-
-export function stop(nextMode) {
-
-    $scope.playNextItem = nextMode ? true : false;
-    jellyfinActions.stop($scope);
-
-    var reportingParams = getReportingParams($scope);
-
-    var promise;
-
-    jellyfinActions.stopPingInterval();
-
-    if (reportingParams.ItemId) {
-        promise = jellyfinActions.reportPlaybackStopped($scope, reportingParams);
-    }
-
-    window.mediaManager.stop();
-
-    window.playlist = [];
-    window.currentPlaylistIndex = -1;
-    jellyfinActions.displayUserInfo($scope, $scope.serverAddress, $scope.accessToken, $scope.userId);
-
-    promise = promise || Promise.resolve();
-
-    return promise;
-}
 
 window.castReceiverContext.addEventListener(cast.framework.system.EventType.SYSTEM_VOLUME_CHANGED, function (event) {
     console.log("### Cast Receiver Manager - System Volume Changed : " + JSON.stringify(event.data));

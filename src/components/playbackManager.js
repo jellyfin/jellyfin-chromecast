@@ -3,7 +3,8 @@ import {
     getIntros,
     setAppStatus,
     broadcastConnectionErrorMessage,
-    tagItems
+    tagItems,
+    getReportingParams
 } from "../helpers";
 
 import {
@@ -100,7 +101,7 @@ export class playbackManager {
 
         if (stopPlayer) {
 
-            stop("none").then(callback);
+            this.stop("none").then(callback);
         } else {
             callback();
         }
@@ -141,5 +142,31 @@ export class playbackManager {
 
             }, broadcastConnectionErrorMessage);
         });
+    }
+
+    stop(nextMode) {
+
+        $scope.playNextItem = nextMode ? true : false;
+        jellyfinActions.stop($scope);
+
+        var reportingParams = getReportingParams($scope);
+
+        var promise;
+
+        jellyfinActions.stopPingInterval();
+
+        if (reportingParams.ItemId) {
+            promise = jellyfinActions.reportPlaybackStopped($scope, reportingParams);
+        }
+
+        this.playerManager.stop();
+
+        this.activePlaylist = [];
+        this.activePlaylistIndex = -1;
+        jellyfinActions.displayUserInfo($scope, $scope.serverAddress, $scope.accessToken, $scope.userId);
+
+        promise = promise || Promise.resolve();
+
+        return promise;
     }
 }

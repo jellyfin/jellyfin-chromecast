@@ -129,7 +129,7 @@ export class commandHandler {
     }
 
     StopHandler() {
-        stop();
+        this.playerManager.stop();
     }
 
     PlayPauseHandler() {
