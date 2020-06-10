@@ -665,48 +665,6 @@ export function createMediaInformation(playSessionId, item, streamInfo) {
     return mediaInfo;
 }
 
-export function playMediaSource(playSessionId, item, mediaSource, options) {
-
-    setAppStatus('loading');
-
-    var streamInfo = createStreamInfo(item, mediaSource, options.startPositionTicks);
-
-    var url = streamInfo.url;
-
-    var mediaInfo = createMediaInformation(playSessionId, item, streamInfo);
-    var loadRequestData = new cast.framework.messages.LoadRequestData();
-    loadRequestData.media = mediaInfo;
-    loadRequestData.autoplay = true;
-
-    jellyfinActions.load($scope, mediaInfo.customData, item);
-    window.mediaManager.load(loadRequestData);
-
-    $scope.PlaybackMediaSource = mediaSource;
-
-    console.log('setting src to ' + url);
-    $scope.mediaSource = mediaSource;
-
-    if (item.BackdropImageTags && item.BackdropImageTags.length) {
-        backdropUrl = $scope.serverAddress + '/emby/Items/' + item.Id + '/Images/Backdrop/0?tag=' + item.BackdropImageTags[0];
-    } else if (item.ParentBackdropItemId && item.ParentBackdropImageTags && item.ParentBackdropImageTags.length) {
-        backdropUrl = $scope.serverAddress + '/emby/Items/' + item.ParentBackdropItemId + '/Images/Backdrop/0?tag=' + item.ParentBackdropImageTags[0];
-    }
-
-    if (backdropUrl) {
-        window.mediaElement.style.setProperty('--background-image', 'url("' + backdropUrl + '")');
-    } else {
-        //Replace with a placeholder?
-        window.mediaElement.style.removeProperty('--background-image');
-    }
-
-    jellyfinActions.reportPlaybackStart($scope, getReportingParams($scope));
-
-    // We use false as we do not want to broadcast the new status yet
-    // we will broadcast manually when the media has been loaded, this
-    // is to be sure the duration has been updated in the media element
-    window.mediaManager.setMediaInformation(mediaInfo, false);
-}
-
 playbackConfig.supportedCommands = cast.framework.messages.Command.ALL_BASIC_MEDIA;
 
 // Set the available buttons in the UI controls.
