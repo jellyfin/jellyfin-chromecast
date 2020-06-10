@@ -25,6 +25,8 @@ import {
     tagItems
 } from "../helpers";
 
+import { commandHandler } from "./commandHandler";
+
 window.castReceiverContext = cast.framework.CastReceiverContext.getInstance();
 window.mediaManager = window.castReceiverContext.getPlayerManager();
 window.mediaManager.addEventListener(cast.framework.events.category.CORE,
@@ -49,7 +51,7 @@ var mgr = window.mediaManager;
 
 var broadcastToServer = new Date();
 
-function onMediaElementTimeUpdate(e) {
+export function onMediaElementTimeUpdate(e) {
     if ($scope.isChangingStream) {
         return;
     }
@@ -68,7 +70,7 @@ function onMediaElementTimeUpdate(e) {
     }
 }
 
-function onMediaElementPause() {
+export function onMediaElementPause() {
 
     if ($scope.isChangingStream) {
         return;
@@ -77,7 +79,7 @@ function onMediaElementPause() {
     reportEvent('playstatechange', true);
 }
 
-function onMediaElementPlaying() {
+export function onMediaElementPlaying() {
 
     if ($scope.isChangingStream) {
         return;
@@ -85,7 +87,7 @@ function onMediaElementPlaying() {
     reportEvent('playstatechange', true);
 }
 
-function onMediaElementVolumeChange() {
+export function onMediaElementVolumeChange() {
 
     var volume = window.mediaElement.volume;
     window.VolumeInfo.Level = volume * 100;
@@ -94,14 +96,14 @@ function onMediaElementVolumeChange() {
     reportEvent('volumechange', true);
 }
 
-function enableTimeUpdateListener() {
+export function enableTimeUpdateListener() {
     window.mediaManager.addEventListener(cast.framework.events.EventType.TIME_UPDATE, onMediaElementTimeUpdate);
     window.mediaManager.addEventListener(cast.framework.events.EventType.REQUEST_VOLUME_CHANGE, onMediaElementVolumeChange);
     window.mediaManager.addEventListener(cast.framework.events.EventType.PAUSE, onMediaElementPause);
     window.mediaManager.addEventListener(cast.framework.events.EventType.PLAYING, onMediaElementPlaying);
 }
 
-function disableTimeUpdateListener() {
+export function disableTimeUpdateListener() {
     window.mediaManager.removeEventListener(cast.framework.events.EventType.TIME_UPDATE, onMediaElementTimeUpdate);
     window.mediaManager.removeEventListener(cast.framework.events.EventType.REQUEST_VOLUME_CHANGE, onMediaElementVolumeChange);
     window.mediaManager.removeEventListener(cast.framework.events.EventType.PAUSE, onMediaElementPause);
@@ -110,7 +112,7 @@ function disableTimeUpdateListener() {
 
 enableTimeUpdateListener();
 
-function isPlaying() {
+export function isPlaying() {
     return window.mediaManager.getPlayerState() === cast.framework.messages.PlayerState.PLAYING;
 }
 
@@ -154,7 +156,7 @@ mgr.addEventListener('ENDED', function () {
     }
 });
 
-function stop(nextMode) {
+export function stop(nextMode) {
 
     $scope.playNextItem = nextMode ? true : false;
     jellyfinActions.stop($scope);
@@ -197,7 +199,29 @@ window.mediaManager.addEventListener(
 
 console.log('Application is ready, starting system');
 
-function processMessage(data) {
+export function reportDeviceCapabilities() {
+    getMaxBitrate("Video").then((maxBitrate) => {
+        let capabilitiesUrl = $scope.serverAddress + "/Sessions/Capabilities/Full";
+        let deviceProfile = getDeviceProfile(maxBitrate);
+
+        let capabilities = {
+            PlayableMediaTypes: ["Audio", "Video"],
+            SupportsPersistentIdentifier: false,
+            SupportsMediaControl: true,
+            DeviceProfile: deviceProfile
+        };
+        window.hasReportedCapabilities = true;
+        return ajax({
+            url: capabilitiesUrl,
+            headers: getSecurityHeaders($scope.accessToken, $scope.userId),
+            type: 'POST',
+            data: JSON.stringify(capabilities),
+            contentType: 'application/json'
+        });
+    });
+}
+
+export function processMessage(data) {
 
     if (!data.command || !data.serverAddress || !data.userId || !data.accessToken) {
 
@@ -210,6 +234,7 @@ function processMessage(data) {
         return;
     }
 
+    // Items will have properties - Id, Name, Type, MediaType, IsFolder
     $scope.userId = data.userId;
     $scope.accessToken = data.accessToken;
     $scope.serverAddress = data.serverAddress;
@@ -219,25 +244,7 @@ function processMessage(data) {
 
     // Report device capabilities
     if (!window.hasReportedCapabilities) {
-        getMaxBitrate("Video").then((maxBitrate) => {
-            let capabilitiesUrl = $scope.serverAddress + "/Sessions/Capabilities/Full";
-            let deviceProfile = getDeviceProfile(maxBitrate);
-
-            let capabilities = {
-                PlayableMediaTypes: ["Audio", "Video"],
-                SupportsPersistentIdentifier: false,
-                SupportsMediaControl: true,
-                DeviceProfile: deviceProfile
-            };
-            window.hasReportedCapabilities = true;
-            return ajax({
-                url: capabilitiesUrl,
-                headers: getSecurityHeaders($scope.accessToken, $scope.userId),
-                type: 'POST',
-                data: JSON.stringify(capabilities),
-                contentType: 'application/json'
-            });
-        });
+        reportDeviceCapabilities();
     }
 
     data.options = data.options || {};
@@ -250,85 +257,32 @@ function processMessage(data) {
         window.MaxBitrate = data.maxBitrate;
     }
 
-    // Items will have properties - Id, Name, Type, MediaType, IsFolder
+    window.reportEventType;
 
-    var reportEventType;
-    var systemVolume = window.castReceiverContext.getSystemVolume();
+    let cmdHandler = window.commandHandler;
 
-    if (data.command == 'PlayLast' || data.command == 'PlayNext') {
-        translateItems(data, data.options, data.options.items, data.command);
-    } else if (data.command == 'Shuffle') {
-        shuffle(data, data.options, data.options.items[0]);
-    } else if (data.command == 'InstantMix') {
-        instantMix(data, data.options, data.options.items[0]);
-    } else if (data.command == 'DisplayContent' && !isPlaying()) {
-        console.log('DisplayContent');
-        jellyfinActions.displayItem($scope, data.serverAddress, data.accessToken, data.userId, data.options.ItemId);
-    } else if (data.command == 'NextTrack' && window.playlist && window.currentPlaylistIndex < window.playlist.length - 1) {
-        playNextItem({}, true);
-    } else if (data.command == 'PreviousTrack' && window.playlist && window.currentPlaylistIndex > 0) {
-        playPreviousItem({});
-    } else if (data.command == 'SetAudioStreamIndex') {
-        setAudioStreamIndex($scope, data.options.index);
-    } else if (data.command == 'SetSubtitleStreamIndex') {
-        setSubtitleStreamIndex($scope, data.options.index, data.serverAddress);
-    } else if (data.command == 'VolumeUp') {
-        window.castReceiverContext.setSystemVolumeLevel(Math.min(1, systemVolume.level + 0.2));
-    } else if (data.command == 'VolumeDown') {
-        window.castReceiverContext.setSystemVolumeLevel(Math.max(0, systemVolume.level - 0.2));
-    } else if (data.command == 'ToggleMute') {
-        window.castReceiverContext.setSystemVolumeMuted(!systemVolume.muted);
-    } else if (data.command == 'Identify') {
-        if (!isPlaying()) {
-            jellyfinActions.displayUserInfo($scope, data.serverAddress, data.accessToken, data.userId);
-        } else {
-            // when a client connects send back the initial device state (volume etc) via a playbackstop message
-            jellyfinActions.reportPlaybackProgress($scope, getReportingParams($scope), true, "playbackstop");
-        }
-    } else if (data.command == 'SetVolume') {
-        // Scale 0-100
-        window.castReceiverContext.setSystemVolumeLevel(data.options.volume / 100);
-    } else if (data.command == 'Seek') {
-        seek(data.options.position * 10000000);
-    } else if (data.command == 'Mute') {
-        window.castReceiverContext.setSystemVolumeMuted(true);
-    } else if (data.command == 'Unmute') {
-        window.castReceiverContext.setSystemVolumeMuted(false);
-    } else if (data.command == 'Stop') {
-        stop();
-    } else if (data.command == 'PlayPause') {
-
-        if (window.mediaManager.getPlayerState() === cast.framework.messages.PlayerState.PAUSED) {
-            window.mediaManager.play();
-        } else {
-            window.mediaManager.pause();
-        }
-    } else if (data.command == 'Pause') {
-        window.mediaManager.pause();
-    } else if (data.command == 'SetRepeatMode') {
-        window.repeatMode = data.options.RepeatMode;
-        reportEventType = 'repeatmodechange';
-    } else if (data.command == 'Unpause') {
-        window.mediaManager.play();
-    } else {
-        translateItems(data, data.options, data.options.items, 'play');
+    if (!cmdHandler) {
+        window.commandHandler = new commandHandler(window.castReceiverContext, window.mediaManager);
+        cmdHandler = window.commandHandler;
     }
 
-    if (reportEventType) {
+    cmdHandler.processMessage(data, data.command);
+
+    if (window.reportEventType) {
         var report = function () {
             jellyfinActions.reportPlaybackProgress($scope, getReportingParams($scope));
         };
-        jellyfinActions.reportPlaybackProgress($scope, getReportingParams($scope), true, reportEventType);
+        jellyfinActions.reportPlaybackProgress($scope, getReportingParams($scope), true, window.reportEventType);
         setTimeout(report, 100);
         setTimeout(report, 500);
     }
 }
 
-function reportEvent(name, reportToServer) {
+export function reportEvent(name, reportToServer) {
     jellyfinActions.reportPlaybackProgress($scope, getReportingParams($scope), reportToServer, name);
 }
 
-function setSubtitleStreamIndex($scope, index, serverAddress) {
+export function setSubtitleStreamIndex($scope, index, serverAddress) {
     console.log('setSubtitleStreamIndex. index: ' + index);
 
     var currentSubtitleStream = $scope.mediaSource.MediaStreams.filter(function (m) {
@@ -379,18 +333,18 @@ function setSubtitleStreamIndex($scope, index, serverAddress) {
     }
 }
 
-function setAudioStreamIndex($scope, index) {
+export function setAudioStreamIndex($scope, index) {
     var positionTicks = getCurrentPositionTicks($scope);
     changeStream(positionTicks, {
         AudioStreamIndex: index
     });
 }
 
-function seek(ticks) {
+export function seek(ticks) {
     changeStream(ticks);
 }
 
-function changeStream(ticks, params) {
+export function changeStream(ticks, params) {
     if (ticks) {
         ticks = parseInt(ticks);
     }
@@ -470,7 +424,7 @@ window.castReceiverContext.addCustomMessageListener('urn:x-cast:com.connectsdk',
     processMessage(data);
 });
 
-function translateItems(data, options, items, method) {
+export function translateItems(data, options, items, method) {
     var callback = function (result) {
         options.items = result.Items;
         tagItems(options.items, data);
@@ -486,7 +440,7 @@ function translateItems(data, options, items, method) {
     translateRequestedItems(data.serverAddress, data.accessToken, data.userId, items, smartTranslate).then(callback);
 }
 
-function instantMix(data, options, item) {
+export function instantMix(data, options, item) {
     getInstantMixItems(data.serverAddress, data.accessToken, data.userId, item).then(function (result) {
 
         options.items = result.Items;
@@ -495,7 +449,7 @@ function instantMix(data, options, item) {
     });
 }
 
-function shuffle(data, options, item) {
+export function shuffle(data, options, item) {
     getShuffleItems(data.serverAddress, data.accessToken, data.userId, item).then(function (result) {
         options.items = result.Items;
         tagItems(options.items, data);
@@ -503,13 +457,13 @@ function shuffle(data, options, item) {
     });
 }
 
-function queue(items) {
+export function queue(items) {
     for (var i = 0, length = items.length; i < length; i++) {
         window.playlist.push(items[i]);
     }
 }
 
-function playFromOptions(options) {
+export function playFromOptions(options) {
     var firstItem = options.items[0];
 
     if (options.startPositionTicks || firstItem.MediaType !== 'Video') {
@@ -530,7 +484,7 @@ function playFromOptions(options) {
     });
 }
 
-function playFromOptionsInternal(options) {
+export function playFromOptionsInternal(options) {
 
     var stopPlayer = window.playlist && window.playlist.length > 0;
 
@@ -540,7 +494,7 @@ function playFromOptionsInternal(options) {
 }
 
 // Plays the next item in the list
-function playNextItem(options, stopPlayer) {
+export function playNextItem(options, stopPlayer) {
 
     var nextItemInfo = getNextPlaybackItemInfo();
 
@@ -556,7 +510,7 @@ function playNextItem(options, stopPlayer) {
     return false;
 }
 
-function playPreviousItem(options) {
+export function playPreviousItem(options) {
 
     var playlist = window.playlist;
 
@@ -571,7 +525,7 @@ function playPreviousItem(options) {
     return false;
 }
 
-function playItem(item, options, stopPlayer) {
+export function playItem(item, options, stopPlayer) {
 
     var callback = function () {
         onStopPlayerBeforePlaybackDone(item, options);
@@ -585,7 +539,7 @@ function playItem(item, options, stopPlayer) {
     }
 }
 
-function onStopPlayerBeforePlaybackDone(item, options) {
+export function onStopPlayerBeforePlaybackDone(item, options) {
 
     var requestUrl = getUrl(item.serverAddress, 'Users/' + item.userId + '/Items/' + item.Id);
 
@@ -606,7 +560,7 @@ function onStopPlayerBeforePlaybackDone(item, options) {
     }, broadcastConnectionErrorMessage);
 }
 
-function getDeviceProfile(maxBitrate) {
+export function getDeviceProfile(maxBitrate) {
 
     let transcodingAudioChannels = document.createElement('video').canPlayType('audio/mp4; codecs="ac-3"').replace(/no/, '') ?
         6 :
@@ -619,7 +573,7 @@ function getDeviceProfile(maxBitrate) {
 
 }
 
-function playItemInternal(item, options) {
+export function playItemInternal(item, options) {
 
     $scope.isChangingStream = false;
     setAppStatus('loading');
@@ -658,7 +612,7 @@ function playItemInternal(item, options) {
 
 var lastBitrateDetect = 0;
 var detectedBitrate = 0;
-function getMaxBitrate(mediaType) {
+export function getMaxBitrate(mediaType) {
 
     console.log('getMaxBitrate');
 
@@ -701,7 +655,7 @@ function getMaxBitrate(mediaType) {
     });
 }
 
-function validatePlaybackInfoResult(result) {
+export function validatePlaybackInfoResult(result) {
 
     if (result.ErrorCode) {
 
@@ -712,7 +666,7 @@ function validatePlaybackInfoResult(result) {
     return true;
 }
 
-function showPlaybackInfoErrorMessage(errorCode) {
+export function showPlaybackInfoErrorMessage(errorCode) {
 
     broadcastToMessageBus({
         type: 'playbackerror',
@@ -720,7 +674,7 @@ function showPlaybackInfoErrorMessage(errorCode) {
     });
 }
 
-function getOptimalMediaSource(versions) {
+export function getOptimalMediaSource(versions) {
 
     var optimalVersion = versions.filter(function (v) {
 
@@ -743,7 +697,7 @@ function getOptimalMediaSource(versions) {
     })[0];
 }
 
-function supportsDirectPlay(mediaSource) {
+export function supportsDirectPlay(mediaSource) {
 
     if (mediaSource.SupportsDirectPlay && mediaSource.Protocol == 'Http' && !mediaSource.RequiredHttpHeaders.length) {
 
@@ -754,7 +708,7 @@ function supportsDirectPlay(mediaSource) {
     return false;
 }
 
-function setTextTrack(index) {
+export function setTextTrack(index) {
     try {
         var textTracksManager = window.mediaManager.getTextTracksManager();
         if (index == null) {
@@ -818,7 +772,7 @@ function setTextTrack(index) {
     }
 }
 
-function createMediaInformation(playSessionId, item, streamInfo) {
+export function createMediaInformation(playSessionId, item, streamInfo) {
     var mediaInfo = new cast.framework.messages.MediaInformation();
     mediaInfo.contentId = streamInfo.url;
     mediaInfo.contentType = streamInfo.contentType;
@@ -853,7 +807,7 @@ function createMediaInformation(playSessionId, item, streamInfo) {
     return mediaInfo;
 }
 
-function playMediaSource(playSessionId, item, mediaSource, options) {
+export function playMediaSource(playSessionId, item, mediaSource, options) {
 
     setAppStatus('loading');
 
