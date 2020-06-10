@@ -7,7 +7,6 @@ import {
     getUrl,
     getCurrentPositionTicks,
     getReportingParams,
-    getNextPlaybackItemInfo,
     resetPlaybackScope,
     getMetadata,
     createStreamInfo,
@@ -15,7 +14,6 @@ import {
     getSecurityHeaders,
     getShuffleItems,
     getInstantMixItems,
-    getIntros,
     translateRequestedItems,
     setAppStatus,
     extend,
@@ -26,6 +24,7 @@ import {
 } from "../helpers";
 
 import { commandHandler } from "./commandHandler";
+import { playbackManager } from "./playbackManager";
 
 window.castReceiverContext = cast.framework.CastReceiverContext.getInstance();
 window.mediaManager = window.castReceiverContext.getPlayerManager();
@@ -34,6 +33,8 @@ window.mediaManager.addEventListener(cast.framework.events.category.CORE,
         console.log("Core event: " + event.type);
         console.log(event);
     });
+
+const playbackMgr = new playbackManager();
 
 const playbackConfig = new cast.framework.PlaybackConfig();
 // Set the player to start playback as soon as there are five seconds of
@@ -111,10 +112,6 @@ export function disableTimeUpdateListener() {
 }
 
 enableTimeUpdateListener();
-
-export function isPlaying() {
-    return window.mediaManager.getPlayerState() === cast.framework.messages.PlayerState.PLAYING;
-}
 
 window.addEventListener('beforeunload', function () {
     // Try to cleanup after ourselves before the page closes
@@ -432,7 +429,7 @@ export function translateItems(data, options, items, method) {
         if (method == 'PlayNext' || method == 'PlayLast') {
             queue(options.items, method);
         } else {
-            playFromOptions(data.options);
+            playbackMgr.playFromOptions(data.options);
         }
     };
 
@@ -445,7 +442,7 @@ export function instantMix(data, options, item) {
 
         options.items = result.Items;
         tagItems(options.items, data);
-        playFromOptions(data.options);
+        playbackMgr.playFromOptions(data.options);
     });
 }
 
@@ -453,89 +450,13 @@ export function shuffle(data, options, item) {
     getShuffleItems(data.serverAddress, data.accessToken, data.userId, item).then(function (result) {
         options.items = result.Items;
         tagItems(options.items, data);
-        playFromOptions(data.options);
+        playbackMgr.playFromOptions(data.options);
     });
 }
 
 export function queue(items) {
     for (var i = 0, length = items.length; i < length; i++) {
         window.playlist.push(items[i]);
-    }
-}
-
-export function playFromOptions(options) {
-    var firstItem = options.items[0];
-
-    if (options.startPositionTicks || firstItem.MediaType !== 'Video') {
-        playFromOptionsInternal(options);
-        return;
-    }
-
-    getIntros(firstItem.serverAddress, firstItem.accessToken, firstItem.userId, firstItem).then(function (intros) {
-
-        tagItems(intros.Items, {
-            userId: firstItem.userId,
-            accessToken: firstItem.accessToken,
-            serverAddress: firstItem.serverAddress
-        });
-
-        options.items = intros.Items.concat(options.items);
-        playFromOptionsInternal(options);
-    });
-}
-
-export function playFromOptionsInternal(options) {
-
-    var stopPlayer = window.playlist && window.playlist.length > 0;
-
-    window.playlist = options.items;
-    window.currentPlaylistIndex = -1;
-    playNextItem(options, stopPlayer);
-}
-
-// Plays the next item in the list
-export function playNextItem(options, stopPlayer) {
-
-    var nextItemInfo = getNextPlaybackItemInfo();
-
-    if (nextItemInfo) {
-        window.currentPlaylistIndex = nextItemInfo.index;
-
-        var item = nextItemInfo.item;
-
-        playItem(item, options || {}, stopPlayer);
-        return true;
-    }
-
-    return false;
-}
-
-export function playPreviousItem(options) {
-
-    var playlist = window.playlist;
-
-    if (playlist && window.currentPlaylistIndex > 0) {
-        window.currentPlaylistIndex--;
-
-        var item = playlist[window.currentPlaylistIndex];
-
-        playItem(item, options || {}, true);
-        return true;
-    }
-    return false;
-}
-
-export function playItem(item, options, stopPlayer) {
-
-    var callback = function () {
-        onStopPlayerBeforePlaybackDone(item, options);
-    };
-
-    if (stopPlayer) {
-
-        stop("none").then(callback);
-    } else {
-        callback();
     }
 }
 
@@ -555,7 +476,7 @@ export function onStopPlayerBeforePlaybackDone(item, options) {
         // Attach the custom properties we created like userId, serverAddress, itemId, etc
         extend(data, item);
 
-        playItemInternal(data, options);
+        playbackMgr.playItemInternal(data, options);
 
     }, broadcastConnectionErrorMessage);
 }
@@ -571,43 +492,6 @@ export function getDeviceProfile(maxBitrate) {
         audioChannels: transcodingAudioChannels
     });
 
-}
-
-export function playItemInternal(item, options) {
-
-    $scope.isChangingStream = false;
-    setAppStatus('loading');
-
-    getMaxBitrate(item.MediaType).then(function (maxBitrate) {
-
-        var deviceProfile = getDeviceProfile(maxBitrate);
-
-        jellyfinActions.getPlaybackInfo(item, maxBitrate, deviceProfile, options.startPositionTicks, options.mediaSourceId, options.audioStreamIndex, options.subtitleStreamIndex).then(function (result) {
-
-            if (validatePlaybackInfoResult(result)) {
-
-                var mediaSource = getOptimalMediaSource(result.MediaSources);
-
-                if (mediaSource) {
-
-                    if (mediaSource.RequiresOpening) {
-
-                        jellyfinActions.getLiveStream(item, result.PlaySessionId, maxBitrate, deviceProfile, options.startPositionTicks, mediaSource, null, null).then(function (openLiveStreamResult) {
-
-                            openLiveStreamResult.MediaSource.enableDirectPlay = supportsDirectPlay(openLiveStreamResult.MediaSource);
-                            playMediaSource(result.PlaySessionId, item, openLiveStreamResult.MediaSource, options);
-                        });
-
-                    } else {
-                        playMediaSource(result.PlaySessionId, item, mediaSource, options);
-                    }
-                } else {
-                    showPlaybackInfoErrorMessage('NoCompatibleStream');
-                }
-            }
-
-        }, broadcastConnectionErrorMessage);
-    });
 }
 
 var lastBitrateDetect = 0;
