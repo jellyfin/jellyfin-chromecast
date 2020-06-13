@@ -2,7 +2,6 @@ import {
     translateItems,
     shuffle,
     instantMix,
-    isPlaying,
     setAudioStreamIndex,
     setSubtitleStreamIndex,
     seek
@@ -61,7 +60,7 @@ export class commandHandler {
     }
 
     displayContentHandler(data) {
-        if (!isPlaying()) {
+        if (!this.playbackManager.isPlaying()) {
             jellyfinActions.displayItem($scope, data.serverAddress, data.accessToken, data.userId, data.options.ItemId);
         }
     }
@@ -107,7 +106,7 @@ export class commandHandler {
     }
 
     IdentifyHandler(data) {
-        if (!isPlaying()) {
+        if (!this.playbackManager.isPlaying()) {
             jellyfinActions.displayUserInfo($scope, data.serverAddress, data.accessToken, data.userId);
         } else {
             // When a client connects send back the initial device state (volume etc) via a playbackstop message

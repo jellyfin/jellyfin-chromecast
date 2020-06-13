@@ -4,7 +4,8 @@ import {
     setAppStatus,
     broadcastConnectionErrorMessage,
     tagItems,
-    getReportingParams
+    getReportingParams,
+    createStreamInfo
 } from "../helpers";
 
 import {
@@ -15,7 +16,6 @@ import {
     validatePlaybackInfoResult,
     showPlaybackInfoErrorMessage,
     supportsDirectPlay,
-    createStreamInfo,
     createMediaInformation
 } from "./maincontroller";
 
