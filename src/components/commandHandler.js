@@ -3,12 +3,9 @@ import {
     shuffle,
     instantMix,
     isPlaying,
-    playNextItem,
-    playPreviousItem,
     setAudioStreamIndex,
     setSubtitleStreamIndex,
-    seek,
-    stop
+    seek
 } from "./maincontroller";
 
 import { getReportingParams } from "../helpers";
@@ -16,9 +13,10 @@ import { getReportingParams } from "../helpers";
 import { factory as jellyfinActions } from "./jellyfinactions";
 
 export class commandHandler {
-    constructor(castContext, playerManager) {
+    constructor(castContext, playerManager, playbackManager) {
         this.castContext = castContext;
         this.playerManager = playerManager;
+        this.playbackManager = playbackManager;
 
         this.supportedCommands = {
             PlayNext: this.playNextHandler,
@@ -70,13 +68,13 @@ export class commandHandler {
 
     nextTrackHandler() {
         if (window.playlist && window.currentPlaylistIndex < window.playlist.length - 1) {
-            playNextItem({}, true);
+            this.playbackManager.playNextItem({}, true);
         }
     }
 
     previousTrackHandler() {
         if (window.playlist && window.currentPlaylistIndex > 0) {
-            playPreviousItem({});
+            this.playbackManager.playPreviousItem({});
         }
     }
 
@@ -130,7 +128,7 @@ export class commandHandler {
     }
 
     StopHandler() {
-        stop();
+        this.playerManager.stop();
     }
 
     PlayPauseHandler() {
