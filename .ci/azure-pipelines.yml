@@ -119,7 +119,7 @@ jobs:
     displayName: 'Download Artifact'
     inputs:
       source: 'current'
-      artifact: 'jellyfin-chromecast-$(ArtifactSuffix)'
+      artifact: 'jellyfin-chromecast-$(BuildConfiguration)'
       path: '$(System.ArtifactsDirectory)'
       runVersion: 'latest'
 
