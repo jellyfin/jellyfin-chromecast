@@ -149,7 +149,7 @@ jobs:
     inputs:
       sshEndpoint: repository
       runOptions: 'inline'
-      inline: 'cd /srv/repository/releases/client/chromecast && rm -rf *.zip && ln -s versions/$(TAG)/jellyfin-chromecast-$(ArtifactSuffix)-$(TAG).zip .'
+      inline: 'cd /srv/repository/releases/client/chromecast && rm -rf *.zip && ln -s versions/$(TAG)/jellyfin-chromecast-$(BuildConfiguration)-$(TAG).zip .'
 
 - job: Production
   displayName: 'Production'
