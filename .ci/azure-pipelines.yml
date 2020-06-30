@@ -136,7 +136,6 @@ jobs:
 
   - task: CopyFilesOverSSH@0
     displayName: 'Upload to Repository'
-    condition: eq(variables['Build.SourceBranch'], 'refs/heads/master')
     inputs:
       sshEndpoint: repository
       sourceFolder: '$(System.ArtifactsDirectory)'
@@ -145,7 +144,6 @@ jobs:
 
   - task: SSH@0
     displayName: 'Symlink Latest Version'
-    condition: eq(variables['Build.SourceBranch'], 'refs/heads/master')
     inputs:
       sshEndpoint: repository
       runOptions: 'inline'
@@ -178,7 +176,6 @@ jobs:
 
   - task: CopyFilesOverSSH@0
     displayName: 'Update Nightly'
-    condition: eq(variables['Build.SourceBranch'], 'refs/heads/master')
     inputs:
       sshEndpoint: chromecast
       sourceFolder: '$(System.ArtifactsDirectory)/artifact'
