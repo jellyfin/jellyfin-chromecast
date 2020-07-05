@@ -178,7 +178,8 @@ jobs:
     displayName: 'Update Nightly'
     inputs:
       sshEndpoint: chromecast
-      sourceFolder: '$(System.ArtifactsDirectory)/artifact'
+      sourceFolder: '$(System.ArtifactsDirectory)/artifact/jellyfin-chromecast'
+      cleanTargetFolder: true
       contents: '**'
       targetFolder: '/srv/chromecast/nightly'
 
@@ -187,6 +188,7 @@ jobs:
     condition: startsWith(variables['Build.SourceBranch'], 'refs/tags')
     inputs:
       sshEndpoint: chromecast
-      sourceFolder: '$(System.ArtifactsDirectory)/artifact'
+      sourceFolder: '$(System.ArtifactsDirectory)/artifact/jellyfin-chromecast'
+      cleanTargetFolder: true
       contents: '**'
       targetFolder: '/srv/chromecast/stable'
