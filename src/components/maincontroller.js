@@ -34,7 +34,7 @@ window.mediaManager.addEventListener(cast.framework.events.category.CORE,
         console.log(event);
     });
 
-const playbackMgr = new playbackManager();
+const playbackMgr = new playbackManager(window.castReceiverContext, window.mediaManager);
 
 const playbackConfig = new cast.framework.PlaybackConfig();
 // Set the player to start playback as soon as there are five seconds of
