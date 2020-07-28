@@ -44,7 +44,7 @@ export class playbackManager {
             return;
         }
 
-        getIntros(firstItem.serverAddress, firstItem.accessToken, firstItem.userId, firstItem).then(function (intros) {
+        getIntros(firstItem.serverAddress, firstItem.accessToken, firstItem.userId, firstItem).then(intros => {
 
             tagItems(intros.Items, {
                 userId: firstItem.userId,
@@ -63,6 +63,8 @@ export class playbackManager {
 
         this.activePlaylist = options.items;
         this.activePlaylist.currentPlaylistIndex = -1;
+        window.playlist = this.activePlaylist;
+
         this.playNextItem(options, stopPlayer);
     }
 
@@ -114,11 +116,11 @@ export class playbackManager {
         $scope.isChangingStream = false;
         setAppStatus('loading');
 
-        getMaxBitrate(item.MediaType).then(function (maxBitrate) {
+        getMaxBitrate(item.MediaType).then(maxBitrate => {
 
             var deviceProfile = getDeviceProfile(maxBitrate);
 
-            jellyfinActions.getPlaybackInfo(item, maxBitrate, deviceProfile, options.startPositionTicks, options.mediaSourceId, options.audioStreamIndex, options.subtitleStreamIndex).then(function (result) {
+            jellyfinActions.getPlaybackInfo(item, maxBitrate, deviceProfile, options.startPositionTicks, options.mediaSourceId, options.audioStreamIndex, options.subtitleStreamIndex).then(result => {
 
                 if (validatePlaybackInfoResult(result)) {
 
@@ -128,7 +130,7 @@ export class playbackManager {
 
                         if (mediaSource.RequiresOpening) {
 
-                            jellyfinActions.getLiveStream(item, result.PlaySessionId, maxBitrate, deviceProfile, options.startPositionTicks, mediaSource, null, null).then(function (openLiveStreamResult) {
+                            jellyfinActions.getLiveStream(item, result.PlaySessionId, maxBitrate, deviceProfile, options.startPositionTicks, mediaSource, null, null).then(openLiveStreamResult => {
 
                                 openLiveStreamResult.MediaSource.enableDirectPlay = supportsDirectPlay(openLiveStreamResult.MediaSource);
                                 this.playMediaSource(result.PlaySessionId, item, openLiveStreamResult.MediaSource, options);
