@@ -24,12 +24,12 @@ import { factory as jellyfinActions } from "./jellyfinactions";
 declare var $scope;
 
 export class playbackManager {
-    castContext : any;
-    playerManager : any;
+    castContext : cast.framework.CastReceiverContext;
+    playerManager : cast.framework.PlayerManager;
     activePlaylist : any[];
     activePlaylistIndex : number;
 
-    constructor(castContext, playerManager) {
+    constructor(castContext : cast.framework.CastReceiverContext, playerManager : cast.framework.PlayerManager) {
         // Parameters
         this.castContext = castContext;
         this.playerManager = playerManager;
@@ -76,7 +76,7 @@ export class playbackManager {
     }
 
     // Plays the next item in the list
-    playNextItem(options, stopPlayer) {
+    playNextItem(options ?: any, stopPlayer ?: boolean) {
 
         var nextItemInfo = getNextPlaybackItemInfo();
 
@@ -198,7 +198,7 @@ export class playbackManager {
         this.playerManager.setMediaInformation(mediaInfo, false);
     }
 
-    stop(nextMode) {
+    stop(nextMode ?: any) {
 
         $scope.playNextItem = nextMode ? true : false;
         jellyfinActions.stop($scope);

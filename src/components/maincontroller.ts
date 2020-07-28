@@ -25,9 +25,32 @@ import {
 
 import { commandHandler } from "./commandHandler";
 import { playbackManager } from "./playbackManager";
+import { EventType } from "chromecast-caf-receiver/cast.framework.events";
+import { CastReceiverContext, PlayerManager, CastReceiverOptions } from "chromecast-caf-receiver/cast.framework";
+import { Event as SystemEvent } from "chromecast-caf-receiver/cast.framework.system";
 
-window.castReceiverContext = cast.framework.CastReceiverContext.getInstance();
+declare var $scope;
+declare var window : Window & {
+    castReceiverContext : CastReceiverContext,
+    mediaManager : PlayerManager,
+    mediaElement,
+    VolumeInfo,
+    playlist,
+    currentPlaylistIndex,
+    hasReportedCapabilities,
+    DefaultMaxBitrate
+    MaxBitrate,
+    addEventListener,
+    commandHandler,
+    deviceInfo,
+    reportEventType,
+    senderId,
+    subtitleAppearance,
+};
+
+window.castReceiverContext = CastReceiverContext.getInstance();
 window.mediaManager = window.castReceiverContext.getPlayerManager();
+
 window.mediaManager.addEventListener(cast.framework.events.category.CORE,
     event => {
         console.log("Core event: " + event.type);
@@ -48,7 +71,7 @@ var init = function () {
 
 init();
 
-var mgr = window.mediaManager;
+var mgr = <PlayerManager & { defaultOnPlay, defaultOnPause, defaultOnStop }>window.mediaManager;
 
 var broadcastToServer = new Date();
 
@@ -59,7 +82,7 @@ export function onMediaElementTimeUpdate(e) {
 
     var now = new Date();
 
-    var elapsed = now - broadcastToServer;
+    var elapsed = +now - +broadcastToServer;
 
     if (elapsed > 5000) {
         // TODO use status as input
@@ -124,19 +147,19 @@ mgr.defaultOnPlay = function (event) {
     jellyfinActions.play($scope, event);
     jellyfinActions.reportPlaybackProgress($scope, getReportingParams($scope));
 };
-mgr.addEventListener('PLAY', mgr.defaultOnPlay);
+mgr.addEventListener(<EventType>'PLAY', mgr.defaultOnPlay);
 
 mgr.defaultOnPause = function (event) {
     jellyfinActions.reportPlaybackProgress($scope, getReportingParams($scope));
 };
-mgr.addEventListener('PAUSE', mgr.defaultOnPause);
+mgr.addEventListener(<EventType>'PAUSE', mgr.defaultOnPause);
 
 mgr.defaultOnStop = function (event) {
     playbackMgr.stop();
 };
-mgr.addEventListener('ABORT', mgr.defaultOnStop);
+mgr.addEventListener(<EventType>'ABORT', mgr.defaultOnStop);
 
-mgr.addEventListener('ENDED', function () {
+mgr.addEventListener(<EventType>'ENDED', function () {
 
     // Ignore
     if ($scope.isChangingStream) {
@@ -146,7 +169,7 @@ mgr.addEventListener('ENDED', function () {
     jellyfinActions.reportPlaybackStopped($scope, getReportingParams($scope));
     init();
 
-    if (!playNextItem()) {
+    if (!playbackMgr.playNextItem()) {
         window.playlist = [];
         window.currentPlaylistIndex = -1;
         jellyfinActions.displayUserInfo($scope, $scope.serverAddress, $scope.accessToken, $scope.userId);
@@ -315,7 +338,7 @@ export function seek(ticks) {
     changeStream(ticks);
 }
 
-export function changeStream(ticks, params) {
+export function changeStream(ticks ?: any, params ?: any) {
     if (ticks) {
         ticks = parseInt(ticks);
     }
@@ -382,7 +405,7 @@ export function changeStream(ticks, params) {
 
 // Create a message handler for the custome namespace channel
 // TODO save namespace somewhere global?
-window.castReceiverContext.addCustomMessageListener('urn:x-cast:com.connectsdk', function (evt) {
+window.castReceiverContext.addCustomMessageListener('urn:x-cast:com.connectsdk', function (evt : SystemEvent & { senderId }) {
     console.log('Playlist message: ' + JSON.stringify(evt));
 
     var data = evt.data;
@@ -401,7 +424,7 @@ export function translateItems(data, options, items, method) {
         tagItems(options.items, data);
 
         if (method == 'PlayNext' || method == 'PlayLast') {
-            queue(options.items, method);
+            queue(options.items);
         } else {
             playbackMgr.playFromOptions(data.options);
         }
@@ -665,26 +688,26 @@ export function createMediaInformation(playSessionId, item, streamInfo) {
     return mediaInfo;
 }
 
-playbackConfig.supportedCommands = cast.framework.messages.Command.ALL_BASIC_MEDIA;
+window.mediaManager.setSupportedMediaCommands(cast.framework.messages.Command.ALL_BASIC_MEDIA);
 
 // Set the available buttons in the UI controls.
-const controls = cast.framework.ui.Controls.getInstance();
+const controls = (<any>cast.framework.ui).Controls.getInstance();
 controls.clearDefaultSlotAssignments();
 
 /* Disabled for now, dynamically set controls for each media type in the future.
 // Assign buttons to control slots.
 controls.assignButton(
-    cast.framework.ui.ControlsSlot.SLOT_SECONDARY_1,
-    cast.framework.ui.ControlsButton.CAPTIONS
+    (<any>cast.framework.ui).ControlsSlot.SLOT_SECONDARY_1,
+    (<any>cast.framework.ui).ControlsButton.CAPTIONS
 );*/
 
 controls.assignButton(
-    cast.framework.ui.ControlsSlot.SLOT_PRIMARY_1,
-    cast.framework.ui.ControlsButton.SEEK_BACKWARD_15
+    (<any>cast.framework.ui).ControlsSlot.SLOT_PRIMARY_1,
+    (<any>cast.framework.ui).ControlsButton.SEEK_BACKWARD_15
 );
 controls.assignButton(
-    cast.framework.ui.ControlsSlot.SLOT_PRIMARY_2,
-    cast.framework.ui.ControlsButton.SEEK_FORWARD_15
+    (<any>cast.framework.ui).ControlsSlot.SLOT_PRIMARY_2,
+    (<any>cast.framework.ui).ControlsButton.SEEK_FORWARD_15
 );
 
-window.castReceiverContext.start(playbackConfig);
+window.castReceiverContext.start({ playbackConfig });
