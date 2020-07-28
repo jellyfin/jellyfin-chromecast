@@ -21,7 +21,14 @@ import {
 
 import { factory as jellyfinActions } from "./jellyfinactions";
 
+declare var $scope;
+
 export class playbackManager {
+    castContext : any;
+    playerManager : any;
+    activePlaylist : any[];
+    activePlaylistIndex : number;
+
     constructor(castContext, playerManager) {
         // Parameters
         this.castContext = castContext;
@@ -62,8 +69,8 @@ export class playbackManager {
         var stopPlayer = this.activePlaylist && this.activePlaylist.length > 0;
 
         this.activePlaylist = options.items;
-        this.activePlaylist.currentPlaylistIndex = -1;
-        window.playlist = this.activePlaylist;
+        (<any>window).currentPlaylistIndex = -1;
+        (<any>window).playlist = this.activePlaylist;
 
         this.playNextItem(options, stopPlayer);
     }
@@ -177,10 +184,10 @@ export class playbackManager {
         }
 
         if (backdropUrl) {
-            window.mediaElement.style.setProperty('--background-image', 'url("' + backdropUrl + '")');
+            (<any>window).mediaElement.style.setProperty('--background-image', 'url("' + backdropUrl + '")');
         } else {
             //Replace with a placeholder?
-            window.mediaElement.style.removeProperty('--background-image');
+            (<any>window).mediaElement.style.removeProperty('--background-image');
         }
 
         jellyfinActions.reportPlaybackStart($scope, getReportingParams($scope));
