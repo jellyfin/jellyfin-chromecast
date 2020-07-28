@@ -5,3 +5,8 @@
 # npm/yarn
 node_modules
 dist
+src/*.js.map
+src/*.js
+src/**/*.js.map
+src/**/*.js
+package-lock.json
