@@ -1,6 +1,7 @@
 /* eslint-disable */
 
 import { ajax } from "./components/fetchhelper";
+import { $scope, window } from "./app";
 
 export function getUrl(serverAddress, name) {
 
@@ -31,7 +32,8 @@ export function getCurrentPositionTicks($scope) {
 }
 
 export function getReportingParams($scope) {
-    var volumeInfo = window.castReceiverContext.getSystemVolume();
+    // TODO: track volume because there's no way to query for it
+    var volumeInfo = { muted: false, level: 1 };
     return {
         PositionTicks: getCurrentPositionTicks($scope),
         IsPaused: window.mediaManager.getPlayerState() === cast.framework.messages.PlayerState.PAUSED,
@@ -96,7 +98,9 @@ export function getSenderReportingData($scope, reportingData) {
     var state = {
         ItemId: reportingData.ItemId,
         PlayState: extend({}, reportingData),
-        QueueableMediaTypes: reportingData.QueueableMediaTypes
+        QueueableMediaTypes: reportingData.QueueableMediaTypes,
+        NowPlayingItem: <any>undefined,
+        NextMediaType: <any>undefined,
     };
 
     // Don't want this here
@@ -410,7 +414,8 @@ export function createStreamInfo(item, mediaSource, startPosition) {
         audioStreamIndex: mediaSource.DefaultAudioStreamIndex,
         subtitleStreamIndex: mediaSource.DefaultSubtitleStreamIndex,
         playerStartPositionTicks: playerStartPositionTicks,
-        startPositionTicks: startPosition
+        startPositionTicks: startPosition,
+        tracks: <any[]>undefined,
     };
 
     var subtitleStreams = mediaSource.MediaStreams.filter(function (stream) {
@@ -435,7 +440,7 @@ export function createStreamInfo(item, mediaSource, startPosition) {
         track.trackContentType = 'text/vtt';
         track.subtype = cast.framework.messages.TextTrackType.SUBTITLES;
         subtitleTracks.push(track)
-        console.log('Subtitle url: ' + info.subtitleStreamUrl);
+        console.log('Subtitle url: ' + textStreamUrl);
     });
 
     if (subtitleTracks) {
@@ -455,6 +460,7 @@ export function getStreamByIndex(streams, type, index) {
 
 export function getSecurityHeaders(accessToken, userId) {
 
+    var deviceInfo = window.deviceInfo;
     var auth = 'Emby Client="Chromecast", Device="' + deviceInfo.deviceName + '", DeviceId="' + deviceInfo.deviceId + '", Version="' + deviceInfo.versionNumber + '"';
 
     if (userId) {
@@ -572,7 +578,11 @@ export function getShuffleItems(serverAddress, accessToken, userId, item) {
         Limit: 50,
         Filters: "IsNotFolder",
         Recursive: true,
-        SortBy: "Random"
+        SortBy: "Random",
+        MediaTypes: <string>undefined,
+        ArtistIds: <any>undefined,
+        Genres: <any>undefined,
+        ParentId: <any>undefined,
     };
 
     if (item.Type == "MusicArtist") {
@@ -597,7 +607,8 @@ export function getInstantMixItems(serverAddress, accessToken, userId, item) {
     var query = {
         UserId: userId,
         Fields: requiredItemFields,
-        Limit: 50
+        Limit: 50,
+        Id: <any>undefined,
     };
 
     var url;
@@ -937,7 +948,7 @@ export function setInnerHTML(selector, html, autoHide) {
 }
 export function setPlayedPercentage(value) {
     $scope.playedPercentage = value;
-    document.querySelector('.itemProgressBar').value = value || 0;
+    document.querySelector<HTMLProgressElement>('.itemProgressBar').value = value || 0;
 }
 
 export function setStartPositionTicks(value) {
@@ -945,7 +956,7 @@ export function setStartPositionTicks(value) {
 }
 
 export function setWaitingBackdrop(src) {
-    document.querySelector('#waiting-container-backdrop').style.backgroundImage = src ? 'url(' + src + ')' : ''
+    document.querySelector<HTMLElement>('#waiting-container-backdrop').style.backgroundImage = src ? 'url(' + src + ')' : ''
 }
 
 export function setHasPlayedPercentage(value) {
@@ -957,11 +968,11 @@ export function setHasPlayedPercentage(value) {
 }
 
 export function setLogo(src) {
-    document.querySelector('.detailLogo').style.backgroundImage = src ? 'url(' + src + ')' : ''
+    document.querySelector<HTMLElement>('.detailLogo').style.backgroundImage = src ? 'url(' + src + ')' : ''
 }
 
 export function setDetailImage(src) {
-    document.querySelector('.detailImage').style.backgroundImage = src ? 'url(' + src + ')' : ''
+    document.querySelector<HTMLElement>('.detailImage').style.backgroundImage = src ? 'url(' + src + ')' : ''
 }
 
 export function extend(target, source) {
@@ -971,7 +982,7 @@ export function extend(target, source) {
     return target;
 }
 
-export function parseISO8601Date(s, toLocal) {
+export function parseISO8601Date(s) {
     return new Date(s);
 }
 
@@ -991,7 +1002,7 @@ export function getDisplayRunningTime(ticks) {
 
     ticks -= (hours * ticksPerHour);
 
-    var minutes = ticks / ticksPerMinute;
+    var minutes : string | number = ticks / ticksPerMinute;
     minutes = Math.floor(minutes);
 
     ticks -= (minutes * ticksPerMinute);
@@ -1001,7 +1012,7 @@ export function getDisplayRunningTime(ticks) {
     }
     parts.push(minutes);
 
-    var seconds = ticks / ticksPerSecond;
+    var seconds : string | number = ticks / ticksPerSecond;
     seconds = Math.floor(seconds);
 
     if (seconds < 10) {
