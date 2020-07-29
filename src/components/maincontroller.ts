@@ -29,8 +29,8 @@ import { EventType } from "chromecast-caf-receiver/cast.framework.events";
 import { CastReceiverContext, PlayerManager, CastReceiverOptions } from "chromecast-caf-receiver/cast.framework";
 import { Event as SystemEvent } from "chromecast-caf-receiver/cast.framework.system";
 
-declare var $scope;
-declare var window : Window & {
+export declare var $scope;
+export declare var window : Window & {
     castReceiverContext : CastReceiverContext,
     mediaManager : PlayerManager,
     mediaElement,
@@ -46,6 +46,7 @@ declare var window : Window & {
     reportEventType,
     senderId,
     subtitleAppearance,
+    repeatMode,
 };
 
 window.castReceiverContext = CastReceiverContext.getInstance();
@@ -256,7 +257,10 @@ export function processMessage(data) {
     let cmdHandler = window.commandHandler;
 
     if (!cmdHandler) {
-        window.commandHandler = new commandHandler(window.castReceiverContext, window.mediaManager);
+        window.commandHandler = new commandHandler(
+            window.castReceiverContext,
+            window.mediaManager,
+            playbackMgr);
         cmdHandler = window.commandHandler;
     }
 

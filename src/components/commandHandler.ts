@@ -4,15 +4,25 @@ import {
     instantMix,
     setAudioStreamIndex,
     setSubtitleStreamIndex,
-    seek
+    seek,
+    $scope,
+    window
 } from "./maincontroller";
 
 import { getReportingParams } from "../helpers";
 
 import { factory as jellyfinActions } from "./jellyfinactions";
+import { CastReceiverContext, PlayerManager } from "chromecast-caf-receiver/cast.framework";
+import { playbackManager } from "./playbackManager";
+import { VolumeRequestData } from "chromecast-caf-receiver/cast.framework.messages";
 
 export class commandHandler {
-    constructor(castContext, playerManager, playbackManager) {
+    castContext: CastReceiverContext;
+    playerManager: PlayerManager;
+    playbackManager: playbackManager;
+    supportedCommands: {};
+
+    constructor(castContext : CastReceiverContext, playerManager : PlayerManager, playbackManager : playbackManager) {
         this.castContext = castContext;
         this.playerManager = playerManager;
         this.playbackManager = playbackManager;
@@ -102,7 +112,9 @@ export class commandHandler {
 
     SetVolumeHandler(data) {
         // Scale 0-100
-        this.castContext.setSystemVolumeLevel(data.options.volume / 100);
+        let request = new VolumeRequestData();
+        request.volume = { level: data.options.volume / 100 };
+        this.playerManager.sendLocalMediaRequest(request);
     }
 
     IdentifyHandler(data) {
@@ -119,11 +131,15 @@ export class commandHandler {
     }
 
     MuteHandler() {
-        this.castContext.setSystemVolumeMuted(true);
+        let request = new VolumeRequestData();
+        request.volume = { muted: true };
+        this.playerManager.sendLocalMediaRequest(request);
     }
 
     UnmuteHandler() {
-        this.castContext.setSystemVolumeMuted(false);
+        let request = new VolumeRequestData();
+        request.volume = { muted: false };
+        this.playerManager.sendLocalMediaRequest(request);
     }
 
     StopHandler() {
