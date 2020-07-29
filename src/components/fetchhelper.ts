@@ -2,24 +2,37 @@
 
 export function getFetchPromise(request) {
     var headers = request.headers || {};
-    "json" === request.dataType && (headers.accept = "application/json");
-    var fetchRequest = {
-            headers: headers,
-            method: request.type,
-            credentials: "same-origin"
-        },
-        contentType = request.contentType;
-    request.data && ("string" == typeof request.data ? fetchRequest.body = request.data : (fetchRequest.body = paramsToString(request.data), contentType = contentType || "application/x-www-form-urlencoded; charset=UTF-8")), contentType && (headers["Content-Type"] = contentType);
+    if ("json" === request.dataType)
+        headers.accept = "application/json";
+
+    var fetchRequest: RequestInit = {
+        headers: headers,
+        method: request.type,
+        credentials: "same-origin"
+    };
+
+    var contentType = request.contentType;
+    if (request.data && "string" == typeof request.data) {
+        fetchRequest.body = request.data;
+    }
+    else {
+        fetchRequest.body = paramsToString(request.data);
+        contentType = contentType || "application/x-www-form-urlencoded; charset=UTF-8";
+    }
+
+    if (contentType)
+        headers["Content-Type"] = contentType;
+
     var url = request.url;
     if (request.query) {
         var paramString = paramsToString(request.query);
         paramString && (url += "?" + paramString)
     }
-    return request.timeout ? fetchWithTimeout(url, fetchRequest, request.timeout) : fetch(url, fetchRequest)
+    return request.timeout ? fetchWithTimeout(url, fetchRequest, request.timeout) : fetch(url, fetchRequest);
 }
 
 export function fetchWithTimeout(url, options, timeoutMs) {
-    return console.log("fetchWithTimeout: timeoutMs: " + timeoutMs + ", url: " + url), new Promise(function (resolve, reject) {
+    return console.log("fetchWithTimeout: timeoutMs: " + timeoutMs + ", url: " + url), new Promise<Response>(function (resolve, reject) {
         var timeout = setTimeout(reject, timeoutMs);
         options = options || {}, options.credentials = "same-origin", fetch(url, options).then(function (response) {
             clearTimeout(timeout), console.log("fetchWithTimeout: succeeded connecting to url: " + url), resolve(response)

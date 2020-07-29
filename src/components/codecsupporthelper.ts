@@ -57,7 +57,7 @@ export function getH26xProfileSupport(deviceId) {
     let h26xProfiles = "high|main|baseline|constrained baseline";
 
     if (deviceId === deviceIds.ULTRA) {
-        h264Profiles += "|high 10"
+        h26xProfiles += "|high 10"
     }
 
     return h26xProfiles;

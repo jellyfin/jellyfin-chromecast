@@ -274,7 +274,7 @@ function getSubtitleProfiles() {
  * @param {Object} [options=Object]
  * @returns {Object} Device profile.
  */
-export function getDeviceProfile(options = {}) {
+export function getDeviceProfile(options : any = {}) {
     profileOptions = options;
     currentDeviceId = getActiveDeviceId();
 
@@ -284,15 +284,14 @@ export function getDeviceProfile(options = {}) {
     let profile = {
         MaxStreamingBitrate: bitrateSetting,
         MaxStaticBitrate: 0,
-        MusicStreamingTranscodingBitrate: Math.min(bitrateSetting, 192000)
+        MusicStreamingTranscodingBitrate: Math.min(bitrateSetting, 192000),
+        DirectPlayProfiles: getDirectPlayProfiles(),
+        TranscodingProfiles: getTranscodingProfiles(),
+        ContainerProfile: getContainerProfiles(),
+        CodecProfiles: getCodecProfiles(),
+        SubtitleProfiles: getSubtitleProfiles(),
+        ResponseProfiles: getResponseProfiles(),
     };
-
-    profile.DirectPlayProfiles = getDirectPlayProfiles();
-    profile.TranscodingProfiles = getTranscodingProfiles();
-    profile.ContainerProfile = getContainerProfiles();
-    profile.CodecProfiles = getCodecProfiles();
-    profile.SubtitleProfiles = getSubtitleProfiles();
-    profile.ResponseProfiles = getResponseProfiles();
 
     return profile;
 }
