@@ -155,11 +155,11 @@ function showItem($scope, serverAddress, accessToken, userId, item) {
     setDetailImage(detailImageUrl);
 }
 
-export var factory = {
+class _Factory {
 
     stopPingInterval() {
         stopPingInterval();
-    },
+    }
 
     reportPlaybackStart($scope, options) {
 
@@ -190,7 +190,7 @@ export var factory = {
             data: JSON.stringify(options),
             contentType: 'application/json'
         });
-    },
+    }
 
     reportPlaybackProgress($scope, options, reportToServer ?: boolean, broadcastEventName ?: string) {
 
@@ -226,7 +226,7 @@ export var factory = {
             data: JSON.stringify(options),
             contentType: 'application/json'
         });
-    },
+    }
 
     reportPlaybackStopped($scope, options) {
 
@@ -255,7 +255,7 @@ export var factory = {
             data: JSON.stringify(options),
             contentType: 'application/json'
         });
-    },
+    }
 
     pingTranscoder($scope, options) {
 
@@ -287,16 +287,16 @@ export var factory = {
             data: JSON.stringify(options),
             contentType: 'application/json'
         });
-    },
+    }
 
     displayUserInfo($scope, serverAddress, accessToken, userId) {
 
         startBackdropInterval($scope, serverAddress, accessToken, userId);
-    },
+    }
 
     stopDynamicContent() {
         clearBackropInterval();
-    },
+    }
 
     displayItem($scope, serverAddress, accessToken, userId, itemId) {
 
@@ -314,7 +314,7 @@ export var factory = {
 
             showItem($scope, serverAddress, accessToken, userId, item);
         });
-    },
+    }
 
     getSubtitle($scope, subtitleStreamUrl) {
 
@@ -325,7 +325,7 @@ export var factory = {
             type: 'GET',
             dataType: 'json'
         });
-    },
+    }
 
     load($scope, customData, serverItem) {
 
@@ -339,7 +339,7 @@ export var factory = {
 
         setAppStatus('backdrop');
         $scope.mediaType = data.MediaType;
-    },
+    }
 
     play($scope, event) {
         if ($scope.status == 'backdrop' || $scope.status == 'playing-with-controls' || $scope.status == 'playing' || $scope.status == 'audio') {
@@ -354,14 +354,14 @@ export var factory = {
                 }
             }, 20);
         }
-    },
+    }
 
     stop($scope) {
 
         setTimeout(function () {
             setAppStatus('waiting');
         }, 20);
-    },
+    }
 
     getPlaybackInfo(item, maxBitrate, deviceProfile, startPosition, mediaSourceId, audioStreamIndex, subtitleStreamIndex, liveStreamId ?: any) {
 
@@ -410,7 +410,7 @@ export var factory = {
             data: JSON.stringify(postData),
             contentType: 'application/json'
         });
-    },
+    }
 
     getLiveStream(item, playSessionId, maxBitrate, deviceProfile, startPosition, mediaSource, audioStreamIndex, subtitleStreamIndex) {
 
@@ -456,7 +456,7 @@ export var factory = {
             data: JSON.stringify(postData),
             contentType: 'application/json'
         });
-    },
+    }
 
     getDownloadSpeed($scope, byteSize) {
 
@@ -488,7 +488,7 @@ export var factory = {
 
             return bitrate;
         });
-    },
+    }
 
     detectBitrate($scope) {
 
@@ -507,7 +507,7 @@ export var factory = {
             }
 
         });
-    },
+    }
 
     stopActiveEncodings($scope) {
 
@@ -527,6 +527,8 @@ export var factory = {
             url: url,
             query: options
         });
-    },
+    }
 
-};
+}
+
+export var factory = new _Factory();
