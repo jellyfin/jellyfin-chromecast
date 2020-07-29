@@ -1,6 +1,27 @@
 import "./components/maincontroller";
+import { CastReceiverContext, PlayerManager } from "chromecast-caf-receiver/cast.framework";
 
-let senders = cast.framework.CastReceiverContext.getSenders();
+export declare var $scope;
+export declare var window : Window & {
+    castReceiverContext : CastReceiverContext,
+    mediaManager : PlayerManager,
+    mediaElement,
+    VolumeInfo,
+    playlist,
+    currentPlaylistIndex,
+    hasReportedCapabilities,
+    DefaultMaxBitrate
+    MaxBitrate,
+    addEventListener,
+    commandHandler,
+    deviceInfo,
+    reportEventType,
+    senderId,
+    subtitleAppearance,
+    repeatMode,
+};
+
+let senders = CastReceiverContext.getInstance().getSenders();
 let id = senders.length !== 0 && senders[0].id ? senders[0].id : new Date().getTime();
 
 window.deviceInfo = {
@@ -14,6 +35,8 @@ window.mediaElement = document.getElementById('video-player');
 window.playlist = [];
 window.currentPlaylistIndex = -1;
 window.repeatMode = "RepeatNone";
+
+declare var PRODUCTION;
 
 // Global variable set by Webpack
 if (!PRODUCTION) {

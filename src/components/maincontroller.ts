@@ -28,26 +28,7 @@ import { playbackManager } from "./playbackManager";
 import { EventType } from "chromecast-caf-receiver/cast.framework.events";
 import { CastReceiverContext, PlayerManager, CastReceiverOptions } from "chromecast-caf-receiver/cast.framework";
 import { Event as SystemEvent } from "chromecast-caf-receiver/cast.framework.system";
-
-export declare var $scope;
-export declare var window : Window & {
-    castReceiverContext : CastReceiverContext,
-    mediaManager : PlayerManager,
-    mediaElement,
-    VolumeInfo,
-    playlist,
-    currentPlaylistIndex,
-    hasReportedCapabilities,
-    DefaultMaxBitrate
-    MaxBitrate,
-    addEventListener,
-    commandHandler,
-    deviceInfo,
-    reportEventType,
-    senderId,
-    subtitleAppearance,
-    repeatMode,
-};
+import { $scope, window } from "../app";
 
 window.castReceiverContext = CastReceiverContext.getInstance();
 window.mediaManager = window.castReceiverContext.getPlayerManager();

@@ -4,10 +4,9 @@ import {
     instantMix,
     setAudioStreamIndex,
     setSubtitleStreamIndex,
-    seek,
-    $scope,
-    window
+    seek
 } from "./maincontroller";
+import { $scope, window } from "../app";
 
 import { getReportingParams } from "../helpers";
 
