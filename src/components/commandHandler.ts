@@ -18,7 +18,7 @@ export class commandHandler {
     castContext: CastReceiverContext;
     playerManager: PlayerManager;
     playbackManager: playbackManager;
-    supportedCommands: {};
+    supportedCommands: unknown;
 
     constructor(castContext : CastReceiverContext, playerManager : PlayerManager, playbackManager : playbackManager) {
         this.castContext = castContext;
@@ -110,7 +110,7 @@ export class commandHandler {
 
     SetVolumeHandler(data) {
         // Scale 0-100
-        let request = new VolumeRequestData();
+        const request = new VolumeRequestData();
         request.volume = { level: data.options.volume / 100 };
         this.playerManager.sendLocalMediaRequest(request);
     }
@@ -129,13 +129,13 @@ export class commandHandler {
     }
 
     MuteHandler() {
-        let request = new VolumeRequestData();
+        const request = new VolumeRequestData();
         request.volume = { muted: true };
         this.playerManager.sendLocalMediaRequest(request);
     }
 
     UnmuteHandler() {
-        let request = new VolumeRequestData();
+        const request = new VolumeRequestData();
         request.volume = { muted: false };
         this.playerManager.sendLocalMediaRequest(request);
     }

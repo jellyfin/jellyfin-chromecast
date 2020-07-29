@@ -2,7 +2,7 @@ import "./components/maincontroller";
 import { CastReceiverContext, PlayerManager } from "chromecast-caf-receiver/cast.framework";
 
 declare global {
-    var $scope;
+    let $scope;
 
     interface Window {
         castReceiverContext : CastReceiverContext,
@@ -23,8 +23,8 @@ declare global {
     }
 }
 
-let senders = CastReceiverContext.getInstance().getSenders();
-let id = senders.length !== 0 && senders[0].id ? senders[0].id : new Date().getTime();
+const senders = CastReceiverContext.getInstance().getSenders();
+const id = senders.length !== 0 && senders[0].id ? senders[0].id : new Date().getTime();
 
 window.deviceInfo = {
     deviceId: id,
@@ -38,7 +38,7 @@ window.playlist = [];
 window.currentPlaylistIndex = -1;
 window.repeatMode = "RepeatNone";
 
-declare var PRODUCTION;
+declare let PRODUCTION;
 
 // Global variable set by Webpack
 if (!PRODUCTION) {

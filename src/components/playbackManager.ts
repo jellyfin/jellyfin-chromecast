@@ -42,7 +42,7 @@ export class playbackManager {
     }
 
     playFromOptions(options) {
-        var firstItem = options.items[0];
+        const firstItem = options.items[0];
 
         if (options.startPositionTicks || firstItem.MediaType !== 'Video') {
             this.playFromOptionsInternal(options);
@@ -64,7 +64,7 @@ export class playbackManager {
 
     playFromOptionsInternal(options) {
 
-        var stopPlayer = this.activePlaylist && this.activePlaylist.length > 0;
+        const stopPlayer = this.activePlaylist && this.activePlaylist.length > 0;
 
         this.activePlaylist = options.items;
         (<any>window).currentPlaylistIndex = -1;
@@ -76,12 +76,12 @@ export class playbackManager {
     // Plays the next item in the list
     playNextItem(options ?: any, stopPlayer ?: boolean) {
 
-        var nextItemInfo = getNextPlaybackItemInfo();
+        const nextItemInfo = getNextPlaybackItemInfo();
 
         if (nextItemInfo) {
             this.activePlaylistIndex = nextItemInfo.index;
 
-            var item = nextItemInfo.item;
+            const item = nextItemInfo.item;
 
             this.playItem(item, options || {}, stopPlayer);
             return true;
@@ -94,7 +94,7 @@ export class playbackManager {
         if (this.activePlaylist && this.activePlaylistIndex > 0) {
             this.activePlaylistIndex--;
 
-            var item = this.activePlaylist[this.activePlaylistIndex];
+            const item = this.activePlaylist[this.activePlaylistIndex];
 
             this.playItem(item, options || {}, true);
             return true;
@@ -104,7 +104,7 @@ export class playbackManager {
 
     playItem(item, options, stopPlayer) {
 
-        var callback = function () {
+        const callback = function () {
             onStopPlayerBeforePlaybackDone(item, options);
         };
 
@@ -123,13 +123,13 @@ export class playbackManager {
 
         getMaxBitrate(item.MediaType).then(maxBitrate => {
 
-            var deviceProfile = getDeviceProfile(maxBitrate);
+            const deviceProfile = getDeviceProfile(maxBitrate);
 
             jellyfinActions.getPlaybackInfo(item, maxBitrate, deviceProfile, options.startPositionTicks, options.mediaSourceId, options.audioStreamIndex, options.subtitleStreamIndex).then(result => {
 
                 if (validatePlaybackInfoResult(result)) {
 
-                    var mediaSource = getOptimalMediaSource(result.MediaSources);
+                    const mediaSource = getOptimalMediaSource(result.MediaSources);
 
                     if (mediaSource) {
 
@@ -157,12 +157,12 @@ export class playbackManager {
 
         setAppStatus('loading');
 
-        var streamInfo = createStreamInfo(item, mediaSource, options.startPositionTicks);
+        const streamInfo = createStreamInfo(item, mediaSource, options.startPositionTicks);
 
-        var url = streamInfo.url;
+        const url = streamInfo.url;
 
-        var mediaInfo = createMediaInformation(playSessionId, item, streamInfo);
-        var loadRequestData = new cast.framework.messages.LoadRequestData();
+        const mediaInfo = createMediaInformation(playSessionId, item, streamInfo);
+        const loadRequestData = new cast.framework.messages.LoadRequestData();
         loadRequestData.media = mediaInfo;
         loadRequestData.autoplay = true;
 
@@ -201,9 +201,9 @@ export class playbackManager {
         $scope.playNextItem = nextMode ? true : false;
         jellyfinActions.stop($scope);
 
-        var reportingParams = getReportingParams($scope);
+        const reportingParams = getReportingParams($scope);
 
-        var promise;
+        let promise;
 
         jellyfinActions.stopPingInterval();
 

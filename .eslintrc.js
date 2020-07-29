@@ -4,8 +4,13 @@ module.exports = {
         node: true,
         es6: true
     },
+    parser: '@typescript-eslint/parser',
+    plugins: [
+      '@typescript-eslint',
+    ],
     extends: [
-        'eslint:recommended'
+        'eslint:recommended',
+        'plugin:@typescript-eslint/recommended',
     ],
     parserOptions: {
         ecmaVersion: 2020,
@@ -26,10 +31,10 @@ module.exports = {
         'no-trailing-spaces': ["error"],
         'one-var': ["error", "never"],
         'semi': ["error"],
-        'space-before-blocks': ["error"]
+        'space-before-blocks': ["error"],
     },
     overrides: [{
-        files: ['./src/**/*.js'],
+        files: ['./src/**/*.ts', './src/*.ts'],
         env: {
             node: false,
             browser: true,
