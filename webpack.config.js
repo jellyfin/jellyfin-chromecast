@@ -19,8 +19,8 @@ let config = {
       extensions: [ '.ts', '.js' ],
     },
     externals: {
-        "chromecast-caf-receiver/cast.framework": "root",
-        "chromecast-caf-receiver/cast.framework.messages": "root",
+        "chromecast-caf-receiver/cast.framework": "cast.framework",
+        "chromecast-caf-receiver/cast.framework.messages": "cast.framework.messages",
     },
     output: {
         filename: "bundle.js",
