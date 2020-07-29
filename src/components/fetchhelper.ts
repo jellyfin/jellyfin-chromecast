@@ -12,12 +12,14 @@ export function getFetchPromise(request) {
     };
 
     var contentType = request.contentType;
-    if (request.data && "string" == typeof request.data) {
-        fetchRequest.body = request.data;
-    }
-    else {
-        fetchRequest.body = paramsToString(request.data);
-        contentType = contentType || "application/x-www-form-urlencoded; charset=UTF-8";
+    if (request.data) {
+        let data = request.data;
+        if ("string" == typeof data)
+            fetchRequest.body = data;
+        else {
+            fetchRequest.body = paramsToString(data);
+            contentType = contentType || "application/x-www-form-urlencoded; charset=UTF-8";
+        }
     }
 
     if (contentType)
