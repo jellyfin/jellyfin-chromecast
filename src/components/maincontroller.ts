@@ -28,7 +28,6 @@ import { playbackManager } from "./playbackManager";
 import { EventType } from "chromecast-caf-receiver/cast.framework.events";
 import { CastReceiverContext, PlayerManager, CastReceiverOptions } from "chromecast-caf-receiver/cast.framework";
 import { Event as SystemEvent } from "chromecast-caf-receiver/cast.framework.system";
-import { $scope, window } from "../app";
 
 window.castReceiverContext = CastReceiverContext.getInstance();
 window.mediaManager = window.castReceiverContext.getPlayerManager();

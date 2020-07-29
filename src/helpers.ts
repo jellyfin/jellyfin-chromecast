@@ -1,7 +1,6 @@
 /* eslint-disable */
 
 import { ajax } from "./components/fetchhelper";
-import { $scope, window } from "./app";
 
 export function getUrl(serverAddress, name) {
 

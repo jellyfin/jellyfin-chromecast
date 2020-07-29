@@ -23,13 +23,13 @@
     "build:production": "webpack --config webpack.config.js --mode=production",
     "build:development": "webpack --config webpack.config.js --mode=development",
     "build:watch": "webpack --config webpack.config.js --mode=development --watch",
-    "lint": "eslint ./src/",
-    "tsc:w": "tsc -w"
+    "lint": "eslint ./src/"
   },
   "devDependencies": {
     "@types/chromecast-caf-receiver": "^5.0.8",
     "eslint": "6.8.0",
     "eslint-plugin-eslint-comments": "^3.1.2",
+    "ts-loader": "^8.0.1",
     "typescript": "^3.9.7"
   }
 }

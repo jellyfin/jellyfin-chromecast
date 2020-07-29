@@ -6,7 +6,6 @@ import {
     setSubtitleStreamIndex,
     seek
 } from "./maincontroller";
-import { $scope, window } from "../app";
 
 import { getReportingParams } from "../helpers";
 

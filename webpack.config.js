@@ -5,7 +5,23 @@ const webpack = require("webpack");
 
 let config = {
     context: path.resolve(__dirname, "src"),
-    entry: "./app.js",
+    entry: "./app.ts",
+    module: {
+      rules: [
+        {
+          test: /\.ts$/,
+          use: 'ts-loader',
+          exclude: /node_modules/,
+        },
+      ],
+    },
+    resolve: {
+      extensions: [ '.ts', '.js' ],
+    },
+    externals: {
+        "chromecast-caf-receiver/cast.framework": "root",
+        "chromecast-caf-receiver/cast.framework.messages": "root",
+    },
     output: {
         filename: "bundle.js",
         path: path.resolve(__dirname, "dist"),

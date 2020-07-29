@@ -20,7 +20,6 @@ import {
 } from "./maincontroller";
 
 import { factory as jellyfinActions } from "./jellyfinactions";
-import { $scope } from "../app";
 
 export class playbackManager {
     castContext : cast.framework.CastReceiverContext;

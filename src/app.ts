@@ -1,25 +1,27 @@
 import "./components/maincontroller";
 import { CastReceiverContext, PlayerManager } from "chromecast-caf-receiver/cast.framework";
 
-export declare var $scope;
-export declare var window : Window & {
-    castReceiverContext : CastReceiverContext,
-    mediaManager : PlayerManager,
-    mediaElement,
-    VolumeInfo,
-    playlist,
-    currentPlaylistIndex,
-    hasReportedCapabilities,
-    DefaultMaxBitrate
-    MaxBitrate,
-    addEventListener,
-    commandHandler,
-    deviceInfo,
-    reportEventType,
-    senderId,
-    subtitleAppearance,
-    repeatMode,
-};
+declare global {
+    var $scope;
+
+    interface Window {
+        castReceiverContext : CastReceiverContext,
+        mediaManager : PlayerManager,
+        mediaElement,
+        VolumeInfo,
+        playlist,
+        currentPlaylistIndex,
+        hasReportedCapabilities,
+        DefaultMaxBitrate
+        MaxBitrate,
+        commandHandler,
+        deviceInfo,
+        reportEventType,
+        senderId,
+        subtitleAppearance,
+        repeatMode,
+    }
+}
 
 let senders = CastReceiverContext.getInstance().getSenders();
 let id = senders.length !== 0 && senders[0].id ? senders[0].id : new Date().getTime();
