@@ -6,7 +6,8 @@ module.exports = {
     },
     parser: '@typescript-eslint/parser',
     plugins: [
-      '@typescript-eslint',
+        '@typescript-eslint',
+        'promise',
     ],
     extends: [
         'eslint:recommended',
@@ -14,12 +15,12 @@ module.exports = {
     ],
     parserOptions: {
         ecmaVersion: 2020,
-        sourceType: 'module'
+        sourceType: 'module',
     },
     rules: {
         'block-spacing': ["error"],
         'brace-style': ["error"],
-        'comma-dangle': ["error", "never"],
+        // 'comma-dangle': ["error", "never"],
         'comma-spacing': ["error"],
         'eol-last': ["error"],
         'indent': ["error", 4, { "SwitchCase": 1 }],
@@ -32,6 +33,8 @@ module.exports = {
         'one-var': ["error", "never"],
         'semi': ["error"],
         'space-before-blocks': ["error"],
+        '@typescript-eslint/explicit-module-boundary-types': ["off"],
+        'promise/prefer-await-to-then': ["warn"],
     },
     overrides: [{
         files: ['./src/**/*.ts', './src/*.ts'],
@@ -46,4 +49,4 @@ module.exports = {
             $scope: 'writable'
         }
     }]
-}
+};

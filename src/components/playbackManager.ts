@@ -67,8 +67,8 @@ export class playbackManager {
         const stopPlayer = this.activePlaylist && this.activePlaylist.length > 0;
 
         this.activePlaylist = options.items;
-        (<any>window).currentPlaylistIndex = -1;
-        (<any>window).playlist = this.activePlaylist;
+        window.currentPlaylistIndex = -1;
+        window.playlist = this.activePlaylist;
 
         this.playNextItem(options, stopPlayer);
     }
@@ -182,10 +182,10 @@ export class playbackManager {
         }
 
         if (backdropUrl) {
-            (<any>window).mediaElement.style.setProperty('--background-image', 'url("' + backdropUrl + '")');
+            window.mediaElement.style.setProperty('--background-image', 'url("' + backdropUrl + '")');
         } else {
             //Replace with a placeholder?
-            (<any>window).mediaElement.style.removeProperty('--background-image');
+            window.mediaElement.style.removeProperty('--background-image');
         }
 
         jellyfinActions.reportPlaybackStart($scope, getReportingParams($scope));
