@@ -1,6 +1,6 @@
 import "./components/maincontroller";
 
-let senders = cast.framework.CastReceiverContext.getSenders();
+let senders = cast.framework.CastReceiverContext.getInstance().getSenders();
 let id = senders.length !== 0 && senders[0].id ? senders[0].id : new Date().getTime();
 
 window.deviceInfo = {
