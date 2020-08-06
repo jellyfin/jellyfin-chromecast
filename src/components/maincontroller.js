@@ -134,6 +134,8 @@ mgr.addEventListener('PAUSE', mgr.defaultOnPause);
 mgr.defaultOnStop = function (event) {
     playbackMgr.stop();
 };
+
+mgr.addEventListener(cast.framework.events.EventType.MEDIA_FINISHED, mgr.defaultOnStop);
 mgr.addEventListener('ABORT', mgr.defaultOnStop);
 
 mgr.addEventListener('ENDED', function () {
