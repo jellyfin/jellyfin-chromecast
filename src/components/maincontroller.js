@@ -233,7 +233,7 @@ export function processMessage(data) {
     let cmdHandler = window.commandHandler;
 
     if (!cmdHandler) {
-        window.commandHandler = new commandHandler(window.castReceiverContext, window.mediaManager);
+        window.commandHandler = new commandHandler(window.castReceiverContext, window.mediaManager, playbackMgr);
         cmdHandler = window.commandHandler;
     }
 
