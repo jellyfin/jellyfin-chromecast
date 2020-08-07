@@ -36,30 +36,26 @@ export class playbackManager {
         return this.playerManager.getPlayerState() === cast.framework.messages.PlayerState.PLAYING;
     }
 
-    playFromOptions(options) {
-        var firstItem = options.items[0];
+    async playFromOptions(options) {
+        const firstItem = options.items[0];
 
         if (options.startPositionTicks || firstItem.MediaType !== 'Video') {
             this.playFromOptionsInternal(options);
             return;
         }
 
-        getIntros(firstItem.serverAddress, firstItem.accessToken, firstItem.userId, firstItem).then(intros => {
-
-            tagItems(intros.Items, {
-                userId: firstItem.userId,
-                accessToken: firstItem.accessToken,
-                serverAddress: firstItem.serverAddress
-            });
-
-            options.items = intros.Items.concat(options.items);
-            this.playFromOptionsInternal(options);
+        let intros = await getIntros(firstItem.serverAddress, firstItem.accessToken, firstItem.userId, firstItem);
+        tagItems(intros.Items, {
+            userId: firstItem.userId,
+            accessToken: firstItem.accessToken,
+            serverAddress: firstItem.serverAddress
         });
+        options.items = intros.Items.concat(options.items);
+        this.playFromOptionsInternal(options);
     }
 
     playFromOptionsInternal(options) {
-
-        var stopPlayer = this.activePlaylist && this.activePlaylist.length > 0;
+        const stopPlayer = this.activePlaylist && this.activePlaylist.length > 0;
 
         this.activePlaylist = options.items;
         this.activePlaylist.currentPlaylistIndex = -1;
@@ -68,7 +64,6 @@ export class playbackManager {
         this.playNextItem(options, stopPlayer);
     }
 
-    // Plays the next item in the list
     playNextItem(options, stopPlayer) {
 
         var nextItemInfo = getNextPlaybackItemInfo();
