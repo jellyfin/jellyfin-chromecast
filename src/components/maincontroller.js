@@ -124,19 +124,21 @@ mgr.defaultOnPlay = function (event) {
     jellyfinActions.play($scope, event);
     jellyfinActions.reportPlaybackProgress($scope, getReportingParams($scope));
 };
-mgr.addEventListener('PLAY', mgr.defaultOnPlay);
+mgr.addEventListener(cast.framework.events.EventType.PLAY, mgr.defaultOnPlay);
 
 mgr.defaultOnPause = function (event) {
     jellyfinActions.reportPlaybackProgress($scope, getReportingParams($scope));
 };
-mgr.addEventListener('PAUSE', mgr.defaultOnPause);
+mgr.addEventListener(cast.framework.events.EventType.PAUSE, mgr.defaultOnPause);
 
 mgr.defaultOnStop = function (event) {
     playbackMgr.stop();
 };
-mgr.addEventListener('ABORT', mgr.defaultOnStop);
 
-mgr.addEventListener('ENDED', function () {
+mgr.addEventListener(cast.framework.events.EventType.MEDIA_FINISHED, mgr.defaultOnStop);
+mgr.addEventListener(cast.framework.events.EventType.ABORT, mgr.defaultOnStop);
+
+mgr.addEventListener(cast.framework.events.EventType.ENDED, function () {
 
     // Ignore
     if ($scope.isChangingStream) {
@@ -233,7 +235,7 @@ export function processMessage(data) {
     let cmdHandler = window.commandHandler;
 
     if (!cmdHandler) {
-        window.commandHandler = new commandHandler(window.castReceiverContext, window.mediaManager);
+        window.commandHandler = new commandHandler(window.castReceiverContext, window.mediaManager, playbackMgr);
         cmdHandler = window.commandHandler;
     }
 
