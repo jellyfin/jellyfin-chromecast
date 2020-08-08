@@ -171,6 +171,15 @@ function getCodecProfiles() {
                 createProfileCondition("IsSecondaryAudio", "Equals", false)
             ]
         });
+
+        CodecProfiles.push({
+            Type: "Audio",
+            Codec: "flac",
+            Conditions: [
+                createProfileCondition("AudioSampleRate", "LessThanEqual", "96000"),
+                createProfileCondition("AudioBitDepth", "LessThanEqual", "24")
+            ]
+        });
     }
 
     return CodecProfiles;
