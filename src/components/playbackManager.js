@@ -29,7 +29,7 @@ export class playbackManager {
 
         // Properties
         this.activePlaylist = [];
-        this.activePlaylistIndex = 0;
+        this.activePlaylistIndex = -1;
     }
 
     isPlaying() {
@@ -62,7 +62,7 @@ export class playbackManager {
         var stopPlayer = this.activePlaylist && this.activePlaylist.length > 0;
 
         this.activePlaylist = options.items;
-        this.activePlaylist.currentPlaylistIndex = -1;
+        this.activePlaylistIndex = options.startIndex || -1;
         window.playlist = this.activePlaylist;
 
         this.playNextItem(options, stopPlayer);
@@ -70,7 +70,6 @@ export class playbackManager {
 
     // Plays the next item in the list
     playNextItem(options, stopPlayer) {
-
         var nextItemInfo = getNextPlaybackItemInfo();
 
         if (nextItemInfo) {
