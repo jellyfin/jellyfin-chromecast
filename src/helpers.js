@@ -52,30 +52,31 @@ export function getReportingParams($scope) {
 
 export function getNextPlaybackItemInfo() {
 
-    var playlist = window.playlist;
+    var playlist = window.playbackManager.activePlaylist;
 
     if (!playlist) {
         return null;
     }
 
+    let activeIndex = window.playbackManager.activePlaylistIndex;
     var newIndex;
 
-    if (window.currentPlaylistIndex == -1) {
+    if (activeIndex == -1) {
         newIndex = 0;
     } else {
         switch (window.repeatMode) {
 
             case 'RepeatOne':
-                newIndex = window.currentPlaylistIndex;
+                newIndex = activeIndex;
                 break;
             case 'RepeatAll':
-                newIndex = window.currentPlaylistIndex + 1;
-                if (newIndex >= window.playlist.length) {
+                newIndex = activeIndex + 1;
+                if (newIndex >= playlist.length) {
                     newIndex = 0;
                 }
                 break;
             default:
-                newIndex = window.currentPlaylistIndex + 1;
+                newIndex = activeIndex;
                 break;
         }
     }
