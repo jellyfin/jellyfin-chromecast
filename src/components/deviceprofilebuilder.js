@@ -29,7 +29,7 @@ let currentDeviceId;
 /**
  * @param {string} Property What property the condition should test.
  * @param {string} Condition The condition to test the values for.
- * @param {(string|number)} Value The value to compare against.
+ * @param {(boolean|string|number)} Value The value to compare against.
  * @param {boolean} [IsRequired=false]
  * @returns {Object} A profile condition created from the parameters.
  */
@@ -37,7 +37,7 @@ function createProfileCondition(Property, Condition, Value, IsRequired = false) 
     return {
         Condition,
         Property,
-        Value,
+        Value: Value.toString(),
         IsRequired
     }
 }
