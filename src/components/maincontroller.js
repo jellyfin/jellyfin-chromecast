@@ -337,48 +337,39 @@ export function changeStream(ticks, params) {
     var item = $scope.item;
     var mediaType = item.MediaType;
 
-    // TODO untangle this shitty callback mess
-    getMaxBitrate(mediaType).then(function (maxBitrate) {
-        var deviceProfile = getDeviceProfile(maxBitrate);
+    getMaxBitrate(mediaType).then(async (maxBitrate) => {
+        const deviceProfile = getDeviceProfile(maxBitrate);
+        const audioStreamIndex = params.AudioStreamIndex == null ? $scope.audioStreamIndex : params.AudioStreamIndex;
+        const subtitleStreamIndex = params.SubtitleStreamIndex == null ? $scope.subtitleStreamIndex : params.SubtitleStreamIndex;
 
-        var audioStreamIndex = params.AudioStreamIndex == null ? $scope.audioStreamIndex : params.AudioStreamIndex;
-        var subtitleStreamIndex = params.SubtitleStreamIndex == null ? $scope.subtitleStreamIndex : params.SubtitleStreamIndex;
+        const playbackInformation = await jellyfinActions.getPlaybackInfo(item, maxBitrate, deviceProfile, ticks, $scope.mediaSourceId, audioStreamIndex, subtitleStreamIndex, liveStreamId);
+        if (!validatePlaybackInfoResult(playbackInformation)) {
+            return;
+        }
 
-        jellyfinActions.getPlaybackInfo(item, maxBitrate, deviceProfile, ticks, $scope.mediaSourceId, audioStreamIndex, subtitleStreamIndex, liveStreamId).then(function (result) {
-            if (validatePlaybackInfoResult(result)) {
-                var mediaSource = result.MediaSources[0];
+        const mediaSource = playbackInformation.MediaSources[0];
+        const streamInfo = createStreamInfo(item, mediaSource, ticks);
 
-                var streamInfo = createStreamInfo(item, mediaSource, ticks);
+        if (!streamInfo.url) {
+            showPlaybackInfoErrorMessage('NoCompatibleStream');
+            return;
+        }
 
-                if (!streamInfo.url) {
-                    showPlaybackInfoErrorMessage('NoCompatibleStream');
-                    return;
-                }
+        const mediaInformation = createMediaInformation(playSessionId, item, streamInfo);
+        const loadRequest = new cast.framework.messages.LoadRequestData();
+        loadRequest.media = mediaInformation;
+        loadRequest.autoplay = true;
 
-                var mediaInformation = createMediaInformation(playSessionId, item, streamInfo);
-                var loadRequest = new cast.framework.messages.LoadRequestData();
-                loadRequest.media = mediaInformation;
-                loadRequest.autoplay = true;
-
-                new Promise((resolve, reject) => {
-                    // TODO something to do with HLS?
-                    var requiresStoppingTranscoding = false;
-                    if (requiresStoppingTranscoding) {
-                        window.mediaManager.pause();
-                        jellyfinActions.stopActiveEncodings(playSessionId).then(function () {
-                            resolve();
-                        });
-                    } else {
-                        resolve();
-                    }
-                }).then(() => {
-                    window.mediaManager.load(loadRequest);
-                    window.mediaManager.play();
-                    $scope.subtitleStreamIndex = subtitleStreamIndex;
-                    $scope.audioStreamIndex = audioStreamIndex;
-                });
-            }
-        });
+        // TODO something to do with HLS?
+        const requiresStoppingTranscoding = false;
+        if (requiresStoppingTranscoding) {
+            window.mediaManager.pause();
+            await jellyfinActions.stopActiveEncodings(playSessionId);
+        }
+        window.mediaManager.load(loadRequest);
+        window.mediaManager.play();
+        $scope.subtitleStreamIndex = subtitleStreamIndex;
+        $scope.audioStreamIndex = audioStreamIndex;
     });
 }
 
