@@ -13,7 +13,6 @@ import {
     getMaxBitrate,
     getDeviceProfile,
     getOptimalMediaSource,
-    validatePlaybackInfoResult,
     showPlaybackInfoErrorMessage,
     supportsDirectPlay,
     createMediaInformation
@@ -94,7 +93,7 @@ export class playbackManager {
 
     async playItem(item, options, stopPlayer) {
         if (stopPlayer) {
-            await this.stop("none")
+            await this.stop("none");
         }
 
         onStopPlayerBeforePlaybackDone(item, options);
@@ -104,16 +103,16 @@ export class playbackManager {
         $scope.isChangingStream = false;
         setAppStatus('loading');
 
-        const maxBitrate = await getMaxBitrate(item.MediaType)
+        const maxBitrate = await getMaxBitrate(item.MediaType);
         const deviceProfile = await getDeviceProfile(maxBitrate);
         const playbackInfo = await jellyfinActions.getPlaybackInfo(
-                item,
-                maxBitrate,
-                deviceProfile,
-                options.startPositionTicks,
-                options.mediaSourceId,
-                options.audioStreamIndex,
-                options.subtitleStreamIndex)
+            item,
+            maxBitrate,
+            deviceProfile,
+            options.startPositionTicks,
+            options.mediaSourceId,
+            options.audioStreamIndex,
+            options.subtitleStreamIndex)
             .catch(broadcastConnectionErrorMessage);
 
         if (playbackInfo.ErrorCode) {
@@ -124,7 +123,7 @@ export class playbackManager {
         if (!mediaSource) {
             return showPlaybackInfoErrorMessage('NoCompatibleStream');
         }
-        
+
         let itemToPlay = mediaSource;
         if (mediaSource.RequiresOpening) {
             const openLiveStreamResult = await jellyfinActions.getLiveStream(item,
