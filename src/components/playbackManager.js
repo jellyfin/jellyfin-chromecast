@@ -13,7 +13,6 @@ import {
     getMaxBitrate,
     getDeviceProfile,
     getOptimalMediaSource,
-    validatePlaybackInfoResult,
     showPlaybackInfoErrorMessage,
     supportsDirectPlay,
     createMediaInformation
@@ -36,30 +35,26 @@ export class playbackManager {
         return this.playerManager.getPlayerState() === cast.framework.messages.PlayerState.PLAYING;
     }
 
-    playFromOptions(options) {
-        var firstItem = options.items[0];
+    async playFromOptions(options) {
+        const firstItem = options.items[0];
 
         if (options.startPositionTicks || firstItem.MediaType !== 'Video') {
             this.playFromOptionsInternal(options);
             return;
         }
 
-        getIntros(firstItem.serverAddress, firstItem.accessToken, firstItem.userId, firstItem).then(intros => {
-
-            tagItems(intros.Items, {
-                userId: firstItem.userId,
-                accessToken: firstItem.accessToken,
-                serverAddress: firstItem.serverAddress
-            });
-
-            options.items = intros.Items.concat(options.items);
-            this.playFromOptionsInternal(options);
+        let intros = await getIntros(firstItem.serverAddress, firstItem.accessToken, firstItem.userId, firstItem);
+        tagItems(intros.Items, {
+            userId: firstItem.userId,
+            accessToken: firstItem.accessToken,
+            serverAddress: firstItem.serverAddress
         });
+        options.items = intros.Items.concat(options.items);
+        this.playFromOptionsInternal(options);
     }
 
     playFromOptionsInternal(options) {
-
-        var stopPlayer = this.activePlaylist && this.activePlaylist.length > 0;
+        const stopPlayer = this.activePlaylist && this.activePlaylist.length > 0;
 
         this.activePlaylist = options.items;
         this.activePlaylist.currentPlaylistIndex = -1;
@@ -68,7 +63,6 @@ export class playbackManager {
         this.playNextItem(options, stopPlayer);
     }
 
-    // Plays the next item in the list
     playNextItem(options, stopPlayer) {
 
         var nextItemInfo = getNextPlaybackItemInfo();
@@ -97,55 +91,53 @@ export class playbackManager {
         return false;
     }
 
-    playItem(item, options, stopPlayer) {
-
-        var callback = function () {
-            onStopPlayerBeforePlaybackDone(item, options);
-        };
-
+    async playItem(item, options, stopPlayer) {
         if (stopPlayer) {
-
-            this.stop("none").then(callback);
-        } else {
-            callback();
+            await this.stop("none");
         }
+
+        onStopPlayerBeforePlaybackDone(item, options);
     }
 
-    playItemInternal(item, options) {
-
+    async playItemInternal(item, options) {
         $scope.isChangingStream = false;
         setAppStatus('loading');
 
-        getMaxBitrate(item.MediaType).then(maxBitrate => {
+        const maxBitrate = await getMaxBitrate(item.MediaType);
+        const deviceProfile = await getDeviceProfile(maxBitrate);
+        const playbackInfo = await jellyfinActions.getPlaybackInfo(
+            item,
+            maxBitrate,
+            deviceProfile,
+            options.startPositionTicks,
+            options.mediaSourceId,
+            options.audioStreamIndex,
+            options.subtitleStreamIndex)
+            .catch(broadcastConnectionErrorMessage);
 
-            var deviceProfile = getDeviceProfile(maxBitrate);
+        if (playbackInfo.ErrorCode) {
+            return showPlaybackInfoErrorMessage(playbackInfo.ErrorCode);
+        }
 
-            jellyfinActions.getPlaybackInfo(item, maxBitrate, deviceProfile, options.startPositionTicks, options.mediaSourceId, options.audioStreamIndex, options.subtitleStreamIndex).then(result => {
+        const mediaSource = await getOptimalMediaSource(playbackInfo.MediaSources);
+        if (!mediaSource) {
+            return showPlaybackInfoErrorMessage('NoCompatibleStream');
+        }
 
-                if (validatePlaybackInfoResult(result)) {
+        let itemToPlay = mediaSource;
+        if (mediaSource.RequiresOpening) {
+            const openLiveStreamResult = await jellyfinActions.getLiveStream(item,
+                playbackInfo.PlaySessionId,
+                maxBitrate,
+                deviceProfile,
+                options.startPositionTicks,
+                mediaSource,
+                null, null);
+            openLiveStreamResult.MediaSource.enableDirectPlay = supportsDirectPlay(openLiveStreamResult.MediaSource);
+            itemToPlay = openLiveStreamResult.MediaSource;
+        }
 
-                    var mediaSource = getOptimalMediaSource(result.MediaSources);
-
-                    if (mediaSource) {
-
-                        if (mediaSource.RequiresOpening) {
-
-                            jellyfinActions.getLiveStream(item, result.PlaySessionId, maxBitrate, deviceProfile, options.startPositionTicks, mediaSource, null, null).then(openLiveStreamResult => {
-
-                                openLiveStreamResult.MediaSource.enableDirectPlay = supportsDirectPlay(openLiveStreamResult.MediaSource);
-                                this.playMediaSource(result.PlaySessionId, item, openLiveStreamResult.MediaSource, options);
-                            });
-
-                        } else {
-                            this.playMediaSource(result.PlaySessionId, item, mediaSource, options);
-                        }
-                    } else {
-                        showPlaybackInfoErrorMessage('NoCompatibleStream');
-                    }
-                }
-
-            }, broadcastConnectionErrorMessage);
-        });
+        this.playMediaSource(playbackInfo.PlaySessionId, item, itemToPlay, options);
     }
 
     playMediaSource(playSessionId, item, mediaSource, options) {
