@@ -1,0 +1,10 @@
+{
+    "compilerOptions": {
+        "target": "ES2018",
+        "module": "ESNext",
+        "moduleResolution": "Node",
+        "allowJs": true,
+        "sourceMap": true,
+        "outDir": "./dist/"
+    }
+}

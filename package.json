@@ -25,7 +25,11 @@
     "lint": "eslint ./src/"
   },
   "devDependencies": {
+    "@types/chromecast-caf-receiver": "^5.0.12",
     "eslint": "6.8.0",
-    "eslint-plugin-eslint-comments": "^3.1.2"
+    "eslint-plugin-eslint-comments": "^3.1.2",
+    "source-map-loader": "^1.1.2",
+    "ts-loader": "^8.0.7",
+    "typescript": "^4.0.5"
   }
 }
