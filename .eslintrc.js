@@ -1,11 +1,16 @@
 module.exports = {
     root: true,
+    parser: '@typescript-eslint/parser',
+    plugins: [
+        '@typescript-eslint'
+    ],
     env: {
         node: true,
         es6: true
     },
     extends: [
-        'eslint:recommended'
+        'eslint:recommended',
+        'plugin:@typescript-eslint/recommended'
     ],
     parserOptions: {
         ecmaVersion: 2020,
@@ -26,10 +31,13 @@ module.exports = {
         'no-trailing-spaces': ["error"],
         'one-var': ["error", "never"],
         'semi': ["error"],
-        'space-before-blocks': ["error"]
+        'space-before-blocks': ["error"],
+        // Disable these until we have converted the project to TS
+        '@typescript-eslint/explicit-module-boundary-types': "off"
+        
     },
     overrides: [{
-        files: ['./src/**/*.js'],
+        files: ['./src/**/*.js', './src/**/*.ts'],
         env: {
             node: false,
             browser: true,
