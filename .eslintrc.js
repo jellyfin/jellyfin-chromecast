@@ -31,22 +31,29 @@ module.exports = {
         'no-trailing-spaces': ["error"],
         'one-var': ["error", "never"],
         'semi': ["error"],
-        'space-before-blocks': ["error"],
-        // Disable these until we have converted the project to TS
-        '@typescript-eslint/explicit-module-boundary-types': "off",
-        '@typescript-eslint/no-explicit-any': "off"
+        'space-before-blocks': ["error"]
     },
-    overrides: [{
-        files: ['./src/**/*.js', './src/**/*.ts'],
-        env: {
-            node: false,
-            browser: true,
-            es6: true
+    overrides: [
+        {
+            files: ['./src/**/*.js', './src/**/*.ts'],
+            env: {
+                node: false,
+                browser: true,
+                es6: true
+            },
+            globals: {
+                cast: 'readonly',
+                PRODUCTION: 'readonly',
+                $scope: 'writable'
+            }
         },
-        globals: {
-            cast: 'readonly',
-            PRODUCTION: 'readonly',
-            $scope: 'writable'
+        {
+            files: ['./src/**/*.ts'],
+            rules: {
+                // Disable these until we have converted the project to TS
+                '@typescript-eslint/explicit-module-boundary-types': "off",
+                '@typescript-eslint/no-explicit-any': "off"
+            }
         }
-    }]
+    ]
 }
