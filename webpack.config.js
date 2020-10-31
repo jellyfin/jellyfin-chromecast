@@ -5,7 +5,7 @@ const webpack = require("webpack");
 
 let config = {
     context: path.resolve(__dirname, "src"),
-    entry: "./app.js",
+    entry: "./app.ts",
     output: {
         filename: "bundle.js",
         path: path.resolve(__dirname, "dist")

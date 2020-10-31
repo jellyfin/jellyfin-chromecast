@@ -1,7 +1,24 @@
 import "./components/maincontroller";
 
-let senders = cast.framework.CastReceiverContext.getInstance().getSenders();
-let id = senders.length !== 0 && senders[0].id ? senders[0].id : new Date().getTime();
+declare global {
+    let PRODUCTION: boolean;
+    interface Window {
+        deviceInfo: deviceInfo;
+        mediaElement: HTMLElement;
+        playlist: Array<any>;
+        currentPlaylistIndex: number;
+        repeatMode: "RepeatOne" | "RepeatAll" | "RepeatNone";
+    }
+}
+
+interface deviceInfo {
+    deviceId: string | number,
+    deviceName: string,
+    versionNumber: string
+}
+
+const senders = cast.framework.CastReceiverContext.getInstance().getSenders();
+const id = senders.length !== 0 && senders[0].id ? senders[0].id : new Date().getTime();
 
 window.deviceInfo = {
     deviceId: id,

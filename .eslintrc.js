@@ -33,8 +33,8 @@ module.exports = {
         'semi': ["error"],
         'space-before-blocks': ["error"],
         // Disable these until we have converted the project to TS
-        '@typescript-eslint/explicit-module-boundary-types': "off"
-        
+        '@typescript-eslint/explicit-module-boundary-types': "off",
+        '@typescript-eslint/no-explicit-any': "off"
     },
     overrides: [{
         files: ['./src/**/*.js', './src/**/*.ts'],
