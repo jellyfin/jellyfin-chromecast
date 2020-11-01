@@ -45,10 +45,7 @@ module.exports = {
                 cast: 'readonly',
                 PRODUCTION: 'readonly',
                 $scope: 'writable'
-            }
-        },
-        {
-            files: ['./src/**/*.ts'],
+            },
             rules: {
                 // Disable these until we have converted the project to TS
                 '@typescript-eslint/explicit-module-boundary-types': "off",
