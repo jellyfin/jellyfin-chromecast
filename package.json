@@ -11,7 +11,9 @@
     "url": "https://github.com/jellyfin/jellyfin-chromecast/issues"
   },
   "homepage": "https://jellyfin.org/",
-  "dependencies": {},
+  "dependencies": {
+    "axios": "^0.21.0"
+  },
   "scripts": {
     "prepare": "webpack --config webpack.config.js --mode=production",
     "build:production": "webpack --config webpack.config.js --mode=production",
