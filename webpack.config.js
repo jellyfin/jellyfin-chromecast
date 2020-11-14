@@ -5,10 +5,13 @@ const webpack = require("webpack");
 
 let config = {
     context: path.resolve(__dirname, "src"),
-    entry: "./app.js",
+    entry: "./app.ts",
     output: {
         filename: "bundle.js",
-        path: path.resolve(__dirname, "dist"),
+        path: path.resolve(__dirname, "dist")
+    },
+    resolve: {
+        extensions: [".webpack.js", ".web.js", ".ts", ".js"]
     },
     plugins: [
         new CleanWebpackPlugin(),
@@ -17,7 +20,13 @@ let config = {
             to: ".",
             ignore: ['*.js']
         }])
-    ]
+    ],
+    module: {
+        rules: [
+            { test: /\.tsx?$/, loader: "ts-loader" },
+            { test: /\.js$/, loader: "source-map-loader" }
+        ]
+    }
 };
 
 module.exports = (env, argv) => {
@@ -30,7 +39,7 @@ module.exports = (env, argv) => {
     );
 
     if (!isProduction) {
-        config.devtool = "#inline-source-map";
+        config.devtool = "inline-source-map";
     }
 
     return config;

@@ -1,11 +1,16 @@
 module.exports = {
     root: true,
+    parser: '@typescript-eslint/parser',
+    plugins: [
+        '@typescript-eslint'
+    ],
     env: {
         node: true,
         es6: true
     },
     extends: [
-        'eslint:recommended'
+        'eslint:recommended',
+        'plugin:@typescript-eslint/recommended'
     ],
     parserOptions: {
         ecmaVersion: 2020,
@@ -28,17 +33,24 @@ module.exports = {
         'semi': ["error"],
         'space-before-blocks': ["error"]
     },
-    overrides: [{
-        files: ['./src/**/*.js'],
-        env: {
-            node: false,
-            browser: true,
-            es6: true
-        },
-        globals: {
-            cast: 'readonly',
-            PRODUCTION: 'readonly',
-            $scope: 'writable'
+    overrides: [
+        {
+            files: ['./src/**/*.js', './src/**/*.ts'],
+            env: {
+                node: false,
+                browser: true,
+                es6: true
+            },
+            globals: {
+                cast: 'readonly',
+                PRODUCTION: 'readonly',
+                $scope: 'writable'
+            },
+            rules: {
+                // Disable these until we have converted the project to TS
+                '@typescript-eslint/explicit-module-boundary-types': "off",
+                '@typescript-eslint/no-explicit-any': "off"
+            }
         }
-    }]
+    ]
 }
