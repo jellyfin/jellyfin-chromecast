@@ -1,28 +1,32 @@
 const path = require("path");
-const CopyWebpackPlugin = require("copy-webpack-plugin");
-const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 const webpack = require("webpack");
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 let config = {
     context: path.resolve(__dirname, "src"),
     entry: "./app.ts",
     output: {
-        filename: "bundle.js",
-        path: path.resolve(__dirname, "dist")
+        filename: "[name].[fullhash].js",
+        path: path.resolve(__dirname, "dist"),
+        publicPath: './'
     },
     resolve: {
-        extensions: [".webpack.js", ".web.js", ".ts", ".js"]
+        extensions: [".ts", ".js"]
     },
     plugins: [
         new CleanWebpackPlugin(),
-        new CopyWebpackPlugin([{
-            from: "**/*",
-            to: ".",
-            ignore: ['*.js']
-        }])
+        new HtmlWebpackPlugin({
+            filename: 'index.html',
+            template: 'index.html',
+            hash: false
+        })
     ],
     module: {
         rules: [
+            { test: /\.html$/, loader: "html-loader"},
+            { test: /\.(svg|png|jpe?g|gif|eot|woff|tff)$/i, loader: "url-loader" },
+            { test: /\.css$/i, loader: 'file-loader' },
             { test: /\.tsx?$/, loader: "ts-loader" },
             { test: /\.js$/, loader: "source-map-loader" }
         ]
