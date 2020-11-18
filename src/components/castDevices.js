@@ -4,11 +4,12 @@ const castContext = cast.framework.CastReceiverContext.getInstance();
 
 // Device Ids
 export const deviceIds = {
-    GEN1n2: 1,
+    GEN1AND2: 1,
     AUDIO: 2,
     GEN3: 3,
     ULTRA: 4,
-    NESTHUB: 5
+    NESTHUBANDMAX: 5, //Nest hub and Nest hub max
+    CCGTV: 6 //Chromecast Google TV
 }
 
 
@@ -22,11 +23,11 @@ export function getActiveDeviceId() {
         castContext.canDisplayType("video/webm", "vp9")) {
         return deviceIds.ULTRA;
     } else if (castContext.canDisplayType("video/webm", "vp9")) {
-        return deviceIds.NESTHUB;
+        return deviceIds.NESTHUBANDMAX;
     } else if (castContext.canDisplayType("video/mp4", "avc1.64002A")) {
         return deviceIds.GEN3;
     } else if (castContext.canDisplayType("video/mp4", "avc1.640029")) {
-        return deviceIds.GEN1n2;
+        return deviceIds.GEN1AND2;
     } else {
         return deviceIds.AUDIO;
     }
