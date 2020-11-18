@@ -2,7 +2,7 @@
 
 import { factory as jellyfinActions } from "./jellyfinactions";
 import { ajax } from "./fetchhelper";
-import { getDeviceProfile as deviceProfileBuilder } from "./deviceprofilebuilder";
+import { getDeviceProfile as deviceProfileBuilder } from "./deviceprofileBuilder";
 import {
     getUrl,
     getCurrentPositionTicks,
