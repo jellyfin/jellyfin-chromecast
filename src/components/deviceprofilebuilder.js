@@ -4,6 +4,7 @@ import {
     deviceIds,
     getActiveDeviceId
 } from "./castDevices";
+
 import {
     hasTextTrackSupport,
     hasVP8Support,

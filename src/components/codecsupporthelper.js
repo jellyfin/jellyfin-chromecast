@@ -38,11 +38,12 @@ export function getMaxBitrateSupport() {
 export function getMaxWidthSupport(deviceId) {
     switch (deviceId) {
         case deviceIds.ULTRA:
+        case deviceIds.CCGTV:
             return 3840;
-        case deviceIds.GEN1n2:
+        case deviceIds.GEN1AND2:
         case deviceIds.GEN3:
             return 1920;
-        case deviceIds.NESTHUB:
+        case deviceIds.NESTHUBANDMAX:
             return 1280;
     }
 }
@@ -56,7 +57,7 @@ export function getH26xProfileSupport(deviceId) {
     // These are supported by all Cast devices, excluding audio only devices.
     let h26xProfiles = "high|main|baseline|constrained baseline";
 
-    if (deviceId === deviceIds.ULTRA) {
+    if (deviceId === deviceIds.ULTRA || deviceId === deviceIds.CCGTV) {
         h264Profiles += "|high 10"
     }
 
@@ -70,12 +71,13 @@ export function getH26xProfileSupport(deviceId) {
  */
 export function getH26xLevelSupport(deviceId) {
     switch (deviceId) {
-        case deviceIds.NESTHUB:
-        case deviceIds.GEN1n2:
+        case deviceIds.NESTHUBANDMAX:
+        case deviceIds.GEN1AND2:
             return 41;
         case deviceIds.GEN3:
             return 42;
         case deviceIds.ULTRA:
+        case deviceIds.CCGTV:
             return 52;
     }
 }
