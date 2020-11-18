@@ -300,10 +300,10 @@ body {
 }
 
 cast-media-player {
-    --spinner-image: url("img/spinner.png");
-    --playback-logo-image: url("img/banner.png");
+    --spinner-image: url("../img/spinner.png");
+    --playback-logo-image: url("../img/banner.png");
 
-    --watermark-image: url("img/banner-reverse.png");
+    --watermark-image: url("../img/banner-reverse.png");
     --watermark-size: 225px;
     --watermark-position: top right;
 
