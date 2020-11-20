@@ -1,24 +1,21 @@
-/* eslint-disable */
-
 const castContext = cast.framework.CastReceiverContext.getInstance();
 
 // Device Ids
-export const deviceIds = {
-    GEN1AND2: 1,
-    AUDIO: 2,
-    GEN3: 3,
-    ULTRA: 4,
-    NESTHUBANDMAX: 5, //Nest hub and Nest hub max
-    CCGTV: 6 //Chromecast Google TV
+export enum deviceIds {
+    GEN1AND2,
+    AUDIO,
+    GEN3,
+    ULTRA,
+    NESTHUBANDMAX, //Nest hub and Nest hub max
+    CCGTV //Chromecast Google TV
 }
-
 
 /**
  * Get device id of the active Cast device.
  * Tries to identify the active Cast device by testing support for different codecs.
- * @returns {number} Active Cast device Id.
+ * @returns Active Cast device Id.
  */
-export function getActiveDeviceId() {
+export function getActiveDeviceId(): number {
     if (castContext.canDisplayType("video/mp4", "hev1.1.6.L153.B0") &&
         castContext.canDisplayType("video/webm", "vp9")) {
         return deviceIds.ULTRA;

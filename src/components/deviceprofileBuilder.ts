@@ -33,7 +33,7 @@ import {
     getSupportedHLSAudioCodecs,
     getSupportedWebMAudioCodecs,
     getSupportedAudioCodecs
-} from "./codecsupporthelper";
+} from "./codecSupportHelper";
 
 interface ProfileOptions {
     audioChannels?: number,
