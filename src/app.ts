@@ -1,3 +1,4 @@
+import { RepeatMode } from "./api/generated/models/repeat-mode";
 import "./components/maincontroller";
 
 const senders = cast.framework.CastReceiverContext.getInstance().getSenders();
@@ -13,7 +14,7 @@ window.mediaElement = document.getElementById('video-player');
 
 window.playlist = [];
 window.currentPlaylistIndex = -1;
-window.repeatMode = "RepeatNone";
+window.repeatMode = RepeatMode.RepeatNone;
 
 // Global variable set by Webpack
 if (!PRODUCTION) {
