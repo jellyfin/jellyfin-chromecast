@@ -33,7 +33,7 @@ export function getMaxBitrateSupport(): number {
  * @param deviceId Cast device id.
  * @returns Max supported width.
  */
-export function getMaxWidthSupport(deviceId: number): number | undefined {
+export function getMaxWidthSupport(deviceId: number): number {
     switch (deviceId) {
         case deviceIds.ULTRA:
         case deviceIds.CCGTV:
@@ -44,6 +44,8 @@ export function getMaxWidthSupport(deviceId: number): number | undefined {
         case deviceIds.NESTHUBANDMAX:
             return 1280;
     }
+
+    return 0;
 }
 
 /**
@@ -67,7 +69,7 @@ export function getH26xProfileSupport(deviceId: number): string {
  * @param deviceId Cast device id.
  * @returns The highest supported H.26x level.
  */
-export function getH26xLevelSupport(deviceId: number): number | undefined {
+export function getH26xLevelSupport(deviceId: number): number {
     switch (deviceId) {
         case deviceIds.NESTHUBANDMAX:
         case deviceIds.GEN1AND2:
@@ -78,6 +80,8 @@ export function getH26xLevelSupport(deviceId: number): number | undefined {
         case deviceIds.CCGTV:
             return 52;
     }
+
+    return 0;
 }
 
 /**
