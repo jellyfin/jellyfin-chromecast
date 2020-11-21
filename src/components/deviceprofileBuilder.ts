@@ -11,7 +11,7 @@ import { SubtitleDeliveryMethod } from "../api/generated/models/subtitle-deliver
 import { SubtitleProfile } from "../api/generated/models/subtitle-profile";
 import { TranscodingProfile } from "../api/generated/models/transcoding-profile";
 import { CodecType } from "../api/generated/models/codec-type";
-import {ProfileConditionValue} from "../api/generated/models/profile-condition-value";
+import { ProfileConditionValue } from "../api/generated/models/profile-condition-value";
 
 import {
     deviceIds,
