@@ -1,30 +1,28 @@
-/* eslint-disable */
-
 import { deviceIds } from "./castDevices";
 
 const castContext = cast.framework.CastReceiverContext.getInstance();
 
-export function hasH265Support() {
+export function hasH265Support(): boolean {
     return castContext.canDisplayType("video/mp4", "hev1.1.6.L150.B0");
 }
 
-export function hasTextTrackSupport(deviceId) {
+export function hasTextTrackSupport(deviceId: number): boolean {
     return deviceId !== deviceIds.AUDIO;
 }
 
-export function hasVP8Support() {
+export function hasVP8Support(): boolean {
     return castContext.canDisplayType("video/webm", "vp8");
 }
 
-export function hasVP9Support() {
+export function hasVP9Support(): boolean {
     return castContext.canDisplayType("video/webm", "vp9");
 }
 
 /**
  * Get the max supported media bitrate for the active Cast device.
- * @returns {number} Max supported bitrate.
+ * @returns Max supported bitrate.
  */
-export function getMaxBitrateSupport() {
+export function getMaxBitrateSupport(): number {
     // FIXME: We should get this dynamically or hardcode this to values
     // we see fit for each Cast device. More testing is needed.
     return 120000000;
@@ -32,10 +30,10 @@ export function getMaxBitrateSupport() {
 
 /**
  * Get the max supported video width the active Cast device supports.
- * @param {number} deviceId Cast device id.
- * @returns {number} Max supported width.
+ * @param deviceId Cast device id.
+ * @returns Max supported width.
  */
-export function getMaxWidthSupport(deviceId) {
+export function getMaxWidthSupport(deviceId: number): number {
     switch (deviceId) {
         case deviceIds.ULTRA:
         case deviceIds.CCGTV:
@@ -46,6 +44,8 @@ export function getMaxWidthSupport(deviceId) {
         case deviceIds.NESTHUBANDMAX:
             return 1280;
     }
+
+    return 0;
 }
 
 /**
@@ -53,12 +53,12 @@ export function getMaxWidthSupport(deviceId) {
  * @param {number} deviceId Cast device id.
  * @returns {string} All supported H.26x profiles.
  */
-export function getH26xProfileSupport(deviceId) {
+export function getH26xProfileSupport(deviceId: number): string {
     // These are supported by all Cast devices, excluding audio only devices.
     let h26xProfiles = "high|main|baseline|constrained baseline";
 
     if (deviceId === deviceIds.ULTRA || deviceId === deviceIds.CCGTV) {
-        h26xProfiles += "|high 10"
+        h26xProfiles += "|high 10";
     }
 
     return h26xProfiles;
@@ -66,10 +66,10 @@ export function getH26xProfileSupport(deviceId) {
 
 /**
  * Get the highest H.26x level supported by the active Cast device.
- * @param {number} deviceId Cast device id.
- * @returns {number} The highest supported H.26x level.
+ * @param deviceId Cast device id.
+ * @returns The highest supported H.26x level.
  */
-export function getH26xLevelSupport(deviceId) {
+export function getH26xLevelSupport(deviceId: number): number {
     switch (deviceId) {
         case deviceIds.NESTHUBANDMAX:
         case deviceIds.GEN1AND2:
@@ -80,14 +80,16 @@ export function getH26xLevelSupport(deviceId) {
         case deviceIds.CCGTV:
             return 52;
     }
+
+    return 0;
 }
 
 /**
  * Get VPX (VP8, VP9) codecs supported by the active Cast device.
- * @returns {Array} Supported VPX codecs.
+ * @returns Supported VPX codecs.
  */
-export function getSupportedVPXVideoCodecs() {
-    let codecs = [];
+export function getSupportedVPXVideoCodecs(): Array<string> {
+    const codecs = [];
     if (hasVP8Support()) {
         codecs.push("VP8");
     }
@@ -101,10 +103,10 @@ export function getSupportedVPXVideoCodecs() {
 
 /**
  * Get supported video codecs suitable for use in an MP4 container.
- * @returns {Array} Supported MP4 video codecs.
+ * @returns Supported MP4 video codecs.
  */
-export function getSupportedMP4VideoCodecs() {
-    var codecs = ["h264"];
+export function getSupportedMP4VideoCodecs(): Array<string> {
+    const codecs = ["h264"];
 
     if (hasH265Support()) {
         codecs.push("h265");
@@ -116,17 +118,17 @@ export function getSupportedMP4VideoCodecs() {
 
 /**
  * Get supported audio codecs suitable for use in an MP4 container.
- * @returns {Array} Supported MP4 audio codecs.
+ * @returns Supported MP4 audio codecs.
  */
-export function getSupportedMP4AudioCodecs() {
+export function getSupportedMP4AudioCodecs(): Array<string> {
     return ["aac", "mp3"];
 }
 
 /**
  * Get supported video codecs suitable for use with HLS.
- * @returns {Array} Supported HLS video codecs.
+ * @returns Supported HLS video codecs.
  */
-export function getSupportedHLSVideoCodecs() {
+export function getSupportedHLSVideoCodecs(): Array<string> {
     // Currently the server does not support fmp4 which is required
     // by the HLS spec for streaming H.265 video.
     return ["h264"];
@@ -134,25 +136,25 @@ export function getSupportedHLSVideoCodecs() {
 
 /**
  * Get supported audio codecs suitable for use with HLS.
- * @returns {Array} All supported HLS audio codecs.
+ * @returns All supported HLS audio codecs.
  */
-export function getSupportedHLSAudioCodecs() {
+export function getSupportedHLSAudioCodecs(): Array<string> {
     // HLS basically supports whatever MP4 supports.
     return getSupportedMP4AudioCodecs();
 }
 
 /**
  * Get supported audio codecs suitable for use in a WebM container.
- * @returns {Array} All supported WebM audio codecs.
+ * @returns All supported WebM audio codecs.
  */
-export function getSupportedWebMAudioCodecs() {
+export function getSupportedWebMAudioCodecs(): Array<string> {
     return ["vorbis", "opus"];
 }
 
 /**
  * Get supported audio codecs suitable for use in a WebM container.
- * @returns {Array} All supported WebM audio codecs.
+ * @returns All supported WebM audio codecs.
  */
-export function getSupportedAudioCodecs() {
+export function getSupportedAudioCodecs(): Array<string> {
     return ["opus", "mp3", "aac", "flac", "webma", "wav"];
 }
