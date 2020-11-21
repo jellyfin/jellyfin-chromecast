@@ -1,6 +1,14 @@
 ﻿/* eslint-disable */
 
-import { factory as jellyfinActions } from "./jellyfinActions";
+import {
+    reportPlaybackProgress,
+    reportPlaybackStopped,
+    play,
+    displayUserInfo,
+    getPlaybackInfo,
+    stopActiveEncodings,
+    detectBitrate,
+} from "./jellyfinActions";
 import { ajax } from "./fetchhelper";
 import { getDeviceProfile as deviceProfileBuilder } from "./deviceprofileBuilder";
 import {
@@ -63,11 +71,11 @@ export function onMediaElementTimeUpdate(e) {
 
     if (elapsed > 5000) {
         // TODO use status as input
-        jellyfinActions.reportPlaybackProgress($scope, getReportingParams($scope));
+        reportPlaybackProgress($scope, getReportingParams($scope));
         broadcastToServer = now;
     } else if (elapsed > 1500) {
         // TODO use status as input
-        jellyfinActions.reportPlaybackProgress($scope, getReportingParams($scope), false);
+        reportPlaybackProgress($scope, getReportingParams($scope), false);
     }
 }
 
@@ -116,18 +124,18 @@ enableTimeUpdateListener();
 window.addEventListener('beforeunload', function () {
     // Try to cleanup after ourselves before the page closes
     disableTimeUpdateListener();
-    jellyfinActions.reportPlaybackStopped($scope, getReportingParams($scope));
+    reportPlaybackStopped($scope, getReportingParams($scope));
 });
 
 mgr.defaultOnPlay = function (event) {
 
-    jellyfinActions.play($scope, event);
-    jellyfinActions.reportPlaybackProgress($scope, getReportingParams($scope));
+    play($scope, event);
+    reportPlaybackProgress($scope, getReportingParams($scope));
 };
 mgr.addEventListener(cast.framework.events.EventType.PLAY, mgr.defaultOnPlay);
 
 mgr.defaultOnPause = function (event) {
-    jellyfinActions.reportPlaybackProgress($scope, getReportingParams($scope));
+    reportPlaybackProgress($scope, getReportingParams($scope));
 };
 mgr.addEventListener(cast.framework.events.EventType.PAUSE, mgr.defaultOnPause);
 
@@ -145,13 +153,13 @@ mgr.addEventListener(cast.framework.events.EventType.ENDED, function () {
         return;
     }
 
-    jellyfinActions.reportPlaybackStopped($scope, getReportingParams($scope));
+    reportPlaybackStopped($scope, getReportingParams($scope));
     init();
 
     if (!playNextItem()) {
         window.playlist = [];
         window.currentPlaylistIndex = -1;
-        jellyfinActions.displayUserInfo($scope, $scope.serverAddress, $scope.accessToken, $scope.userId);
+        displayUserInfo($scope, $scope.serverAddress, $scope.accessToken, $scope.userId);
     }
 });
 
@@ -243,16 +251,16 @@ export function processMessage(data) {
 
     if (window.reportEventType) {
         var report = function () {
-            jellyfinActions.reportPlaybackProgress($scope, getReportingParams($scope));
+            reportPlaybackProgress($scope, getReportingParams($scope));
         };
-        jellyfinActions.reportPlaybackProgress($scope, getReportingParams($scope), true, window.reportEventType);
+        reportPlaybackProgress($scope, getReportingParams($scope), true, window.reportEventType);
         setTimeout(report, 100);
         setTimeout(report, 500);
     }
 }
 
 export function reportEvent(name, reportToServer) {
-    jellyfinActions.reportPlaybackProgress($scope, getReportingParams($scope), reportToServer, name);
+    reportPlaybackProgress($scope, getReportingParams($scope), reportToServer, name);
 }
 
 export function setSubtitleStreamIndex($scope, index, serverAddress) {
@@ -325,7 +333,7 @@ export function changeStream(ticks, params) {
     if (window.mediaManager.getMediaInformation().customData.canClientSeek && params == null) {
 
         window.mediaManager.seek(ticks / 10000000);
-        jellyfinActions.reportPlaybackProgress($scope, getReportingParams($scope));
+        reportPlaybackProgress($scope, getReportingParams($scope));
         return;
     }
 
@@ -342,7 +350,7 @@ export function changeStream(ticks, params) {
         const audioStreamIndex = params.AudioStreamIndex == null ? $scope.audioStreamIndex : params.AudioStreamIndex;
         const subtitleStreamIndex = params.SubtitleStreamIndex == null ? $scope.subtitleStreamIndex : params.SubtitleStreamIndex;
 
-        const playbackInformation = await jellyfinActions.getPlaybackInfo(item, maxBitrate, deviceProfile, ticks, $scope.mediaSourceId, audioStreamIndex, subtitleStreamIndex, liveStreamId);
+        const playbackInformation = await getPlaybackInfo(item, maxBitrate, deviceProfile, ticks, $scope.mediaSourceId, audioStreamIndex, subtitleStreamIndex, liveStreamId);
         if (!validatePlaybackInfoResult(playbackInformation)) {
             return;
         }
@@ -364,7 +372,7 @@ export function changeStream(ticks, params) {
         const requiresStoppingTranscoding = false;
         if (requiresStoppingTranscoding) {
             window.mediaManager.pause();
-            await jellyfinActions.stopActiveEncodings(playSessionId);
+            await stopActiveEncodings(playSessionId);
         }
         window.mediaManager.load(loadRequest);
         window.mediaManager.play();
@@ -490,7 +498,7 @@ export function getMaxBitrate(mediaType) {
 
         console.log('detecting bitrate');
 
-        jellyfinActions.detectBitrate($scope).then(function (bitrate) {
+        detectBitrate($scope).then(function (bitrate) {
 
             console.log('Max bitrate auto detected to ' + bitrate);
             lastBitrateDetect = new Date().getTime();
