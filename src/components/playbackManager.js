@@ -18,7 +18,7 @@ import {
     createMediaInformation
 } from "./maincontroller";
 
-import { factory as jellyfinActions } from "./jellyfinactions";
+import { factory as jellyfinActions } from "./jellyfinActions";
 
 export class playbackManager {
     constructor(castContext, playerManager) {

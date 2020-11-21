@@ -9,7 +9,7 @@ import {
 
 import { getReportingParams } from "../helpers";
 
-import { factory as jellyfinActions } from "./jellyfinactions";
+import { factory as jellyfinActions } from "./jellyfinActions";
 
 export class commandHandler {
     constructor(castContext, playerManager, playbackManager) {
