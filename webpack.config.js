@@ -2,6 +2,7 @@ const path = require("path");
 const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 const webpack = require("webpack");
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const packagejson = require("./package.json")
 
 let config = {
     context: path.resolve(__dirname, "src"),
@@ -38,7 +39,8 @@ module.exports = (env, argv) => {
 
     config.plugins.push(
         new webpack.DefinePlugin({
-            PRODUCTION: JSON.stringify(isProduction)
+            PRODUCTION: JSON.stringify(isProduction),
+            RECEIVERVERSION: JSON.stringify(packagejson.version)
         })
     );
 
