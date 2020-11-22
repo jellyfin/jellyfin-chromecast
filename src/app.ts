@@ -6,7 +6,7 @@ const id = senders.length !== 0 && senders[0].id ? senders[0].id : new Date().ge
 window.deviceInfo = {
     deviceId: id,
     deviceName: 'Google Cast',
-    versionNumber: '3.0.0'
+    versionNumber: RECEIVERVERSION
 };
 
 window.mediaElement = document.getElementById('video-player');

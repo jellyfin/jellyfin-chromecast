@@ -1,5 +1,6 @@
 declare global {
-    export let PRODUCTION: boolean;
+    export const PRODUCTION: boolean;
+    export const RECEIVERVERSION: string;
     export interface Window {
         deviceInfo: DeviceInfo;
         mediaElement: HTMLElement | null;
