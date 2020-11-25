@@ -1,6 +1,5 @@
-﻿/* eslint-disable */
+﻿import { ajax } from "./fetchhelper";
 
-import { ajax } from "./fetchhelper";
 import {
     getUrl,
     getSenderReportingData,
@@ -25,41 +24,52 @@ import {
     broadcastToMessageBus
 } from "../helpers";
 
-export var factory = {};
+import { GlobalScope } from "../types/global";
+import { PlaybackProgressInfo } from "../api/generated/models/playback-progress-info";
+import { BaseItemDto } from "../api/generated/models/base-item-dto";
+import { DeviceProfile } from "../api/generated/models/device-profile";
+import { MediaSourceInfo } from "../api/generated/models/media-source-info";
+import { PlayRequest } from "../api/generated/models/play-request";
 
-var pingInterval;
-var lastTranscoderPing = 0;
+interface PlayRequestQuery extends PlayRequest {
+    UserId?: string;
+    StartTimeTicks?: number;
+    MaxStreamingBitrate?: number;
+    LiveStreamId?: string;
+    ItemId?: string;
+    PlaySessionId?: string;
+}
 
-function restartPingInterval($scope, reportingParams) {
+let pingInterval: number;
+let backdropInterval: number;
+let lastTranscoderPing = 0;
+
+function restartPingInterval($scope: GlobalScope, reportingParams: PlaybackProgressInfo): void {
 
     stopPingInterval();
 
     if (reportingParams.PlayMethod == 'Transcode') {
-        pingInterval = setInterval(function () {
-            factory.pingTranscoder($scope, {
+        pingInterval = <any>setInterval(function () {
+            pingTranscoder($scope, {
                 PlaySessionId: reportingParams.PlaySessionId
             });
         }, 1000);
     }
 }
 
-function stopPingInterval() {
-
-    var current = pingInterval;
-
-    if (current) {
-        clearInterval(current);
-        pingInterval = null;
+export function stopPingInterval(): void {
+    if (pingInterval !== 0) {
+        clearInterval(pingInterval);
+        pingInterval = 0;
     }
 }
 
-factory.stopPingInterval = function () {
-    stopPingInterval();
-};
+export function reportPlaybackStart(
+    $scope: GlobalScope,
+    reportingParams: PlaybackProgressInfo
+): Promise<any> {
 
-factory.reportPlaybackStart = function ($scope, options) {
-
-    this.stopDynamicContent();
+    stopDynamicContent();
 
     if (!$scope.userId) {
         throw new Error("null userId");
@@ -69,26 +79,31 @@ factory.reportPlaybackStart = function ($scope, options) {
         throw new Error("null serverAddress");
     }
 
-    var url = getUrl($scope.serverAddress, "Sessions/Playing");
+    const url = getUrl($scope.serverAddress, "Sessions/Playing");
 
     broadcastToMessageBus({
+        //TODO: convert these to use a defined type in the type field
         type: 'playbackstart',
-        data: getSenderReportingData($scope, options)
+        data: getSenderReportingData($scope, reportingParams)
     });
 
-    restartPingInterval($scope, options);
+    restartPingInterval($scope, reportingParams);
 
     return ajax({
-
         url: url,
         headers: getSecurityHeaders($scope.accessToken, $scope.userId),
         type: 'POST',
-        data: JSON.stringify(options),
+        data: JSON.stringify(reportingParams),
         contentType: 'application/json'
     });
-};
+}
 
-factory.reportPlaybackProgress = function ($scope, options, reportToServer, broadcastEventName) {
+export function reportPlaybackProgress(
+    $scope: GlobalScope,
+    reportingParams: PlaybackProgressInfo,
+    reportToServer: boolean,
+    broadcastEventName: string
+): Promise<any> {
 
     if (!$scope.userId) {
         throw new Error("null userId");
@@ -98,33 +113,33 @@ factory.reportPlaybackProgress = function ($scope, options, reportToServer, broa
         throw new Error("null serverAddress");
     }
 
-    //console.log(JSON.stringify(getSenderReportingData($scope, options)));
-
     broadcastToMessageBus({
         type: broadcastEventName || 'playbackprogress',
-        data: getSenderReportingData($scope, options)
+        data: getSenderReportingData($scope, reportingParams)
     });
 
     if (reportToServer === false) {
         return Promise.resolve();
     }
 
-    var url = getUrl($scope.serverAddress, "Sessions/Playing/Progress");
+    const url = getUrl($scope.serverAddress, "Sessions/Playing/Progress");
 
-    restartPingInterval($scope, options);
+    restartPingInterval($scope, reportingParams);
     lastTranscoderPing = new Date().getTime();
 
     return ajax({
-
         url: url,
         headers: getSecurityHeaders($scope.accessToken, $scope.userId),
         type: 'POST',
-        data: JSON.stringify(options),
+        data: JSON.stringify(reportingParams),
         contentType: 'application/json'
     });
-};
+}
 
-factory.reportPlaybackStopped = function ($scope, options) {
+export function reportPlaybackStopped(
+    $scope: GlobalScope,
+    reportingParams: PlaybackProgressInfo
+): Promise<any> {
 
     stopPingInterval();
 
@@ -136,24 +151,26 @@ factory.reportPlaybackStopped = function ($scope, options) {
         throw new Error("null serverAddress");
     }
 
-    var url = getUrl($scope.serverAddress, "Sessions/Playing/Stopped");
+    const url = getUrl($scope.serverAddress, "Sessions/Playing/Stopped");
 
     broadcastToMessageBus({
         type: 'playbackstop',
-        data: getSenderReportingData($scope, options)
+        data: getSenderReportingData($scope, reportingParams)
     });
 
     return ajax({
-
         url: url,
         headers: getSecurityHeaders($scope.accessToken, $scope.userId),
         type: 'POST',
-        data: JSON.stringify(options),
+        data: JSON.stringify(reportingParams),
         contentType: 'application/json'
     });
-};
+}
 
-factory.pingTranscoder = function ($scope, options) {
+export function pingTranscoder(
+    $scope: GlobalScope,
+    reportingParams: PlaybackProgressInfo
+): Promise<any> {
 
     if (!$scope.userId) {
         throw new Error("null userId");
@@ -163,53 +180,57 @@ factory.pingTranscoder = function ($scope, options) {
         throw new Error("null serverAddress");
     }
 
-    var now = new Date().getTime();
-    if ((now - lastTranscoderPing) < 10000) {
+    const now = new Date().getTime();
 
+    if ((now - lastTranscoderPing) < 10000) {
         console.log("Skipping ping due to recent progress check-in");
-        return new Promise(function (resolve, reject) {
+        return new Promise(function (resolve) {
             resolve();
         });
     }
 
-    var url = getUrl($scope.serverAddress, "Sessions/Playing/Ping");
+    const url = getUrl($scope.serverAddress, "Sessions/Playing/Ping");
     lastTranscoderPing = new Date().getTime();
 
     return ajax({
-
         url: url,
         headers: getSecurityHeaders($scope.accessToken, $scope.userId),
         type: 'POST',
-        data: JSON.stringify(options),
+        data: JSON.stringify(reportingParams),
         contentType: 'application/json'
     });
-};
+}
 
-var backdropInterval;
-
-function clearBackropInterval() {
-    if (backdropInterval) {
+function clearBackropInterval(): void {
+    if (backdropInterval !== 0) {
         clearInterval(backdropInterval);
-        backdropInterval = null;
+        backdropInterval = 0;
     }
 }
 
-function startBackdropInterval($scope, serverAddress, accessToken, userId) {
+function startBackdropInterval(
+    $scope: GlobalScope,
+    serverAddress: string,
+    accessToken: string,
+    userId: string
+): void {
 
     clearBackropInterval();
 
     setRandomUserBackdrop($scope, serverAddress, accessToken, userId);
 
-    backdropInterval = setInterval(function () {
+    backdropInterval = <any> setInterval(function () {
         setRandomUserBackdrop($scope, serverAddress, accessToken, userId);
     }, 30000);
 }
 
-function setRandomUserBackdrop($scope, serverAddress, accessToken, userId) {
-
-    console.log('setRandomUserBackdrop');
-
-    var url = getUrl(serverAddress, "Users/" + userId + "/Items");
+function setRandomUserBackdrop(
+    $scope: GlobalScope,
+    serverAddress: string,
+    accessToken: string,
+    userId: string
+): void {
+    const url = getUrl(serverAddress, "Users/" + userId + "/Items");
 
     ajax({
         url: url,
@@ -221,18 +242,15 @@ function setRandomUserBackdrop($scope, serverAddress, accessToken, userId) {
             IncludeItemTypes: "Movie,Series",
             ImageTypes: 'Backdrop',
             Recursive: true,
-
+            Limit: 1,
             // Although we're limiting to what the user has access to,
             // not everyone will want to see adult backdrops rotating on their TV.
-            MaxOfficialRating: 'PG-13',
-
-            Limit: 1
+            MaxOfficialRating: 'PG-13'
         }
-
     }).then(function (result) {
-        var item = result.Items[0];
+        const item = result.Items[0];
 
-        var backdropUrl = '';
+        let backdropUrl = '';
 
         if (item) {
             backdropUrl = getBackdropUrl(item, serverAddress) || '';
@@ -242,54 +260,72 @@ function setRandomUserBackdrop($scope, serverAddress, accessToken, userId) {
     });
 }
 
-factory.displayUserInfo = function ($scope, serverAddress, accessToken, userId) {
-
+export function displayUserInfo(
+    $scope: GlobalScope,
+    serverAddress: string,
+    accessToken: string,
+    userId: string
+): void {
     startBackdropInterval($scope, serverAddress, accessToken, userId);
-};
+}
 
-factory.stopDynamicContent = function () {
+export function stopDynamicContent(): void {
     clearBackropInterval();
-};
+}
 
-function showItem($scope, serverAddress, accessToken, userId, item) {
+function showItem(
+    $scope: GlobalScope,
+    serverAddress: string,
+    accessToken: string,
+    userId: string,
+    item: BaseItemDto
+): void {
 
     clearBackropInterval();
 
-    console.log('showItem');
-
-    var backdropUrl = getBackdropUrl(item, serverAddress) || '';
-    var detailImageUrl = getPrimaryImageUrl(item, serverAddress) || '';
+    const backdropUrl = getBackdropUrl(item, serverAddress) || '';
+    let detailImageUrl = getPrimaryImageUrl(item, serverAddress) || '';
 
     setAppStatus('details');
     setWaitingBackdrop(backdropUrl);
 
     setLogo(getLogoUrl(item, serverAddress) || '');
     setOverview(item.Overview || '');
-    setGenres(item.Genres.join(' / '));
+    setGenres(item?.Genres?.join(' / '));
     setDisplayName(getDisplayName(item));
-    document.getElementById('miscInfo').innerHTML = getMiscInfoHtml(item) || '';
-    document.getElementById('detailRating').innerHTML = getRatingHtml(item);
 
-    var playedIndicator = document.getElementById('playedIndicator');
-
-    if (item.UserData.Played) {
-
-        playedIndicator.style.display = 'block';
-        playedIndicator.innerHTML = '<span class="glyphicon glyphicon-ok"></span>';
-    } else if (item.UserData.UnplayedItemCount) {
-
-        playedIndicator.style.display = 'block';
-        playedIndicator.innerHTML = item.UserData.UnplayedItemCount;
-    } else {
-        playedIndicator.style.display = 'none';
+    const detailRating = document.getElementById('detailRating');
+    const miscInfo = document.getElementById('miscInfo');
+    if (miscInfo) {
+        miscInfo.innerHTML = getMiscInfoHtml(item) || '';
     }
 
-    if (item.UserData.PlayedPercentage && item.UserData.PlayedPercentage < 100 && !item.IsFolder) {
+    if (detailRating) {
+        detailRating.innerHTML = getRatingHtml(item);
+    }
+
+    const playedIndicator = document.getElementById('playedIndicator');
+
+    if (playedIndicator) {
+        if (item?.UserData?.Played) {
+            playedIndicator.style.display = 'block';
+            playedIndicator.innerHTML = '<span class="glyphicon glyphicon-ok"></span>';
+        } else if (item?.UserData?.UnplayedItemCount) {
+            playedIndicator.style.display = 'block';
+            playedIndicator.innerHTML = item.UserData.UnplayedItemCount.toString();
+        } else {
+            playedIndicator.style.display = 'none';
+        }
+    }
+
+    if (item?.UserData?.PlayedPercentage
+        && item?.UserData?.PlayedPercentage < 100
+        && !item.IsFolder
+    ) {
         setHasPlayedPercentage(false);
         setPlayedPercentage(item.UserData.PlayedPercentage);
 
-        detailImageUrl += "&PercentPlayed=" + parseInt(item.UserData.PlayedPercentage);
-
+        detailImageUrl += "&PercentPlayed=" + item.UserData.PlayedPercentage.toString();
     } else {
         setHasPlayedPercentage(false);
         setPlayedPercentage(0);
@@ -298,26 +334,29 @@ function showItem($scope, serverAddress, accessToken, userId, item) {
     setDetailImage(detailImageUrl);
 }
 
-factory.displayItem = function ($scope, serverAddress, accessToken, userId, itemId) {
-
-    console.log('Displaying item: ' + itemId);
-
-    var url = getUrl(serverAddress, "Users/" + userId + "/Items/" + itemId);
+export function displayItem(
+    $scope: GlobalScope,
+    serverAddress: string,
+    accessToken: string,
+    userId: string,
+    itemId: string
+): void {
+    const url = getUrl(serverAddress, "Users/" + userId + "/Items/" + itemId);
 
     ajax({
         url: url,
         headers: getSecurityHeaders(accessToken, userId),
         dataType: 'json',
         type: 'GET'
-
     }).then(function (item) {
-
         showItem($scope, serverAddress, accessToken, userId, item);
     });
-};
+}
 
-factory.getSubtitle = function ($scope, subtitleStreamUrl) {
-
+export function getSubtitle(
+    $scope: GlobalScope,
+    subtitleStreamUrl: string
+): Promise<any> {
     return ajax({
 
         url: subtitleStreamUrl,
@@ -325,27 +364,29 @@ factory.getSubtitle = function ($scope, subtitleStreamUrl) {
         type: 'GET',
         dataType: 'json'
     });
-};
+}
 
-factory.load = function ($scope, customData, serverItem) {
+export function load(
+    $scope: GlobalScope,
+    customData: PlaybackProgressInfo,
+    serverItem: BaseItemDto
+): void {
 
     resetPlaybackScope($scope);
 
     extend($scope, customData);
 
-    var data = serverItem;
-
-    $scope.item = data;
+    $scope.item = serverItem;
 
     setAppStatus('backdrop');
-    $scope.mediaType = data.MediaType;
-};
+    $scope.mediaType = serverItem?.MediaType;
+}
 
-factory.play = function ($scope, event) {
+//TODO: rename these
+export function play($scope: GlobalScope): void {
     if ($scope.status == 'backdrop' || $scope.status == 'playing-with-controls' || $scope.status == 'playing' || $scope.status == 'audio') {
         setTimeout(function () {
 
-            var startTime = new Date();
             window.mediaManager.play();
 
             setAppStatus('playing-with-controls');
@@ -354,32 +395,40 @@ factory.play = function ($scope, event) {
             }
         }, 20);
     }
-};
+}
 
-factory.stop = function ($scope) {
-
+export function stop(): void {
     setTimeout(function () {
         setAppStatus('waiting');
     }, 20);
-};
+}
 
-factory.getPlaybackInfo = function (item, maxBitrate, deviceProfile, startPosition, mediaSourceId, audioStreamIndex, subtitleStreamIndex, liveStreamId) {
-
+export function getPlaybackInfo (
+    // TODO: change to BaseItemDto once refactor happens,
+    // userId and serverAddress should not be on item
+    item: any,
+    maxBitrate: number,
+    deviceProfile: DeviceProfile,
+    startPosition: number,
+    mediaSourceId: string,
+    audioStreamIndex: number,
+    subtitleStreamIndex: number,
+    liveStreamId: string
+): Promise<any> {
     if (!item.userId) {
         throw new Error("null userId");
-        return;
     }
 
     if (!item.serverAddress) {
         throw new Error("null serverAddress");
-        return;
     }
 
-    var postData = {
+    const postData = {
         DeviceProfile: deviceProfile
     };
 
-    var query = {
+    // TODO: PlayRequestQuery might not be the proper type for this
+    const query: PlayRequestQuery = {
         UserId: item.userId,
         StartTimeTicks: startPosition || 0,
         MaxStreamingBitrate: maxBitrate
@@ -398,10 +447,9 @@ factory.getPlaybackInfo = function (item, maxBitrate, deviceProfile, startPositi
         query.LiveStreamId = liveStreamId;
     }
 
-    var url = getUrl(item.serverAddress, 'Items/' + item.Id + '/PlaybackInfo');
+    const url = getUrl(item.serverAddress, 'Items/' + item.Id + '/PlaybackInfo');
 
     return ajax({
-
         url: url,
         headers: getSecurityHeaders(item.accessToken, item.userId),
         query: query,
@@ -410,26 +458,35 @@ factory.getPlaybackInfo = function (item, maxBitrate, deviceProfile, startPositi
         data: JSON.stringify(postData),
         contentType: 'application/json'
     });
-};
+}
 
-factory.getLiveStream = function (item, playSessionId, maxBitrate, deviceProfile, startPosition, mediaSource, audioStreamIndex, subtitleStreamIndex) {
+export function getLiveStream(
+    // TODO: change to BaseItemDto once refactor happens,
+    // userId and serverAddress should not be on item
+    item: any,
+    playSessionId: string,
+    maxBitrate: number,
+    deviceProfile: DeviceProfile,
+    startPosition: number,
+    mediaSource: MediaSourceInfo,
+    audioStreamIndex: number,
+    subtitleStreamIndex: number
+): Promise<any> {
 
     if (!item.userId) {
         throw new Error("null userId");
-        return;
     }
 
     if (!item.serverAddress) {
         throw new Error("null serverAddress");
-        return;
     }
 
-    var postData = {
+    const postData = {
         DeviceProfile: deviceProfile,
         OpenToken: mediaSource.OpenToken
     };
 
-    var query = {
+    const query: PlayRequestQuery = {
         UserId: item.userId,
         StartTimeTicks: startPosition || 0,
         ItemId: item.Id,
@@ -444,10 +501,9 @@ factory.getLiveStream = function (item, playSessionId, maxBitrate, deviceProfile
         query.SubtitleStreamIndex = subtitleStreamIndex;
     }
 
-    var url = getUrl(item.serverAddress, 'LiveStreams/Open');
+    const url = getUrl(item.serverAddress, 'LiveStreams/Open');
 
     return ajax({
-
         url: url,
         headers: getSecurityHeaders(item.accessToken, item.userId),
         query: query,
@@ -456,9 +512,9 @@ factory.getLiveStream = function (item, playSessionId, maxBitrate, deviceProfile
         data: JSON.stringify(postData),
         contentType: 'application/json'
     });
-};
+}
 
-factory.getDownloadSpeed = function ($scope, byteSize) {
+export function getDownloadSpeed($scope: GlobalScope, byteSize: number): Promise<any> {
 
     if (!$scope.userId) {
         throw new Error("null userId");
@@ -468,58 +524,56 @@ factory.getDownloadSpeed = function ($scope, byteSize) {
         throw new Error("null serverAddress");
     }
 
-    var url = getUrl($scope.serverAddress, "Playback/BitrateTest");
+    let url = getUrl($scope.serverAddress, "Playback/BitrateTest");
     url += "?size=" + byteSize;
 
-    var now = new Date().getTime();
+    const now = new Date().getTime();
 
     return ajax({
-
         type: "GET",
         url: url,
         headers: getSecurityHeaders($scope.accessToken, $scope.userId),
         timeout: 5000
-
     }).then(function () {
-
-        var responseTimeSeconds = (new Date().getTime() - now) / 1000;
-        var bytesPerSecond = byteSize / responseTimeSeconds;
-        var bitrate = Math.round(bytesPerSecond * 8);
+        const responseTimeSeconds = (new Date().getTime() - now) / 1000;
+        const bytesPerSecond = byteSize / responseTimeSeconds;
+        const bitrate = Math.round(bytesPerSecond * 8);
 
         return bitrate;
     });
-};
+}
 
-factory.detectBitrate = function ($scope) {
+export function detectBitrate($scope: GlobalScope): Promise<number> {
 
     // First try a small amount so that we don't hang up their mobile connection
-    return factory.getDownloadSpeed($scope, 1000000).then(function (bitrate) {
+    return getDownloadSpeed($scope, 1000000).then(function (bitrate) {
 
         if (bitrate < 1000000) {
-            return Math.round(bitrate * .8);
+            return Math.round(bitrate * 0.8);
         } else {
 
             // If that produced a fairly high speed, try again with a larger size to get a more accurate result
-            return factory.getDownloadSpeed($scope, 2400000).then(function (bitrate) {
+            return getDownloadSpeed($scope, 2400000).then(function (bitrate) {
 
-                return Math.round(bitrate * .8);
+                return Math.round(bitrate * 0.8);
             });
         }
 
     });
-};
+}
 
-factory.stopActiveEncodings = function ($scope) {
+export function stopActiveEncodings($scope: GlobalScope): Promise<any> {
 
-    var options = {
-        deviceId: deviceInfo.deviceId
+    const options = {
+        deviceId: window.deviceInfo.deviceId,
+        PlaySessionId: undefined
     };
 
     if ($scope.playSessionId) {
         options.PlaySessionId = $scope.playSessionId;
     }
 
-    var url = getUrl($scope.serverAddress, "Videos/ActiveEncodings");
+    const url = getUrl($scope.serverAddress, "Videos/ActiveEncodings");
 
     return ajax({
         type: "DELETE",
@@ -527,4 +581,4 @@ factory.stopActiveEncodings = function ($scope) {
         url: url,
         query: options
     });
-};
+}

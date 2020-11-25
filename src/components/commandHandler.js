@@ -9,7 +9,11 @@ import {
 
 import { getReportingParams } from "../helpers";
 
-import { factory as jellyfinActions } from "./jellyfinactions";
+import {
+    displayItem,
+    displayUserInfo,
+    reportPlaybackProgress
+} from "./jellyfinActions";
 
 export class commandHandler {
     constructor(castContext, playerManager, playbackManager) {
@@ -61,7 +65,7 @@ export class commandHandler {
 
     displayContentHandler(data) {
         if (!this.playbackManager.isPlaying()) {
-            jellyfinActions.displayItem($scope, data.serverAddress, data.accessToken, data.userId, data.options.ItemId);
+            displayItem($scope, data.serverAddress, data.accessToken, data.userId, data.options.ItemId);
         }
     }
 
@@ -107,10 +111,10 @@ export class commandHandler {
 
     IdentifyHandler(data) {
         if (!this.playbackManager.isPlaying()) {
-            jellyfinActions.displayUserInfo($scope, data.serverAddress, data.accessToken, data.userId);
+            displayUserInfo($scope, data.serverAddress, data.accessToken, data.userId);
         } else {
             // When a client connects send back the initial device state (volume etc) via a playbackstop message
-            jellyfinActions.reportPlaybackProgress($scope, getReportingParams($scope), true, "playbackstop");
+            reportPlaybackProgress($scope, getReportingParams($scope), true, "playbackstop");
         }
     }
 

@@ -18,7 +18,16 @@ import {
     createMediaInformation
 } from "./maincontroller";
 
-import { factory as jellyfinActions } from "./jellyfinactions";
+import {
+    getPlaybackInfo,
+    getLiveStream,
+    load,
+    reportPlaybackStart,
+    stop,
+    stopPingInterval,
+    reportPlaybackStopped,
+    displayUserInfo
+} from "./jellyfinActions";
 
 export class playbackManager {
     constructor(castContext, playerManager) {
@@ -104,8 +113,8 @@ export class playbackManager {
         setAppStatus('loading');
 
         const maxBitrate = await getMaxBitrate(item.MediaType);
-        const deviceProfile = await getDeviceProfile(maxBitrate);
-        const playbackInfo = await jellyfinActions.getPlaybackInfo(
+        const deviceProfile = getDeviceProfile(maxBitrate);
+        const playbackInfo = await getPlaybackInfo(
             item,
             maxBitrate,
             deviceProfile,
@@ -126,7 +135,7 @@ export class playbackManager {
 
         let itemToPlay = mediaSource;
         if (mediaSource.RequiresOpening) {
-            const openLiveStreamResult = await jellyfinActions.getLiveStream(item,
+            const openLiveStreamResult = await getLiveStream(item,
                 playbackInfo.PlaySessionId,
                 maxBitrate,
                 deviceProfile,
@@ -153,7 +162,7 @@ export class playbackManager {
         loadRequestData.media = mediaInfo;
         loadRequestData.autoplay = true;
 
-        jellyfinActions.load($scope, mediaInfo.customData, item);
+        load($scope, mediaInfo.customData, item);
         this.playerManager.load(loadRequestData);
 
         $scope.PlaybackMediaSource = mediaSource;
@@ -175,7 +184,7 @@ export class playbackManager {
             window.mediaElement.style.removeProperty('--background-image');
         }
 
-        jellyfinActions.reportPlaybackStart($scope, getReportingParams($scope));
+        reportPlaybackStart($scope, getReportingParams($scope));
 
         // We use false as we do not want to broadcast the new status yet
         // we will broadcast manually when the media has been loaded, this
@@ -186,23 +195,23 @@ export class playbackManager {
     stop(nextMode) {
 
         $scope.playNextItem = nextMode ? true : false;
-        jellyfinActions.stop($scope);
+        stop($scope);
 
         var reportingParams = getReportingParams($scope);
 
         var promise;
 
-        jellyfinActions.stopPingInterval();
+        stopPingInterval();
 
         if (reportingParams.ItemId) {
-            promise = jellyfinActions.reportPlaybackStopped($scope, reportingParams);
+            promise = reportPlaybackStopped($scope, reportingParams);
         }
 
         this.playerManager.stop();
 
         this.activePlaylist = [];
         this.activePlaylistIndex = -1;
-        jellyfinActions.displayUserInfo($scope, $scope.serverAddress, $scope.accessToken, $scope.userId);
+        displayUserInfo($scope, $scope.serverAddress, $scope.accessToken, $scope.userId);
 
         promise = promise || Promise.resolve();
 
