@@ -13,7 +13,7 @@ export interface GlobalScope {
 declare global {
     export const PRODUCTION: boolean;
     export const RECEIVERVERSION: string;
-    export let $scope: GlobalScope;
+    export const $scope: GlobalScope;
     export interface Window {
         deviceInfo: DeviceInfo;
         mediaElement: HTMLElement | null;
@@ -23,5 +23,4 @@ declare global {
         repeatMode: "RepeatOne" | "RepeatAll" | "RepeatNone";
     }
 }
-
 
