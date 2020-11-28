@@ -1,21 +1,28 @@
 import {Configuration} from "./generated/configuration"
 
-interface CredentialStore {
+export interface CredentialStore {
     [id: string]: Configuration
 }
 
 export class credentialManager{
     /**
-     * Store for credentials
+     * Store for credentials.
      * @private
      */
-    private credentialStore: CredentialStore = {};
+    private credentialStore: CredentialStore;
 
     /**
-     * Get credentials for the provided server ID
-     * @param serverId - ID of the server the credentials belong to
+     * @param initialStore - Existing CredentialStore to initialize private store with.
+     */
+    constructor(initialStore: CredentialStore = {}) {
+        this.credentialStore = initialStore;
+    }
+
+    /**
+     * Get credentials for the provided server ID.
+     * @param serverId - ID of the server the credentials belong to.
      * @returns Credentials for the provided server ID
-     *      or undefined if the store has no server with that ID
+     *      or undefined if the store has no server with that ID.
      */
     get(serverId: string) : Configuration | undefined {
         if(serverId in this.credentialStore) {
@@ -25,9 +32,9 @@ export class credentialManager{
 
     /**
      * Update credentials for the provided server ID
-     * @param serverId - ID of the server to update
-     * @param newConfig - Updated Credentials
-     * @returns True if the value was updated, false if it wasn't
+     * @param serverId - ID of the server to update.
+     * @param newConfig - Updated Credentials.
+     * @returns True if the value was updated, false if it wasn't.
      */
     update(serverId: string, newConfig: Configuration) : boolean {
         if(serverId in this.credentialStore) {
@@ -40,9 +47,9 @@ export class credentialManager{
 
     /**
      * Add a new credential to store. Only accepts new entries.
-     * @param serverId - ID of the server the credentials belong to
-     * @param Configuration - Credentials of the server
-     * @returns True if server was added, false if it wasn't
+     * @param serverId - ID of the server the credentials belong to.
+     * @param Configuration - Credentials of the server.
+     * @returns True if server was added, false if it wasn't.
      */
     add(serverId: string, configuration: Configuration) : boolean {
         if(serverId in this.credentialStore) {
@@ -54,11 +61,11 @@ export class credentialManager{
     }
 
     /**
-     * Add a new credential to store. Only accepts new entries.
-     * @param serverId - ID of the server the credentials belong to
-     * @returns True if server was added, false if it wasn't
+     * Remove a credential from store.
+     * @param serverId - ID of the server the credentials belong to.
+     * @returns True if server was removed, false if it wasn't.
      */
-    remove(serverId: string) {
+    remove(serverId: string): boolean {
         if(serverId in this.credentialStore) {
             delete this.credentialStore[serverId]
             return true
