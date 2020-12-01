@@ -1,4 +1,4 @@
-﻿import { ajax } from './fetchhelper';
+import { ajax } from './fetchhelper';
 
 import {
     getUrl,
