@@ -208,11 +208,11 @@ body {
 }
 
 .fresh {
-    background-image: url(../img/fresh.svg);
+    background-image: url('../img/fresh.svg');
 }
 
 .rotten {
-    background-image: url(../img/rotten.svg);
+    background-image: url('../img/rotten.svg');
 }
 
 .metascore {
