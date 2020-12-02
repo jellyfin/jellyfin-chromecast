@@ -1,4 +1,5 @@
-html, body {
+html,
+body {
     height: 100%;
     width: 100%;
 }
@@ -63,7 +64,7 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(15, 15,15, .82);
+    background-color: rgba(15, 15, 15, 0.82);
 }
 
 .detailLogo {
@@ -100,7 +101,7 @@ body {
     padding-top: 3px;
     border-radius: 50%;
     color: #fff;
-    background: rgba(0,128,0,.8);
+    background: rgba(0, 128, 0, 0.8);
     font-size: 13px;
     line-height: 16.9px;
 }
@@ -118,18 +119,18 @@ body {
     margin: 0 auto;
     height: 6px;
 }
-    /* Chrome */
+/* Chrome */
 .itemProgressBar::-webkit-progress-value {
     border-radius: 0;
     background-image: none;
-    background-color: #52B54B;
+    background-color: #52b54b;
 }
 
 /* Polyfill */
 .itemProgressBar[aria-valuenow]:before {
     border-radius: 0;
     background-image: none;
-    background-color: #52B54B;
+    background-color: #52b54b;
 }
 
 .itemProgressBar {
@@ -154,7 +155,6 @@ body {
 .detailInfo p {
     margin: 10px 0;
 }
-
 
 #detailRating {
     margin: -4px 0 0;
@@ -228,18 +228,19 @@ body {
 }
 
 .metascorehigh {
-    background-color: rgba(102, 204, 51, .7);
+    background-color: rgba(102, 204, 51, 0.7);
 }
 
 .metascoremid {
-    background-color: rgba(255, 204, 51, .7);
+    background-color: rgba(255, 204, 51, 0.7);
 }
 
 .metascorelow {
-    background-color: rgba(240, 0, 0, .7);
+    background-color: rgba(240, 0, 0, 0.7);
 }
 
-.criticRating + .metascore, .starRatingValue + .metascore {
+.criticRating + .metascore,
+.starRatingValue + .metascore {
     margin-left: 1em;
 }
 
@@ -255,7 +256,7 @@ body {
 }
 
 #waiting-container {
-    background-color: rgba(15, 15,15, .82);
+    background-color: rgba(15, 15, 15, 0.82);
 }
 
 .waitingContent {
@@ -269,7 +270,8 @@ body {
     text-align: center;
 }
 
-#waiting-container h1, #waiting-container h2 {
+#waiting-container h1,
+#waiting-container h2 {
     margin: 25px 0;
 }
 
@@ -278,7 +280,8 @@ body {
     font-weight: 300;
 }
 
-#waiting-container h2, .error-container h2 {
+#waiting-container h2,
+.error-container h2 {
     font-size: 30px;
     font-weight: 300;
 }
@@ -300,10 +303,10 @@ body {
 }
 
 cast-media-player {
-    --spinner-image: url("../img/spinner.png");
-    --playback-logo-image: url("../img/banner.png");
+    --spinner-image: url('../img/spinner.png');
+    --playback-logo-image: url('../img/banner.png');
 
-    --watermark-image: url("../img/banner-reverse.png");
+    --watermark-image: url('../img/banner-reverse.png');
     --watermark-size: 225px;
     --watermark-position: top right;
 
