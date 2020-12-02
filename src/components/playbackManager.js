@@ -197,7 +197,7 @@ export class playbackManager {
         if (item.BackdropImageTags && item.BackdropImageTags.length) {
             backdropUrl =
                 $scope.serverAddress +
-                '/emby/Items/' +
+                '/Items/' +
                 item.Id +
                 '/Images/Backdrop/0?tag=' +
                 item.BackdropImageTags[0];
@@ -208,7 +208,7 @@ export class playbackManager {
         ) {
             backdropUrl =
                 $scope.serverAddress +
-                '/emby/Items/' +
+                '/Items/' +
                 item.ParentBackdropItemId +
                 '/Images/Backdrop/0?tag=' +
                 item.ParentBackdropImageTags[0];

@@ -222,28 +222,28 @@ export function getMetadata(item) {
     if (item.SeriesPrimaryImageTag) {
         posterUrl =
             $scope.serverAddress +
-            '/emby/Items/' +
+            '/Items/' +
             item.SeriesId +
             '/Images/Primary?tag=' +
             item.SeriesPrimaryImageTag;
     } else if (item.AlbumPrimaryImageTag) {
         posterUrl =
             $scope.serverAddress +
-            '/emby/Items/' +
+            '/Items/' +
             item.AlbumId +
             '/Images/Primary?tag=' +
             item.AlbumPrimaryImageTag;
     } else if (item.PrimaryImageTag) {
         posterUrl =
             $scope.serverAddress +
-            '/emby/Items/' +
+            '/Items/' +
             item.Id +
             '/Images/Primary?tag=' +
             item.PrimaryImageTag;
     } else if (item.ImageTags.Primary) {
         posterUrl =
             $scope.serverAddress +
-            '/emby/Items/' +
+            '/Items/' +
             item.Id +
             '/Images/Primary?tag=' +
             item.ImageTags.Primary;
