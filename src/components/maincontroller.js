@@ -577,15 +577,7 @@ export function onStopPlayerBeforePlaybackDone(item, options) {
 }
 
 export function getDeviceProfile(maxBitrate) {
-    let transcodingAudioChannels = document
-        .createElement('video')
-        .canPlayType('audio/mp4; codecs="ac-3"')
-        .replace(/no/, '')
-        ? 6
-        : 2;
-
     return deviceProfileBuilder({
-        audioChannels: transcodingAudioChannels,
         enableHls: true,
         bitrateSetting: maxBitrate
     });

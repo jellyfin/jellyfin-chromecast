@@ -2,6 +2,18 @@ import { deviceIds } from './castDevices';
 
 const castContext = cast.framework.CastReceiverContext.getInstance();
 
+export function hasEAC3Support(): boolean {
+    return castContext.canDisplayType('audio/mp4', 'ec-3');
+}
+
+export function hasAC3Support(): boolean {
+    return castContext.canDisplayType('audio/mp4', 'ac-3');
+}
+
+export function hasSurroundSupport(): boolean {
+    return hasAC3Support();
+}
+
 export function hasH265Support(): boolean {
     return castContext.canDisplayType('video/mp4', 'hev1.1.6.L150.B0');
 }
@@ -121,7 +133,16 @@ export function getSupportedMP4VideoCodecs(): Array<string> {
  * @returns Supported MP4 audio codecs.
  */
 export function getSupportedMP4AudioCodecs(): Array<string> {
-    return ['aac', 'mp3'];
+    const codecs = [];
+    if (hasEAC3Support()) {
+        codecs.push('eac3');
+    }
+    if (hasAC3Support()) {
+        codecs.push('ac3');
+    }
+    codecs.push('aac');
+    codecs.push('mp3');
+    return codecs;
 }
 
 /**

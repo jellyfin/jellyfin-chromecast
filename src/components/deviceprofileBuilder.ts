@@ -16,6 +16,7 @@ import { ProfileConditionValue } from '../api/generated/models/profile-condition
 import { deviceIds, getActiveDeviceId } from './castDevices';
 
 import {
+    hasSurroundSupport,
     hasTextTrackSupport,
     hasVP8Support,
     hasVP9Support,
@@ -33,7 +34,6 @@ import {
 } from './codecSupportHelper';
 
 interface ProfileOptions {
-    audioChannels: number;
     enableHls: boolean;
     bitrateSetting?: number;
 }
@@ -266,16 +266,17 @@ function getCodecProfiles(): Array<CodecProfile> {
 function getTranscodingProfiles(): Array<TranscodingProfile> {
     const TranscodingProfiles: Array<TranscodingProfile> = [];
 
-    const physicalAudioChannels: number = profileOptions.audioChannels ? 6 : 2;
+    const hlsAudioCodecs = getSupportedHLSAudioCodecs();
+    const audioChannels: number = hasSurroundSupport() ? 6 : 2;
 
     if (profileOptions.enableHls !== false) {
         TranscodingProfiles.push({
             Container: 'ts',
             Type: DlnaProfileType.Audio,
-            AudioCodec: 'aac',
+            AudioCodec: hlsAudioCodecs.join(','),
             Context: EncodingContext.Streaming,
             Protocol: 'hls',
-            MaxAudioChannels: physicalAudioChannels.toString(),
+            MaxAudioChannels: audioChannels.toString(),
             MinSegments: 1,
             BreakOnNonKeyFrames: false
         });
@@ -283,6 +284,7 @@ function getTranscodingProfiles(): Array<TranscodingProfile> {
 
     const supportedAudio = getSupportedAudioCodecs();
 
+    // audio only profiles here
     for (const audioFormat of supportedAudio) {
         TranscodingProfiles.push({
             Container: audioFormat,
@@ -290,7 +292,7 @@ function getTranscodingProfiles(): Array<TranscodingProfile> {
             AudioCodec: audioFormat,
             Context: EncodingContext.Streaming,
             Protocol: 'http',
-            MaxAudioChannels: physicalAudioChannels.toString()
+            MaxAudioChannels: audioChannels.toString()
         });
     }
 
@@ -299,21 +301,20 @@ function getTranscodingProfiles(): Array<TranscodingProfile> {
         return TranscodingProfiles;
     }
 
-    const hlsVideoAudioCodecs = getSupportedHLSAudioCodecs();
     const hlsVideoCodecs = getSupportedHLSVideoCodecs();
     if (
         hlsVideoCodecs.length &&
-        hlsVideoAudioCodecs.length &&
+        hlsAudioCodecs.length &&
         profileOptions.enableHls !== false
     ) {
         TranscodingProfiles.push({
             Container: 'ts',
             Type: DlnaProfileType.Video,
-            AudioCodec: hlsVideoAudioCodecs.join(','),
+            AudioCodec: hlsAudioCodecs.join(','),
             VideoCodec: hlsVideoCodecs.join(','),
             Context: EncodingContext.Streaming,
             Protocol: 'hls',
-            MaxAudioChannels: physicalAudioChannels.toString(),
+            MaxAudioChannels: audioChannels.toString(),
             MinSegments: 1,
             BreakOnNonKeyFrames: false
         });
@@ -329,7 +330,7 @@ function getTranscodingProfiles(): Array<TranscodingProfile> {
             Protocol: 'http',
             // If audio transcoding is needed, limit channels to number of physical audio channels
             // Trying to transcode to 5 channels when there are only 2 speakers generally does not sound good
-            MaxAudioChannels: physicalAudioChannels.toString()
+            MaxAudioChannels: audioChannels.toString()
         });
     }
 
@@ -362,7 +363,7 @@ function getSubtitleProfiles(): Array<SubtitleProfile> {
  * @param Profile options
  * @returns Device profile.
  */
-export function getDeviceProfile(options: ProfileOptions = {}): DeviceProfile {
+export function getDeviceProfile(options: ProfileOptions): DeviceProfile {
     profileOptions = options;
     currentDeviceId = getActiveDeviceId();
 
