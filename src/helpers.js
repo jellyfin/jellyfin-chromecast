@@ -439,15 +439,13 @@ export function createStreamInfo(item, mediaSource, startPosition) {
     var subtitleTracks = [];
     subtitleStreams.forEach(function (subtitleStream) {
         let subStreamCodec = subtitleStream.Codec.toLowerCase();
-        if (
-            subStreamCodec !== 'vtt' &&
-            subStreamCodec !== 'webvtt' &&
-            subStreamCodec === 'srt' &&
-            subtitleStream.DeliveryMethod !== 'External'
-        ) {
+        if (subtitleStream.DeliveryUrl === undefined) {
             /* The CAF v3 player only supports vtt currently,
-            SRT subs can be "transcoded" to vtt by jellyfin.
-            Support for more could be added with a custom implementation */
+             * SRT subs can be "transcoded" to vtt by jellyfin.
+             * The server will do that in accordance with the device profiles and
+             * give us a DeliveryUrl if that is the case.
+             * Support for more could be added with a custom implementation
+             **/
             return;
         }
         var textStreamUrl = subtitleStream.IsExternalUrl
