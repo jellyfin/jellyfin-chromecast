@@ -2,7 +2,6 @@ const path = require('path');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const CopyPlugin = require('copy-webpack-plugin');
 const packagejson = require('./package.json');
 
 const config = {
@@ -18,13 +17,11 @@ const config = {
     },
     plugins: [
         new CleanWebpackPlugin(),
-        new CopyPlugin({
-            patterns: [{ from: 'favicon.ico', to: '.' }]
-        }),
         new HtmlWebpackPlugin({
             filename: 'index.html',
             template: 'index.html',
-            hash: false
+            hash: false,
+            favicon: 'favicon.ico'
         })
     ],
     module: {
