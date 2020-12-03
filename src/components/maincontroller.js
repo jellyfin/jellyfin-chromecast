@@ -484,8 +484,6 @@ export function changeStream(ticks, params) {
 window.castReceiverContext.addCustomMessageListener(
     'urn:x-cast:com.connectsdk',
     function (evt) {
-        console.log('Playlist message: ' + JSON.stringify(evt));
-
         var data = evt.data;
 
         // Apparently chromium likes to pass it as json, not as object.
@@ -500,6 +498,7 @@ window.castReceiverContext.addCustomMessageListener(
         // TODO set it somewhere better perhaps
         window.senderId = evt.senderId;
 
+        console.log('Received message: ' + JSON.stringify(data));
         processMessage(data);
     }
 );
