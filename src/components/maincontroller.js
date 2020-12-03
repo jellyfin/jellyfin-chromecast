@@ -586,8 +586,9 @@ export function getDeviceProfile(maxBitrate) {
         : 2;
 
     return deviceProfileBuilder({
-        supportsCustomSeeking: true,
-        audioChannels: transcodingAudioChannels
+        audioChannels: transcodingAudioChannels,
+        enableHls: true,
+        bitrateSetting: maxBitrate
     });
 }
 

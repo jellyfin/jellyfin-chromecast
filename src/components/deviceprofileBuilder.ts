@@ -33,8 +33,8 @@ import {
 } from './codecSupportHelper';
 
 interface ProfileOptions {
-    audioChannels?: number;
-    enableHls?: boolean;
+    audioChannels: number;
+    enableHls: boolean;
     bitrateSetting?: number;
 }
 
