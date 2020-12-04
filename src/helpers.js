@@ -354,7 +354,7 @@ export function createStreamInfo(item, mediaSource, startPosition) {
         } else if (mediaSource.SupportsDirectStream) {
             mediaUrl = getUrl(
                 item.serverAddress,
-                'Videos/' + item.Id + '/stream.' + mediaSource.Container
+                'videos/' + item.Id + '/stream.' + mediaSource.Container
             );
             mediaUrl += '?mediaSourceId=' + mediaSource.Id;
             mediaUrl += '&api_key=' + item.accessToken;
