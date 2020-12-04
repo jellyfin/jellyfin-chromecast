@@ -34,10 +34,7 @@ import { JellyfinApi } from './jellyfinApi';
 window.castReceiverContext = cast.framework.CastReceiverContext.getInstance();
 window.mediaManager = window.castReceiverContext.getPlayerManager();
 
-const playbackMgr = new playbackManager(
-    window.castReceiverContext,
-    window.mediaManager
-);
+const playbackMgr = new playbackManager(window.mediaManager);
 
 var init = function () {
     resetPlaybackScope($scope);
@@ -276,7 +273,6 @@ export function processMessage(data) {
 
     if (!cmdHandler) {
         window.commandHandler = new commandHandler(
-            window.castReceiverContext,
             window.mediaManager,
             playbackMgr
         );

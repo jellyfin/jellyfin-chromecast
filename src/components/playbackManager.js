@@ -31,9 +31,8 @@ import {
 import { JellyfinApi } from './jellyfinApi';
 
 export class playbackManager {
-    constructor(castContext, playerManager) {
+    constructor(playerManager) {
         // Parameters
-        this.castContext = castContext;
         this.playerManager = playerManager;
 
         // Properties
