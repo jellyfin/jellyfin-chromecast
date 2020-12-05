@@ -35,7 +35,7 @@ import {
 
 interface ProfileOptions {
     enableHls: boolean;
-    bitrateSetting?: number;
+    bitrateSetting: number;
 }
 
 let profileOptions: ProfileOptions;
@@ -367,13 +367,14 @@ export function getDeviceProfile(options: ProfileOptions): DeviceProfile {
     profileOptions = options;
     currentDeviceId = getActiveDeviceId();
 
-    const bitrateSetting = options.bitrateSetting || getMaxBitrateSupport();
-
     // MaxStaticBitrate seems to be for offline sync only
     const profile: DeviceProfile = {
-        MaxStreamingBitrate: bitrateSetting,
-        MaxStaticBitrate: 0,
-        MusicStreamingTranscodingBitrate: Math.min(bitrateSetting, 192000)
+        MaxStreamingBitrate: options.bitrateSetting,
+        MaxStaticBitrate: options.bitrateSetting,
+        MusicStreamingTranscodingBitrate: Math.min(
+            options.bitrateSetting,
+            192000
+        )
     };
 
     profile.DirectPlayProfiles = getDirectPlayProfiles();
