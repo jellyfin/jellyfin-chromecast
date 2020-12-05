@@ -120,7 +120,7 @@ export class playbackManager {
         $scope.isChangingStream = false;
         setAppStatus('loading');
 
-        const maxBitrate = await getMaxBitrate(item.MediaType);
+        const maxBitrate = await getMaxBitrate();
         const deviceProfile = getDeviceProfile(maxBitrate);
         const playbackInfo = await getPlaybackInfo(
             item,

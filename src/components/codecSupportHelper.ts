@@ -58,6 +58,7 @@ export function hasVP9Support(): boolean {
 export function getMaxBitrateSupport(): number {
     // FIXME: We should get this dynamically or hardcode this to values
     // we see fit for each Cast device. More testing is needed.
+    // 120Mb/s ?
     return 120000000;
 }
 

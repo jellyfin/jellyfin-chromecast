@@ -31,6 +31,8 @@ import {
     tagItems
 } from '../helpers';
 
+import { getMaxBitrateSupport } from './codecSupportHelper';
+
 import { commandHandler } from './commandHandler';
 import { playbackManager } from './playbackManager';
 
@@ -222,7 +224,7 @@ window.mediaManager.addEventListener(
 console.log('Application is ready, starting system');
 
 export function reportDeviceCapabilities() {
-    getMaxBitrate('Video').then((maxBitrate) => {
+    getMaxBitrate().then((maxBitrate) => {
         let capabilitiesUrl =
             $scope.serverAddress + '/Sessions/Capabilities/Full';
         let deviceProfile = getDeviceProfile(maxBitrate);
@@ -422,9 +424,8 @@ export function changeStream(ticks, params) {
     var liveStreamId = $scope.liveStreamId;
 
     var item = $scope.item;
-    var mediaType = item.MediaType;
 
-    getMaxBitrate(mediaType).then(async (maxBitrate) => {
+    getMaxBitrate().then(async (maxBitrate) => {
         const deviceProfile = getDeviceProfile(maxBitrate);
         const audioStreamIndex =
             params.AudioStreamIndex == null
@@ -585,10 +586,11 @@ export function getDeviceProfile(maxBitrate) {
 
 var lastBitrateDetect = 0;
 var detectedBitrate = 0;
-export function getMaxBitrate(mediaType) {
+export function getMaxBitrate() {
     console.log('getMaxBitrate');
 
     return new Promise(function (resolve, reject) {
+        // The client can set this number
         if (window.MaxBitrate) {
             console.log('bitrate is set to ' + window.MaxBitrate);
 
@@ -607,12 +609,6 @@ export function getMaxBitrate(mediaType) {
             return;
         }
 
-        if (mediaType != 'Video') {
-            // We don't need to bother with bitrate detection for music
-            resolve(window.DefaultMaxBitrate);
-            return;
-        }
-
         console.log('detecting bitrate');
 
         detectBitrate($scope).then(
@@ -625,9 +621,9 @@ export function getMaxBitrate(mediaType) {
             },
             function () {
                 console.log(
-                    'Error detecting bitrate, will return default value.'
+                    'Error detecting bitrate, will return device maximum.'
                 );
-                resolve(window.DefaultMaxBitrate);
+                resolve(getMaxBitrateSupport());
             }
         );
     });
