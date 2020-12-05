@@ -267,7 +267,7 @@ function getTranscodingProfiles(): Array<TranscodingProfile> {
     const TranscodingProfiles: Array<TranscodingProfile> = [];
 
     const hlsAudioCodecs = getSupportedHLSAudioCodecs();
-    const audioChannels: number = hasSurroundSupport() ? 6 : 2;
+    const audioChannels: number = hasSurroundSupport(currentDeviceId) ? 6 : 2;
 
     if (profileOptions.enableHls !== false) {
         TranscodingProfiles.push({

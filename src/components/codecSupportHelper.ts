@@ -3,15 +3,36 @@ import { deviceIds } from './castDevices';
 const castContext = cast.framework.CastReceiverContext.getInstance();
 
 export function hasEAC3Support(): boolean {
-    return castContext.canDisplayType('audio/mp4', 'ec-3');
+    // Some error causes this not to work at all
+    //return castContext.canDisplayType('audio/mp4', 'ec-3');
+    return false;
 }
 
 export function hasAC3Support(): boolean {
-    return castContext.canDisplayType('audio/mp4', 'ac-3');
+    // Some error causes this not to work at all
+    //return castContext.canDisplayType('audio/mp4', 'ac-3');
+    return false;
 }
 
-export function hasSurroundSupport(): boolean {
+export function hasSurroundSupport(deviceId: number): boolean {
+    // AC-3 in this client is broken. The cause is not known yet.
+    // However, the device does report correctly in this check.
+    // We can use that to estimate if we can send AAC 6ch.
+
+    // From my testing:
+    // GEN1+GEN2+GEN3 can only do 2.0 when AC3 is lacking.
+    // AUDIO has toslink at most, which doesn't do pcm 6ch.
+    // Forums indicate that they only support the passthrough option across the lineup.
+    // See https://support.google.com/chromecast/thread/362511
+
+    // This will turn on surround support if passthrough is available.
     return hasAC3Support();
+
+    // If there are cast devices that can decode 6ch audio:
+    // We cannot check if the connected system supports pcm 6ch, but we can check for ac-3.
+    // Sadly there are some situations (toslink) that supports ac-3 but not pcm 6ch.
+    // In those cases we will rely on chromecast downmixing.
+    //return castContext.canDisplayType('audio/mp4', 'ac-3');
 }
 
 export function hasH265Support(): boolean {
