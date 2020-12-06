@@ -1,9 +1,9 @@
-import { deviceIds } from "./castDevices";
+import { deviceIds } from './castDevices';
 
 const castContext = cast.framework.CastReceiverContext.getInstance();
 
 export function hasH265Support(): boolean {
-    return castContext.canDisplayType("video/mp4", "hev1.1.6.L150.B0");
+    return castContext.canDisplayType('video/mp4', 'hev1.1.6.L150.B0');
 }
 
 export function hasTextTrackSupport(deviceId: number): boolean {
@@ -11,11 +11,11 @@ export function hasTextTrackSupport(deviceId: number): boolean {
 }
 
 export function hasVP8Support(): boolean {
-    return castContext.canDisplayType("video/webm", "vp8");
+    return castContext.canDisplayType('video/webm', 'vp8');
 }
 
 export function hasVP9Support(): boolean {
-    return castContext.canDisplayType("video/webm", "vp9");
+    return castContext.canDisplayType('video/webm', 'vp9');
 }
 
 /**
@@ -55,10 +55,10 @@ export function getMaxWidthSupport(deviceId: number): number {
  */
 export function getH26xProfileSupport(deviceId: number): string {
     // These are supported by all Cast devices, excluding audio only devices.
-    let h26xProfiles = "high|main|baseline|constrained baseline";
+    let h26xProfiles = 'high|main|baseline|constrained baseline';
 
     if (deviceId === deviceIds.ULTRA || deviceId === deviceIds.CCGTV) {
-        h26xProfiles += "|high 10";
+        h26xProfiles += '|high 10';
     }
 
     return h26xProfiles;
@@ -91,11 +91,11 @@ export function getH26xLevelSupport(deviceId: number): number {
 export function getSupportedVPXVideoCodecs(): Array<string> {
     const codecs = [];
     if (hasVP8Support()) {
-        codecs.push("VP8");
+        codecs.push('VP8');
     }
 
     if (hasVP9Support()) {
-        codecs.push("VP9");
+        codecs.push('VP9');
     }
 
     return codecs;
@@ -106,11 +106,11 @@ export function getSupportedVPXVideoCodecs(): Array<string> {
  * @returns Supported MP4 video codecs.
  */
 export function getSupportedMP4VideoCodecs(): Array<string> {
-    const codecs = ["h264"];
+    const codecs = ['h264'];
 
     if (hasH265Support()) {
-        codecs.push("h265");
-        codecs.push("hevc");
+        codecs.push('h265');
+        codecs.push('hevc');
     }
 
     return codecs;
@@ -121,7 +121,7 @@ export function getSupportedMP4VideoCodecs(): Array<string> {
  * @returns Supported MP4 audio codecs.
  */
 export function getSupportedMP4AudioCodecs(): Array<string> {
-    return ["aac", "mp3"];
+    return ['aac', 'mp3'];
 }
 
 /**
@@ -131,7 +131,7 @@ export function getSupportedMP4AudioCodecs(): Array<string> {
 export function getSupportedHLSVideoCodecs(): Array<string> {
     // Currently the server does not support fmp4 which is required
     // by the HLS spec for streaming H.265 video.
-    return ["h264"];
+    return ['h264'];
 }
 
 /**
@@ -148,7 +148,7 @@ export function getSupportedHLSAudioCodecs(): Array<string> {
  * @returns All supported WebM audio codecs.
  */
 export function getSupportedWebMAudioCodecs(): Array<string> {
-    return ["vorbis", "opus"];
+    return ['vorbis', 'opus'];
 }
 
 /**
@@ -156,5 +156,5 @@ export function getSupportedWebMAudioCodecs(): Array<string> {
  * @returns All supported WebM audio codecs.
  */
 export function getSupportedAudioCodecs(): Array<string> {
-    return ["opus", "mp3", "aac", "flac", "webma", "wav"];
+    return ['opus', 'mp3', 'aac', 'flac', 'webma', 'wav'];
 }

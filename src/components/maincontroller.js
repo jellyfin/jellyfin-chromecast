@@ -7,10 +7,10 @@ import {
     displayUserInfo,
     getPlaybackInfo,
     stopActiveEncodings,
-    detectBitrate,
-} from "./jellyfinActions";
-import { ajax } from "./fetchhelper";
-import { getDeviceProfile as deviceProfileBuilder } from "./deviceprofileBuilder";
+    detectBitrate
+} from './jellyfinActions';
+import { ajax } from './fetchhelper';
+import { getDeviceProfile as deviceProfileBuilder } from './deviceprofileBuilder';
 import {
     getUrl,
     getCurrentPositionTicks,
@@ -29,20 +29,25 @@ import {
     broadcastConnectionErrorMessage,
     cleanName,
     tagItems
-} from "../helpers";
+} from '../helpers';
 
-import { commandHandler } from "./commandHandler";
-import { playbackManager } from "./playbackManager";
+import { commandHandler } from './commandHandler';
+import { playbackManager } from './playbackManager';
 
 window.castReceiverContext = cast.framework.CastReceiverContext.getInstance();
 window.mediaManager = window.castReceiverContext.getPlayerManager();
-window.mediaManager.addEventListener(cast.framework.events.category.CORE,
-    event => {
-        console.log("Core event: " + event.type);
+window.mediaManager.addEventListener(
+    cast.framework.events.category.CORE,
+    (event) => {
+        console.log('Core event: ' + event.type);
         console.log(event);
-    });
+    }
+);
 
-const playbackMgr = new playbackManager(window.castReceiverContext, window.mediaManager);
+const playbackMgr = new playbackManager(
+    window.castReceiverContext,
+    window.mediaManager
+);
 
 const playbackConfig = new cast.framework.PlaybackConfig();
 // Set the player to start playback as soon as there are five seconds of
@@ -50,7 +55,6 @@ const playbackConfig = new cast.framework.PlaybackConfig();
 playbackConfig.autoResumeDuration = 5;
 
 var init = function () {
-
     resetPlaybackScope($scope);
 };
 
@@ -80,7 +84,6 @@ export function onMediaElementTimeUpdate(e) {
 }
 
 export function onMediaElementPause() {
-
     if ($scope.isChangingStream) {
         return;
     }
@@ -89,7 +92,6 @@ export function onMediaElementPause() {
 }
 
 export function onMediaElementPlaying() {
-
     if ($scope.isChangingStream) {
         return;
     }
@@ -97,7 +99,6 @@ export function onMediaElementPlaying() {
 }
 
 export function onMediaElementVolumeChange() {
-
     var volume = window.mediaElement.volume;
     window.VolumeInfo.Level = volume * 100;
     window.VolumeInfo.IsMuted = volume == 0;
@@ -106,17 +107,41 @@ export function onMediaElementVolumeChange() {
 }
 
 export function enableTimeUpdateListener() {
-    window.mediaManager.addEventListener(cast.framework.events.EventType.TIME_UPDATE, onMediaElementTimeUpdate);
-    window.mediaManager.addEventListener(cast.framework.events.EventType.REQUEST_VOLUME_CHANGE, onMediaElementVolumeChange);
-    window.mediaManager.addEventListener(cast.framework.events.EventType.PAUSE, onMediaElementPause);
-    window.mediaManager.addEventListener(cast.framework.events.EventType.PLAYING, onMediaElementPlaying);
+    window.mediaManager.addEventListener(
+        cast.framework.events.EventType.TIME_UPDATE,
+        onMediaElementTimeUpdate
+    );
+    window.mediaManager.addEventListener(
+        cast.framework.events.EventType.REQUEST_VOLUME_CHANGE,
+        onMediaElementVolumeChange
+    );
+    window.mediaManager.addEventListener(
+        cast.framework.events.EventType.PAUSE,
+        onMediaElementPause
+    );
+    window.mediaManager.addEventListener(
+        cast.framework.events.EventType.PLAYING,
+        onMediaElementPlaying
+    );
 }
 
 export function disableTimeUpdateListener() {
-    window.mediaManager.removeEventListener(cast.framework.events.EventType.TIME_UPDATE, onMediaElementTimeUpdate);
-    window.mediaManager.removeEventListener(cast.framework.events.EventType.REQUEST_VOLUME_CHANGE, onMediaElementVolumeChange);
-    window.mediaManager.removeEventListener(cast.framework.events.EventType.PAUSE, onMediaElementPause);
-    window.mediaManager.removeEventListener(cast.framework.events.EventType.PLAYING, onMediaElementPlaying);
+    window.mediaManager.removeEventListener(
+        cast.framework.events.EventType.TIME_UPDATE,
+        onMediaElementTimeUpdate
+    );
+    window.mediaManager.removeEventListener(
+        cast.framework.events.EventType.REQUEST_VOLUME_CHANGE,
+        onMediaElementVolumeChange
+    );
+    window.mediaManager.removeEventListener(
+        cast.framework.events.EventType.PAUSE,
+        onMediaElementPause
+    );
+    window.mediaManager.removeEventListener(
+        cast.framework.events.EventType.PLAYING,
+        onMediaElementPlaying
+    );
 }
 
 enableTimeUpdateListener();
@@ -128,7 +153,6 @@ window.addEventListener('beforeunload', function () {
 });
 
 mgr.defaultOnPlay = function (event) {
-
     play($scope, event);
     reportPlaybackProgress($scope, getReportingParams($scope));
 };
@@ -143,11 +167,13 @@ mgr.defaultOnStop = function (event) {
     playbackMgr.stop();
 };
 
-mgr.addEventListener(cast.framework.events.EventType.MEDIA_FINISHED, mgr.defaultOnStop);
+mgr.addEventListener(
+    cast.framework.events.EventType.MEDIA_FINISHED,
+    mgr.defaultOnStop
+);
 mgr.addEventListener(cast.framework.events.EventType.ABORT, mgr.defaultOnStop);
 
 mgr.addEventListener(cast.framework.events.EventType.ENDED, function () {
-
     // Ignore
     if ($scope.isChangingStream) {
         return;
@@ -159,34 +185,50 @@ mgr.addEventListener(cast.framework.events.EventType.ENDED, function () {
     if (!playNextItem()) {
         window.playlist = [];
         window.currentPlaylistIndex = -1;
-        displayUserInfo($scope, $scope.serverAddress, $scope.accessToken, $scope.userId);
+        displayUserInfo(
+            $scope,
+            $scope.serverAddress,
+            $scope.accessToken,
+            $scope.userId
+        );
     }
 });
 
-window.castReceiverContext.addEventListener(cast.framework.system.EventType.SYSTEM_VOLUME_CHANGED, function (event) {
-    console.log("### Cast Receiver Manager - System Volume Changed : " + JSON.stringify(event.data));
+window.castReceiverContext.addEventListener(
+    cast.framework.system.EventType.SYSTEM_VOLUME_CHANGED,
+    function (event) {
+        console.log(
+            '### Cast Receiver Manager - System Volume Changed : ' +
+                JSON.stringify(event.data)
+        );
 
-    if ($scope.userId != null) {
-        reportEvent('volumechange', true);
+        if ($scope.userId != null) {
+            reportEvent('volumechange', true);
+        }
     }
-});
+);
 
 // Set the active subtitle track once the player has loaded
 window.mediaManager.addEventListener(
-    cast.framework.events.EventType.PLAYER_LOAD_COMPLETE, () => {
-        setTextTrack(window.mediaManager.getMediaInformation().customData.subtitleStreamIndex);
+    cast.framework.events.EventType.PLAYER_LOAD_COMPLETE,
+    () => {
+        setTextTrack(
+            window.mediaManager.getMediaInformation().customData
+                .subtitleStreamIndex
+        );
     }
 );
 
 console.log('Application is ready, starting system');
 
 export function reportDeviceCapabilities() {
-    getMaxBitrate("Video").then((maxBitrate) => {
-        let capabilitiesUrl = $scope.serverAddress + "/Sessions/Capabilities/Full";
+    getMaxBitrate('Video').then((maxBitrate) => {
+        let capabilitiesUrl =
+            $scope.serverAddress + '/Sessions/Capabilities/Full';
         let deviceProfile = getDeviceProfile(maxBitrate);
 
         let capabilities = {
-            PlayableMediaTypes: ["Audio", "Video"],
+            PlayableMediaTypes: ['Audio', 'Video'],
             SupportsPersistentIdentifier: false,
             SupportsMediaControl: true,
             DeviceProfile: deviceProfile
@@ -203,14 +245,18 @@ export function reportDeviceCapabilities() {
 }
 
 export function processMessage(data) {
-
-    if (!data.command || !data.serverAddress || !data.userId || !data.accessToken) {
-
+    if (
+        !data.command ||
+        !data.serverAddress ||
+        !data.userId ||
+        !data.accessToken
+    ) {
         console.log('Invalid message sent from sender. Sending error response');
 
         broadcastToMessageBus({
             type: 'error',
-            message: "Missing one or more required params - command,options,userId,accessToken,serverAddress"
+            message:
+                'Missing one or more required params - command,options,userId,accessToken,serverAddress'
         });
         return;
     }
@@ -230,9 +276,12 @@ export function processMessage(data) {
 
     data.options = data.options || {};
     var cleanReceiverName = cleanName(data.receiverName || '');
-    window.deviceInfo.deviceName = cleanReceiverName || window.deviceInfo.deviceName;
+    window.deviceInfo.deviceName =
+        cleanReceiverName || window.deviceInfo.deviceName;
     // deviceId just needs to be unique-ish
-    window.deviceInfo.deviceId = cleanReceiverName ? btoa(cleanReceiverName) : window.deviceInfo.deviceId;
+    window.deviceInfo.deviceId = cleanReceiverName
+        ? btoa(cleanReceiverName)
+        : window.deviceInfo.deviceId;
 
     if (data.maxBitrate) {
         window.MaxBitrate = data.maxBitrate;
@@ -243,7 +292,11 @@ export function processMessage(data) {
     let cmdHandler = window.commandHandler;
 
     if (!cmdHandler) {
-        window.commandHandler = new commandHandler(window.castReceiverContext, window.mediaManager, playbackMgr);
+        window.commandHandler = new commandHandler(
+            window.castReceiverContext,
+            window.mediaManager,
+            playbackMgr
+        );
         cmdHandler = window.commandHandler;
     }
 
@@ -253,23 +306,39 @@ export function processMessage(data) {
         var report = function () {
             reportPlaybackProgress($scope, getReportingParams($scope));
         };
-        reportPlaybackProgress($scope, getReportingParams($scope), true, window.reportEventType);
+        reportPlaybackProgress(
+            $scope,
+            getReportingParams($scope),
+            true,
+            window.reportEventType
+        );
         setTimeout(report, 100);
         setTimeout(report, 500);
     }
 }
 
 export function reportEvent(name, reportToServer) {
-    reportPlaybackProgress($scope, getReportingParams($scope), reportToServer, name);
+    reportPlaybackProgress(
+        $scope,
+        getReportingParams($scope),
+        reportToServer,
+        name
+    );
 }
 
 export function setSubtitleStreamIndex($scope, index, serverAddress) {
     console.log('setSubtitleStreamIndex. index: ' + index);
 
-    var currentSubtitleStream = $scope.mediaSource.MediaStreams.filter(function (m) {
-        return m.Index == $scope.subtitleStreamIndex && m.Type == 'Subtitle';
-    })[0];
-    var currentDeliveryMethod = currentSubtitleStream ? currentSubtitleStream.DeliveryMethod : null;
+    var currentSubtitleStream = $scope.mediaSource.MediaStreams.filter(
+        function (m) {
+            return (
+                m.Index == $scope.subtitleStreamIndex && m.Type == 'Subtitle'
+            );
+        }
+    )[0];
+    var currentDeliveryMethod = currentSubtitleStream
+        ? currentSubtitleStream.DeliveryMethod
+        : null;
 
     if (index == -1 || index == null) {
         // Need to change the stream to turn off the subs
@@ -291,15 +360,23 @@ export function setSubtitleStreamIndex($scope, index, serverAddress) {
     var subtitleStream = getStreamByIndex(mediaStreams, 'Subtitle', index);
 
     if (!subtitleStream) {
-        console.log('setSubtitleStreamIndex error condition - subtitle stream not found.');
+        console.log(
+            'setSubtitleStreamIndex error condition - subtitle stream not found.'
+        );
         return;
     }
 
-    console.log('setSubtitleStreamIndex DeliveryMethod:' + subtitleStream.DeliveryMethod);
+    console.log(
+        'setSubtitleStreamIndex DeliveryMethod:' + subtitleStream.DeliveryMethod
+    );
 
-    if (subtitleStream.DeliveryMethod == 'External' || currentDeliveryMethod == 'Encode') {
-
-        var textStreamUrl = subtitleStream.IsExternalUrl ? subtitleStream.DeliveryUrl : getUrl(serverAddress, subtitleStream.DeliveryUrl);
+    if (
+        subtitleStream.DeliveryMethod == 'External' ||
+        currentDeliveryMethod == 'Encode'
+    ) {
+        var textStreamUrl = subtitleStream.IsExternalUrl
+            ? subtitleStream.DeliveryUrl
+            : getUrl(serverAddress, subtitleStream.DeliveryUrl);
 
         console.log('Subtitle url: ' + textStreamUrl);
         setTextTrack(index);
@@ -330,8 +407,10 @@ export function changeStream(ticks, params) {
         ticks = parseInt(ticks);
     }
 
-    if (window.mediaManager.getMediaInformation().customData.canClientSeek && params == null) {
-
+    if (
+        window.mediaManager.getMediaInformation().customData.canClientSeek &&
+        params == null
+    ) {
         window.mediaManager.seek(ticks / 10000000);
         reportPlaybackProgress($scope, getReportingParams($scope));
         return;
@@ -347,10 +426,25 @@ export function changeStream(ticks, params) {
 
     getMaxBitrate(mediaType).then(async (maxBitrate) => {
         const deviceProfile = getDeviceProfile(maxBitrate);
-        const audioStreamIndex = params.AudioStreamIndex == null ? $scope.audioStreamIndex : params.AudioStreamIndex;
-        const subtitleStreamIndex = params.SubtitleStreamIndex == null ? $scope.subtitleStreamIndex : params.SubtitleStreamIndex;
+        const audioStreamIndex =
+            params.AudioStreamIndex == null
+                ? $scope.audioStreamIndex
+                : params.AudioStreamIndex;
+        const subtitleStreamIndex =
+            params.SubtitleStreamIndex == null
+                ? $scope.subtitleStreamIndex
+                : params.SubtitleStreamIndex;
 
-        const playbackInformation = await getPlaybackInfo(item, maxBitrate, deviceProfile, ticks, $scope.mediaSourceId, audioStreamIndex, subtitleStreamIndex, liveStreamId);
+        const playbackInformation = await getPlaybackInfo(
+            item,
+            maxBitrate,
+            deviceProfile,
+            ticks,
+            $scope.mediaSourceId,
+            audioStreamIndex,
+            subtitleStreamIndex,
+            liveStreamId
+        );
         if (!validatePlaybackInfoResult(playbackInformation)) {
             return;
         }
@@ -363,7 +457,11 @@ export function changeStream(ticks, params) {
             return;
         }
 
-        const mediaInformation = createMediaInformation(playSessionId, item, streamInfo);
+        const mediaInformation = createMediaInformation(
+            playSessionId,
+            item,
+            streamInfo
+        );
         const loadRequest = new cast.framework.messages.LoadRequestData();
         loadRequest.media = mediaInformation;
         loadRequest.autoplay = true;
@@ -383,18 +481,21 @@ export function changeStream(ticks, params) {
 
 // Create a message handler for the custome namespace channel
 // TODO save namespace somewhere global?
-window.castReceiverContext.addCustomMessageListener('urn:x-cast:com.connectsdk', function (evt) {
-    console.log('Playlist message: ' + JSON.stringify(evt));
+window.castReceiverContext.addCustomMessageListener(
+    'urn:x-cast:com.connectsdk',
+    function (evt) {
+        console.log('Playlist message: ' + JSON.stringify(evt));
 
-    var data = evt.data;
+        var data = evt.data;
 
-    data.options = data.options || {};
-    data.options.senderId = evt.senderId;
-    // TODO set it somewhere better perhaps
-    window.senderId = evt.senderId;
+        data.options = data.options || {};
+        data.options.senderId = evt.senderId;
+        // TODO set it somewhere better perhaps
+        window.senderId = evt.senderId;
 
-    processMessage(data);
-});
+        processMessage(data);
+    }
+);
 
 export function translateItems(data, options, items, method) {
     var callback = function (result) {
@@ -409,12 +510,22 @@ export function translateItems(data, options, items, method) {
     };
 
     var smartTranslate = method != 'PlayNext' && method != 'PlayLast';
-    translateRequestedItems(data.serverAddress, data.accessToken, data.userId, items, smartTranslate).then(callback);
+    translateRequestedItems(
+        data.serverAddress,
+        data.accessToken,
+        data.userId,
+        items,
+        smartTranslate
+    ).then(callback);
 }
 
 export function instantMix(data, options, item) {
-    getInstantMixItems(data.serverAddress, data.accessToken, data.userId, item).then(function (result) {
-
+    getInstantMixItems(
+        data.serverAddress,
+        data.accessToken,
+        data.userId,
+        item
+    ).then(function (result) {
         options.items = result.Items;
         tagItems(options.items, data);
         playbackMgr.playFromOptions(data.options);
@@ -422,7 +533,12 @@ export function instantMix(data, options, item) {
 }
 
 export function shuffle(data, options, item) {
-    getShuffleItems(data.serverAddress, data.accessToken, data.userId, item).then(function (result) {
+    getShuffleItems(
+        data.serverAddress,
+        data.accessToken,
+        data.userId,
+        item
+    ).then(function (result) {
         options.items = result.Items;
         tagItems(options.items, data);
         playbackMgr.playFromOptions(data.options);
@@ -436,47 +552,44 @@ export function queue(items) {
 }
 
 export function onStopPlayerBeforePlaybackDone(item, options) {
-
-    var requestUrl = getUrl(item.serverAddress, 'Users/' + item.userId + '/Items/' + item.Id);
+    var requestUrl = getUrl(
+        item.serverAddress,
+        'Users/' + item.userId + '/Items/' + item.Id
+    );
 
     return ajax({
-
         url: requestUrl,
         headers: getSecurityHeaders(item.accessToken, item.userId),
         dataType: 'json',
         type: 'GET'
-
     }).then(function (data) {
-
         // Attach the custom properties we created like userId, serverAddress, itemId, etc
         extend(data, item);
 
         playbackMgr.playItemInternal(data, options);
-
     }, broadcastConnectionErrorMessage);
 }
 
 export function getDeviceProfile(maxBitrate) {
-
-    let transcodingAudioChannels = document.createElement('video').canPlayType('audio/mp4; codecs="ac-3"').replace(/no/, '') ?
-        6 :
-        2;
+    let transcodingAudioChannels = document
+        .createElement('video')
+        .canPlayType('audio/mp4; codecs="ac-3"')
+        .replace(/no/, '')
+        ? 6
+        : 2;
 
     return deviceProfileBuilder({
         supportsCustomSeeking: true,
         audioChannels: transcodingAudioChannels
     });
-
 }
 
 var lastBitrateDetect = 0;
 var detectedBitrate = 0;
 export function getMaxBitrate(mediaType) {
-
     console.log('getMaxBitrate');
 
     return new Promise(function (resolve, reject) {
-
         if (window.MaxBitrate) {
             console.log('bitrate is set to ' + window.MaxBitrate);
 
@@ -484,8 +597,13 @@ export function getMaxBitrate(mediaType) {
             return;
         }
 
-        if (detectedBitrate && (new Date().getTime() - lastBitrateDetect) < 600000) {
-            console.log('returning previous detected bitrate of ' + detectedBitrate);
+        if (
+            detectedBitrate &&
+            new Date().getTime() - lastBitrateDetect < 600000
+        ) {
+            console.log(
+                'returning previous detected bitrate of ' + detectedBitrate
+            );
             resolve(detectedBitrate);
             return;
         }
@@ -498,26 +616,26 @@ export function getMaxBitrate(mediaType) {
 
         console.log('detecting bitrate');
 
-        detectBitrate($scope).then(function (bitrate) {
+        detectBitrate($scope).then(
+            function (bitrate) {
+                console.log('Max bitrate auto detected to ' + bitrate);
+                lastBitrateDetect = new Date().getTime();
+                detectedBitrate = bitrate;
 
-            console.log('Max bitrate auto detected to ' + bitrate);
-            lastBitrateDetect = new Date().getTime();
-            detectedBitrate = bitrate;
-
-            resolve(detectedBitrate);
-
-        }, function () {
-
-            console.log('Error detecting bitrate, will return default value.');
-            resolve(window.DefaultMaxBitrate);
-        });
+                resolve(detectedBitrate);
+            },
+            function () {
+                console.log(
+                    'Error detecting bitrate, will return default value.'
+                );
+                resolve(window.DefaultMaxBitrate);
+            }
+        );
     });
 }
 
 export function validatePlaybackInfoResult(result) {
-
     if (result.ErrorCode) {
-
         showPlaybackInfoErrorMessage(result.ErrorCode);
         return false;
     }
@@ -526,7 +644,6 @@ export function validatePlaybackInfoResult(result) {
 }
 
 export function showPlaybackInfoErrorMessage(errorCode) {
-
     broadcastToMessageBus({
         type: 'playbackerror',
         message: errorCode
@@ -534,32 +651,32 @@ export function showPlaybackInfoErrorMessage(errorCode) {
 }
 
 export function getOptimalMediaSource(versions) {
-
     var optimalVersion = versions.filter(function (v) {
-
         v.enableDirectPlay = supportsDirectPlay(v);
 
         return v.enableDirectPlay;
-
     })[0];
 
     if (!optimalVersion) {
         optimalVersion = versions.filter(function (v) {
-
             return v.SupportsDirectStream;
-
         })[0];
     }
 
-    return optimalVersion || versions.filter(function (s) {
-        return s.SupportsTranscoding;
-    })[0];
+    return (
+        optimalVersion ||
+        versions.filter(function (s) {
+            return s.SupportsTranscoding;
+        })[0]
+    );
 }
 
 export function supportsDirectPlay(mediaSource) {
-
-    if (mediaSource.SupportsDirectPlay && mediaSource.Protocol == 'Http' && !mediaSource.RequiredHttpHeaders.length) {
-
+    if (
+        mediaSource.SupportsDirectPlay &&
+        mediaSource.Protocol == 'Http' &&
+        !mediaSource.RequiredHttpHeaders.length
+    ) {
         // TODO: Need to verify the host is going to be reachable
         return true;
     }
@@ -586,8 +703,10 @@ export function setTextTrack(index) {
                 var textTrackStyle = new cast.framework.messages.TextTrackStyle();
                 if (subtitleAppearance.dropShadow != null) {
                     // Empty string is DROP_SHADOW
-                    textTrackStyle.edgeType = subtitleAppearance.dropShadow.toUpperCase() || cast.framework.messages.TextTrackEdgeType.DROP_SHADOW;
-                    textTrackStyle.edgeColor = "#000000FF";
+                    textTrackStyle.edgeType =
+                        subtitleAppearance.dropShadow.toUpperCase() ||
+                        cast.framework.messages.TextTrackEdgeType.DROP_SHADOW;
+                    textTrackStyle.edgeColor = '#000000FF';
                 }
 
                 if (subtitleAppearance.font) {
@@ -596,11 +715,12 @@ export function setTextTrack(index) {
 
                 if (subtitleAppearance.textColor) {
                     // Append the transparency, hardcoded to 100%
-                    textTrackStyle.foregroundColor = subtitleAppearance.textColor + "FF";
+                    textTrackStyle.foregroundColor =
+                        subtitleAppearance.textColor + 'FF';
                 }
 
-                if (subtitleAppearance.textBackground === "transparent") {
-                    textTrackStyle.backgroundColor = "#00000000" // RGBA
+                if (subtitleAppearance.textBackground === 'transparent') {
+                    textTrackStyle.backgroundColor = '#00000000'; // RGBA
                 }
 
                 switch (subtitleAppearance.textSize) {
@@ -627,7 +747,7 @@ export function setTextTrack(index) {
             }
         }
     } catch (e) {
-        console.log("Setting subtitle track failed: " + e);
+        console.log('Setting subtitle track failed: ' + e);
     }
 }
 
@@ -650,7 +770,7 @@ export function createMediaInformation(playSessionId, item, streamInfo) {
         canSeek: streamInfo.canSeek,
         canClientSeek: streamInfo.canClientSeek,
         playSessionId: playSessionId
-    }
+    };
 
     mediaInfo.metadata = getMetadata(item);
 
@@ -658,7 +778,9 @@ export function createMediaInformation(playSessionId, item, streamInfo) {
     mediaInfo.tracks = streamInfo.tracks;
 
     if (streamInfo.mediaSource.RunTimeTicks) {
-        mediaInfo.duration = Math.floor(streamInfo.mediaSource.RunTimeTicks / 10000000);
+        mediaInfo.duration = Math.floor(
+            streamInfo.mediaSource.RunTimeTicks / 10000000
+        );
     }
 
     mediaInfo.customData.startPositionTicks = streamInfo.startPosition || 0;
@@ -666,7 +788,8 @@ export function createMediaInformation(playSessionId, item, streamInfo) {
     return mediaInfo;
 }
 
-playbackConfig.supportedCommands = cast.framework.messages.Command.ALL_BASIC_MEDIA;
+playbackConfig.supportedCommands =
+    cast.framework.messages.Command.ALL_BASIC_MEDIA;
 
 // Set the available buttons in the UI controls.
 const controls = cast.framework.ui.Controls.getInstance();

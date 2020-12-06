@@ -1,8 +1,11 @@
-import { RepeatMode } from "./api/generated/models/repeat-mode";
-import "./components/maincontroller";
+import { RepeatMode } from './api/generated/models/repeat-mode';
+import './components/maincontroller';
 
 const senders = cast.framework.CastReceiverContext.getInstance().getSenders();
-const id = senders.length !== 0 && senders[0].id ? senders[0].id : new Date().getTime();
+const id =
+    senders.length !== 0 && senders[0].id
+        ? senders[0].id
+        : new Date().getTime();
 
 window.deviceInfo = {
     deviceId: id,
@@ -18,7 +21,11 @@ window.repeatMode = RepeatMode.RepeatNone;
 
 // Global variable set by Webpack
 if (!PRODUCTION) {
-    cast.framework.CastReceiverContext.getInstance().setLoggerLevel(cast.framework.LoggerLevel.DEBUG);
+    cast.framework.CastReceiverContext.getInstance().setLoggerLevel(
+        cast.framework.LoggerLevel.DEBUG
+    );
 } else {
-    cast.framework.CastReceiverContext.getInstance().setLoggerLevel(cast.framework.LoggerLevel.NONE);
+    cast.framework.CastReceiverContext.getInstance().setLoggerLevel(
+        cast.framework.LoggerLevel.NONE
+    );
 }
