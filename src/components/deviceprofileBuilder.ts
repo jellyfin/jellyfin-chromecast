@@ -1,22 +1,19 @@
-import { CodecProfile } from "../api/generated/models/codec-profile";
-import { ContainerProfile } from "../api/generated/models/container-profile";
-import { DeviceProfile } from "../api/generated/models/device-profile";
-import { DirectPlayProfile } from "../api/generated/models/direct-play-profile";
-import { DlnaProfileType } from "../api/generated/models/dlna-profile-type";
-import { EncodingContext } from "../api/generated/models/encoding-context";
-import { ProfileCondition } from "../api/generated/models/profile-condition";
-import { ProfileConditionType } from "../api/generated/models/profile-condition-type";
-import { ResponseProfile } from "../api/generated/models/response-profile";
-import { SubtitleDeliveryMethod } from "../api/generated/models/subtitle-delivery-method";
-import { SubtitleProfile } from "../api/generated/models/subtitle-profile";
-import { TranscodingProfile } from "../api/generated/models/transcoding-profile";
-import { CodecType } from "../api/generated/models/codec-type";
-import { ProfileConditionValue } from "../api/generated/models/profile-condition-value";
+import { CodecProfile } from '../api/generated/models/codec-profile';
+import { ContainerProfile } from '../api/generated/models/container-profile';
+import { DeviceProfile } from '../api/generated/models/device-profile';
+import { DirectPlayProfile } from '../api/generated/models/direct-play-profile';
+import { DlnaProfileType } from '../api/generated/models/dlna-profile-type';
+import { EncodingContext } from '../api/generated/models/encoding-context';
+import { ProfileCondition } from '../api/generated/models/profile-condition';
+import { ProfileConditionType } from '../api/generated/models/profile-condition-type';
+import { ResponseProfile } from '../api/generated/models/response-profile';
+import { SubtitleDeliveryMethod } from '../api/generated/models/subtitle-delivery-method';
+import { SubtitleProfile } from '../api/generated/models/subtitle-profile';
+import { TranscodingProfile } from '../api/generated/models/transcoding-profile';
+import { CodecType } from '../api/generated/models/codec-type';
+import { ProfileConditionValue } from '../api/generated/models/profile-condition-value';
 
-import {
-    deviceIds,
-    getActiveDeviceId
-} from "./castDevices";
+import { deviceIds, getActiveDeviceId } from './castDevices';
 
 import {
     hasTextTrackSupport,
@@ -33,12 +30,12 @@ import {
     getSupportedHLSAudioCodecs,
     getSupportedWebMAudioCodecs,
     getSupportedAudioCodecs
-} from "./codecSupportHelper";
+} from './codecSupportHelper';
 
 interface ProfileOptions {
-    audioChannels?: number,
-    enableHls?: boolean,
-    bitrateSetting?: number
+    audioChannels?: number;
+    enableHls?: boolean;
+    bitrateSetting?: number;
 }
 
 let profileOptions: ProfileOptions;
@@ -77,11 +74,13 @@ function getContainerProfiles(): Array<ContainerProfile> {
  */
 function getResponseProfiles(): Array<ResponseProfile> {
     // This seems related to DLNA, it might not be needed?
-    return [{
-        Type: DlnaProfileType.Video,
-        Container: "m4v",
-        MimeType: "video/mp4"
-    }];
+    return [
+        {
+            Type: DlnaProfileType.Video,
+            Container: 'm4v',
+            MimeType: 'video/mp4'
+        }
+    ];
 }
 
 /**
@@ -98,33 +97,33 @@ function getDirectPlayProfiles(): Array<DirectPlayProfile> {
 
         for (const codec of vpxVideoCodecs) {
             DirectPlayProfiles.push({
-                Container: "webm",
+                Container: 'webm',
                 Type: DlnaProfileType.Video,
-                AudioCodec: webmAudioCodecs.join(","),
+                AudioCodec: webmAudioCodecs.join(','),
                 VideoCodec: codec
             });
         }
 
         DirectPlayProfiles.push({
-            Container: "mp4,m4v",
+            Container: 'mp4,m4v',
             Type: DlnaProfileType.Video,
-            VideoCodec: mp4VideoCodecs.join(","),
-            AudioCodec: mp4AudioCodecs.join(",")
+            VideoCodec: mp4VideoCodecs.join(','),
+            AudioCodec: mp4AudioCodecs.join(',')
         });
     }
 
     const supportedAudio = getSupportedAudioCodecs();
 
     for (const audioFormat of supportedAudio) {
-        if (audioFormat === "mp3") {
+        if (audioFormat === 'mp3') {
             DirectPlayProfiles.push({
                 Container: audioFormat,
                 Type: DlnaProfileType.Audio,
                 AudioCodec: audioFormat
             });
-        } else if (audioFormat === "webma") {
+        } else if (audioFormat === 'webma') {
             DirectPlayProfiles.push({
-                Container: "webma,webm",
+                Container: 'webma,webm',
                 Type: DlnaProfileType.Audio
             });
         } else {
@@ -135,9 +134,9 @@ function getDirectPlayProfiles(): Array<DirectPlayProfile> {
         }
 
         // aac also appears in the m4a and m4b container
-        if (audioFormat === "aac") {
+        if (audioFormat === 'aac') {
             DirectPlayProfiles.push({
-                Container: "m4a,m4b",
+                Container: 'm4a,m4b',
                 AudioCodec: audioFormat,
                 Type: DlnaProfileType.Audio
             });
@@ -155,17 +154,17 @@ function getCodecProfiles(): Array<CodecProfile> {
 
     const audioConditions: CodecProfile = {
         Type: CodecType.Audio,
-        Codec: "flac",
+        Codec: 'flac',
         Conditions: [
             createProfileCondition(
                 ProfileConditionValue.AudioSampleRate,
                 ProfileConditionType.LessThanEqual,
-                "96000"
+                '96000'
             ),
             createProfileCondition(
                 ProfileConditionValue.AudioBitDepth,
                 ProfileConditionType.LessThanEqual,
-                "24"
+                '24'
             )
         ]
     };
@@ -179,18 +178,18 @@ function getCodecProfiles(): Array<CodecProfile> {
 
     const aacConditions: CodecProfile = {
         Type: CodecType.VideoAudio,
-        Codec: "aac",
+        Codec: 'aac',
         Conditions: [
             // Not sure what secondary audio means in this context. Multiple audio tracks?
             createProfileCondition(
                 ProfileConditionValue.IsSecondaryAudio,
                 ProfileConditionType.Equals,
-                "false"
+                'false'
             ),
             createProfileCondition(
                 ProfileConditionValue.IsSecondaryAudio,
                 ProfileConditionType.LessThanEqual,
-                "2"
+                '2'
             )
         ]
     };
@@ -203,12 +202,12 @@ function getCodecProfiles(): Array<CodecProfile> {
 
     const h26xConditions: CodecProfile = {
         Type: CodecType.Video,
-        Codec: "h264",
+        Codec: 'h264',
         Conditions: [
             createProfileCondition(
                 ProfileConditionValue.IsAnamorphic,
                 ProfileConditionType.NotEquals,
-                "true"
+                'true'
             ),
             createProfileCondition(
                 ProfileConditionValue.VideoProfile,
@@ -251,7 +250,7 @@ function getCodecProfiles(): Array<CodecProfile> {
             createProfileCondition(
                 ProfileConditionValue.IsSecondaryAudio,
                 ProfileConditionType.Equals,
-                "false"
+                'false'
             )
         ]
     };
@@ -271,11 +270,11 @@ function getTranscodingProfiles(): Array<TranscodingProfile> {
 
     if (profileOptions.enableHls !== false) {
         TranscodingProfiles.push({
-            Container: "ts",
+            Container: 'ts',
             Type: DlnaProfileType.Audio,
-            AudioCodec: "aac",
+            AudioCodec: 'aac',
             Context: EncodingContext.Streaming,
-            Protocol: "hls",
+            Protocol: 'hls',
             MaxAudioChannels: physicalAudioChannels.toString(),
             MinSegments: 1,
             BreakOnNonKeyFrames: false
@@ -290,7 +289,7 @@ function getTranscodingProfiles(): Array<TranscodingProfile> {
             Type: DlnaProfileType.Audio,
             AudioCodec: audioFormat,
             Context: EncodingContext.Streaming,
-            Protocol: "http",
+            Protocol: 'http',
             MaxAudioChannels: physicalAudioChannels.toString()
         });
     }
@@ -302,16 +301,18 @@ function getTranscodingProfiles(): Array<TranscodingProfile> {
 
     const hlsVideoAudioCodecs = getSupportedHLSAudioCodecs();
     const hlsVideoCodecs = getSupportedHLSVideoCodecs();
-    if (hlsVideoCodecs.length &&
+    if (
+        hlsVideoCodecs.length &&
         hlsVideoAudioCodecs.length &&
-            profileOptions.enableHls !== false) {
+        profileOptions.enableHls !== false
+    ) {
         TranscodingProfiles.push({
-            Container: "ts",
+            Container: 'ts',
             Type: DlnaProfileType.Video,
-            AudioCodec: hlsVideoAudioCodecs.join(","),
-            VideoCodec: hlsVideoCodecs.join(","),
+            AudioCodec: hlsVideoAudioCodecs.join(','),
+            VideoCodec: hlsVideoCodecs.join(','),
             Context: EncodingContext.Streaming,
-            Protocol: "hls",
+            Protocol: 'hls',
             MaxAudioChannels: physicalAudioChannels.toString(),
             MinSegments: 1,
             BreakOnNonKeyFrames: false
@@ -320,12 +321,12 @@ function getTranscodingProfiles(): Array<TranscodingProfile> {
 
     if (hasVP8Support() || hasVP9Support()) {
         TranscodingProfiles.push({
-            Container: "webm",
+            Container: 'webm',
             Type: DlnaProfileType.Video,
-            AudioCodec: "vorbis",
-            VideoCodec: "vpx",
+            AudioCodec: 'vorbis',
+            VideoCodec: 'vpx',
             Context: EncodingContext.Streaming,
-            Protocol: "http",
+            Protocol: 'http',
             // If audio transcoding is needed, limit channels to number of physical audio channels
             // Trying to transcode to 5 channels when there are only 2 speakers generally does not sound good
             MaxAudioChannels: physicalAudioChannels.toString()
@@ -343,12 +344,12 @@ function getSubtitleProfiles(): Array<SubtitleProfile> {
 
     if (hasTextTrackSupport(currentDeviceId)) {
         subProfiles.push({
-            Format: "vtt",
+            Format: 'vtt',
             Method: SubtitleDeliveryMethod.External
         });
 
         subProfiles.push({
-            Format: "vtt",
+            Format: 'vtt',
             Method: SubtitleDeliveryMethod.Hls
         });
     }

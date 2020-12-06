@@ -1,14 +1,14 @@
-import { PlayerManager } from "chromecast-caf-receiver/cast.framework";
-import { RepeatMode } from "../api/generated/models/repeat-mode";
+import { PlayerManager } from 'chromecast-caf-receiver/cast.framework';
+import { RepeatMode } from '../api/generated/models/repeat-mode';
 
 export interface DeviceInfo {
-    deviceId: string | number,
-    deviceName: string,
-    versionNumber: string
+    deviceId: string | number;
+    deviceName: string;
+    versionNumber: string;
 }
 
 export interface GlobalScope {
-    [key: string]: any
+    [key: string]: any;
 }
 
 declare global {
@@ -22,7 +22,6 @@ declare global {
         playlist: Array<any>;
         currentPlaylistIndex: number;
         repeatMode: RepeatMode;
-        reportEventType: "repeatmodechange";
+        reportEventType: 'repeatmodechange';
     }
 }
-

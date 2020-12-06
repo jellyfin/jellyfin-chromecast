@@ -6,7 +6,7 @@ import {
     tagItems,
     getReportingParams,
     createStreamInfo
-} from "../helpers";
+} from '../helpers';
 
 import {
     onStopPlayerBeforePlaybackDone,
@@ -16,7 +16,7 @@ import {
     showPlaybackInfoErrorMessage,
     supportsDirectPlay,
     createMediaInformation
-} from "./maincontroller";
+} from './maincontroller';
 
 import {
     getPlaybackInfo,
@@ -27,7 +27,7 @@ import {
     stopPingInterval,
     reportPlaybackStopped,
     displayUserInfo
-} from "./jellyfinActions";
+} from './jellyfinActions';
 
 export class playbackManager {
     constructor(castContext, playerManager) {
@@ -41,7 +41,10 @@ export class playbackManager {
     }
 
     isPlaying() {
-        return this.playerManager.getPlayerState() === cast.framework.messages.PlayerState.PLAYING;
+        return (
+            this.playerManager.getPlayerState() ===
+            cast.framework.messages.PlayerState.PLAYING
+        );
     }
 
     async playFromOptions(options) {
@@ -52,7 +55,12 @@ export class playbackManager {
             return;
         }
 
-        let intros = await getIntros(firstItem.serverAddress, firstItem.accessToken, firstItem.userId, firstItem);
+        let intros = await getIntros(
+            firstItem.serverAddress,
+            firstItem.accessToken,
+            firstItem.userId,
+            firstItem
+        );
         tagItems(intros.Items, {
             userId: firstItem.userId,
             accessToken: firstItem.accessToken,
@@ -63,7 +71,8 @@ export class playbackManager {
     }
 
     playFromOptionsInternal(options) {
-        const stopPlayer = this.activePlaylist && this.activePlaylist.length > 0;
+        const stopPlayer =
+            this.activePlaylist && this.activePlaylist.length > 0;
 
         this.activePlaylist = options.items;
         this.activePlaylist.currentPlaylistIndex = -1;
@@ -73,7 +82,6 @@ export class playbackManager {
     }
 
     playNextItem(options, stopPlayer) {
-
         var nextItemInfo = getNextPlaybackItemInfo();
 
         if (nextItemInfo) {
@@ -102,7 +110,7 @@ export class playbackManager {
 
     async playItem(item, options, stopPlayer) {
         if (stopPlayer) {
-            await this.stop("none");
+            await this.stop('none');
         }
 
         onStopPlayerBeforePlaybackDone(item, options);
@@ -121,39 +129,54 @@ export class playbackManager {
             options.startPositionTicks,
             options.mediaSourceId,
             options.audioStreamIndex,
-            options.subtitleStreamIndex)
-            .catch(broadcastConnectionErrorMessage);
+            options.subtitleStreamIndex
+        ).catch(broadcastConnectionErrorMessage);
 
         if (playbackInfo.ErrorCode) {
             return showPlaybackInfoErrorMessage(playbackInfo.ErrorCode);
         }
 
-        const mediaSource = await getOptimalMediaSource(playbackInfo.MediaSources);
+        const mediaSource = await getOptimalMediaSource(
+            playbackInfo.MediaSources
+        );
         if (!mediaSource) {
             return showPlaybackInfoErrorMessage('NoCompatibleStream');
         }
 
         let itemToPlay = mediaSource;
         if (mediaSource.RequiresOpening) {
-            const openLiveStreamResult = await getLiveStream(item,
+            const openLiveStreamResult = await getLiveStream(
+                item,
                 playbackInfo.PlaySessionId,
                 maxBitrate,
                 deviceProfile,
                 options.startPositionTicks,
                 mediaSource,
-                null, null);
-            openLiveStreamResult.MediaSource.enableDirectPlay = supportsDirectPlay(openLiveStreamResult.MediaSource);
+                null,
+                null
+            );
+            openLiveStreamResult.MediaSource.enableDirectPlay = supportsDirectPlay(
+                openLiveStreamResult.MediaSource
+            );
             itemToPlay = openLiveStreamResult.MediaSource;
         }
 
-        this.playMediaSource(playbackInfo.PlaySessionId, item, itemToPlay, options);
+        this.playMediaSource(
+            playbackInfo.PlaySessionId,
+            item,
+            itemToPlay,
+            options
+        );
     }
 
     playMediaSource(playSessionId, item, mediaSource, options) {
-
         setAppStatus('loading');
 
-        var streamInfo = createStreamInfo(item, mediaSource, options.startPositionTicks);
+        var streamInfo = createStreamInfo(
+            item,
+            mediaSource,
+            options.startPositionTicks
+        );
 
         var url = streamInfo.url;
 
@@ -172,13 +195,30 @@ export class playbackManager {
 
         let backdropUrl;
         if (item.BackdropImageTags && item.BackdropImageTags.length) {
-            backdropUrl = $scope.serverAddress + '/emby/Items/' + item.Id + '/Images/Backdrop/0?tag=' + item.BackdropImageTags[0];
-        } else if (item.ParentBackdropItemId && item.ParentBackdropImageTags && item.ParentBackdropImageTags.length) {
-            backdropUrl = $scope.serverAddress + '/emby/Items/' + item.ParentBackdropItemId + '/Images/Backdrop/0?tag=' + item.ParentBackdropImageTags[0];
+            backdropUrl =
+                $scope.serverAddress +
+                '/emby/Items/' +
+                item.Id +
+                '/Images/Backdrop/0?tag=' +
+                item.BackdropImageTags[0];
+        } else if (
+            item.ParentBackdropItemId &&
+            item.ParentBackdropImageTags &&
+            item.ParentBackdropImageTags.length
+        ) {
+            backdropUrl =
+                $scope.serverAddress +
+                '/emby/Items/' +
+                item.ParentBackdropItemId +
+                '/Images/Backdrop/0?tag=' +
+                item.ParentBackdropImageTags[0];
         }
 
         if (backdropUrl) {
-            window.mediaElement.style.setProperty('--background-image', 'url("' + backdropUrl + '")');
+            window.mediaElement.style.setProperty(
+                '--background-image',
+                'url("' + backdropUrl + '")'
+            );
         } else {
             //Replace with a placeholder?
             window.mediaElement.style.removeProperty('--background-image');
@@ -193,7 +233,6 @@ export class playbackManager {
     }
 
     stop(nextMode) {
-
         $scope.playNextItem = nextMode ? true : false;
         stop($scope);
 
@@ -211,7 +250,12 @@ export class playbackManager {
 
         this.activePlaylist = [];
         this.activePlaylistIndex = -1;
-        displayUserInfo($scope, $scope.serverAddress, $scope.accessToken, $scope.userId);
+        displayUserInfo(
+            $scope,
+            $scope.serverAddress,
+            $scope.accessToken,
+            $scope.userId
+        );
 
         promise = promise || Promise.resolve();
 

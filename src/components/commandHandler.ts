@@ -5,26 +5,29 @@ import {
     setAudioStreamIndex,
     setSubtitleStreamIndex,
     seek
-} from "./maincontroller";
+} from './maincontroller';
 
-import { getReportingParams } from "../helpers";
+import { getReportingParams } from '../helpers';
 
 import {
     displayItem,
     displayUserInfo,
     reportPlaybackProgress
-} from "./jellyfinActions";
+} from './jellyfinActions';
 
-import { CastReceiverContext, PlayerManager } from "chromecast-caf-receiver/cast.framework";
-import { playbackManager } from "./playbackManager";
+import {
+    CastReceiverContext,
+    PlayerManager
+} from 'chromecast-caf-receiver/cast.framework';
+import { playbackManager } from './playbackManager';
 
 export interface DataMessage {
     //TODO: figure out a better type for data
-    [any: string]: any
+    [any: string]: any;
 }
 
 interface SupportedCommands {
-    [command: string]: (data: DataMessage) => any
+    [command: string]: (data: DataMessage) => any;
 }
 
 export class commandHandler {
@@ -84,12 +87,21 @@ export class commandHandler {
 
     displayContentHandler(data: DataMessage): void {
         if (!this.playbackManager.isPlaying()) {
-            displayItem($scope, data.serverAddress, data.accessToken, data.userId, data.options.ItemId);
+            displayItem(
+                $scope,
+                data.serverAddress,
+                data.accessToken,
+                data.userId,
+                data.options.ItemId
+            );
         }
     }
 
     nextTrackHandler(): void {
-        if (window.playlist && window.currentPlaylistIndex < window.playlist.length - 1) {
+        if (
+            window.playlist &&
+            window.currentPlaylistIndex < window.playlist.length - 1
+        ) {
             this.playbackManager.playNextItem({}, true);
         }
     }
@@ -112,28 +124,38 @@ export class commandHandler {
     // From what I can tell there's no convenient way for the receiver to get its own volume.
     // We should probably remove these commands in the future.
     VolumeUpHandler(): void {
-        console.log("VolumeUp handler not implemented");
+        console.log('VolumeUp handler not implemented');
     }
 
     VolumeDownHandler(): void {
-        console.log("VolumeDown handler not implemented");
+        console.log('VolumeDown handler not implemented');
     }
 
     ToggleMuteHandler(): void {
-        console.log("ToggleMute handler not implemented");
+        console.log('ToggleMute handler not implemented');
     }
 
     SetVolumeHandler(data: DataMessage): void {
         // This is now implemented on the sender
-        console.log("SetVolume handler not implemented");
+        console.log('SetVolume handler not implemented');
     }
 
     IdentifyHandler(data: DataMessage): void {
         if (!this.playbackManager.isPlaying()) {
-            displayUserInfo($scope, data.serverAddress, data.accessToken, data.userId);
+            displayUserInfo(
+                $scope,
+                data.serverAddress,
+                data.accessToken,
+                data.userId
+            );
         } else {
             // When a client connects send back the initial device state (volume etc) via a playbackstop message
-            reportPlaybackProgress($scope, getReportingParams($scope), true, "playbackstop");
+            reportPlaybackProgress(
+                $scope,
+                getReportingParams($scope),
+                true,
+                'playbackstop'
+            );
         }
     }
 
@@ -143,12 +165,12 @@ export class commandHandler {
 
     MuteHandler(): void {
         // This is now implemented on the sender
-        console.log("Mute handler not implemented");
+        console.log('Mute handler not implemented');
     }
 
     UnmuteHandler(): void {
         // This is now implemented on the sender
-        console.log("Unmute handler not implemented");
+        console.log('Unmute handler not implemented');
     }
 
     StopHandler(): void {
@@ -156,7 +178,10 @@ export class commandHandler {
     }
 
     PlayPauseHandler(): void {
-        if (this.playerManager.getPlayerState() === cast.framework.messages.PlayerState.PAUSED) {
+        if (
+            this.playerManager.getPlayerState() ===
+            cast.framework.messages.PlayerState.PAUSED
+        ) {
             this.playerManager.play();
         } else {
             this.playerManager.pause();
@@ -184,11 +209,15 @@ export class commandHandler {
 
     processMessage(data: DataMessage, command: string) {
         const commandHandler = this.supportedCommands[command];
-        if (typeof commandHandler === "function") {
-            console.debug(`Command "${command}" received. Identified handler, calling identified handler.`);
-            (commandHandler.bind(this))(data);
+        if (typeof commandHandler === 'function') {
+            console.debug(
+                `Command "${command}" received. Identified handler, calling identified handler.`
+            );
+            commandHandler.bind(this)(data);
         } else {
-            console.debug(`Command "${command}" received. Could not identify handler, calling default handler.`);
+            console.debug(
+                `Command "${command}" received. Could not identify handler, calling default handler.`
+            );
             this.defaultHandler(data);
         }
     }
