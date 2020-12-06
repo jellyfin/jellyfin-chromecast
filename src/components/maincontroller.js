@@ -1,4 +1,4 @@
-﻿/* eslint-disable */
+/* eslint-disable */
 
 import {
     reportPlaybackProgress,
@@ -487,6 +487,13 @@ window.castReceiverContext.addCustomMessageListener(
         console.log('Playlist message: ' + JSON.stringify(evt));
 
         var data = evt.data;
+
+        // Apparently chromium likes to pass it as json, not as object.
+        // chrome on android works fine
+        if (typeof data == 'string' || data instanceof String) {
+            console.log('Event data is a string.. Chromium detected..');
+            data = JSON.parse(data);
+        }
 
         data.options = data.options || {};
         data.options.senderId = evt.senderId;
