@@ -3,8 +3,6 @@
 <head>
     <meta charset="utf-8">
     <title>Jellyfin</title>
-    <link rel="stylesheet" href="css/glyphicons.css">
-    <link rel="stylesheet" href="css/jellyfin.css">
     <style>
         @import url('https://fonts.googleapis.com/css?family=Quicksand');
     </style>
@@ -20,19 +18,19 @@
     <div id="waiting-container">
         <div class="waitingContent">
             <img class="logo" src="img/logo.png" />
-            
+
             <h1>Ready to cast</h1>
             <h2>Select your media in Jellyfin and play it here</h2>
         </div>
     </div>
     <cast-media-player id="video-player" crossorigin="anonymous" preload="auto"></cast-media-player>
-    <div class="detailContent">		
+    <div class="detailContent">
         <div class="detailImage">
             <div id="playedIndicator"></div>
-			
+
             <div class="detailImageProgressContainer"><progress class="itemProgressBar" min="0" max="100"></progress></div>
         </div>
-		
+
         <div class="detailInfo">
             <p class="displayNameContainer"><span class="displayName"></span><span id="miscInfo"></span></p>
             <div id="detailRating"></div>
