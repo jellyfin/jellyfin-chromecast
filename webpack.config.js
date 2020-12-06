@@ -1,41 +1,49 @@
-const path = require("path");
-const { CleanWebpackPlugin } = require("clean-webpack-plugin");
-const webpack = require("webpack");
+const path = require('path');
+const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const packagejson = require("./package.json")
+const packagejson = require('./package.json');
 
-let config = {
-    context: path.resolve(__dirname, "src"),
-    entry: "./app.ts",
+const config = {
+    context: path.resolve(__dirname, 'src'),
+    entry: './app.ts',
     output: {
-        filename: "[name].[fullhash].js",
-        path: path.resolve(__dirname, "dist"),
+        filename: '[name].[fullhash].js',
+        path: path.resolve(__dirname, 'dist'),
         publicPath: './'
     },
     resolve: {
-        extensions: [".ts", ".js"]
+        extensions: ['.ts', '.js']
     },
     plugins: [
         new CleanWebpackPlugin(),
         new HtmlWebpackPlugin({
             filename: 'index.html',
             template: 'index.html',
-            hash: false
+            hash: false,
+            favicon: 'favicon.ico'
         })
     ],
     module: {
         rules: [
-            { test: /\.html$/, loader: "html-loader"},
-            { test: /\.(svg|png|jpe?g|gif|eot|woff|tff)$/i, loader: "url-loader" },
-            { test: /\.css$/i, loader: 'file-loader' },
-            { test: /\.tsx?$/, loader: "ts-loader" },
-            { test: /\.js$/, loader: "source-map-loader" }
+            { test: /\.html$/, loader: 'html-loader' },
+            {
+                test: /\.(png|svg|jpg|gif)$/,
+                use: 'file-loader'
+            },
+            {
+                test: /\.(ttf|eot|woff(2)?)(\?[a-z0-9=&.]+)?$/,
+                loader: 'file-loader'
+            },
+            { test: /\.css$/i, use: ['style-loader', 'css-loader'] },
+            { test: /\.tsx?$/, loader: 'ts-loader' },
+            { test: /\.js$/, loader: 'source-map-loader' }
         ]
     }
 };
 
 module.exports = (env, argv) => {
-    const isProduction = (argv.mode === "production");
+    const isProduction = argv.mode === 'production';
 
     config.plugins.push(
         new webpack.DefinePlugin({
@@ -45,7 +53,7 @@ module.exports = (env, argv) => {
     );
 
     if (!isProduction) {
-        config.devtool = "inline-source-map";
+        config.devtool = 'inline-source-map';
     }
 
     return config;
