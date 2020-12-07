@@ -467,9 +467,7 @@ export function createStreamInfo(item, mediaSource, startPosition) {
         console.log('Subtitle url: ' + info.subtitleStreamUrl);
     });
 
-    if (subtitleTracks) {
-        info.tracks = subtitleTracks;
-    }
+    info.tracks = subtitleTracks;
 
     return info;
 }
