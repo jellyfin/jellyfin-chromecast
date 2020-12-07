@@ -49,9 +49,7 @@ function restartPingInterval(
 
     if (reportingParams.PlayMethod == 'Transcode') {
         pingInterval = <any>setInterval(function () {
-            pingTranscoder({
-                PlaySessionId: reportingParams.PlaySessionId
-            });
+            pingTranscoder(reportingParams);
         }, 1000);
     }
 }
@@ -133,24 +131,36 @@ export function reportPlaybackStopped(
     });
 }
 
+/* This keeps the session alive when playback is paused by refreshing the server.
+ * /Sessions/Playing/Progress does work but may not be called during pause.
+ * The web client calls that during pause, but this endpoint gets the job done
+ * as well.
+ * */
 export function pingTranscoder(
     reportingParams: PlaybackProgressInfo
 ): Promise<any> {
     const now = new Date().getTime();
 
-    if (now - lastTranscoderPing < 10000) {
-        console.log('Skipping ping due to recent progress check-in');
+    // 10s is the timeout value, so use half that to report often enough
+    if (now - lastTranscoderPing < 5000) {
+        console.debug('Skipping ping due to recent progress check-in');
         return new Promise(function (resolve) {
             resolve();
         });
     }
 
-    const url = JellyfinApi.createUrl('Sessions/Playing/Ping');
+    // 10.7 oddly wants it as a query string parameter. This is a server bug for now.
+    const url = JellyfinApi.createUrl(
+        'Sessions/Playing/Ping?playSessionId=' + reportingParams.PlaySessionId
+    );
     lastTranscoderPing = new Date().getTime();
 
     return JellyfinApi.authAjax(url, {
         type: 'POST',
-        data: JSON.stringify(reportingParams),
+        data: JSON.stringify({
+            // jellyfin <= 10.6 wants it in the post data.
+            PlaySessionId: reportingParams.PlaySessionId
+        }),
         contentType: 'application/json'
     });
 }
