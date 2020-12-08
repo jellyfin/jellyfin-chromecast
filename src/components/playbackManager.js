@@ -40,10 +40,18 @@ export class playbackManager {
         this.activePlaylistIndex = 0;
     }
 
+    /* This is used to check if we can switch to
+     * some other info overlay.
+     *
+     * Returns true when playing or paused.
+     * (before: true only when playing)
+     * */
     isPlaying() {
         return (
             this.playerManager.getPlayerState() ===
-            cast.framework.messages.PlayerState.PLAYING
+                cast.framework.messages.PlayerState.PLAYING ||
+            this.playerManager.getPlayerState() ===
+                cast.framework.messages.PlayerState.PAUSED
         );
     }
 
