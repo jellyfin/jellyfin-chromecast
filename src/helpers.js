@@ -885,20 +885,6 @@ export function setOverview(name) {
     $scope.overview = name;
     document.querySelector('.overview').innerHTML = name || '';
 }
-export function setInnerHTML(selector, html, autoHide) {
-    var elems = document.querySelectorAll(selector);
-    for (var i = 0, length = elems.length; i < length; i++) {
-        elems[i].innerHTML = html || '';
-
-        if (autoHide) {
-            if (html) {
-                elems[i].classList.remove('hide');
-            } else {
-                elems[i].classList.add('hide');
-            }
-        }
-    }
-}
 export function setPlayedPercentage(value) {
     $scope.playedPercentage = value;
     document.querySelector('.itemProgressBar').value = value || 0;
