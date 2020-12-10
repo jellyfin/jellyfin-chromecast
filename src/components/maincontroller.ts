@@ -17,7 +17,6 @@ import {
     reportPlaybackProgress,
     reportPlaybackStopped,
     play,
-    startBackdropInterval,
     getPlaybackInfo,
     stopActiveEncodings,
     detectBitrate
@@ -27,6 +26,7 @@ import { JellyfinApi } from './jellyfinApi';
 import { playbackManager } from './playbackManager';
 import { CommandHandler } from './commandHandler';
 import { getMaxBitrateSupport } from './codecSupportHelper';
+import { DocumentManager } from './documentManager';
 
 import { BaseItemDtoQueryResult } from '~/api/generated/models/base-item-dto-query-result';
 import { BaseItemDto } from '~/api/generated/models/base-item-dto';
@@ -167,7 +167,7 @@ mgr.addEventListener(cast.framework.events.EventType.ENDED, function () {
     if (!playbackMgr.playNextItem()) {
         window.playlist = [];
         window.currentPlaylistIndex = -1;
-        startBackdropInterval();
+        DocumentManager.startBackdropInterval();
     }
 });
 

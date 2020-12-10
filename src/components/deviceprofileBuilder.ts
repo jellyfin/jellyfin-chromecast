@@ -41,11 +41,11 @@ let profileOptions: ProfileOptions;
 let currentDeviceId: number;
 
 /**
- * @param Property What property the condition should test.
- * @param Condition The condition to test the values for.
- * @param Value The value to compare against.
- * @param [IsRequired=false]
- * @returns A profile condition created from the parameters.
+ * @param {ProfileConditionValue} Property What property the condition should test.
+ * @param {ProfileConditionType} Condition The condition to test the values for.
+ * @param {string} Value The value to compare against.
+ * @param {boolean} [IsRequired=false] Don't permit unknown values
+ * @returns {ProfileCondition} A profile condition created from the parameters.
  */
 function createProfileCondition(
     Property: ProfileConditionValue,

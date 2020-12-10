@@ -1,13 +1,11 @@
 import {
     getNextPlaybackItemInfo,
     getIntros,
-    setAppStatus,
     broadcastConnectionErrorMessage,
     getReportingParams,
     createStreamInfo
 } from '../helpers';
 
-import { JellyfinApi } from './jellyfinApi';
 import {
     getPlaybackInfo,
     getLiveStream,
@@ -15,8 +13,7 @@ import {
     reportPlaybackStart,
     stop,
     stopPingInterval,
-    reportPlaybackStopped,
-    startBackdropInterval
+    reportPlaybackStopped
 } from './jellyfinActions';
 import { getDeviceProfile } from './deviceprofileBuilder';
 
@@ -29,6 +26,7 @@ import {
     createMediaInformation
 } from './maincontroller';
 
+import { DocumentManager } from './documentManager';
 import { BaseItemDto } from '~/api/generated/models/base-item-dto';
 import { MediaSourceInfo } from '~/api/generated/models/media-source-info';
 
@@ -126,7 +124,7 @@ export class playbackManager {
 
     async playItemInternal(item: BaseItemDto, options: any): Promise<void> {
         $scope.isChangingStream = false;
-        setAppStatus('loading');
+        DocumentManager.setAppStatus('loading');
 
         const maxBitrate = await getMaxBitrate();
         const deviceProfile = getDeviceProfile({
@@ -187,7 +185,7 @@ export class playbackManager {
         mediaSource: MediaSourceInfo,
         options: any
     ): void {
-        setAppStatus('loading');
+        DocumentManager.setAppStatus('loading');
 
         const streamInfo = createStreamInfo(
             item,
@@ -214,36 +212,7 @@ export class playbackManager {
         console.log('setting src to ' + url);
         $scope.mediaSource = mediaSource;
 
-        let backdropUrl;
-        if (item.BackdropImageTags && item.BackdropImageTags.length) {
-            backdropUrl = JellyfinApi.createUrl(
-                'Items/' +
-                    item.Id +
-                    '/Images/Backdrop/0?tag=' +
-                    item.BackdropImageTags[0]
-            );
-        } else if (
-            item.ParentBackdropItemId &&
-            item.ParentBackdropImageTags &&
-            item.ParentBackdropImageTags.length
-        ) {
-            backdropUrl = JellyfinApi.createUrl(
-                'Items/' +
-                    item.ParentBackdropItemId +
-                    '/Images/Backdrop/0?tag=' +
-                    item.ParentBackdropImageTags[0]
-            );
-        }
-
-        if (backdropUrl) {
-            window.mediaElement?.style.setProperty(
-                '--background-image',
-                'url("' + backdropUrl + '")'
-            );
-        } else {
-            //Replace with a placeholder?
-            window.mediaElement?.style.removeProperty('--background-image');
-        }
+        DocumentManager.setPlayerBackdrop(item);
 
         reportPlaybackStart($scope, getReportingParams($scope));
 
@@ -271,7 +240,7 @@ export class playbackManager {
 
         this.activePlaylist = [];
         this.activePlaylistIndex = -1;
-        startBackdropInterval();
+        DocumentManager.startBackdropInterval();
 
         promise = promise || Promise.resolve();
 
