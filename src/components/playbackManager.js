@@ -3,7 +3,6 @@ import {
     getIntros,
     setAppStatus,
     broadcastConnectionErrorMessage,
-    tagItems,
     getReportingParams,
     createStreamInfo
 } from '../helpers';
@@ -26,8 +25,10 @@ import {
     stop,
     stopPingInterval,
     reportPlaybackStopped,
-    displayUserInfo
+    startBackdropInterval
 } from './jellyfinActions';
+
+import { JellyfinApi } from './jellyfinApi';
 
 export class playbackManager {
     constructor(castContext, playerManager) {
@@ -55,17 +56,7 @@ export class playbackManager {
             return;
         }
 
-        let intros = await getIntros(
-            firstItem.serverAddress,
-            firstItem.accessToken,
-            firstItem.userId,
-            firstItem
-        );
-        tagItems(intros.Items, {
-            userId: firstItem.userId,
-            accessToken: firstItem.accessToken,
-            serverAddress: firstItem.serverAddress
-        });
+        let intros = await getIntros(firstItem);
         options.items = intros.Items.concat(options.items);
         this.playFromOptionsInternal(options);
     }
@@ -195,23 +186,23 @@ export class playbackManager {
 
         let backdropUrl;
         if (item.BackdropImageTags && item.BackdropImageTags.length) {
-            backdropUrl =
-                $scope.serverAddress +
-                '/Items/' +
-                item.Id +
-                '/Images/Backdrop/0?tag=' +
-                item.BackdropImageTags[0];
+            backdropUrl = JellyfinApi.createUrl(
+                'Items/' +
+                    item.Id +
+                    '/Images/Backdrop/0?tag=' +
+                    item.BackdropImageTags[0]
+            );
         } else if (
             item.ParentBackdropItemId &&
             item.ParentBackdropImageTags &&
             item.ParentBackdropImageTags.length
         ) {
-            backdropUrl =
-                $scope.serverAddress +
-                '/Items/' +
-                item.ParentBackdropItemId +
-                '/Images/Backdrop/0?tag=' +
-                item.ParentBackdropImageTags[0];
+            backdropUrl = JellyfinApi.createUrl(
+                'Items/' +
+                    item.ParentBackdropItemId +
+                    '/Images/Backdrop/0?tag=' +
+                    item.ParentBackdropImageTags[0]
+            );
         }
 
         if (backdropUrl) {
@@ -250,12 +241,7 @@ export class playbackManager {
 
         this.activePlaylist = [];
         this.activePlaylistIndex = -1;
-        displayUserInfo(
-            $scope,
-            $scope.serverAddress,
-            $scope.accessToken,
-            $scope.userId
-        );
+        startBackdropInterval();
 
         promise = promise || Promise.resolve();
 

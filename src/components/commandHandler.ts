@@ -11,8 +11,8 @@ import { getReportingParams } from '../helpers';
 
 import {
     displayItem,
-    displayUserInfo,
-    reportPlaybackProgress
+    reportPlaybackProgress,
+    startBackdropInterval
 } from './jellyfinActions';
 
 import {
@@ -92,13 +92,7 @@ export class commandHandler {
 
     displayContentHandler(data: DataMessage): void {
         if (!this.playbackManager.isPlaying()) {
-            displayItem(
-                $scope,
-                data.serverAddress,
-                data.accessToken,
-                data.userId,
-                data.options.ItemId
-            );
+            displayItem(data.options.ItemId);
         }
     }
 
@@ -122,7 +116,7 @@ export class commandHandler {
     }
 
     setSubtitleStreamIndexHandler(data: DataMessage): void {
-        setSubtitleStreamIndex($scope, data.options.index, data.serverAddress);
+        setSubtitleStreamIndex($scope, data.options.index);
     }
 
     // VolumeUp, VolumeDown and ToggleMute commands seem to be handled on the sender in the current implementation.
@@ -147,12 +141,7 @@ export class commandHandler {
 
     IdentifyHandler(data: DataMessage): void {
         if (!this.playbackManager.isPlaying()) {
-            displayUserInfo(
-                $scope,
-                data.serverAddress,
-                data.accessToken,
-                data.userId
-            );
+            startBackdropInterval();
         } else {
             // When a client connects send back the initial device state (volume etc) via a playbackstop message
             reportPlaybackProgress(
