@@ -36,6 +36,7 @@ export class commandHandler {
     private playbackManager: playbackManager;
     private supportedCommands: SupportedCommands = {
         PlayNext: this.playNextHandler,
+        PlayNow: this.playNowHandler,
         PlayLast: this.playLastHandler,
         Shuffle: this.shuffleHandler,
         InstantMix: this.instantMixHandler,
@@ -70,6 +71,10 @@ export class commandHandler {
     }
 
     playNextHandler(data: DataMessage): void {
+        translateItems(data, data.options, data.options.items, data.command);
+    }
+
+    playNowHandler(data: DataMessage): void {
         translateItems(data, data.options, data.options.items, data.command);
     }
 
@@ -215,7 +220,7 @@ export class commandHandler {
             );
             commandHandler.bind(this)(data);
         } else {
-            console.debug(
+            console.log(
                 `Command "${command}" received. Could not identify handler, calling default handler.`
             );
             this.defaultHandler(data);

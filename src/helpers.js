@@ -222,28 +222,28 @@ export function getMetadata(item) {
     if (item.SeriesPrimaryImageTag) {
         posterUrl =
             $scope.serverAddress +
-            '/emby/Items/' +
+            '/Items/' +
             item.SeriesId +
             '/Images/Primary?tag=' +
             item.SeriesPrimaryImageTag;
     } else if (item.AlbumPrimaryImageTag) {
         posterUrl =
             $scope.serverAddress +
-            '/emby/Items/' +
+            '/Items/' +
             item.AlbumId +
             '/Images/Primary?tag=' +
             item.AlbumPrimaryImageTag;
     } else if (item.PrimaryImageTag) {
         posterUrl =
             $scope.serverAddress +
-            '/emby/Items/' +
+            '/Items/' +
             item.Id +
             '/Images/Primary?tag=' +
             item.PrimaryImageTag;
     } else if (item.ImageTags.Primary) {
         posterUrl =
             $scope.serverAddress +
-            '/emby/Items/' +
+            '/Items/' +
             item.Id +
             '/Images/Primary?tag=' +
             item.ImageTags.Primary;
@@ -354,7 +354,7 @@ export function createStreamInfo(item, mediaSource, startPosition) {
         } else if (mediaSource.SupportsDirectStream) {
             mediaUrl = getUrl(
                 item.serverAddress,
-                'Videos/' + item.Id + '/stream.' + mediaSource.Container
+                'videos/' + item.Id + '/stream.' + mediaSource.Container
             );
             mediaUrl += '?mediaSourceId=' + mediaSource.Id;
             mediaUrl += '&api_key=' + item.accessToken;
@@ -439,15 +439,13 @@ export function createStreamInfo(item, mediaSource, startPosition) {
     var subtitleTracks = [];
     subtitleStreams.forEach(function (subtitleStream) {
         let subStreamCodec = subtitleStream.Codec.toLowerCase();
-        if (
-            subStreamCodec !== 'vtt' &&
-            subStreamCodec !== 'webvtt' &&
-            subStreamCodec === 'srt' &&
-            subtitleStream.DeliveryMethod !== 'External'
-        ) {
+        if (subtitleStream.DeliveryUrl === undefined) {
             /* The CAF v3 player only supports vtt currently,
-            SRT subs can be "transcoded" to vtt by jellyfin.
-            Support for more could be added with a custom implementation */
+             * SRT subs can be "transcoded" to vtt by jellyfin.
+             * The server will do that in accordance with the device profiles and
+             * give us a DeliveryUrl if that is the case.
+             * Support for more could be added with a custom implementation
+             **/
             return;
         }
         var textStreamUrl = subtitleStream.IsExternalUrl
@@ -469,9 +467,7 @@ export function createStreamInfo(item, mediaSource, startPosition) {
         console.log('Subtitle url: ' + info.subtitleStreamUrl);
     });
 
-    if (subtitleTracks) {
-        info.tracks = subtitleTracks;
-    }
+    info.tracks = subtitleTracks;
 
     return info;
 }

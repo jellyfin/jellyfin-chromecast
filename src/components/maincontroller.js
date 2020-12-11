@@ -31,6 +31,8 @@ import {
     tagItems
 } from '../helpers';
 
+import { getMaxBitrateSupport } from './codecSupportHelper';
+
 import { commandHandler } from './commandHandler';
 import { playbackManager } from './playbackManager';
 
@@ -222,7 +224,7 @@ window.mediaManager.addEventListener(
 console.log('Application is ready, starting system');
 
 export function reportDeviceCapabilities() {
-    getMaxBitrate('Video').then((maxBitrate) => {
+    getMaxBitrate().then((maxBitrate) => {
         let capabilitiesUrl =
             $scope.serverAddress + '/Sessions/Capabilities/Full';
         let deviceProfile = getDeviceProfile(maxBitrate);
@@ -422,9 +424,8 @@ export function changeStream(ticks, params) {
     var liveStreamId = $scope.liveStreamId;
 
     var item = $scope.item;
-    var mediaType = item.MediaType;
 
-    getMaxBitrate(mediaType).then(async (maxBitrate) => {
+    getMaxBitrate().then(async (maxBitrate) => {
         const deviceProfile = getDeviceProfile(maxBitrate);
         const audioStreamIndex =
             params.AudioStreamIndex == null
@@ -484,8 +485,6 @@ export function changeStream(ticks, params) {
 window.castReceiverContext.addCustomMessageListener(
     'urn:x-cast:com.connectsdk',
     function (evt) {
-        console.log('Playlist message: ' + JSON.stringify(evt));
-
         var data = evt.data;
 
         // Apparently chromium likes to pass it as json, not as object.
@@ -500,6 +499,7 @@ window.castReceiverContext.addCustomMessageListener(
         // TODO set it somewhere better perhaps
         window.senderId = evt.senderId;
 
+        console.log('Received message: ' + JSON.stringify(data));
         processMessage(data);
     }
 );
@@ -578,25 +578,19 @@ export function onStopPlayerBeforePlaybackDone(item, options) {
 }
 
 export function getDeviceProfile(maxBitrate) {
-    let transcodingAudioChannels = document
-        .createElement('video')
-        .canPlayType('audio/mp4; codecs="ac-3"')
-        .replace(/no/, '')
-        ? 6
-        : 2;
-
     return deviceProfileBuilder({
-        supportsCustomSeeking: true,
-        audioChannels: transcodingAudioChannels
+        enableHls: true,
+        bitrateSetting: maxBitrate
     });
 }
 
 var lastBitrateDetect = 0;
 var detectedBitrate = 0;
-export function getMaxBitrate(mediaType) {
+export function getMaxBitrate() {
     console.log('getMaxBitrate');
 
     return new Promise(function (resolve, reject) {
+        // The client can set this number
         if (window.MaxBitrate) {
             console.log('bitrate is set to ' + window.MaxBitrate);
 
@@ -615,12 +609,6 @@ export function getMaxBitrate(mediaType) {
             return;
         }
 
-        if (mediaType != 'Video') {
-            // We don't need to bother with bitrate detection for music
-            resolve(window.DefaultMaxBitrate);
-            return;
-        }
-
         console.log('detecting bitrate');
 
         detectBitrate($scope).then(
@@ -633,9 +621,9 @@ export function getMaxBitrate(mediaType) {
             },
             function () {
                 console.log(
-                    'Error detecting bitrate, will return default value.'
+                    'Error detecting bitrate, will return device maximum.'
                 );
-                resolve(window.DefaultMaxBitrate);
+                resolve(getMaxBitrateSupport());
             }
         );
     });
