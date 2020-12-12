@@ -57,6 +57,9 @@ export abstract class JellyfinApi {
     // Create a basic url.
     // Cannot start with /.
     public static createUrl(path: string): string {
+        // Remove leading slashes
+        while (path.charAt(0) === '/') path = path.substring(1);
+
         return this.serverAddress + '/' + path;
     }
 
