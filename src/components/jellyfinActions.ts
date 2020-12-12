@@ -363,9 +363,7 @@ export function getPlaybackInfo(
 }
 
 export function getLiveStream(
-    // TODO: change to BaseItemDto once refactor happens,
-    // userId and serverAddress should not be on item
-    item: any,
+    item: BaseItemDto,
     playSessionId: string,
     maxBitrate: number,
     deviceProfile: DeviceProfile,
