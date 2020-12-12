@@ -318,16 +318,14 @@ export function stop(): void {
 }
 
 export function getPlaybackInfo(
-    // TODO: change to BaseItemDto once refactor happens,
-    // userId and serverAddress should not be on item
-    item: any,
+    item: BaseItemDto,
     maxBitrate: number,
     deviceProfile: DeviceProfile,
     startPosition: number,
     mediaSourceId: string,
     audioStreamIndex: number,
     subtitleStreamIndex: number,
-    liveStreamId: string
+    liveStreamId: string | null = null
 ): Promise<any> {
     const postData = {
         DeviceProfile: deviceProfile
