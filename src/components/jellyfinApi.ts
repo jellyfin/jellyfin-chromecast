@@ -1,12 +1,6 @@
-// this class will take over for any ajax call.
-
 import { ajax } from './fetchhelper';
+import { Dictionary } from '../types/global';
 
-interface Dictionary<T> {
-    [Key: string]: T;
-}
-
-// DocumentManager should never ha
 export abstract class JellyfinApi {
     // userId that we are connecting as currently
     public static userId: string | null = null;
