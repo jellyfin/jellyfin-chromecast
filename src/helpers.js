@@ -1,22 +1,4 @@
-/* eslint-disable */
-
-import { ajax } from './components/fetchhelper';
-
-export function getUrl(serverAddress, name) {
-    if (!name) {
-        throw new Error('Url name cannot be empty');
-    }
-
-    var url = serverAddress;
-
-    if (name.charAt(0) != '/') {
-        url += '/';
-    }
-
-    url += name;
-
-    return url;
-}
+import { JellyfinApi } from './components/jellyfinApi';
 
 export function getCurrentPositionTicks($scope) {
     var positionTicks = window.mediaManager.getCurrentTimeSec() * 10000000;
@@ -220,33 +202,27 @@ export function getMetadata(item) {
     var posterUrl = '';
 
     if (item.SeriesPrimaryImageTag) {
-        posterUrl =
-            $scope.serverAddress +
-            '/Items/' +
-            item.SeriesId +
-            '/Images/Primary?tag=' +
-            item.SeriesPrimaryImageTag;
+        posterUrl = JellyfinApi.createUrl(
+            'Items/' +
+                item.SeriesId +
+                '/Images/Primary?tag=' +
+                item.SeriesPrimaryImageTag
+        );
     } else if (item.AlbumPrimaryImageTag) {
-        posterUrl =
-            $scope.serverAddress +
-            '/Items/' +
-            item.AlbumId +
-            '/Images/Primary?tag=' +
-            item.AlbumPrimaryImageTag;
+        posterUrl = JellyfinApi.createUrl(
+            'Items/' +
+                item.AlbumId +
+                '/Images/Primary?tag=' +
+                item.AlbumPrimaryImageTag
+        );
     } else if (item.PrimaryImageTag) {
-        posterUrl =
-            $scope.serverAddress +
-            '/Items/' +
-            item.Id +
-            '/Images/Primary?tag=' +
-            item.PrimaryImageTag;
+        posterUrl = JellyfinApi.createUrl(
+            'Items/' + item.Id + '/Images/Primary?tag=' + item.PrimaryImageTag
+        );
     } else if (item.ImageTags.Primary) {
-        posterUrl =
-            $scope.serverAddress +
-            '/Items/' +
-            item.Id +
-            '/Images/Primary?tag=' +
-            item.ImageTags.Primary;
+        posterUrl = JellyfinApi.createUrl(
+            'Items/' + item.Id + '/Images/Primary?tag=' + item.ImageTags.Primary
+        );
     }
 
     if (item.Type == 'Episode') {
@@ -352,17 +328,16 @@ export function createStreamInfo(item, mediaSource, startPosition) {
             mediaUrl = mediaSource.Path;
             isStatic = true;
         } else if (mediaSource.SupportsDirectStream) {
-            mediaUrl = getUrl(
-                item.serverAddress,
+            mediaUrl = JellyfinApi.createUrl(
                 'videos/' + item.Id + '/stream.' + mediaSource.Container
             );
             mediaUrl += '?mediaSourceId=' + mediaSource.Id;
-            mediaUrl += '&api_key=' + item.accessToken;
+            mediaUrl += '&api_key=' + JellyfinApi.accessToken;
             mediaUrl += '&static=true' + seekParam;
             isStatic = true;
             playerStartPositionTicks = startPosition || 0;
         } else {
-            mediaUrl = getUrl(item.serverAddress, mediaSource.TranscodingUrl);
+            mediaUrl = JellyfinApi.createUrl(mediaSource.TranscodingUrl);
 
             if (mediaSource.TranscodingSubProtocol == 'hls') {
                 mediaUrl += seekParam;
@@ -395,22 +370,18 @@ export function createStreamInfo(item, mediaSource, startPosition) {
                     mediaSource.Container || ''
                 ).toLowerCase();
 
-                mediaUrl = getUrl(
-                    item.serverAddress,
+                mediaUrl = JellyfinApi.createUrl(
                     'Audio/' + item.Id + '/stream.' + outputContainer
                 );
                 mediaUrl += '?mediaSourceId=' + mediaSource.Id;
-                mediaUrl += '&api_key=' + item.accessToken;
+                mediaUrl += '&api_key=' + JellyfinApi.accessToken;
                 mediaUrl += '&static=true' + seekParam;
                 isStatic = true;
             } else {
                 streamContainer = mediaSource.TranscodingContainer;
                 contentType = 'audio/' + mediaSource.TranscodingContainer;
 
-                mediaUrl = getUrl(
-                    item.serverAddress,
-                    mediaSource.TranscodingUrl
-                );
+                mediaUrl = JellyfinApi.createUrl(mediaSource.TranscodingUrl);
             }
         }
     }
@@ -438,7 +409,6 @@ export function createStreamInfo(item, mediaSource, startPosition) {
     });
     var subtitleTracks = [];
     subtitleStreams.forEach(function (subtitleStream) {
-        let subStreamCodec = subtitleStream.Codec.toLowerCase();
         if (subtitleStream.DeliveryUrl === undefined) {
             /* The CAF v3 player only supports vtt currently,
              * SRT subs can be "transcoded" to vtt by jellyfin.
@@ -450,7 +420,7 @@ export function createStreamInfo(item, mediaSource, startPosition) {
         }
         var textStreamUrl = subtitleStream.IsExternalUrl
             ? subtitleStream.DeliveryUrl
-            : getUrl(item.serverAddress, subtitleStream.DeliveryUrl);
+            : JellyfinApi.createUrl(subtitleStream.DeliveryUrl);
 
         var track = new cast.framework.messages.Track(
             info.subtitleStreamIndex,
@@ -478,35 +448,11 @@ export function getStreamByIndex(streams, type, index) {
     })[0];
 }
 
-export function getSecurityHeaders(accessToken, userId) {
-    var auth =
-        'Emby Client="Chromecast", Device="' +
-        deviceInfo.deviceName +
-        '", DeviceId="' +
-        deviceInfo.deviceId +
-        '", Version="' +
-        deviceInfo.versionNumber +
-        '"';
-
-    if (userId) {
-        auth += ', UserId="' + userId + '"';
-    }
-
-    var headers = {
-        Authorization: auth
-    };
-
-    headers['X-MediaBrowser-Token'] = accessToken;
-
-    return headers;
-}
-
-export function getBackdropUrl(item, serverAddress) {
+export function getBackdropUrl(item) {
     var url;
 
     if (item.BackdropImageTags && item.BackdropImageTags.length) {
-        url = getUrl(
-            serverAddress,
+        url = JellyfinApi.createUrl(
             'Items/' +
                 item.Id +
                 '/Images/Backdrop/0?tag=' +
@@ -517,8 +463,7 @@ export function getBackdropUrl(item, serverAddress) {
         item.ParentBackdropImageTags &&
         item.ParentBackdropImageTags.length
     ) {
-        url = getUrl(
-            serverAddress,
+        url = JellyfinApi.createUrl(
             'Items/' +
                 item.ParentBackdropItemId +
                 '/Images/Backdrop/0?tag=' +
@@ -529,16 +474,14 @@ export function getBackdropUrl(item, serverAddress) {
     return url;
 }
 
-export function getLogoUrl(item, serverAddress) {
+export function getLogoUrl(item) {
     var url;
     if (item.ImageTags && item.ImageTags.Logo) {
-        url = getUrl(
-            serverAddress,
+        url = JellyfinApi.createUrl(
             'Items/' + item.Id + '/Images/Logo/0?tag=' + item.ImageTags.Logo
         );
     } else if (item.ParentLogoItemId && item.ParentLogoImageTag) {
-        url = getUrl(
-            serverAddress,
+        url = JellyfinApi.createUrl(
             'Items/' +
                 item.ParentLogoItemId +
                 '/Images/Logo/0?tag=' +
@@ -549,24 +492,21 @@ export function getLogoUrl(item, serverAddress) {
     return url;
 }
 
-export function getPrimaryImageUrl(item, serverAddress) {
+export function getPrimaryImageUrl(item) {
     var posterUrl = '';
     if (item.AlbumPrimaryImageTag) {
-        posterUrl = getUrl(
-            serverAddress,
+        posterUrl = JellyfinApi.createUrl(
             'Items/' +
                 item.AlbumId +
                 '/Images/Primary?tag=' +
                 item.AlbumPrimaryImageTag
         );
     } else if (item.PrimaryImageTag) {
-        posterUrl = getUrl(
-            serverAddress,
+        posterUrl = JellyfinApi.createUrl(
             'Items/' + item.Id + '/Images/Primary?tag=' + item.PrimaryImageTag
         );
     } else if (item.ImageTags.Primary) {
-        posterUrl = getUrl(
-            serverAddress,
+        posterUrl = JellyfinApi.createUrl(
             'Items/' + item.Id + '/Images/Primary?tag=' + item.ImageTags.Primary
         );
     }
@@ -636,7 +576,7 @@ export function getRatingHtml(item) {
 
 var requiredItemFields = 'MediaSources,Chapters';
 
-export function getShuffleItems(serverAddress, accessToken, userId, item) {
+export function getShuffleItems(userId, item) {
     var query = {
         UserId: userId,
         Fields: requiredItemFields,
@@ -656,10 +596,10 @@ export function getShuffleItems(serverAddress, accessToken, userId, item) {
         query.ParentId = item.Id;
     }
 
-    return getItemsForPlayback(serverAddress, accessToken, userId, query);
+    return getItemsForPlayback(userId, query);
 }
 
-export function getInstantMixItems(serverAddress, accessToken, userId, item) {
+export function getInstantMixItems(userId, item) {
     var query = {
         UserId: userId,
         Fields: requiredItemFields,
@@ -682,30 +622,26 @@ export function getInstantMixItems(serverAddress, accessToken, userId, item) {
         url = 'Playlists/' + item.Id + '/InstantMix';
     }
 
-    url = getUrl(serverAddress, url);
+    url = JellyfinApi.createUrl(url);
 
-    return ajax({
-        url: url,
-        headers: getSecurityHeaders(accessToken, userId),
+    return JellyfinApi.authAjax(url, {
         query: query,
         type: 'GET',
         dataType: 'json'
     });
 }
 
-export function getItemsForPlayback(serverAddress, accessToken, userId, query) {
+export function getItemsForPlayback(userId, query) {
     query.UserId = userId;
     query.Limit = query.Limit || 100;
     query.Fields = requiredItemFields;
     query.ExcludeLocationTypes = 'Virtual';
 
-    var url = getUrl(serverAddress, 'Users/' + userId + '/Items');
+    var url = JellyfinApi.createUserUrl('Items');
 
     if (query.Ids && query.Ids.split(',').length == 1) {
         url += '/' + query.Ids.split(',')[0];
-        return ajax({
-            url: url,
-            headers: getSecurityHeaders(accessToken, userId),
+        return JellyfinApi.authAjax(url, {
             type: 'GET',
             dataType: 'json'
         }).then(function (item) {
@@ -716,77 +652,54 @@ export function getItemsForPlayback(serverAddress, accessToken, userId, query) {
         });
     }
 
-    return ajax({
-        url: url,
-        headers: getSecurityHeaders(accessToken, userId),
+    return JellyfinApi.authAjax(url, {
         query: query,
         type: 'GET',
         dataType: 'json'
     });
 }
 
-export function getEpisodesForPlayback(
-    serverAddress,
-    accessToken,
-    userId,
-    seriesId,
-    query
-) {
+export function getEpisodesForPlayback(userId, seriesId, query) {
     query.UserId = userId;
     query.Fields = requiredItemFields;
     query.ExcludeLocationTypes = 'Virtual';
 
-    var url = getUrl(serverAddress, 'Shows/' + seriesId + '/Episodes');
+    var url = JellyfinApi.createUrl('Shows/' + seriesId + '/Episodes');
 
-    return ajax({
-        url: url,
-        headers: getSecurityHeaders(accessToken, userId),
+    return JellyfinApi.authAjax(url, {
         query: query,
         type: 'GET',
         dataType: 'json'
     });
 }
 
-export function getIntros(serverAddress, accessToken, userId, firstItem) {
-    var url = getUrl(
-        serverAddress,
-        'Users/' + userId + '/Items/' + firstItem.Id + '/Intros'
-    );
+export function getIntros(firstItem) {
+    var url = JellyfinApi.createUserUrl('Items/' + firstItem.Id + '/Intros');
 
-    return ajax({
-        url: url,
+    return JellyfinApi.authAjax(url, {
         dataType: 'json',
-        headers: getSecurityHeaders(accessToken, userId),
         type: 'GET'
     });
 }
 
-export function getUser(serverAddress, accessToken, userId) {
-    var url = getUrl(serverAddress, 'Users/' + userId);
+export function getUser() {
+    var url = JellyfinApi.createUserUrl();
 
-    return ajax({
-        url: url,
+    return JellyfinApi.authAjax(url, {
         dataType: 'json',
-        headers: getSecurityHeaders(accessToken, userId),
         type: 'GET'
     });
 }
 
-export function translateRequestedItems(
-    serverAddress,
-    accessToken,
-    userId,
-    items,
-    smart
-) {
+export function translateRequestedItems(userId, items, smart) {
     var firstItem = items[0];
 
     if (firstItem.Type == 'Playlist') {
-        return getItemsForPlayback(serverAddress, accessToken, userId, {
+        return getItemsForPlayback(userId, {
             ParentId: firstItem.Id
         });
     } else if (firstItem.Type == 'MusicArtist') {
-        return getItemsForPlayback(serverAddress, accessToken, userId, {
+        return getItemsForPlayback(userId, {
             ArtistIds: firstItem.Id,
             Filters: 'IsNotFolder',
             Recursive: true,
@@ -794,7 +707,7 @@ export function translateRequestedItems(
             MediaTypes: 'Audio'
         });
     } else if (firstItem.Type == 'MusicGenre') {
-        return getItemsForPlayback(serverAddress, accessToken, userId, {
+        return getItemsForPlayback(userId, {
             Genres: firstItem.Name,
             Filters: 'IsNotFolder',
             Recursive: true,
@@ -802,7 +715,7 @@ export function translateRequestedItems(
             MediaTypes: 'Audio'
         });
     } else if (firstItem.IsFolder) {
-        return getItemsForPlayback(serverAddress, accessToken, userId, {
+        return getItemsForPlayback(userId, {
             ParentId: firstItem.Id,
             Filters: 'IsNotFolder',
             Recursive: true,
@@ -810,16 +723,14 @@ export function translateRequestedItems(
             MediaTypes: 'Audio,Video'
         });
     } else if (smart && firstItem.Type == 'Episode' && items.length == 1) {
-        return getUser(serverAddress, accessToken, userId).then(function (
-            user
-        ) {
+        return getUser().then(function (user) {
             if (!user.Configuration.EnableNextEpisodeAutoPlay) {
                 return {
                     Items: items
                 };
             }
 
-            return getItemsForPlayback(serverAddress, accessToken, userId, {
+            return getItemsForPlayback(userId, {
                 Ids: firstItem.Id
             }).then(function (result) {
                 var episode = result.Items[0];
@@ -828,17 +739,11 @@ export function translateRequestedItems(
                     return result;
                 }
 
-                return getEpisodesForPlayback(
-                    serverAddress,
-                    accessToken,
-                    userId,
-                    episode.SeriesId,
-                    {
-                        IsVirtualUnaired: false,
-                        IsMissing: false,
-                        UserId: userId
-                    }
-                ).then(function (episodesResult) {
+                return getEpisodesForPlayback(userId, episode.SeriesId, {
+                    IsVirtualUnaired: false,
+                    IsMissing: false,
+                    UserId: userId
+                }).then(function (episodesResult) {
                     var foundItem = false;
                     episodesResult.Items = episodesResult.Items.filter(
                         function (e) {
@@ -868,7 +773,8 @@ export function translateRequestedItems(
 
 export function getMiscInfoHtml(item) {
     var miscInfo = [];
-    var text, date;
+    var text;
+    var date;
 
     if (item.Type == 'Episode') {
         if (item.PremiereDate) {
@@ -1034,7 +940,7 @@ export function extend(target, source) {
     return target;
 }
 
-export function parseISO8601Date(s, toLocal) {
+export function parseISO8601Date(s) {
     return new Date(s);
 }
 
@@ -1092,14 +998,4 @@ export function broadcastConnectionErrorMessage() {
 
 export function cleanName(name) {
     return name.replace(/[^\w\s]/gi, '');
-}
-
-export function tagItems(items, data) {
-    // Attach server data to the items
-    // Once day the items could be coming from multiple servers, each with their own security info
-    for (var i = 0, length = items.length; i < length; i++) {
-        items[i].userId = data.userId;
-        items[i].accessToken = data.accessToken;
-        items[i].serverAddress = data.serverAddress;
-    }
 }

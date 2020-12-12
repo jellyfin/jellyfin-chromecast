@@ -1,40 +1,35 @@
-/* eslint-disable */
-
 import {
     reportPlaybackProgress,
     reportPlaybackStopped,
     play,
-    displayUserInfo,
+    startBackdropInterval,
     getPlaybackInfo,
     stopActiveEncodings,
     detectBitrate
 } from './jellyfinActions';
-import { ajax } from './fetchhelper';
 import { getDeviceProfile as deviceProfileBuilder } from './deviceprofileBuilder';
 import {
-    getUrl,
     getCurrentPositionTicks,
     getReportingParams,
     resetPlaybackScope,
     getMetadata,
     createStreamInfo,
     getStreamByIndex,
-    getSecurityHeaders,
     getShuffleItems,
     getInstantMixItems,
     translateRequestedItems,
-    setAppStatus,
     extend,
     broadcastToMessageBus,
     broadcastConnectionErrorMessage,
-    cleanName,
-    tagItems
+    cleanName
 } from '../helpers';
 
 import { getMaxBitrateSupport } from './codecSupportHelper';
 
 import { commandHandler } from './commandHandler';
 import { playbackManager } from './playbackManager';
+
+import { JellyfinApi } from './jellyfinApi';
 
 window.castReceiverContext = cast.framework.CastReceiverContext.getInstance();
 window.mediaManager = window.castReceiverContext.getPlayerManager();
@@ -66,7 +61,7 @@ var mgr = window.mediaManager;
 
 var broadcastToServer = new Date();
 
-export function onMediaElementTimeUpdate(e) {
+export function onMediaElementTimeUpdate() {
     if ($scope.isChangingStream) {
         return;
     }
@@ -160,12 +155,12 @@ mgr.defaultOnPlay = function (event) {
 };
 mgr.addEventListener(cast.framework.events.EventType.PLAY, mgr.defaultOnPlay);
 
-mgr.defaultOnPause = function (event) {
+mgr.defaultOnPause = function () {
     reportPlaybackProgress($scope, getReportingParams($scope));
 };
 mgr.addEventListener(cast.framework.events.EventType.PAUSE, mgr.defaultOnPause);
 
-mgr.defaultOnStop = function (event) {
+mgr.defaultOnStop = function () {
     playbackMgr.stop();
 };
 
@@ -184,15 +179,10 @@ mgr.addEventListener(cast.framework.events.EventType.ENDED, function () {
     reportPlaybackStopped($scope, getReportingParams($scope));
     init();
 
-    if (!playNextItem()) {
+    if (!playbackMgr.playNextItem()) {
         window.playlist = [];
         window.currentPlaylistIndex = -1;
-        displayUserInfo(
-            $scope,
-            $scope.serverAddress,
-            $scope.accessToken,
-            $scope.userId
-        );
+        startBackdropInterval();
     }
 });
 
@@ -204,9 +194,7 @@ window.castReceiverContext.addEventListener(
                 JSON.stringify(event.data)
         );
 
-        if ($scope.userId != null) {
-            reportEvent('volumechange', true);
-        }
+        reportEvent('volumechange', true);
     }
 );
 
@@ -225,8 +213,10 @@ console.log('Application is ready, starting system');
 
 export function reportDeviceCapabilities() {
     getMaxBitrate().then((maxBitrate) => {
-        let capabilitiesUrl =
-            $scope.serverAddress + '/Sessions/Capabilities/Full';
+        let capabilitiesUrl = JellyfinApi.createUrl(
+            'Sessions/Capabilities/Full'
+        );
+
         let deviceProfile = getDeviceProfile(maxBitrate);
 
         let capabilities = {
@@ -236,9 +226,8 @@ export function reportDeviceCapabilities() {
             DeviceProfile: deviceProfile
         };
         window.hasReportedCapabilities = true;
-        return ajax({
-            url: capabilitiesUrl,
-            headers: getSecurityHeaders($scope.accessToken, $scope.userId),
+
+        return JellyfinApi.authAjax(capabilitiesUrl, {
             type: 'POST',
             data: JSON.stringify(capabilities),
             contentType: 'application/json'
@@ -264,9 +253,13 @@ export function processMessage(data) {
     }
 
     // Items will have properties - Id, Name, Type, MediaType, IsFolder
-    $scope.userId = data.userId;
-    $scope.accessToken = data.accessToken;
-    $scope.serverAddress = data.serverAddress;
+
+    JellyfinApi.setServerInfo(
+        data.userId,
+        data.accessToken,
+        data.serverAddress
+    );
+
     if (data.subtitleAppearance) {
         window.subtitleAppearance = data.subtitleAppearance;
     }
@@ -328,8 +321,10 @@ export function reportEvent(name, reportToServer) {
     );
 }
 
-export function setSubtitleStreamIndex($scope, index, serverAddress) {
+export function setSubtitleStreamIndex($scope, index) {
     console.log('setSubtitleStreamIndex. index: ' + index);
+
+    var positionTicks;
 
     var currentSubtitleStream = $scope.mediaSource.MediaStreams.filter(
         function (m) {
@@ -346,7 +341,7 @@ export function setSubtitleStreamIndex($scope, index, serverAddress) {
         // Need to change the stream to turn off the subs
         if (currentDeliveryMethod == 'Encode') {
             console.log('setSubtitleStreamIndex video url change required');
-            var positionTicks = getCurrentPositionTicks($scope);
+            positionTicks = getCurrentPositionTicks($scope);
             changeStream(positionTicks, {
                 SubtitleStreamIndex: -1
             });
@@ -378,7 +373,7 @@ export function setSubtitleStreamIndex($scope, index, serverAddress) {
     ) {
         var textStreamUrl = subtitleStream.IsExternalUrl
             ? subtitleStream.DeliveryUrl
-            : getUrl(serverAddress, subtitleStream.DeliveryUrl);
+            : JellyfinApi.createUrl(subtitleStream.DeliveryUrl);
 
         console.log('Subtitle url: ' + textStreamUrl);
         setTextTrack(index);
@@ -386,7 +381,7 @@ export function setSubtitleStreamIndex($scope, index, serverAddress) {
         return;
     } else {
         console.log('setSubtitleStreamIndex video url change required');
-        var positionTicks = getCurrentPositionTicks($scope);
+        positionTicks = getCurrentPositionTicks($scope);
         changeStream(positionTicks, {
             SubtitleStreamIndex: index
         });
@@ -507,7 +502,6 @@ window.castReceiverContext.addCustomMessageListener(
 export function translateItems(data, options, items, method) {
     var callback = function (result) {
         options.items = result.Items;
-        tagItems(options.items, data);
 
         if (method == 'PlayNext' || method == 'PlayLast') {
             queue(options.items, method);
@@ -517,37 +511,19 @@ export function translateItems(data, options, items, method) {
     };
 
     var smartTranslate = method != 'PlayNext' && method != 'PlayLast';
-    translateRequestedItems(
-        data.serverAddress,
-        data.accessToken,
-        data.userId,
-        items,
-        smartTranslate
-    ).then(callback);
+    translateRequestedItems(data.userId, items, smartTranslate).then(callback);
 }
 
 export function instantMix(data, options, item) {
-    getInstantMixItems(
-        data.serverAddress,
-        data.accessToken,
-        data.userId,
-        item
-    ).then(function (result) {
+    getInstantMixItems(data.userId, item).then(function (result) {
         options.items = result.Items;
-        tagItems(options.items, data);
         playbackMgr.playFromOptions(data.options);
     });
 }
 
 export function shuffle(data, options, item) {
-    getShuffleItems(
-        data.serverAddress,
-        data.accessToken,
-        data.userId,
-        item
-    ).then(function (result) {
+    getShuffleItems(data.userId, item).then(function (result) {
         options.items = result.Items;
-        tagItems(options.items, data);
         playbackMgr.playFromOptions(data.options);
     });
 }
@@ -559,14 +535,9 @@ export function queue(items) {
 }
 
 export function onStopPlayerBeforePlaybackDone(item, options) {
-    var requestUrl = getUrl(
-        item.serverAddress,
-        'Users/' + item.userId + '/Items/' + item.Id
-    );
+    var requestUrl = JellyfinApi.createUserUrl('Items/' + item.Id);
 
-    return ajax({
-        url: requestUrl,
-        headers: getSecurityHeaders(item.accessToken, item.userId),
+    return JellyfinApi.authAjax(requestUrl, {
         dataType: 'json',
         type: 'GET'
     }).then(function (data) {
@@ -589,7 +560,7 @@ var detectedBitrate = 0;
 export function getMaxBitrate() {
     console.log('getMaxBitrate');
 
-    return new Promise(function (resolve, reject) {
+    return new Promise(function (resolve) {
         // The client can set this number
         if (window.MaxBitrate) {
             console.log('bitrate is set to ' + window.MaxBitrate);
@@ -752,8 +723,6 @@ export function createMediaInformation(playSessionId, item, streamInfo) {
     mediaInfo.contentType = streamInfo.contentType;
     mediaInfo.customData = {
         startPositionTicks: streamInfo.startPositionTicks || 0,
-        serverAddress: item.serverAddress,
-        userId: item.userId,
         itemId: item.Id,
         mediaSourceId: streamInfo.mediaSource.Id,
         audioStreamIndex: streamInfo.audioStreamIndex,
@@ -761,7 +730,6 @@ export function createMediaInformation(playSessionId, item, streamInfo) {
         playMethod: streamInfo.isStatic ? 'DirectStream' : 'Transcode',
         runtimeTicks: streamInfo.mediaSource.RunTimeTicks,
         liveStreamId: streamInfo.mediaSource.LiveStreamId,
-        accessToken: item.accessToken,
         canSeek: streamInfo.canSeek,
         canClientSeek: streamInfo.canClientSeek,
         playSessionId: playSessionId

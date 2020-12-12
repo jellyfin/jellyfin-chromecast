@@ -11,6 +11,10 @@ export interface GlobalScope {
     [key: string]: any;
 }
 
+export interface Dictionary<T> {
+    [Key: string]: T;
+}
+
 declare global {
     export const PRODUCTION: boolean;
     export const RECEIVERVERSION: string;

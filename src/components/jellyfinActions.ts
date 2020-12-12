@@ -1,10 +1,6 @@
-import { ajax } from './fetchhelper';
-
 import {
-    getUrl,
     getSenderReportingData,
     resetPlaybackScope,
-    getSecurityHeaders,
     getBackdropUrl,
     getLogoUrl,
     getPrimaryImageUrl,
@@ -30,6 +26,7 @@ import { BaseItemDto } from '../api/generated/models/base-item-dto';
 import { DeviceProfile } from '../api/generated/models/device-profile';
 import { MediaSourceInfo } from '../api/generated/models/media-source-info';
 import { PlayRequest } from '../api/generated/models/play-request';
+import { JellyfinApi } from './jellyfinApi';
 
 interface PlayRequestQuery extends PlayRequest {
     UserId?: string;
@@ -52,7 +49,7 @@ function restartPingInterval(
 
     if (reportingParams.PlayMethod == 'Transcode') {
         pingInterval = <any>setInterval(function () {
-            pingTranscoder($scope, {
+            pingTranscoder({
                 PlaySessionId: reportingParams.PlaySessionId
             });
         }, 1000);
@@ -70,17 +67,9 @@ export function reportPlaybackStart(
     $scope: GlobalScope,
     reportingParams: PlaybackProgressInfo
 ): Promise<any> {
-    stopDynamicContent();
+    clearBackdropInterval();
 
-    if (!$scope.userId) {
-        throw new Error('null userId');
-    }
-
-    if (!$scope.serverAddress) {
-        throw new Error('null serverAddress');
-    }
-
-    const url = getUrl($scope.serverAddress, 'Sessions/Playing');
+    const url = JellyfinApi.createUrl('Sessions/Playing');
 
     broadcastToMessageBus({
         //TODO: convert these to use a defined type in the type field
@@ -90,9 +79,7 @@ export function reportPlaybackStart(
 
     restartPingInterval($scope, reportingParams);
 
-    return ajax({
-        url: url,
-        headers: getSecurityHeaders($scope.accessToken, $scope.userId),
+    return JellyfinApi.authAjax(url, {
         type: 'POST',
         data: JSON.stringify(reportingParams),
         contentType: 'application/json'
@@ -105,14 +92,6 @@ export function reportPlaybackProgress(
     reportToServer: boolean,
     broadcastEventName: string
 ): Promise<any> {
-    if (!$scope.userId) {
-        throw new Error('null userId');
-    }
-
-    if (!$scope.serverAddress) {
-        throw new Error('null serverAddress');
-    }
-
     broadcastToMessageBus({
         type: broadcastEventName || 'playbackprogress',
         data: getSenderReportingData($scope, reportingParams)
@@ -122,14 +101,12 @@ export function reportPlaybackProgress(
         return Promise.resolve();
     }
 
-    const url = getUrl($scope.serverAddress, 'Sessions/Playing/Progress');
+    const url = JellyfinApi.createUrl('Sessions/Playing/Progress');
 
     restartPingInterval($scope, reportingParams);
     lastTranscoderPing = new Date().getTime();
 
-    return ajax({
-        url: url,
-        headers: getSecurityHeaders($scope.accessToken, $scope.userId),
+    return JellyfinApi.authAjax(url, {
         type: 'POST',
         data: JSON.stringify(reportingParams),
         contentType: 'application/json'
@@ -142,24 +119,14 @@ export function reportPlaybackStopped(
 ): Promise<any> {
     stopPingInterval();
 
-    if (!$scope.userId) {
-        throw new Error('null userId');
-    }
-
-    if (!$scope.serverAddress) {
-        throw new Error('null serverAddress');
-    }
-
-    const url = getUrl($scope.serverAddress, 'Sessions/Playing/Stopped');
+    const url = JellyfinApi.createUrl('Sessions/Playing/Stopped');
 
     broadcastToMessageBus({
         type: 'playbackstop',
         data: getSenderReportingData($scope, reportingParams)
     });
 
-    return ajax({
-        url: url,
-        headers: getSecurityHeaders($scope.accessToken, $scope.userId),
+    return JellyfinApi.authAjax(url, {
         type: 'POST',
         data: JSON.stringify(reportingParams),
         contentType: 'application/json'
@@ -167,17 +134,8 @@ export function reportPlaybackStopped(
 }
 
 export function pingTranscoder(
-    $scope: GlobalScope,
     reportingParams: PlaybackProgressInfo
 ): Promise<any> {
-    if (!$scope.userId) {
-        throw new Error('null userId');
-    }
-
-    if (!$scope.serverAddress) {
-        throw new Error('null serverAddress');
-    }
-
     const now = new Date().getTime();
 
     if (now - lastTranscoderPing < 10000) {
@@ -187,51 +145,37 @@ export function pingTranscoder(
         });
     }
 
-    const url = getUrl($scope.serverAddress, 'Sessions/Playing/Ping');
+    const url = JellyfinApi.createUrl('Sessions/Playing/Ping');
     lastTranscoderPing = new Date().getTime();
 
-    return ajax({
-        url: url,
-        headers: getSecurityHeaders($scope.accessToken, $scope.userId),
+    return JellyfinApi.authAjax(url, {
         type: 'POST',
         data: JSON.stringify(reportingParams),
         contentType: 'application/json'
     });
 }
 
-function clearBackropInterval(): void {
+function clearBackdropInterval(): void {
     if (backdropInterval !== 0) {
         clearInterval(backdropInterval);
         backdropInterval = 0;
     }
 }
 
-function startBackdropInterval(
-    $scope: GlobalScope,
-    serverAddress: string,
-    accessToken: string,
-    userId: string
-): void {
-    clearBackropInterval();
+export function startBackdropInterval(): void {
+    clearBackdropInterval();
 
-    setRandomUserBackdrop($scope, serverAddress, accessToken, userId);
+    setRandomUserBackdrop();
 
     backdropInterval = <any>setInterval(function () {
-        setRandomUserBackdrop($scope, serverAddress, accessToken, userId);
+        setRandomUserBackdrop();
     }, 30000);
 }
 
-function setRandomUserBackdrop(
-    $scope: GlobalScope,
-    serverAddress: string,
-    accessToken: string,
-    userId: string
-): void {
-    const url = getUrl(serverAddress, 'Users/' + userId + '/Items');
+function setRandomUserBackdrop(): void {
+    const url = JellyfinApi.createUserUrl('Items');
 
-    ajax({
-        url: url,
-        headers: getSecurityHeaders(accessToken, userId),
+    JellyfinApi.authAjax(url, {
         dataType: 'json',
         type: 'GET',
         query: {
@@ -244,48 +188,29 @@ function setRandomUserBackdrop(
             // not everyone will want to see adult backdrops rotating on their TV.
             MaxOfficialRating: 'PG-13'
         }
-    }).then(function (result) {
+    }).then(function (result: any) {
         const item = result.Items[0];
 
         let backdropUrl = '';
 
         if (item) {
-            backdropUrl = getBackdropUrl(item, serverAddress) || '';
+            backdropUrl = getBackdropUrl(item) || '';
         }
 
         setWaitingBackdrop(backdropUrl);
     });
 }
 
-export function displayUserInfo(
-    $scope: GlobalScope,
-    serverAddress: string,
-    accessToken: string,
-    userId: string
-): void {
-    startBackdropInterval($scope, serverAddress, accessToken, userId);
-}
+function showItem(item: BaseItemDto): void {
+    clearBackdropInterval();
 
-export function stopDynamicContent(): void {
-    clearBackropInterval();
-}
-
-function showItem(
-    $scope: GlobalScope,
-    serverAddress: string,
-    accessToken: string,
-    userId: string,
-    item: BaseItemDto
-): void {
-    clearBackropInterval();
-
-    const backdropUrl = getBackdropUrl(item, serverAddress) || '';
-    let detailImageUrl = getPrimaryImageUrl(item, serverAddress) || '';
+    const backdropUrl = getBackdropUrl(item) || '';
+    let detailImageUrl = getPrimaryImageUrl(item) || '';
 
     setAppStatus('details');
     setWaitingBackdrop(backdropUrl);
 
-    setLogo(getLogoUrl(item, serverAddress) || '');
+    setLogo(getLogoUrl(item) || '');
     setOverview(item.Overview || '');
     setGenres(item?.Genres?.join(' / '));
     setDisplayName(getDisplayName(item));
@@ -333,32 +258,20 @@ function showItem(
     setDetailImage(detailImageUrl);
 }
 
-export function displayItem(
-    $scope: GlobalScope,
-    serverAddress: string,
-    accessToken: string,
-    userId: string,
-    itemId: string
-): void {
-    const url = getUrl(serverAddress, 'Users/' + userId + '/Items/' + itemId);
+export function displayItem(itemId: string): void {
+    const url = JellyfinApi.createUserUrl('Items/' + itemId);
 
-    ajax({
-        url: url,
-        headers: getSecurityHeaders(accessToken, userId),
+    JellyfinApi.authAjax(url, {
         dataType: 'json',
         type: 'GET'
     }).then(function (item) {
-        showItem($scope, serverAddress, accessToken, userId, item);
+        showItem(item);
     });
 }
 
-export function getSubtitle(
-    $scope: GlobalScope,
-    subtitleStreamUrl: string
-): Promise<any> {
-    return ajax({
-        url: subtitleStreamUrl,
-        headers: getSecurityHeaders($scope.accessToken, $scope.userId),
+// TODO: Part of JellyfinApi
+export function getSubtitle(subtitleStreamUrl: string): Promise<any> {
+    return JellyfinApi.authAjax(subtitleStreamUrl, {
         type: 'GET',
         dataType: 'json'
     });
@@ -405,32 +318,22 @@ export function stop(): void {
 }
 
 export function getPlaybackInfo(
-    // TODO: change to BaseItemDto once refactor happens,
-    // userId and serverAddress should not be on item
-    item: any,
+    item: BaseItemDto,
     maxBitrate: number,
     deviceProfile: DeviceProfile,
     startPosition: number,
     mediaSourceId: string,
     audioStreamIndex: number,
     subtitleStreamIndex: number,
-    liveStreamId: string
+    liveStreamId: string | null = null
 ): Promise<any> {
-    if (!item.userId) {
-        throw new Error('null userId');
-    }
-
-    if (!item.serverAddress) {
-        throw new Error('null serverAddress');
-    }
-
     const postData = {
         DeviceProfile: deviceProfile
     };
 
     // TODO: PlayRequestQuery might not be the proper type for this
     const query: PlayRequestQuery = {
-        UserId: item.userId,
+        UserId: JellyfinApi.userId ?? undefined,
         StartTimeTicks: startPosition || 0,
         MaxStreamingBitrate: maxBitrate
     };
@@ -448,14 +351,9 @@ export function getPlaybackInfo(
         query.LiveStreamId = liveStreamId;
     }
 
-    const url = getUrl(
-        item.serverAddress,
-        'Items/' + item.Id + '/PlaybackInfo'
-    );
+    const url = JellyfinApi.createUrl('Items/' + item.Id + '/PlaybackInfo');
 
-    return ajax({
-        url: url,
-        headers: getSecurityHeaders(item.accessToken, item.userId),
+    return JellyfinApi.authAjax(url, {
         query: query,
         type: 'POST',
         dataType: 'json',
@@ -465,9 +363,7 @@ export function getPlaybackInfo(
 }
 
 export function getLiveStream(
-    // TODO: change to BaseItemDto once refactor happens,
-    // userId and serverAddress should not be on item
-    item: any,
+    item: BaseItemDto,
     playSessionId: string,
     maxBitrate: number,
     deviceProfile: DeviceProfile,
@@ -476,21 +372,13 @@ export function getLiveStream(
     audioStreamIndex: number,
     subtitleStreamIndex: number
 ): Promise<any> {
-    if (!item.userId) {
-        throw new Error('null userId');
-    }
-
-    if (!item.serverAddress) {
-        throw new Error('null serverAddress');
-    }
-
     const postData = {
         DeviceProfile: deviceProfile,
         OpenToken: mediaSource.OpenToken
     };
 
     const query: PlayRequestQuery = {
-        UserId: item.userId,
+        UserId: JellyfinApi.userId ?? undefined,
         StartTimeTicks: startPosition || 0,
         ItemId: item.Id,
         MaxStreamingBitrate: maxBitrate,
@@ -504,11 +392,9 @@ export function getLiveStream(
         query.SubtitleStreamIndex = subtitleStreamIndex;
     }
 
-    const url = getUrl(item.serverAddress, 'LiveStreams/Open');
+    const url = JellyfinApi.createUrl('LiveStreams/Open');
 
-    return ajax({
-        url: url,
-        headers: getSecurityHeaders(item.accessToken, item.userId),
+    return JellyfinApi.authAjax(url, {
         query: query,
         type: 'POST',
         dataType: 'json',
@@ -517,27 +403,14 @@ export function getLiveStream(
     });
 }
 
-export function getDownloadSpeed(
-    $scope: GlobalScope,
-    byteSize: number
-): Promise<any> {
-    if (!$scope.userId) {
-        throw new Error('null userId');
-    }
-
-    if (!$scope.serverAddress) {
-        throw new Error('null serverAddress');
-    }
-
-    let url = getUrl($scope.serverAddress, 'Playback/BitrateTest');
+export function getDownloadSpeed(byteSize: number): Promise<any> {
+    let url = JellyfinApi.createUrl('Playback/BitrateTest');
     url += '?size=' + byteSize;
 
     const now = new Date().getTime();
 
-    return ajax({
+    return JellyfinApi.authAjax(url, {
         type: 'GET',
-        url: url,
-        headers: getSecurityHeaders($scope.accessToken, $scope.userId),
         timeout: 5000
     }).then(function () {
         const responseTimeSeconds = (new Date().getTime() - now) / 1000;
@@ -548,14 +421,14 @@ export function getDownloadSpeed(
     });
 }
 
-export function detectBitrate($scope: GlobalScope): Promise<number> {
+export function detectBitrate(): Promise<number> {
     // First try a small amount so that we don't hang up their mobile connection
-    return getDownloadSpeed($scope, 1000000).then(function (bitrate) {
+    return getDownloadSpeed(1000000).then(function (bitrate) {
         if (bitrate < 1000000) {
             return Math.round(bitrate * 0.8);
         } else {
             // If that produced a fairly high speed, try again with a larger size to get a more accurate result
-            return getDownloadSpeed($scope, 2400000).then(function (bitrate) {
+            return getDownloadSpeed(2400000).then(function (bitrate) {
                 return Math.round(bitrate * 0.8);
             });
         }
@@ -572,12 +445,10 @@ export function stopActiveEncodings($scope: GlobalScope): Promise<any> {
         options.PlaySessionId = $scope.playSessionId;
     }
 
-    const url = getUrl($scope.serverAddress, 'Videos/ActiveEncodings');
+    const url = JellyfinApi.createUrl('Videos/ActiveEncodings');
 
-    return ajax({
+    return JellyfinApi.authAjax(url, {
         type: 'DELETE',
-        headers: getSecurityHeaders($scope.accessToken, $scope.userId),
-        url: url,
         query: options
     });
 }
