@@ -32,15 +32,13 @@ import { MediaSourceInfo } from '~/api/generated/models/media-source-info';
 import { GlobalScope, PlayRequest } from '~/types/global';
 
 window.castReceiverContext = cast.framework.CastReceiverContext.getInstance();
-window.mediaManager = window.castReceiverContext.getPlayerManager();
+window.playerManager = window.castReceiverContext.getPlayerManager();
 
-const playbackMgr = new playbackManager(window.mediaManager);
+const playbackMgr = new playbackManager(window.playerManager);
 
-CommandHandler.configure(window.mediaManager, playbackMgr);
+CommandHandler.configure(window.playerManager, playbackMgr);
 
 resetPlaybackScope($scope);
-
-const mgr = window.mediaManager;
 
 let broadcastToServer = new Date();
 
@@ -106,7 +104,7 @@ function onMediaElementVolumeChange(event: framework.system.Event): void {
  *
  */
 export function enableTimeUpdateListener(): void {
-    window.mediaManager.addEventListener(
+    window.playerManager.addEventListener(
         cast.framework.events.EventType.TIME_UPDATE,
         onMediaElementTimeUpdate
     );
@@ -114,11 +112,11 @@ export function enableTimeUpdateListener(): void {
         cast.framework.system.EventType.SYSTEM_VOLUME_CHANGED,
         onMediaElementVolumeChange
     );
-    window.mediaManager.addEventListener(
+    window.playerManager.addEventListener(
         cast.framework.events.EventType.PAUSE,
         onMediaElementPause
     );
-    window.mediaManager.addEventListener(
+    window.playerManager.addEventListener(
         cast.framework.events.EventType.PLAYING,
         onMediaElementPlaying
     );
@@ -128,7 +126,7 @@ export function enableTimeUpdateListener(): void {
  *
  */
 export function disableTimeUpdateListener(): void {
-    window.mediaManager.removeEventListener(
+    window.playerManager.removeEventListener(
         cast.framework.events.EventType.TIME_UPDATE,
         onMediaElementTimeUpdate
     );
@@ -136,11 +134,11 @@ export function disableTimeUpdateListener(): void {
         cast.framework.system.EventType.SYSTEM_VOLUME_CHANGED,
         onMediaElementVolumeChange
     );
-    window.mediaManager.removeEventListener(
+    window.playerManager.removeEventListener(
         cast.framework.events.EventType.PAUSE,
         onMediaElementPause
     );
-    window.mediaManager.removeEventListener(
+    window.playerManager.removeEventListener(
         cast.framework.events.EventType.PLAYING,
         onMediaElementPlaying
     );
@@ -154,14 +152,20 @@ window.addEventListener('beforeunload', () => {
     reportPlaybackStopped($scope, getReportingParams($scope));
 });
 
-mgr.addEventListener(cast.framework.events.EventType.PLAY, (): void => {
-    play($scope);
-    reportPlaybackProgress($scope, getReportingParams($scope));
-});
+window.playerManager.addEventListener(
+    cast.framework.events.EventType.PLAY,
+    (): void => {
+        play($scope);
+        reportPlaybackProgress($scope, getReportingParams($scope));
+    }
+);
 
-mgr.addEventListener(cast.framework.events.EventType.PAUSE, (): void => {
-    reportPlaybackProgress($scope, getReportingParams($scope));
-});
+window.playerManager.addEventListener(
+    cast.framework.events.EventType.PAUSE,
+    (): void => {
+        reportPlaybackProgress($scope, getReportingParams($scope));
+    }
+);
 
 /**
  *
@@ -170,34 +174,40 @@ function defaultOnStop(): void {
     playbackMgr.stop();
 }
 
-mgr.addEventListener(
+window.playerManager.addEventListener(
     cast.framework.events.EventType.MEDIA_FINISHED,
     defaultOnStop
 );
-mgr.addEventListener(cast.framework.events.EventType.ABORT, defaultOnStop);
+window.playerManager.addEventListener(
+    cast.framework.events.EventType.ABORT,
+    defaultOnStop
+);
 
-mgr.addEventListener(cast.framework.events.EventType.ENDED, () => {
-    // Ignore
-    if ($scope.isChangingStream) {
-        return;
+window.playerManager.addEventListener(
+    cast.framework.events.EventType.ENDED,
+    (): void => {
+        // Ignore
+        if ($scope.isChangingStream) {
+            return;
+        }
+
+        reportPlaybackStopped($scope, getReportingParams($scope));
+        resetPlaybackScope($scope);
+
+        if (!playbackMgr.playNextItem()) {
+            window.playlist = [];
+            window.currentPlaylistIndex = -1;
+            DocumentManager.startBackdropInterval();
+        }
     }
-
-    reportPlaybackStopped($scope, getReportingParams($scope));
-    resetPlaybackScope($scope);
-
-    if (!playbackMgr.playNextItem()) {
-        window.playlist = [];
-        window.currentPlaylistIndex = -1;
-        DocumentManager.startBackdropInterval();
-    }
-});
+);
 
 // Set the active subtitle track once the player has loaded
-window.mediaManager.addEventListener(
+window.playerManager.addEventListener(
     cast.framework.events.EventType.PLAYER_LOAD_COMPLETE,
     () => {
         setTextTrack(
-            window.mediaManager.getMediaInformation().customData
+            window.playerManager.getMediaInformation().customData
                 .subtitleStreamIndex
         );
     }
@@ -424,10 +434,10 @@ export async function changeStream(
     params: any = undefined
 ): Promise<void> {
     if (
-        window.mediaManager.getMediaInformation().customData.canClientSeek &&
+        window.playerManager.getMediaInformation().customData.canClientSeek &&
         params == null
     ) {
-        window.mediaManager.seek(ticks / 10000000);
+        window.playerManager.seek(ticks / 10000000);
         reportPlaybackProgress($scope, getReportingParams($scope));
 
         return Promise.resolve();
@@ -492,12 +502,12 @@ export async function changeStream(
     const requiresStoppingTranscoding = false;
 
     if (requiresStoppingTranscoding) {
-        window.mediaManager.pause();
+        window.playerManager.pause();
         await stopActiveEncodings(playSessionId);
     }
 
-    window.mediaManager.load(loadRequest);
-    window.mediaManager.play();
+    window.playerManager.load(loadRequest);
+    window.playerManager.play();
     $scope.subtitleStreamIndex = subtitleStreamIndex;
     $scope.audioStreamIndex = audioStreamIndex;
 }
@@ -714,7 +724,7 @@ export function checkDirectPlay(mediaSource: MediaSourceInfo): void {
  */
 export function setTextTrack(index: number | null): void {
     try {
-        const textTracksManager = window.mediaManager.getTextTracksManager();
+        const textTracksManager = window.playerManager.getTextTracksManager();
 
         if (index == null) {
             // docs: null is okay
@@ -870,7 +880,7 @@ if (!PRODUCTION) {
     // quits once the client closes the connection.
     // options.maxInactivity = 3600;
 
-    window.mediaManager.addEventListener(
+    window.playerManager.addEventListener(
         cast.framework.events.category.CORE,
         (event: framework.events.Event) => {
             console.log(`Core event: ${event.type}`);

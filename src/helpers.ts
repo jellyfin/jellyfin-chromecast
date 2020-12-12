@@ -16,8 +16,8 @@ import { GlobalScope, BusMessage, ItemIndex, ItemQuery } from './types/global';
  * @returns position in ticks
  */
 export function getCurrentPositionTicks($scope: GlobalScope): number {
-    let positionTicks = window.mediaManager.getCurrentTimeSec() * 10000000;
-    const mediaInformation = window.mediaManager.getMediaInformation();
+    let positionTicks = window.playerManager.getCurrentTimeSec() * 10000000;
+    const mediaInformation = window.playerManager.getMediaInformation();
 
     if (mediaInformation && !mediaInformation.customData.canClientSeek) {
         positionTicks += $scope.startPositionTicks || 0;
@@ -43,7 +43,7 @@ export function getReportingParams($scope: GlobalScope): PlaybackProgressInfo {
         CanSeek: $scope.canSeek,
         IsMuted: window.volume.muted,
         IsPaused:
-            window.mediaManager.getPlayerState() ===
+            window.playerManager.getPlayerState() ===
             cast.framework.messages.PlayerState.PAUSED,
         ItemId: $scope.itemId,
         LiveStreamId: $scope.liveStreamId,

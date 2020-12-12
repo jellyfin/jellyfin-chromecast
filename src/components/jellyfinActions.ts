@@ -230,7 +230,7 @@ export function play($scope: GlobalScope): void {
         DocumentManager.getAppStatus() == 'audio'
     ) {
         setTimeout(() => {
-            window.mediaManager.play();
+            window.playerManager.play();
 
             if ($scope.mediaType == 'Audio') {
                 DocumentManager.setAppStatus('audio');
