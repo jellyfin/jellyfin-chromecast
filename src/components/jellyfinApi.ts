@@ -16,6 +16,14 @@ export abstract class JellyfinApi {
         accessToken: string,
         serverAddress: string
     ) {
+        console.debug(
+            'JellyfinApi.setServerInfo: user:' +
+                userId +
+                ', token:' +
+                accessToken +
+                ', server:' +
+                serverAddress
+        );
         this.userId = userId;
         this.accessToken = accessToken;
         this.serverAddress = serverAddress;

@@ -33,23 +33,8 @@ import { JellyfinApi } from './jellyfinApi';
 
 window.castReceiverContext = cast.framework.CastReceiverContext.getInstance();
 window.mediaManager = window.castReceiverContext.getPlayerManager();
-window.mediaManager.addEventListener(
-    cast.framework.events.category.CORE,
-    (event) => {
-        console.log('Core event: ' + event.type);
-        console.log(event);
-    }
-);
 
-const playbackMgr = new playbackManager(
-    window.castReceiverContext,
-    window.mediaManager
-);
-
-const playbackConfig = new cast.framework.PlaybackConfig();
-// Set the player to start playback as soon as there are five seconds of
-// media content buffered. Default is 10.
-playbackConfig.autoResumeDuration = 5;
+const playbackMgr = new playbackManager(window.mediaManager);
 
 var init = function () {
     resetPlaybackScope($scope);
@@ -288,7 +273,6 @@ export function processMessage(data) {
 
     if (!cmdHandler) {
         window.commandHandler = new commandHandler(
-            window.castReceiverContext,
             window.mediaManager,
             playbackMgr
         );
@@ -751,9 +735,6 @@ export function createMediaInformation(playSessionId, item, streamInfo) {
     return mediaInfo;
 }
 
-playbackConfig.supportedCommands =
-    cast.framework.messages.Command.ALL_BASIC_MEDIA;
-
 // Set the available buttons in the UI controls.
 const controls = cast.framework.ui.Controls.getInstance();
 controls.clearDefaultSlotAssignments();
@@ -774,4 +755,34 @@ controls.assignButton(
     cast.framework.ui.ControlsButton.SEEK_FORWARD_15
 );
 
-window.castReceiverContext.start(playbackConfig);
+const options = new cast.framework.CastReceiverOptions();
+// Global variable set by Webpack
+if (!PRODUCTION) {
+    window.castReceiverContext.setLoggerLevel(cast.framework.LoggerLevel.DEBUG);
+    // Don't time out on me :(
+    // This is only normally allowed for non media apps, but in this case
+    // it's for debugging purposes.
+    options.disableIdleTimeout = true;
+    // This alternative seems to close sooner; I think it
+    // quits once the client closes the connection.
+    // options.maxInactivity = 3600;
+
+    window.mediaManager.addEventListener(
+        cast.framework.events.category.CORE,
+        (event) => {
+            console.log('Core event: ' + event.type);
+            console.log(event);
+        }
+    );
+} else {
+    window.castReceiverContext.setLoggerLevel(cast.framework.LoggerLevel.NONE);
+}
+
+options.playbackConfig = new cast.framework.PlaybackConfig();
+// Set the player to start playback as soon as there are five seconds of
+// media content buffered. Default is 10.
+options.playbackConfig.autoResumeDuration = 5;
+options.playbackConfig.supportedCommands =
+    cast.framework.messages.Command.ALL_BASIC_MEDIA;
+
+window.castReceiverContext.start(options);

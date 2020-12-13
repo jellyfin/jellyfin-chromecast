@@ -11,16 +11,21 @@ export function getCurrentPositionTicks($scope) {
 }
 
 export function getReportingParams($scope) {
+    /* Math.round() calls:
+     * on 10.7, any floating point will give an API error,
+     * so it's actually really important to make sure that
+     * those fields are always rounded.
+     */
     var volumeInfo = window.castReceiverContext.getSystemVolume();
     return {
-        PositionTicks: getCurrentPositionTicks($scope),
+        PositionTicks: Math.round(getCurrentPositionTicks($scope)),
         IsPaused:
             window.mediaManager.getPlayerState() ===
             cast.framework.messages.PlayerState.PAUSED,
         IsMuted: volumeInfo.muted,
         AudioStreamIndex: $scope.audioStreamIndex,
         SubtitleStreamIndex: $scope.subtitleStreamIndex,
-        VolumeLevel: volumeInfo.level * 100,
+        VolumeLevel: Math.round(volumeInfo.level * 100),
         ItemId: $scope.itemId,
         MediaSourceId: $scope.mediaSourceId,
         QueueableMediaTypes: ['Audio', 'Video'],
@@ -879,20 +884,6 @@ export function setGenres(name) {
 export function setOverview(name) {
     $scope.overview = name;
     document.querySelector('.overview').innerHTML = name || '';
-}
-export function setInnerHTML(selector, html, autoHide) {
-    var elems = document.querySelectorAll(selector);
-    for (var i = 0, length = elems.length; i < length; i++) {
-        elems[i].innerHTML = html || '';
-
-        if (autoHide) {
-            if (html) {
-                elems[i].classList.remove('hide');
-            } else {
-                elems[i].classList.add('hide');
-            }
-        }
-    }
 }
 export function setPlayedPercentage(value) {
     $scope.playedPercentage = value;
