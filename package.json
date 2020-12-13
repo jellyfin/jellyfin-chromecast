@@ -19,7 +19,8 @@
         "build:production": "webpack --config webpack.config.js --mode=production",
         "build:development": "webpack --config webpack.config.js --mode=development",
         "prettier": "prettier --check ./src/",
-        "lint": "eslint ./src/",
+        "lint:js": "eslint ./src/",
+        "lint:css": "stylelint ./src/css/*.css",
         "pretest": "eslint ./src/",
         "test": "jest --passWithNoTests"
     },
@@ -42,6 +43,8 @@
         "pretty-quick": "^3.1.0",
         "source-map-loader": "^1.1.2",
         "style-loader": "^2.0.0",
+        "stylelint": "^13.8.0",
+        "stylelint-config-standard": "^20.0.0",
         "ts-jest": "^26.4.4",
         "ts-loader": "^8.0.7",
         "typescript": "^4.0.5",
