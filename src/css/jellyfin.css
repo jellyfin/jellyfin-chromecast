@@ -47,6 +47,7 @@ body {
     background-position: center;
     background-size: cover;
     background-repeat: no-repeat;
+    background-color: rgba(15, 15, 15, 0.82);
     position: absolute;
     top: 0;
     left: 0;
@@ -119,6 +120,7 @@ body {
     margin: 0 auto;
     height: 6px;
 }
+
 /* Chrome */
 .itemProgressBar::-webkit-progress-value {
     border-radius: 0;
@@ -127,7 +129,7 @@ body {
 }
 
 /* Polyfill */
-.itemProgressBar[aria-valuenow]:before {
+.itemProgressBar[aria-valuenow]::before {
     border-radius: 0;
     background-image: none;
     background-color: #52b54b;
@@ -215,18 +217,6 @@ body {
     background-image: url('../img/rotten.svg');
 }
 
-.metascore {
-    font-family: Arial;
-    color: #fff;
-    display: inline-block;
-    font-size: 12px;
-    text-align: center;
-    padding: 2px 4px;
-    position: relative;
-    top: -1px;
-    border-radius: 2px;
-}
-
 .metascorehigh {
     background-color: rgba(102, 204, 51, 0.7);
 }
@@ -255,10 +245,6 @@ body {
     text-overflow: ellipsis;
 }
 
-#waiting-container {
-    background-color: rgba(15, 15, 15, 0.82);
-}
-
 .waitingContent {
     position: fixed;
     top: 50%;
@@ -280,11 +266,13 @@ body {
     font-weight: 300;
 }
 
-#waiting-container h2,
-.error-container h2 {
+/* stylelint-disable no-descending-specificity */
+.error-container h2,
+#waiting-container h2 {
     font-size: 30px;
     font-weight: 300;
 }
+/* stylelint-enable no-descending-specificity */
 
 #waiting-container .logo {
     height: 200px;
@@ -298,18 +286,18 @@ body {
 .details .detailContent,
 .details .detailLogo,
 .details #waiting-container-backdrop {
-    /*opacity: 1;*/
+    /* opacity: 1; */
     display: initial;
 }
 
+/* stylelint-disable selector-type-no-unknown */
 cast-media-player {
     --spinner-image: url('../img/spinner.png');
     --playback-logo-image: url('../img/banner.png');
-
     --watermark-image: url('../img/banner-reverse.png');
     --watermark-size: 225px;
     --watermark-position: top right;
-
     --theme-hue: 195.3; /* Jellyfin blue */
     --progress-color: #00a4dc;
 }
+/* stylelint-enable selector-type-no-unknown */
