@@ -15,7 +15,6 @@ import {
     startBackdropInterval
 } from './jellyfinActions';
 
-import { PlayerManager } from 'chromecast-caf-receiver/cast.framework';
 import { playbackManager } from './playbackManager';
 
 export interface DataMessage {
@@ -28,7 +27,7 @@ interface SupportedCommands {
 }
 
 export class commandHandler {
-    private playerManager: PlayerManager;
+    private playerManager: cast.framework.PlayerManager;
     private playbackManager: playbackManager;
     private supportedCommands: SupportedCommands = {
         PlayNext: this.playNextHandler,
@@ -57,7 +56,7 @@ export class commandHandler {
     };
 
     constructor(
-        playerManager: PlayerManager,
+        playerManager: cast.framework.PlayerManager,
         playbackManager: playbackManager
     ) {
         this.playerManager = playerManager;
