@@ -1,12 +1,12 @@
 /* eslint @typescript-eslint/no-var-requires: "off" */
+'use strict';
+
 const path = require('path');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
-const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const ImageMinimizerPlugin = require('image-minimizer-webpack-plugin');
-const packagejson = require('./package.json');
 
-const config = {
+module.exports = {
     context: path.resolve(__dirname, 'src'),
     entry: './app.ts',
     output: {
@@ -58,21 +58,4 @@ const config = {
             { test: /\.js$/, loader: 'source-map-loader' }
         ]
     }
-};
-
-module.exports = (env, argv) => {
-    const isProduction = argv.mode === 'production';
-
-    config.plugins.push(
-        new webpack.DefinePlugin({
-            PRODUCTION: JSON.stringify(isProduction),
-            RECEIVERVERSION: JSON.stringify(packagejson.version)
-        })
-    );
-
-    if (!isProduction) {
-        config.devtool = 'inline-source-map';
-    }
-
-    return config;
 };
