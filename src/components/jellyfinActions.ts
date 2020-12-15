@@ -379,8 +379,8 @@ export function getLiveStream(
     deviceProfile: DeviceProfile,
     startPosition: number,
     mediaSource: MediaSourceInfo,
-    audioStreamIndex: number,
-    subtitleStreamIndex: number
+    audioStreamIndex: number | null,
+    subtitleStreamIndex: number | null
 ): Promise<any> {
     const postData = {
         DeviceProfile: deviceProfile,

@@ -1,4 +1,3 @@
-import { PlayerManager } from 'chromecast-caf-receiver/cast.framework';
 import { RepeatMode } from '../api/generated/models/repeat-mode';
 
 export interface DeviceInfo {
@@ -22,7 +21,7 @@ declare global {
     export interface Window {
         deviceInfo: DeviceInfo;
         mediaElement: HTMLElement | null;
-        mediaManager: PlayerManager;
+        mediaManager: cast.framework.PlayerManager;
         playlist: Array<any>;
         currentPlaylistIndex: number;
         repeatMode: RepeatMode;
