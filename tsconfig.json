@@ -1,10 +1,13 @@
 {
     "compilerOptions": {
         "target": "ES2018",
-        "module": "ESNext",
+        "module": "CommonJS",
         "moduleResolution": "Node",
         "lib": ["dom", "ESNext"],
         "allowJs": true,
+        "resolveJsonModule": true,
+        "allowSyntheticDefaultImports": true,
+        "esModuleInterop": true,
         "sourceMap": true,
         "outDir": "./dist/",
         "strict": true,
