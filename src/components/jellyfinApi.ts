@@ -56,6 +56,10 @@ export abstract class JellyfinApi {
     // Create a basic url.
     // Cannot start with /.
     public static createUrl(path: string): string {
+        if (this.serverAddress === null) {
+            console.error('JellyfinApi.createUrl: no server address present');
+            return '';
+        }
         // Remove leading slashes
         while (path.charAt(0) === '/') path = path.substring(1);
 
@@ -73,6 +77,12 @@ export abstract class JellyfinApi {
 
     // Authenticated ajax
     public static authAjax(url: string, args: any): Promise<any> {
+        if (this.userId === null || this.accessToken === null) {
+            console.error(
+                'JellyfinApi.authAjax: No userid or accesstoken present. Skipping request'
+            );
+            return Promise.reject('no auth info present');
+        }
         const params = {
             url: url,
             headers: this.getSecurityHeaders()
