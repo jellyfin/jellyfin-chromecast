@@ -67,8 +67,6 @@ export function reportPlaybackStart(
 ): Promise<any> {
     clearBackdropInterval();
 
-    const url = JellyfinApi.createUrl('Sessions/Playing');
-
     broadcastToMessageBus({
         //TODO: convert these to use a defined type in the type field
         type: 'playbackstart',
@@ -77,7 +75,7 @@ export function reportPlaybackStart(
 
     restartPingInterval($scope, reportingParams);
 
-    return JellyfinApi.authAjax(url, {
+    return JellyfinApi.authAjax('Sessions/Playing', {
         type: 'POST',
         data: JSON.stringify(reportingParams),
         contentType: 'application/json'
@@ -99,12 +97,10 @@ export function reportPlaybackProgress(
         return Promise.resolve();
     }
 
-    const url = JellyfinApi.createUrl('Sessions/Playing/Progress');
-
     restartPingInterval($scope, reportingParams);
     lastTranscoderPing = new Date().getTime();
 
-    return JellyfinApi.authAjax(url, {
+    return JellyfinApi.authAjax('Sessions/Playing/Progress', {
         type: 'POST',
         data: JSON.stringify(reportingParams),
         contentType: 'application/json'
@@ -117,14 +113,12 @@ export function reportPlaybackStopped(
 ): Promise<any> {
     stopPingInterval();
 
-    const url = JellyfinApi.createUrl('Sessions/Playing/Stopped');
-
     broadcastToMessageBus({
         type: 'playbackstop',
         data: getSenderReportingData($scope, reportingParams)
     });
 
-    return JellyfinApi.authAjax(url, {
+    return JellyfinApi.authAjax('Sessions/Playing/Stopped', {
         type: 'POST',
         data: JSON.stringify(reportingParams),
         contentType: 'application/json'
@@ -149,20 +143,20 @@ export function pingTranscoder(
         });
     }
 
-    // 10.7 oddly wants it as a query string parameter. This is a server bug for now.
-    const url = JellyfinApi.createUrl(
-        'Sessions/Playing/Ping?playSessionId=' + reportingParams.PlaySessionId
-    );
     lastTranscoderPing = new Date().getTime();
 
-    return JellyfinApi.authAjax(url, {
-        type: 'POST',
-        data: JSON.stringify({
-            // jellyfin <= 10.6 wants it in the post data.
-            PlaySessionId: reportingParams.PlaySessionId
-        }),
-        contentType: 'application/json'
-    });
+    // 10.7 oddly wants it as a query string parameter. This is a server bug for now.
+    return JellyfinApi.authAjax(
+        'Sessions/Playing/Ping?playSessionId=' + reportingParams.PlaySessionId,
+        {
+            type: 'POST',
+            data: JSON.stringify({
+                // jellyfin <= 10.6 wants it in the post data.
+                PlaySessionId: reportingParams.PlaySessionId
+            }),
+            contentType: 'application/json'
+        }
+    );
 }
 
 function clearBackdropInterval(): void {
@@ -183,9 +177,7 @@ export function startBackdropInterval(): void {
 }
 
 function setRandomUserBackdrop(): void {
-    const url = JellyfinApi.createUserUrl('Items');
-
-    JellyfinApi.authAjax(url, {
+    JellyfinApi.authAjaxUser('Items', {
         dataType: 'json',
         type: 'GET',
         query: {
@@ -269,21 +261,11 @@ function showItem(item: BaseItemDto): void {
 }
 
 export function displayItem(itemId: string): void {
-    const url = JellyfinApi.createUserUrl('Items/' + itemId);
-
-    JellyfinApi.authAjax(url, {
+    JellyfinApi.authAjaxUser('Items/' + itemId, {
         dataType: 'json',
         type: 'GET'
-    }).then(function (item) {
+    }).then(function (item: BaseItemDto) {
         showItem(item);
-    });
-}
-
-// TODO: Part of JellyfinApi
-export function getSubtitle(subtitleStreamUrl: string): Promise<any> {
-    return JellyfinApi.authAjax(subtitleStreamUrl, {
-        type: 'GET',
-        dataType: 'json'
     });
 }
 
@@ -361,9 +343,7 @@ export function getPlaybackInfo(
         query.LiveStreamId = liveStreamId;
     }
 
-    const url = JellyfinApi.createUrl('Items/' + item.Id + '/PlaybackInfo');
-
-    return JellyfinApi.authAjax(url, {
+    return JellyfinApi.authAjax('Items/' + item.Id + '/PlaybackInfo', {
         query: query,
         type: 'POST',
         dataType: 'json',
@@ -402,9 +382,7 @@ export function getLiveStream(
         query.SubtitleStreamIndex = subtitleStreamIndex;
     }
 
-    const url = JellyfinApi.createUrl('LiveStreams/Open');
-
-    return JellyfinApi.authAjax(url, {
+    return JellyfinApi.authAjax('LiveStreams/Open', {
         query: query,
         type: 'POST',
         dataType: 'json',
@@ -414,12 +392,11 @@ export function getLiveStream(
 }
 
 export function getDownloadSpeed(byteSize: number): Promise<any> {
-    let url = JellyfinApi.createUrl('Playback/BitrateTest');
-    url += '?size=' + byteSize;
+    const path = 'Playback/BitrateTest?size=' + byteSize;
 
     const now = new Date().getTime();
 
-    return JellyfinApi.authAjax(url, {
+    return JellyfinApi.authAjax(path, {
         type: 'GET',
         timeout: 5000
     }).then(function () {
@@ -455,9 +432,7 @@ export function stopActiveEncodings($scope: GlobalScope): Promise<any> {
         options.PlaySessionId = $scope.playSessionId;
     }
 
-    const url = JellyfinApi.createUrl('Videos/ActiveEncodings');
-
-    return JellyfinApi.authAjax(url, {
+    return JellyfinApi.authAjax('Videos/ActiveEncodings', {
         type: 'DELETE',
         query: options
     });

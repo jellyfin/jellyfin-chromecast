@@ -30,5 +30,6 @@ declare global {
         subtitleAppearance: any;
         MaxBitrate: number | undefined;
         senderId: string | undefined;
+        volume: cast.framework.system.SystemVolumeData;
     }
 }

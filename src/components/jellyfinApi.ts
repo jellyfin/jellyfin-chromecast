@@ -76,15 +76,39 @@ export abstract class JellyfinApi {
     }
 
     // Authenticated ajax
-    public static authAjax(url: string, args: any): Promise<any> {
-        if (this.userId === null || this.accessToken === null) {
+    public static authAjax(path: string, args: any): Promise<any> {
+        if (
+            this.userId === null ||
+            this.accessToken === null ||
+            this.serverAddress === null
+        ) {
             console.error(
-                'JellyfinApi.authAjax: No userid or accesstoken present. Skipping request'
+                'JellyfinApi.authAjax: No userid/accesstoken/serverAddress present. Skipping request'
             );
-            return Promise.reject('no auth info present');
+            return Promise.reject('no server info present');
         }
         const params = {
-            url: url,
+            url: this.createUrl(path),
+            headers: this.getSecurityHeaders()
+        };
+
+        return ajax({ ...params, ...args });
+    }
+
+    // Authenticated ajax
+    public static authAjaxUser(path: string, args: any): Promise<any> {
+        if (
+            this.userId === null ||
+            this.accessToken === null ||
+            this.serverAddress === null
+        ) {
+            console.error(
+                'JellyfinApi.authAjaxUser: No userid/accesstoken/serverAddress present. Skipping request'
+            );
+            return Promise.reject('no server info present');
+        }
+        const params = {
+            url: this.createUserUrl(path),
             headers: this.getSecurityHeaders()
         };
 

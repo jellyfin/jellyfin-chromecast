@@ -87,7 +87,11 @@ export function onMediaElementPlaying() {
     reportEvent('playstatechange', true);
 }
 
-export function onMediaElementVolumeChange() {
+function onMediaElementVolumeChange(event: cast.framework.system.Event) {
+    window.volume = (<cast.framework.system.SystemVolumeChangedEvent>(
+        event
+    )).data;
+    console.log('Received volume update: ' + window.volume.level);
     reportEvent('volumechange', true);
 }
 
@@ -96,8 +100,8 @@ export function enableTimeUpdateListener() {
         cast.framework.events.EventType.TIME_UPDATE,
         onMediaElementTimeUpdate
     );
-    window.mediaManager.addEventListener(
-        cast.framework.events.EventType.REQUEST_VOLUME_CHANGE,
+    window.castReceiverContext.addEventListener(
+        cast.framework.system.EventType.SYSTEM_VOLUME_CHANGED,
         onMediaElementVolumeChange
     );
     window.mediaManager.addEventListener(
@@ -115,8 +119,8 @@ export function disableTimeUpdateListener() {
         cast.framework.events.EventType.TIME_UPDATE,
         onMediaElementTimeUpdate
     );
-    window.mediaManager.removeEventListener(
-        cast.framework.events.EventType.REQUEST_VOLUME_CHANGE,
+    window.castReceiverContext.removeEventListener(
+        cast.framework.system.EventType.SYSTEM_VOLUME_CHANGED,
         onMediaElementVolumeChange
     );
     window.mediaManager.removeEventListener(
@@ -202,10 +206,6 @@ console.log('Application is ready, starting system');
 
 export function reportDeviceCapabilities() {
     getMaxBitrate().then((maxBitrate) => {
-        const capabilitiesUrl = JellyfinApi.createUrl(
-            'Sessions/Capabilities/Full'
-        );
-
         const deviceProfile = getDeviceProfile({
             enableHls: true,
             bitrateSetting: maxBitrate
@@ -219,7 +219,7 @@ export function reportDeviceCapabilities() {
         };
         hasReportedCapabilities = true;
 
-        return JellyfinApi.authAjax(capabilitiesUrl, {
+        return JellyfinApi.authAjax('Sessions/Capabilities/Full', {
             type: 'POST',
             data: JSON.stringify(capabilities),
             contentType: 'application/json'
@@ -519,9 +519,7 @@ export function onStopPlayerBeforePlaybackDone(
     item: BaseItemDto,
     options: any
 ) {
-    const requestUrl = JellyfinApi.createUserUrl('Items/' + item.Id);
-
-    return JellyfinApi.authAjax(requestUrl, {
+    return JellyfinApi.authAjaxUser('Items/' + item.Id, {
         dataType: 'json',
         type: 'GET'
     }).then(function (data) {

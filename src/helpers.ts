@@ -1,8 +1,12 @@
 import { JellyfinApi } from './components/jellyfinApi';
 
-export function getCurrentPositionTicks($scope) {
-    var positionTicks = window.mediaManager.getCurrentTimeSec() * 10000000;
-    var mediaInformation = window.mediaManager.getMediaInformation();
+import { BaseItemDto } from './api/generated/models/base-item-dto';
+import { BaseItemPerson } from './api/generated/models/base-item-person';
+import { GlobalScope } from './types/global';
+
+export function getCurrentPositionTicks($scope: GlobalScope): number {
+    let positionTicks = window.mediaManager.getCurrentTimeSec() * 10000000;
+    const mediaInformation = window.mediaManager.getMediaInformation();
     if (mediaInformation && !mediaInformation.customData.canClientSeek) {
         positionTicks += $scope.startPositionTicks || 0;
     }
@@ -10,22 +14,21 @@ export function getCurrentPositionTicks($scope) {
     return positionTicks;
 }
 
-export function getReportingParams($scope) {
+export function getReportingParams($scope: GlobalScope): any {
     /* Math.round() calls:
      * on 10.7, any floating point will give an API error,
      * so it's actually really important to make sure that
      * those fields are always rounded.
      */
-    var volumeInfo = window.castReceiverContext.getSystemVolume();
     return {
         PositionTicks: Math.round(getCurrentPositionTicks($scope)),
         IsPaused:
             window.mediaManager.getPlayerState() ===
             cast.framework.messages.PlayerState.PAUSED,
-        IsMuted: volumeInfo.muted,
+        IsMuted: window.volume.muted,
         AudioStreamIndex: $scope.audioStreamIndex,
         SubtitleStreamIndex: $scope.subtitleStreamIndex,
-        VolumeLevel: Math.round(volumeInfo.level * 100),
+        VolumeLevel: Math.round(window.volume.level * 100),
         ItemId: $scope.itemId,
         MediaSourceId: $scope.mediaSourceId,
         QueueableMediaTypes: ['Audio', 'Video'],
@@ -38,13 +41,13 @@ export function getReportingParams($scope) {
 }
 
 export function getNextPlaybackItemInfo() {
-    var playlist = window.playlist;
+    const playlist = window.playlist;
 
     if (!playlist) {
         return null;
     }
 
-    var newIndex;
+    let newIndex: number;
 
     if (window.currentPlaylistIndex == -1) {
         newIndex = 0;
@@ -66,7 +69,7 @@ export function getNextPlaybackItemInfo() {
     }
 
     if (newIndex < playlist.length) {
-        var item = playlist[newIndex];
+        const item = playlist[newIndex];
 
         return {
             item: item,
@@ -76,8 +79,11 @@ export function getNextPlaybackItemInfo() {
     return null;
 }
 
-export function getSenderReportingData($scope, reportingData) {
-    var state = {
+export function getSenderReportingData(
+    $scope: GlobalScope,
+    reportingData: any
+): any {
+    const state: any = {
         ItemId: reportingData.ItemId,
         PlayState: extend({}, reportingData),
         QueueableMediaTypes: reportingData.QueueableMediaTypes
@@ -94,16 +100,16 @@ export function getSenderReportingData($scope, reportingData) {
         RunTimeTicks: $scope.runtimeTicks
     };
 
-    var item = $scope.item;
+    const item = $scope.item;
 
     if (item) {
-        var nowPlayingItem = state.NowPlayingItem;
+        const nowPlayingItem = state.NowPlayingItem;
 
         nowPlayingItem.ServerId = item.ServerId;
         nowPlayingItem.Chapters = item.Chapters || [];
 
         // TODO: Fill these
-        var mediaSource = item.MediaSources.filter(function (m) {
+        const mediaSource = item.MediaSources.filter(function (m: any) {
             return m.Id == reportingData.MediaSourceId;
         })[0];
 
@@ -124,7 +130,7 @@ export function getSenderReportingData($scope, reportingData) {
         nowPlayingItem.Album = item.Album;
         nowPlayingItem.Artists = item.Artists;
 
-        var imageTags = item.ImageTags || {};
+        const imageTags = item.ImageTags || {};
 
         if (item.SeriesPrimaryImageTag) {
             nowPlayingItem.PrimaryImageItemId = item.SeriesId;
@@ -162,7 +168,7 @@ export function getSenderReportingData($scope, reportingData) {
         }
 
         if ($scope.playNextItem) {
-            var nextItemInfo = getNextPlaybackItemInfo();
+            const nextItemInfo = getNextPlaybackItemInfo();
 
             if (nextItemInfo) {
                 state.NextMediaType = nextItemInfo.item.MediaType;
@@ -173,7 +179,7 @@ export function getSenderReportingData($scope, reportingData) {
     return state;
 }
 
-export function resetPlaybackScope($scope) {
+export function resetPlaybackScope($scope: GlobalScope): void {
     setAppStatus('waiting');
 
     setStartPositionTicks(0);
@@ -202,9 +208,9 @@ export function resetPlaybackScope($scope) {
     setDetailImage('');
 }
 
-export function getMetadata(item) {
-    var metadata;
-    var posterUrl = '';
+export function getMetadata(item: BaseItemDto): any {
+    let metadata: any;
+    let posterUrl = '';
 
     if (item.SeriesPrimaryImageTag) {
         posterUrl = JellyfinApi.createUrl(
@@ -220,11 +226,7 @@ export function getMetadata(item) {
                 '/Images/Primary?tag=' +
                 item.AlbumPrimaryImageTag
         );
-    } else if (item.PrimaryImageTag) {
-        posterUrl = JellyfinApi.createUrl(
-            'Items/' + item.Id + '/Images/Primary?tag=' + item.PrimaryImageTag
-        );
-    } else if (item.ImageTags.Primary) {
+    } else if (item.ImageTags?.Primary) {
         posterUrl = JellyfinApi.createUrl(
             'Items/' + item.Id + '/Images/Primary?tag=' + item.ImageTags.Primary
         );
@@ -278,8 +280,11 @@ export function getMetadata(item) {
             metadata.discNumber = item.ParentIndexNumber;
         }
 
-        var composer = (item.People || []).filter(function (p) {
-            return p.PersonType == 'Type';
+        const composer = (item.People || []).filter(function (
+            p: BaseItemPerson
+        ) {
+            // previously: p.PersonType == 'Type'.. wtf?
+            return p.Type == 'Composer';
         })[0];
 
         if (composer) {
@@ -301,30 +306,36 @@ export function getMetadata(item) {
             ).toISOString();
         }
         if (item.Studios && item.Studios.length) {
-            metadata.Studio = item.Studios[0];
+            metadata.studio = item.Studios[0];
         }
     }
 
-    metadata.title = item.Name;
+    metadata.title = item.Name ?? '????';
     metadata.images = [new cast.framework.messages.Image(posterUrl)];
     return metadata;
 }
 
-export function createStreamInfo(item, mediaSource, startPosition) {
-    var mediaUrl;
-    var contentType;
+export function createStreamInfo(
+    item: BaseItemDto,
+    mediaSource: any,
+    startPosition: number | null
+): any {
+    let mediaUrl;
+    let contentType;
 
-    var startPositionInSeekParam = startPosition ? startPosition / 10000000 : 0;
-    var seekParam = startPositionInSeekParam
+    const startPositionInSeekParam = startPosition
+        ? startPosition / 10000000
+        : 0;
+    const seekParam = startPositionInSeekParam
         ? '#t=' + startPositionInSeekParam
         : '';
 
-    var isStatic = false;
-    var streamContainer = mediaSource.Container;
+    let isStatic = false;
+    let streamContainer = mediaSource.Container;
 
-    var playerStartPositionTicks = 0;
+    let playerStartPositionTicks = 0;
 
-    var type = item.MediaType.toLowerCase();
+    const type = item.MediaType?.toLowerCase();
 
     if (type == 'video') {
         contentType = 'video/' + mediaSource.Container;
@@ -368,10 +379,10 @@ export function createStreamInfo(item, mediaSource, startPosition) {
             isStatic = true;
             playerStartPositionTicks = startPosition || 0;
         } else {
-            var isDirectStream = mediaSource.SupportsDirectStream;
+            const isDirectStream = mediaSource.SupportsDirectStream;
 
             if (isDirectStream) {
-                var outputContainer = (
+                const outputContainer = (
                     mediaSource.Container || ''
                 ).toLowerCase();
 
@@ -393,9 +404,9 @@ export function createStreamInfo(item, mediaSource, startPosition) {
 
     // TODO: Remove the second half of the expression by supporting changing the mediaElement src dynamically.
     // It is a pain and will require unbinding all event handlers during the operation
-    var canSeek = (mediaSource.RunTimeTicks || 0) > 0;
+    const canSeek = (mediaSource.RunTimeTicks || 0) > 0;
 
-    var info = {
+    const info: any = {
         url: mediaUrl,
         mediaSource: mediaSource,
         isStatic: isStatic,
@@ -409,11 +420,13 @@ export function createStreamInfo(item, mediaSource, startPosition) {
         startPositionTicks: startPosition
     };
 
-    var subtitleStreams = mediaSource.MediaStreams.filter(function (stream) {
+    const subtitleStreams = mediaSource.MediaStreams.filter(function (
+        stream: any
+    ) {
         return stream.Type === 'Subtitle';
     });
-    var subtitleTracks = [];
-    subtitleStreams.forEach(function (subtitleStream) {
+    const subtitleTracks: Array<framework.messages.Track> = [];
+    subtitleStreams.forEach(function (subtitleStream: any) {
         if (subtitleStream.DeliveryUrl === undefined) {
             /* The CAF v3 player only supports vtt currently,
              * SRT subs can be "transcoded" to vtt by jellyfin.
@@ -423,11 +436,11 @@ export function createStreamInfo(item, mediaSource, startPosition) {
              **/
             return;
         }
-        var textStreamUrl = subtitleStream.IsExternalUrl
+        const textStreamUrl = subtitleStream.IsExternalUrl
             ? subtitleStream.DeliveryUrl
             : JellyfinApi.createUrl(subtitleStream.DeliveryUrl);
 
-        var track = new cast.framework.messages.Track(
+        const track = new cast.framework.messages.Track(
             info.subtitleStreamIndex,
             cast.framework.messages.TrackType.TEXT
         );
@@ -447,14 +460,18 @@ export function createStreamInfo(item, mediaSource, startPosition) {
     return info;
 }
 
-export function getStreamByIndex(streams, type, index) {
+export function getStreamByIndex(
+    streams: Array<any>,
+    type: string,
+    index: number
+): any {
     return streams.filter(function (s) {
         return s.Type == type && s.Index == index;
     })[0];
 }
 
-export function getBackdropUrl(item) {
-    var url;
+export function getBackdropUrl(item: BaseItemDto): string | null {
+    let url: string | null = null;
 
     if (item.BackdropImageTags && item.BackdropImageTags.length) {
         url = JellyfinApi.createUrl(
@@ -479,8 +496,8 @@ export function getBackdropUrl(item) {
     return url;
 }
 
-export function getLogoUrl(item) {
-    var url;
+export function getLogoUrl(item: BaseItemDto): string | null {
+    let url: string | null = null;
     if (item.ImageTags && item.ImageTags.Logo) {
         url = JellyfinApi.createUrl(
             'Items/' + item.Id + '/Images/Logo/0?tag=' + item.ImageTags.Logo
@@ -497,8 +514,8 @@ export function getLogoUrl(item) {
     return url;
 }
 
-export function getPrimaryImageUrl(item) {
-    var posterUrl = '';
+export function getPrimaryImageUrl(item: BaseItemDto): string {
+    let posterUrl = '';
     if (item.AlbumPrimaryImageTag) {
         posterUrl = JellyfinApi.createUrl(
             'Items/' +
@@ -506,21 +523,20 @@ export function getPrimaryImageUrl(item) {
                 '/Images/Primary?tag=' +
                 item.AlbumPrimaryImageTag
         );
-    } else if (item.PrimaryImageTag) {
+    } else if (item.ImageTags?.Primary) {
         posterUrl = JellyfinApi.createUrl(
-            'Items/' + item.Id + '/Images/Primary?tag=' + item.PrimaryImageTag
-        );
-    } else if (item.ImageTags.Primary) {
-        posterUrl = JellyfinApi.createUrl(
-            'Items/' + item.Id + '/Images/Primary?tag=' + item.ImageTags.Primary
+            'Items/' +
+                item.Id +
+                '/Images/Primary?tag=' +
+                item.ImageTags?.Primary
         );
     }
 
     return posterUrl;
 }
 
-export function getDisplayName(item) {
-    var name = item.EpisodeTitle || item.Name;
+export function getDisplayName(item: BaseItemDto): string {
+    let name: string = (item.EpisodeTitle || item.Name) ?? '???';
 
     if (item.Type == 'TvChannel') {
         if (item.Number) {
@@ -534,9 +550,9 @@ export function getDisplayName(item) {
         item.IndexNumber != null &&
         item.ParentIndexNumber != null
     ) {
-        var displayIndexNumber = item.IndexNumber;
+        let displayIndexNumber = item.IndexNumber;
 
-        var number = 'E' + displayIndexNumber;
+        let number = 'E' + displayIndexNumber;
 
         number = 'S' + item.ParentIndexNumber + ', ' + number;
 
@@ -551,17 +567,15 @@ export function getDisplayName(item) {
     return name;
 }
 
-export function getRatingHtml(item) {
-    var html = '';
+export function getRatingHtml(item: BaseItemDto): string {
+    let html = '';
 
     if (item.CommunityRating) {
         html +=
-            "<div class='starRating' title='" +
-            item.CommunityRating +
-            "'></div>";
-        html += '<div class="starRatingValue">';
-        html += item.CommunityRating.toFixed(1);
-        html += '</div>';
+            `<div class="starRating" title="${item.CommunityRating}"></div>` +
+            '<div class="starRatingValue">' +
+            item.CommunityRating.toFixed(1) +
+            '</div>';
     }
 
     if (item.CriticRating != null) {
@@ -579,10 +593,13 @@ export function getRatingHtml(item) {
     return html;
 }
 
-var requiredItemFields = 'MediaSources,Chapters';
+const requiredItemFields = 'MediaSources,Chapters';
 
-export function getShuffleItems(userId, item) {
-    var query = {
+export function getShuffleItems(
+    userId: string,
+    item: BaseItemDto
+): Promise<any> {
+    const query: any = {
         UserId: userId,
         Fields: requiredItemFields,
         Limit: 50,
@@ -604,14 +621,17 @@ export function getShuffleItems(userId, item) {
     return getItemsForPlayback(userId, query);
 }
 
-export function getInstantMixItems(userId, item) {
-    var query = {
+export function getInstantMixItems(
+    userId: string,
+    item: BaseItemDto
+): Promise<any> {
+    const query: any = {
         UserId: userId,
         Fields: requiredItemFields,
         Limit: 50
     };
 
-    var url;
+    let url = '';
 
     if (item.Type == 'MusicArtist') {
         url = 'Artists/InstantMix';
@@ -627,26 +647,25 @@ export function getInstantMixItems(userId, item) {
         url = 'Playlists/' + item.Id + '/InstantMix';
     }
 
-    url = JellyfinApi.createUrl(url);
-
-    return JellyfinApi.authAjax(url, {
-        query: query,
-        type: 'GET',
-        dataType: 'json'
-    });
+    if (url) {
+        return JellyfinApi.authAjax(url, {
+            query: query,
+            type: 'GET',
+            dataType: 'json'
+        });
+    } else {
+        return Promise.reject('InstantMix: Unknown item type: ' + item.Type);
+    }
 }
 
-export function getItemsForPlayback(userId, query) {
+export function getItemsForPlayback(userId: string, query: any): Promise<any> {
     query.UserId = userId;
     query.Limit = query.Limit || 100;
     query.Fields = requiredItemFields;
     query.ExcludeLocationTypes = 'Virtual';
 
-    var url = JellyfinApi.createUserUrl('Items');
-
     if (query.Ids && query.Ids.split(',').length == 1) {
-        url += '/' + query.Ids.split(',')[0];
-        return JellyfinApi.authAjax(url, {
+        return JellyfinApi.authAjaxUser('Items/' + query.Ids.split(',')[0], {
             type: 'GET',
             dataType: 'json'
         }).then(function (item) {
@@ -655,49 +674,51 @@ export function getItemsForPlayback(userId, query) {
                 TotalRecordCount: 1
             };
         });
+    } else {
+        return JellyfinApi.authAjaxUser('Items', {
+            query: query,
+            type: 'GET',
+            dataType: 'json'
+        });
     }
-
-    return JellyfinApi.authAjax(url, {
-        query: query,
-        type: 'GET',
-        dataType: 'json'
-    });
 }
 
-export function getEpisodesForPlayback(userId, seriesId, query) {
+export function getEpisodesForPlayback(
+    userId: string,
+    seriesId: string,
+    query: any
+): Promise<any> {
     query.UserId = userId;
     query.Fields = requiredItemFields;
     query.ExcludeLocationTypes = 'Virtual';
 
-    var url = JellyfinApi.createUrl('Shows/' + seriesId + '/Episodes');
-
-    return JellyfinApi.authAjax(url, {
+    return JellyfinApi.authAjax('Shows/' + seriesId + '/Episodes', {
         query: query,
         type: 'GET',
         dataType: 'json'
     });
 }
 
-export function getIntros(firstItem) {
-    var url = JellyfinApi.createUserUrl('Items/' + firstItem.Id + '/Intros');
-
-    return JellyfinApi.authAjax(url, {
+export function getIntros(firstItem: BaseItemDto): Promise<any> {
+    return JellyfinApi.authAjaxUser('Items/' + firstItem.Id + '/Intros', {
         dataType: 'json',
         type: 'GET'
     });
 }
 
-export function getUser() {
-    var url = JellyfinApi.createUserUrl();
-
-    return JellyfinApi.authAjax(url, {
+export function getUser(): Promise<any> {
+    return JellyfinApi.authAjaxUser('', {
         dataType: 'json',
         type: 'GET'
     });
 }
 
-export function translateRequestedItems(userId, items, smart) {
-    var firstItem = items[0];
+export function translateRequestedItems(
+    userId: string,
+    items: Array<BaseItemDto>,
+    smart = false
+) {
+    const firstItem = items[0];
 
     if (firstItem.Type == 'Playlist') {
         return getItemsForPlayback(userId, {
@@ -738,7 +759,7 @@ export function translateRequestedItems(userId, items, smart) {
             return getItemsForPlayback(userId, {
                 Ids: firstItem.Id
             }).then(function (result) {
-                var episode = result.Items[0];
+                const episode = result.Items[0];
 
                 if (!episode.SeriesId) {
                     return result;
@@ -749,9 +770,9 @@ export function translateRequestedItems(userId, items, smart) {
                     IsMissing: false,
                     UserId: userId
                 }).then(function (episodesResult) {
-                    var foundItem = false;
+                    let foundItem = false;
                     episodesResult.Items = episodesResult.Items.filter(
-                        function (e) {
+                        function (e: BaseItemDto) {
                             if (foundItem) {
                                 return true;
                             }
@@ -776,18 +797,16 @@ export function translateRequestedItems(userId, items, smart) {
     });
 }
 
-export function getMiscInfoHtml(item) {
-    var miscInfo = [];
-    var text;
-    var date;
+export function getMiscInfoHtml(item: BaseItemDto): string {
+    const miscInfo: string[] = [];
+    let date: Date;
 
     if (item.Type == 'Episode') {
         if (item.PremiereDate) {
             try {
                 date = parseISO8601Date(item.PremiereDate);
 
-                text = date.toLocaleDateString();
-                miscInfo.push(text);
+                miscInfo.push(date.toLocaleDateString());
             } catch (e) {
                 console.log('Error parsing date: ' + item.PremiereDate);
             }
@@ -798,8 +817,7 @@ export function getMiscInfoHtml(item) {
         try {
             date = parseISO8601Date(item.StartDate);
 
-            text = date.toLocaleDateString();
-            miscInfo.push(text);
+            miscInfo.push(date.toLocaleDateString());
         } catch (e) {
             console.log('Error parsing date: ' + item.PremiereDate);
         }
@@ -809,10 +827,12 @@ export function getMiscInfoHtml(item) {
         if (item.Status == 'Continuing') {
             miscInfo.push(item.ProductionYear + '-Present');
         } else if (item.ProductionYear) {
-            text = item.ProductionYear;
+            let text: string = item.ProductionYear.toString();
             if (item.EndDate) {
                 try {
-                    var endYear = parseISO8601Date(item.EndDate).getFullYear();
+                    const endYear = parseISO8601Date(
+                        item.EndDate
+                    ).getFullYear();
 
                     if (endYear != item.ProductionYear) {
                         text +=
@@ -829,28 +849,26 @@ export function getMiscInfoHtml(item) {
 
     if (item.Type != 'Series' && item.Type != 'Episode') {
         if (item.ProductionYear) {
-            miscInfo.push(item.ProductionYear);
+            miscInfo.push(item.ProductionYear.toString());
         } else if (item.PremiereDate) {
             try {
-                text = parseISO8601Date(item.PremiereDate).getFullYear();
-                miscInfo.push(text);
+                miscInfo.push(
+                    parseISO8601Date(item.PremiereDate).getFullYear().toString()
+                );
             } catch (e) {
                 console.log('Error parsing date: ' + item.PremiereDate);
             }
         }
     }
 
-    var minutes;
-
     if (item.RunTimeTicks && item.Type != 'Series') {
         if (item.Type == 'Audio') {
             miscInfo.push(getDisplayRunningTime(item.RunTimeTicks));
         } else {
-            minutes = item.RunTimeTicks / 600000000;
-
-            minutes = minutes || 1;
-
-            miscInfo.push(Math.round(minutes) + 'min');
+            miscInfo.push(
+                Math.round(item.RunTimeTicks / 600000000 || 1).toString() +
+                    'min'
+            );
         }
     }
 
@@ -869,110 +887,125 @@ export function getMiscInfoHtml(item) {
     return miscInfo.join('&nbsp;&nbsp;&nbsp;&nbsp;');
 }
 
-export function setAppStatus(status) {
+export function setAppStatus(status: string) {
     $scope.status = status;
     document.body.className = status;
 }
-export function setDisplayName(name) {
+
+export function setDisplayName(name = '') {
+    const element: HTMLElement = <HTMLElement>(
+        document.querySelector('.displayName')
+    );
     $scope.displayName = name;
-    document.querySelector('.displayName').innerHTML = name || '';
-}
-export function setGenres(name) {
-    $scope.genres = name;
-    document.querySelector('.genres').innerHTML = name || '';
-}
-export function setOverview(name) {
-    $scope.overview = name;
-    document.querySelector('.overview').innerHTML = name || '';
-}
-export function setPlayedPercentage(value) {
-    $scope.playedPercentage = value;
-    document.querySelector('.itemProgressBar').value = value || 0;
+    element.innerHTML = name;
 }
 
-export function setStartPositionTicks(value) {
+export function setGenres(name = '') {
+    const element: HTMLElement = <HTMLElement>document.querySelector('.genres');
+    $scope.genres = name;
+    element.innerHTML = name;
+}
+
+export function setOverview(name = '') {
+    const element: HTMLElement = <HTMLElement>(
+        document.querySelector('.overview')
+    );
+    $scope.overview = name;
+    element.innerHTML = name;
+}
+
+export function setPlayedPercentage(value = 0) {
+    const element: HTMLInputElement = <HTMLInputElement>(
+        document.querySelector('.itemProgressBar')
+    );
+
+    $scope.playedPercentage = value;
+    element.value = value.toString();
+}
+
+export function setStartPositionTicks(value: number) {
     $scope.startPositionTicks = value;
 }
 
-export function setWaitingBackdrop(src) {
-    document.querySelector(
-        '#waiting-container-backdrop'
-    ).style.backgroundImage = src ? 'url(' + src + ')' : '';
+export function setWaitingBackdrop(src: string | null) {
+    const element: HTMLElement = <HTMLElement>(
+        document.querySelector('#waiting-container-backdrop')
+    );
+
+    element.style.backgroundImage = src ? 'url(' + src + ')' : '';
 }
 
-export function setHasPlayedPercentage(value) {
-    if (value) {
-        document
-            .querySelector('.detailImageProgressContainer')
-            .classList.remove('hide');
-    } else {
-        document
-            .querySelector('.detailImageProgressContainer')
-            .classList.add('hide');
-    }
+export function setHasPlayedPercentage(value: boolean) {
+    const element: HTMLElement = <HTMLElement>(
+        document.querySelector('.detailImageProgressContainer')
+    );
+    if (value) element.classList.remove('hide');
+    else element.classList.add('hide');
 }
 
-export function setLogo(src) {
-    document.querySelector('.detailLogo').style.backgroundImage = src
-        ? 'url(' + src + ')'
-        : '';
+export function setLogo(src: string | null) {
+    const element: HTMLElement = <HTMLElement>(
+        document.querySelector('.detailLogo')
+    );
+    element.style.backgroundImage = src ? 'url(' + src + ')' : '';
 }
 
-export function setDetailImage(src) {
-    document.querySelector('.detailImage').style.backgroundImage = src
-        ? 'url(' + src + ')'
-        : '';
+export function setDetailImage(src: string | null) {
+    const element: HTMLElement = <HTMLElement>(
+        document.querySelector('.detailImage')
+    );
+
+    element.style.backgroundImage = src ? 'url(' + src + ')' : '';
 }
 
-export function extend(target, source) {
-    for (var i in source) {
+export function extend(target: any, source: any): any {
+    for (const i in source) {
         target[i] = source[i];
     }
     return target;
 }
 
-export function parseISO8601Date(s) {
-    return new Date(s);
+export function parseISO8601Date(date: string) {
+    return new Date(date);
 }
 
-export function getDisplayRunningTime(ticks) {
-    var ticksPerHour = 36000000000;
-    var ticksPerMinute = 600000000;
-    var ticksPerSecond = 10000000;
+export function getDisplayRunningTime(ticks: number): string {
+    const ticksPerHour = 36000000000;
+    const ticksPerMinute = 600000000;
+    const ticksPerSecond = 10000000;
 
-    var parts = [];
+    const parts: string[] = [];
 
-    var hours = ticks / ticksPerHour;
-    hours = Math.floor(hours);
+    const hours: number = Math.floor(ticks / ticksPerHour);
 
     if (hours) {
-        parts.push(hours);
+        parts.push(hours.toString());
     }
 
     ticks -= hours * ticksPerHour;
 
-    var minutes = ticks / ticksPerMinute;
-    minutes = Math.floor(minutes);
+    const minutes: number = Math.floor(ticks / ticksPerMinute);
 
     ticks -= minutes * ticksPerMinute;
 
     if (minutes < 10 && hours) {
-        minutes = '0' + minutes;
+        parts.push('0' + minutes.toString());
+    } else {
+        parts.push(minutes.toString());
     }
-    parts.push(minutes);
 
-    var seconds = ticks / ticksPerSecond;
-    seconds = Math.floor(seconds);
+    const seconds: number = Math.floor(ticks / ticksPerSecond);
 
     if (seconds < 10) {
-        seconds = '0' + seconds;
+        parts.push('0' + seconds.toString());
+    } else {
+        parts.push(seconds.toString());
     }
-    parts.push(seconds);
 
     return parts.join(':');
 }
 
-export function broadcastToMessageBus(msg) {
+export function broadcastToMessageBus(msg: any): void {
     window.castReceiverContext.sendCustomMessage(
         'urn:x-cast:com.connectsdk',
         window.senderId,
@@ -980,13 +1013,13 @@ export function broadcastToMessageBus(msg) {
     );
 }
 
-export function broadcastConnectionErrorMessage() {
+export function broadcastConnectionErrorMessage(): void {
     broadcastToMessageBus({
         type: 'connectionerror',
         message: ''
     });
 }
 
-export function cleanName(name) {
+export function cleanName(name: string): string {
     return name.replace(/[^\w\s]/gi, '');
 }
