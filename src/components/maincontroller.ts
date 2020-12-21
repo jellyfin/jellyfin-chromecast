@@ -202,8 +202,6 @@ window.mediaManager.addEventListener(
     }
 );
 
-console.log('Application is ready, starting system');
-
 export function reportDeviceCapabilities() {
     getMaxBitrate().then((maxBitrate) => {
         const deviceProfile = getDeviceProfile({
@@ -786,4 +784,5 @@ options.playbackConfig = new cast.framework.PlaybackConfig();
 options.playbackConfig.autoResumeDuration = 5;
 options.supportedCommands = cast.framework.messages.Command.ALL_BASIC_MEDIA;
 
+console.log('Application is ready, starting system');
 window.castReceiverContext.start(options);
