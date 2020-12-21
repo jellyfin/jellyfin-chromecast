@@ -178,7 +178,7 @@ export function getSenderReportingData(
 export function resetPlaybackScope($scope: GlobalScope): void {
     setAppStatus('waiting');
 
-    setStartPositionTicks(0);
+    $scope.startPositionTicks = 0;
     setWaitingBackdrop('');
     $scope.mediaType = '';
     $scope.itemId = '';
@@ -928,10 +928,6 @@ export function setPlayedPercentage(value = 0): void {
 
     $scope.playedPercentage = value;
     element.value = value.toString();
-}
-
-export function setStartPositionTicks(value: number): void {
-    $scope.startPositionTicks = value;
 }
 
 export function setWaitingBackdrop(src: string | null): void {
