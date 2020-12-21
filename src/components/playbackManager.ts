@@ -2,7 +2,6 @@ import {
     getNextPlaybackItemInfo,
     getIntros,
     broadcastConnectionErrorMessage,
-    getReportingParams,
     createStreamInfo
 } from '../helpers';
 
@@ -10,10 +9,8 @@ import {
     getPlaybackInfo,
     getLiveStream,
     load,
-    reportPlaybackStart,
     stop,
-    stopPingInterval,
-    reportPlaybackStopped
+    stopPingInterval
 } from './jellyfinActions';
 import { getDeviceProfile } from './deviceprofileBuilder';
 
@@ -230,36 +227,22 @@ export class playbackManager {
 
         DocumentManager.setPlayerBackdrop(item);
 
-        reportPlaybackStart($scope, getReportingParams($scope));
-
         // We use false as we do not want to broadcast the new status yet
         // we will broadcast manually when the media has been loaded, this
         // is to be sure the duration has been updated in the media element
         this.playerManager.setMediaInformation(mediaInfo, false);
     }
 
-    stop(continuing = false): Promise<any> {
+    stop(continuing = false): void {
         $scope.playNextItem = continuing;
         stop();
 
-        const reportingParams = getReportingParams($scope);
-
-        let promise;
-
         stopPingInterval();
-
-        if (reportingParams.ItemId) {
-            promise = reportPlaybackStopped($scope, reportingParams);
-        }
 
         this.playerManager.stop();
 
         this.activePlaylist = [];
         this.activePlaylistIndex = -1;
         DocumentManager.startBackdropInterval();
-
-        promise = promise || Promise.resolve();
-
-        return promise;
     }
 }
