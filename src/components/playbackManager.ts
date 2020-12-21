@@ -213,6 +213,13 @@ export class playbackManager {
         loadRequestData.media = mediaInfo;
         loadRequestData.autoplay = true;
 
+        // If we should seek at the start, translate it
+        // to seconds and give it to loadRequestData :)
+        if (mediaInfo.customData.startPositionTicks > 0) {
+            loadRequestData.currentTime =
+                mediaInfo.customData.startPositionTicks / 10000000;
+        }
+
         load($scope, mediaInfo.customData, item);
         this.playerManager.load(loadRequestData);
 
