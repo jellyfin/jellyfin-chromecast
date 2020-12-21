@@ -8,13 +8,10 @@ const castContext = cast.framework.CastReceiverContext.getInstance();
  * If the device is in auto, EDID information will be used, otherwise it
  * depends on the manual setting.
  *
- * Currently it's disabled because of problems getting it to work with HLS.
- *
- * @returns true if E-AC-3 can be played
+ * @returns {boolean} true if E-AC-3 can be played
  */
 export function hasEAC3Support(): boolean {
-    //return castContext.canDisplayType('audio/mp4', 'ec-3');
-    return false;
+    return castContext.canDisplayType('audio/mp4', 'ec-3');
 }
 
 /**
@@ -23,29 +20,27 @@ export function hasEAC3Support(): boolean {
  * If the device is in auto, EDID information will be used, otherwise it
  * depends on the manual setting.
  *
- * Currently it's disabled because of problems getting it to work with HLS.
- *
- * @returns true if AC-3 can be played
- *
+ * @returns {boolean} true if AC-3 can be played
  */
 export function hasAC3Support(): boolean {
-    //return castContext.canDisplayType('audio/mp4', 'ac-3');
-    return false;
+    return castContext.canDisplayType('audio/mp4', 'ac-3');
 }
 
 /**
- * Checks if the device can play any surround codecs.
+ * Get a list of the supported surround codecs.
  *
- * Potentially, we could guess that systems with E-AC-3 or AC-3
- * will mostly support 6ch pcm, and if any generation of cast devices
- * is actually capable of decoding e.g. aac 6ch, we can return true here
- * and give it a shot.
- *
- * @returns true if surround codecs can be played
+ * @returns {string[]} list of available surround codecs
  */
-export function hasSurroundSupport(): boolean {
-    // This will turn on surround support if passthrough is available.
-    return hasAC3Support();
+export function getSupportedSurroundCodecs(): string[] {
+    // Note: So far, AC-3 and E-AC-3 in HLS in CAF seems to be broken,
+    const codecs = [];
+    if (hasEAC3Support()) {
+        codecs.push('eac3');
+    }
+    if (hasAC3Support()) {
+        codecs.push('ac3');
+    }
+    return codecs;
 }
 
 /**
@@ -199,20 +194,7 @@ export function getSupportedMP4VideoCodecs(): Array<string> {
  * @returns Supported MP4 audio codecs.
  */
 export function getSupportedMP4AudioCodecs(): Array<string> {
-    const codecs = [];
-
-    if (hasEAC3Support()) {
-        codecs.push('eac3');
-    }
-
-    if (hasAC3Support()) {
-        codecs.push('ac3');
-    }
-
-    codecs.push('aac');
-    codecs.push('mp3');
-
-    return codecs;
+    return ['aac', 'mp3'];
 }
 
 /**

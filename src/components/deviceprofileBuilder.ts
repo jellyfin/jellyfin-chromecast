@@ -16,7 +16,6 @@ import { ProfileConditionValue } from '../api/generated/models/profile-condition
 import { deviceIds, getActiveDeviceId } from './castDevices';
 
 import {
-    hasSurroundSupport,
     hasTextTrackSupport,
     hasVP8Support,
     hasVP9Support,
@@ -28,6 +27,7 @@ import {
     getSupportedMP4AudioCodecs,
     getSupportedHLSVideoCodecs,
     getSupportedHLSAudioCodecs,
+    getSupportedSurroundCodecs,
     getSupportedWebMAudioCodecs,
     getSupportedAudioCodecs
 } from './codecSupportHelper';
@@ -89,8 +89,10 @@ function getDirectPlayProfiles(): Array<DirectPlayProfile> {
     const DirectPlayProfiles: Array<DirectPlayProfile> = [];
 
     if (currentDeviceId !== deviceIds.AUDIO) {
+        // For devices with video
         const mp4VideoCodecs = getSupportedMP4VideoCodecs();
         const mp4AudioCodecs = getSupportedMP4AudioCodecs();
+        const surroundAudioCodecs = getSupportedSurroundCodecs();
         const vpxVideoCodecs = getSupportedVPXVideoCodecs();
         const webmAudioCodecs = getSupportedWebMAudioCodecs();
 
@@ -103,6 +105,15 @@ function getDirectPlayProfiles(): Array<DirectPlayProfile> {
             });
         }
 
+        // mkv profile: surround and normal codecs
+        DirectPlayProfiles.push({
+            AudioCodec: mp4AudioCodecs.concat(surroundAudioCodecs).join(','),
+            Container: 'mkv',
+            Type: DlnaProfileType.Video,
+            VideoCodec: mp4VideoCodecs.join(',')
+        });
+
+        // HLS+MPEGTS profile
         DirectPlayProfiles.push({
             AudioCodec: mp4AudioCodecs.join(','),
             Container: 'mp4,m4v',
@@ -266,15 +277,19 @@ function getTranscodingProfiles(): Array<TranscodingProfile> {
     const TranscodingProfiles: Array<TranscodingProfile> = [];
 
     const hlsAudioCodecs = getSupportedHLSAudioCodecs();
-    const audioChannels: number = hasSurroundSupport() ? 6 : 2;
+
+    // Audio channels:
+    // - Non passthrough: Only 2 channels supported
+    // - Audio: Passthrough not supported (at least with chromecast audio)
 
     if (profileOptions.enableHls !== false) {
+        // HLS for audio only
         TranscodingProfiles.push({
             AudioCodec: hlsAudioCodecs.join(','),
             BreakOnNonKeyFrames: false,
             Container: 'ts',
             Context: EncodingContext.Streaming,
-            MaxAudioChannels: audioChannels.toString(),
+            MaxAudioChannels: '2',
             MinSegments: 1,
             Protocol: 'hls',
             Type: DlnaProfileType.Audio
@@ -282,14 +297,16 @@ function getTranscodingProfiles(): Array<TranscodingProfile> {
     }
 
     const supportedAudio = getSupportedAudioCodecs();
+    const surroundCodecs = getSupportedSurroundCodecs();
 
     // audio only profiles here
     for (const audioFormat of supportedAudio) {
+        // direct download audio
         TranscodingProfiles.push({
             AudioCodec: audioFormat,
             Container: audioFormat,
             Context: EncodingContext.Streaming,
-            MaxAudioChannels: audioChannels.toString(),
+            MaxAudioChannels: '2',
             Protocol: 'http',
             Type: DlnaProfileType.Audio
         });
@@ -302,21 +319,42 @@ function getTranscodingProfiles(): Array<TranscodingProfile> {
 
     const hlsVideoCodecs = getSupportedHLSVideoCodecs();
 
-    if (
-        hlsVideoCodecs.length &&
-        hlsAudioCodecs.length &&
-        profileOptions.enableHls !== false
-    ) {
+    if (surroundCodecs.length) {
+        // Direct streaming for passthrough codecs
         TranscodingProfiles.push({
-            AudioCodec: hlsAudioCodecs.join(','),
-            BreakOnNonKeyFrames: false,
-            Container: 'ts',
-            Context: EncodingContext.Streaming,
-            MaxAudioChannels: audioChannels.toString(),
-            MinSegments: 1,
-            Protocol: 'hls',
+            Container: 'mkv',
             Type: DlnaProfileType.Video,
-            VideoCodec: hlsVideoCodecs.join(',')
+            AudioCodec: surroundCodecs.join(','),
+            VideoCodec: hlsVideoCodecs.join(','),
+            Context: EncodingContext.Streaming,
+            Protocol: 'http',
+            MaxAudioChannels: '8'
+        });
+    }
+
+    // Direct streaming for normal codecs
+    TranscodingProfiles.push({
+        Container: 'mkv',
+        Type: DlnaProfileType.Video,
+        AudioCodec: hlsAudioCodecs.join(','),
+        VideoCodec: hlsVideoCodecs.join(','),
+        Context: EncodingContext.Streaming,
+        Protocol: 'http',
+        MaxAudioChannels: '2'
+    });
+
+    if (profileOptions.enableHls !== false) {
+        TranscodingProfiles.push({
+            Container: 'ts',
+            Type: DlnaProfileType.Video,
+            AudioCodec: hlsAudioCodecs.join(','),
+            VideoCodec: hlsVideoCodecs.join(','),
+            Context: EncodingContext.Streaming,
+            Protocol: 'hls',
+            // Only stereo for this mode
+            MaxAudioChannels: '2',
+            MinSegments: 1,
+            BreakOnNonKeyFrames: false
         });
     }
 
@@ -325,9 +363,9 @@ function getTranscodingProfiles(): Array<TranscodingProfile> {
             AudioCodec: 'vorbis',
             Container: 'webm',
             Context: EncodingContext.Streaming,
-            // If audio transcoding is needed, limit channels to number of physical audio channels
-            // Trying to transcode to 5 channels when there are only 2 speakers generally does not sound good
-            MaxAudioChannels: audioChannels.toString(),
+            // TODO: Vorbis 6ch will probably not work, so this should either be passthrough codecs or stereo.
+            //       But we can try this for now and see if it works.
+            MaxAudioChannels: surroundCodecs.length ? '6' : '2',
             Protocol: 'http',
             Type: DlnaProfileType.Video,
             VideoCodec: 'vpx'

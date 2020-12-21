@@ -802,6 +802,7 @@ export function createMediaInformation(
     item: BaseItemDto,
     streamInfo: any
 ): framework.messages.MediaInformation {
+    console.log('streamInfo', streamInfo);
     const mediaInfo = new cast.framework.messages.MediaInformation();
 
     mediaInfo.contentId = streamInfo.url;

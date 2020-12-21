@@ -214,6 +214,7 @@ export class playbackManager {
         loadRequestData.autoplay = true;
 
         load($scope, mediaInfo.customData, item);
+        console.log('loading media:', loadRequestData);
         this.playerManager.load(loadRequestData);
 
         $scope.PlaybackMediaSource = mediaSource;
