@@ -1,12 +1,12 @@
-export function getFetchPromise(request) {
-    var headers = request.headers || {};
+export function getFetchPromise(request: any): Promise<any> {
+    const headers = request.headers || {};
     'json' === request.dataType && (headers.accept = 'application/json');
-    var fetchRequest = {
+    const fetchRequest: any = {
         headers: headers,
         method: request.type,
         credentials: 'same-origin'
     };
-    var contentType = request.contentType;
+    let contentType = request.contentType;
     if (request.data) {
         if (typeof request.data == 'string') {
             fetchRequest.body = request.data;
@@ -20,9 +20,9 @@ export function getFetchPromise(request) {
     if (contentType) {
         headers['Content-Type'] = contentType;
     }
-    var url = request.url;
+    let url = request.url;
     if (request.query) {
-        var paramString = paramsToString(request.query);
+        const paramString = paramsToString(request.query);
         paramString && (url += '?' + paramString);
     }
     return request.timeout
@@ -30,39 +30,39 @@ export function getFetchPromise(request) {
         : fetch(url, fetchRequest);
 }
 
-export function fetchWithTimeout(url, options, timeoutMs) {
-    return (
-        console.log(
-            'fetchWithTimeout: timeoutMs: ' + timeoutMs + ', url: ' + url
-        ),
-        new Promise(function (resolve, reject) {
-            var timeout = setTimeout(reject, timeoutMs);
-            options = options || {};
-            options.credentials = 'same-origin';
-            fetch(url, options).then(
-                function (response) {
-                    clearTimeout(timeout);
-                    console.log(
-                        'fetchWithTimeout: succeeded connecting to url: ' + url
-                    );
-                    resolve(response);
-                },
-                function () {
-                    clearTimeout(timeout);
-                    console.log(
-                        'fetchWithTimeout: timed out connecting to url: ' + url
-                    );
-                    reject();
-                }
-            );
-        })
-    );
+export function fetchWithTimeout(
+    url: string,
+    options: any,
+    timeoutMs: number
+): Promise<any> {
+    console.log('fetchWithTimeout: timeoutMs: ' + timeoutMs + ', url: ' + url);
+    return new Promise(function (resolve, reject) {
+        const timeout = setTimeout(reject, timeoutMs);
+        options = options || {};
+        options.credentials = 'same-origin';
+        fetch(url, options).then(
+            function (response) {
+                clearTimeout(timeout);
+                console.log(
+                    'fetchWithTimeout: succeeded connecting to url: ' + url
+                );
+                resolve(response);
+            },
+            function () {
+                clearTimeout(timeout);
+                console.log(
+                    'fetchWithTimeout: timed out connecting to url: ' + url
+                );
+                reject();
+            }
+        );
+    });
 }
 
-export function paramsToString(params) {
-    var values = [];
-    for (var key in params) {
-        var value = params[key];
+export function paramsToString(params: any): string {
+    const values = [];
+    for (const key in params) {
+        const value = params[key];
         null !== value &&
             void 0 !== value &&
             '' !== value &&
@@ -73,13 +73,13 @@ export function paramsToString(params) {
     return values.join('&');
 }
 
-export function ajax(request) {
+export function ajax(request: any): Promise<any> {
     if (!request) throw new Error('Request cannot be null');
     request.headers = request.headers || {};
     console.log('requesting url: ' + request.url);
 
     return getFetchPromise(request).then(
-        function (response) {
+        function (response: any) {
             console.log(
                 'response status: ' + response.status + ', url: ' + request.url
             );
