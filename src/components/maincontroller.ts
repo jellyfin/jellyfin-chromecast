@@ -14,6 +14,7 @@ import {
     cleanName
 } from '../helpers';
 import {
+    reportPlaybackStart,
     reportPlaybackProgress,
     reportPlaybackStopped,
     play,
@@ -133,12 +134,10 @@ enableTimeUpdateListener();
 window.addEventListener('beforeunload', function () {
     // Try to cleanup after ourselves before the page closes
     disableTimeUpdateListener();
-    reportPlaybackStopped($scope, getReportingParams($scope));
 });
 
 mgr.addEventListener(cast.framework.events.EventType.PLAY, (): void => {
     play($scope);
-    reportPlaybackProgress($scope, getReportingParams($scope));
 });
 
 mgr.addEventListener(cast.framework.events.EventType.PAUSE, (): void => {
@@ -169,6 +168,15 @@ mgr.addEventListener(cast.framework.events.EventType.ENDED, function () {
         window.currentPlaylistIndex = -1;
         startBackdropInterval();
     }
+});
+
+// Notify of playback start as soon as the media is playing. Only then is the tick position good.
+mgr.addEventListener(cast.framework.events.EventType.PLAYING, (): void => {
+    reportPlaybackStart($scope, getReportingParams($scope));
+});
+// Notify of playback end just before stopping it, to get a good tick position
+mgr.addEventListener(cast.framework.events.EventType.REQUEST_STOP, (): void => {
+    reportPlaybackStopped($scope, getReportingParams($scope));
 });
 
 // Set the active subtitle track once the player has loaded
