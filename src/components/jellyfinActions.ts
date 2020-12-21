@@ -87,11 +87,11 @@ export function reportPlaybackStart(
 export function reportPlaybackProgress(
     $scope: GlobalScope,
     reportingParams: PlaybackProgressInfo,
-    reportToServer: boolean,
-    broadcastEventName: string
+    reportToServer = true,
+    broadcastEventName = 'playbackprogress'
 ): Promise<any> {
     broadcastToMessageBus({
-        type: broadcastEventName || 'playbackprogress',
+        type: broadcastEventName,
         data: getSenderReportingData($scope, reportingParams)
     });
 

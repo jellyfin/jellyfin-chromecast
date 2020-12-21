@@ -7,7 +7,7 @@ import {
     stopActiveEncodings,
     detectBitrate
 } from './jellyfinActions';
-import { getDeviceProfile as deviceProfileBuilder } from './deviceprofileBuilder';
+import { getDeviceProfile } from './deviceprofileBuilder';
 import {
     getCurrentPositionTicks,
     getReportingParams,
@@ -26,34 +26,41 @@ import {
 
 import { getMaxBitrateSupport } from './codecSupportHelper';
 
-import { commandHandler } from './commandHandler';
+import { CommandHandler } from './commandHandler';
 import { playbackManager } from './playbackManager';
 
 import { JellyfinApi } from './jellyfinApi';
+
+import { BaseItemDto } from '../api/generated/models/base-item-dto';
+import { GlobalScope } from '../types/global';
 
 window.castReceiverContext = cast.framework.CastReceiverContext.getInstance();
 window.mediaManager = window.castReceiverContext.getPlayerManager();
 
 const playbackMgr = new playbackManager(window.mediaManager);
 
-var init = function () {
+CommandHandler.configure(window.mediaManager, playbackMgr);
+
+const init = function () {
     resetPlaybackScope($scope);
 };
 
 init();
 
-var mgr = window.mediaManager;
+const mgr = window.mediaManager;
 
-var broadcastToServer = new Date();
+let broadcastToServer = new Date();
+
+let hasReportedCapabilities = false;
 
 export function onMediaElementTimeUpdate() {
     if ($scope.isChangingStream) {
         return;
     }
 
-    var now = new Date();
+    const now = new Date();
 
-    var elapsed = now - broadcastToServer;
+    const elapsed = now.valueOf() - broadcastToServer.valueOf();
 
     if (elapsed > 5000) {
         // TODO use status as input
@@ -81,10 +88,6 @@ export function onMediaElementPlaying() {
 }
 
 export function onMediaElementVolumeChange() {
-    var volume = window.mediaElement.volume;
-    window.VolumeInfo.Level = volume * 100;
-    window.VolumeInfo.IsMuted = volume == 0;
-
     reportEvent('volumechange', true);
 }
 
@@ -134,26 +137,27 @@ window.addEventListener('beforeunload', function () {
     reportPlaybackStopped($scope, getReportingParams($scope));
 });
 
-mgr.defaultOnPlay = function (event) {
-    play($scope, event);
+function defaultOnPlay() {
+    play($scope);
     reportPlaybackProgress($scope, getReportingParams($scope));
-};
-mgr.addEventListener(cast.framework.events.EventType.PLAY, mgr.defaultOnPlay);
+}
 
-mgr.defaultOnPause = function () {
+mgr.addEventListener(cast.framework.events.EventType.PLAY, defaultOnPlay);
+
+function defaultOnPause() {
     reportPlaybackProgress($scope, getReportingParams($scope));
-};
-mgr.addEventListener(cast.framework.events.EventType.PAUSE, mgr.defaultOnPause);
+}
+mgr.addEventListener(cast.framework.events.EventType.PAUSE, defaultOnPause);
 
-mgr.defaultOnStop = function () {
+function defaultOnStop() {
     playbackMgr.stop();
-};
+}
 
 mgr.addEventListener(
     cast.framework.events.EventType.MEDIA_FINISHED,
-    mgr.defaultOnStop
+    defaultOnStop
 );
-mgr.addEventListener(cast.framework.events.EventType.ABORT, mgr.defaultOnStop);
+mgr.addEventListener(cast.framework.events.EventType.ABORT, defaultOnStop);
 
 mgr.addEventListener(cast.framework.events.EventType.ENDED, function () {
     // Ignore
@@ -173,7 +177,7 @@ mgr.addEventListener(cast.framework.events.EventType.ENDED, function () {
 
 window.castReceiverContext.addEventListener(
     cast.framework.system.EventType.SYSTEM_VOLUME_CHANGED,
-    function (event) {
+    function (event: any) {
         console.log(
             '### Cast Receiver Manager - System Volume Changed : ' +
                 JSON.stringify(event.data)
@@ -198,19 +202,22 @@ console.log('Application is ready, starting system');
 
 export function reportDeviceCapabilities() {
     getMaxBitrate().then((maxBitrate) => {
-        let capabilitiesUrl = JellyfinApi.createUrl(
+        const capabilitiesUrl = JellyfinApi.createUrl(
             'Sessions/Capabilities/Full'
         );
 
-        let deviceProfile = getDeviceProfile(maxBitrate);
+        const deviceProfile = getDeviceProfile({
+            enableHls: true,
+            bitrateSetting: maxBitrate
+        });
 
-        let capabilities = {
+        const capabilities = {
             PlayableMediaTypes: ['Audio', 'Video'],
             SupportsPersistentIdentifier: false,
             SupportsMediaControl: true,
             DeviceProfile: deviceProfile
         };
-        window.hasReportedCapabilities = true;
+        hasReportedCapabilities = true;
 
         return JellyfinApi.authAjax(capabilitiesUrl, {
             type: 'POST',
@@ -220,7 +227,7 @@ export function reportDeviceCapabilities() {
     });
 }
 
-export function processMessage(data) {
+export function processMessage(data: any) {
     if (
         !data.command ||
         !data.serverAddress ||
@@ -250,12 +257,12 @@ export function processMessage(data) {
     }
 
     // Report device capabilities
-    if (!window.hasReportedCapabilities) {
+    if (!hasReportedCapabilities) {
         reportDeviceCapabilities();
     }
 
     data.options = data.options || {};
-    var cleanReceiverName = cleanName(data.receiverName || '');
+    const cleanReceiverName = cleanName(data.receiverName || '');
     window.deviceInfo.deviceName =
         cleanReceiverName || window.deviceInfo.deviceName;
     // deviceId just needs to be unique-ish
@@ -269,20 +276,10 @@ export function processMessage(data) {
 
     window.reportEventType;
 
-    let cmdHandler = window.commandHandler;
-
-    if (!cmdHandler) {
-        window.commandHandler = new commandHandler(
-            window.mediaManager,
-            playbackMgr
-        );
-        cmdHandler = window.commandHandler;
-    }
-
-    cmdHandler.processMessage(data, data.command);
+    CommandHandler.processMessage(data, data.command);
 
     if (window.reportEventType) {
-        var report = function () {
+        const report = function () {
             reportPlaybackProgress($scope, getReportingParams($scope));
         };
         reportPlaybackProgress(
@@ -296,7 +293,7 @@ export function processMessage(data) {
     }
 }
 
-export function reportEvent(name, reportToServer) {
+export function reportEvent(name: string, reportToServer: boolean) {
     reportPlaybackProgress(
         $scope,
         getReportingParams($scope),
@@ -305,19 +302,19 @@ export function reportEvent(name, reportToServer) {
     );
 }
 
-export function setSubtitleStreamIndex($scope, index) {
+export function setSubtitleStreamIndex($scope: GlobalScope, index: number) {
     console.log('setSubtitleStreamIndex. index: ' + index);
 
-    var positionTicks;
+    let positionTicks;
 
-    var currentSubtitleStream = $scope.mediaSource.MediaStreams.filter(
-        function (m) {
+    const currentSubtitleStream = $scope.mediaSource.MediaStreams.filter(
+        function (m: any) {
             return (
                 m.Index == $scope.subtitleStreamIndex && m.Type == 'Subtitle'
             );
         }
     )[0];
-    var currentDeliveryMethod = currentSubtitleStream
+    const currentDeliveryMethod = currentSubtitleStream
         ? currentSubtitleStream.DeliveryMethod
         : null;
 
@@ -336,9 +333,9 @@ export function setSubtitleStreamIndex($scope, index) {
         return;
     }
 
-    var mediaStreams = $scope.PlaybackMediaSource.MediaStreams;
+    const mediaStreams = $scope.PlaybackMediaSource.MediaStreams;
 
-    var subtitleStream = getStreamByIndex(mediaStreams, 'Subtitle', index);
+    const subtitleStream = getStreamByIndex(mediaStreams, 'Subtitle', index);
 
     if (!subtitleStream) {
         console.log(
@@ -355,7 +352,7 @@ export function setSubtitleStreamIndex($scope, index) {
         subtitleStream.DeliveryMethod == 'External' ||
         currentDeliveryMethod == 'Encode'
     ) {
-        var textStreamUrl = subtitleStream.IsExternalUrl
+        const textStreamUrl = subtitleStream.IsExternalUrl
             ? subtitleStream.DeliveryUrl
             : JellyfinApi.createUrl(subtitleStream.DeliveryUrl);
 
@@ -372,22 +369,18 @@ export function setSubtitleStreamIndex($scope, index) {
     }
 }
 
-export function setAudioStreamIndex($scope, index) {
-    var positionTicks = getCurrentPositionTicks($scope);
+export function setAudioStreamIndex($scope: GlobalScope, index: number) {
+    const positionTicks = getCurrentPositionTicks($scope);
     changeStream(positionTicks, {
         AudioStreamIndex: index
     });
 }
 
-export function seek(ticks) {
+export function seek(ticks: number) {
     changeStream(ticks);
 }
 
-export function changeStream(ticks, params) {
-    if (ticks) {
-        ticks = parseInt(ticks);
-    }
-
+export function changeStream(ticks: number, params: any = undefined) {
     if (
         window.mediaManager.getMediaInformation().customData.canClientSeek &&
         params == null
@@ -399,13 +392,16 @@ export function changeStream(ticks, params) {
 
     params = params || {};
 
-    var playSessionId = $scope.playSessionId;
-    var liveStreamId = $scope.liveStreamId;
+    const playSessionId = $scope.playSessionId;
+    const liveStreamId = $scope.liveStreamId;
 
-    var item = $scope.item;
+    const item = $scope.item;
 
     getMaxBitrate().then(async (maxBitrate) => {
-        const deviceProfile = getDeviceProfile(maxBitrate);
+        const deviceProfile = getDeviceProfile({
+            enableHls: true,
+            bitrateSetting: maxBitrate
+        });
         const audioStreamIndex =
             params.AudioStreamIndex == null
                 ? $scope.audioStreamIndex
@@ -463,12 +459,12 @@ export function changeStream(ticks, params) {
 // TODO save namespace somewhere global?
 window.castReceiverContext.addCustomMessageListener(
     'urn:x-cast:com.connectsdk',
-    function (evt) {
-        var data = evt.data;
+    function (evt: any) {
+        let data: any = evt.data;
 
         // Apparently chromium likes to pass it as json, not as object.
         // chrome on android works fine
-        if (typeof data == 'string' || data instanceof String) {
+        if (typeof data == 'string') {
             console.log('Event data is a string.. Chromium detected..');
             data = JSON.parse(data);
         }
@@ -483,43 +479,47 @@ window.castReceiverContext.addCustomMessageListener(
     }
 );
 
-export function translateItems(data, options, items, method) {
-    var callback = function (result) {
+export function translateItems(
+    data: any,
+    options: any,
+    items: Array<BaseItemDto>,
+    method: string
+) {
+    const callback = function (result: any) {
         options.items = result.Items;
 
         if (method == 'PlayNext' || method == 'PlayLast') {
-            queue(options.items, method);
+            for (let i = 0, length = options.items.length; i < length; i++) {
+                window.playlist.push(options.items[i]);
+            }
         } else {
             playbackMgr.playFromOptions(data.options);
         }
     };
 
-    var smartTranslate = method != 'PlayNext' && method != 'PlayLast';
+    const smartTranslate = method != 'PlayNext' && method != 'PlayLast';
     translateRequestedItems(data.userId, items, smartTranslate).then(callback);
 }
 
-export function instantMix(data, options, item) {
+export function instantMix(data: any, options: any, item: BaseItemDto) {
     getInstantMixItems(data.userId, item).then(function (result) {
         options.items = result.Items;
         playbackMgr.playFromOptions(data.options);
     });
 }
 
-export function shuffle(data, options, item) {
+export function shuffle(data: any, options: any, item: BaseItemDto) {
     getShuffleItems(data.userId, item).then(function (result) {
         options.items = result.Items;
         playbackMgr.playFromOptions(data.options);
     });
 }
 
-export function queue(items) {
-    for (var i = 0, length = items.length; i < length; i++) {
-        window.playlist.push(items[i]);
-    }
-}
-
-export function onStopPlayerBeforePlaybackDone(item, options) {
-    var requestUrl = JellyfinApi.createUserUrl('Items/' + item.Id);
+export function onStopPlayerBeforePlaybackDone(
+    item: BaseItemDto,
+    options: any
+) {
+    const requestUrl = JellyfinApi.createUserUrl('Items/' + item.Id);
 
     return JellyfinApi.authAjax(requestUrl, {
         dataType: 'json',
@@ -532,16 +532,9 @@ export function onStopPlayerBeforePlaybackDone(item, options) {
     }, broadcastConnectionErrorMessage);
 }
 
-export function getDeviceProfile(maxBitrate) {
-    return deviceProfileBuilder({
-        enableHls: true,
-        bitrateSetting: maxBitrate
-    });
-}
-
-var lastBitrateDetect = 0;
-var detectedBitrate = 0;
-export function getMaxBitrate() {
+let lastBitrateDetect = 0;
+let detectedBitrate = 0;
+export function getMaxBitrate(): Promise<number> {
     console.log('getMaxBitrate');
 
     return new Promise(function (resolve) {
@@ -566,7 +559,7 @@ export function getMaxBitrate() {
 
         console.log('detecting bitrate');
 
-        detectBitrate($scope).then(
+        detectBitrate().then(
             function (bitrate) {
                 console.log('Max bitrate auto detected to ' + bitrate);
                 lastBitrateDetect = new Date().getTime();
@@ -584,7 +577,7 @@ export function getMaxBitrate() {
     });
 }
 
-export function validatePlaybackInfoResult(result) {
+export function validatePlaybackInfoResult(result: any) {
     if (result.ErrorCode) {
         showPlaybackInfoErrorMessage(result.ErrorCode);
         return false;
@@ -593,15 +586,15 @@ export function validatePlaybackInfoResult(result) {
     return true;
 }
 
-export function showPlaybackInfoErrorMessage(errorCode) {
+export function showPlaybackInfoErrorMessage(errorCode: number | string) {
     broadcastToMessageBus({
         type: 'playbackerror',
         message: errorCode
     });
 }
 
-export function getOptimalMediaSource(versions) {
-    var optimalVersion = versions.filter(function (v) {
+export function getOptimalMediaSource(versions: Array<any>) {
+    let optimalVersion = versions.filter(function (v) {
         v.enableDirectPlay = supportsDirectPlay(v);
 
         return v.enableDirectPlay;
@@ -621,7 +614,7 @@ export function getOptimalMediaSource(versions) {
     );
 }
 
-export function supportsDirectPlay(mediaSource) {
+export function supportsDirectPlay(mediaSource: any) {
     if (
         mediaSource.SupportsDirectPlay &&
         mediaSource.Protocol == 'Http' &&
@@ -634,23 +627,29 @@ export function supportsDirectPlay(mediaSource) {
     return false;
 }
 
-export function setTextTrack(index) {
+export function setTextTrack(index: number | null) {
     try {
-        var textTracksManager = window.mediaManager.getTextTracksManager();
+        const textTracksManager = window.mediaManager.getTextTracksManager();
         if (index == null) {
-            textTracksManager.setActiveByIds(null);
+            // docs: null is okay
+            // typescript definitions: Must be Array<number>
+            textTracksManager.setActiveByIds([]);
             return;
         }
 
-        var tracks = textTracksManager.getTracks();
-        var subtitleTrack = tracks.find(function (track) {
+        const tracks: Array<cast.framework.messages.Track> = textTracksManager.getTracks();
+        const subtitleTrack:
+            | cast.framework.messages.Track
+            | undefined = tracks.find(function (
+            track: cast.framework.messages.Track
+        ) {
             return track.trackId === index;
         });
-        if (subtitleTrack) {
+        if (subtitleTrack && subtitleTrack.trackId !== undefined) {
             textTracksManager.setActiveByIds([subtitleTrack.trackId]);
-            var subtitleAppearance = window.subtitleAppearance;
+            const subtitleAppearance = window.subtitleAppearance;
             if (subtitleAppearance) {
-                var textTrackStyle = new cast.framework.messages.TextTrackStyle();
+                const textTrackStyle = new cast.framework.messages.TextTrackStyle();
                 if (subtitleAppearance.dropShadow != null) {
                     // Empty string is DROP_SHADOW
                     textTrackStyle.edgeType =
@@ -701,8 +700,13 @@ export function setTextTrack(index) {
     }
 }
 
-export function createMediaInformation(playSessionId, item, streamInfo) {
-    var mediaInfo = new cast.framework.messages.MediaInformation();
+// TODO no any types
+export function createMediaInformation(
+    playSessionId: string,
+    item: BaseItemDto,
+    streamInfo: any
+) {
+    const mediaInfo = new cast.framework.messages.MediaInformation();
     mediaInfo.contentId = streamInfo.url;
     mediaInfo.contentType = streamInfo.contentType;
     mediaInfo.customData = {
@@ -769,7 +773,7 @@ if (!PRODUCTION) {
 
     window.mediaManager.addEventListener(
         cast.framework.events.category.CORE,
-        (event) => {
+        (event: any) => {
             console.log('Core event: ' + event.type);
             console.log(event);
         }
@@ -782,7 +786,6 @@ options.playbackConfig = new cast.framework.PlaybackConfig();
 // Set the player to start playback as soon as there are five seconds of
 // media content buffered. Default is 10.
 options.playbackConfig.autoResumeDuration = 5;
-options.playbackConfig.supportedCommands =
-    cast.framework.messages.Command.ALL_BASIC_MEDIA;
+options.supportedCommands = cast.framework.messages.Command.ALL_BASIC_MEDIA;
 
 window.castReceiverContext.start(options);

@@ -22,9 +22,13 @@ declare global {
         deviceInfo: DeviceInfo;
         mediaElement: HTMLElement | null;
         mediaManager: cast.framework.PlayerManager;
+        castReceiverContext: cast.framework.CastReceiverContext;
         playlist: Array<any>;
         currentPlaylistIndex: number;
         repeatMode: RepeatMode;
         reportEventType: 'repeatmodechange';
+        subtitleAppearance: any;
+        MaxBitrate: number | undefined;
+        senderId: string | undefined;
     }
 }

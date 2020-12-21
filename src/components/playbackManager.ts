@@ -10,12 +10,13 @@ import {
 import {
     onStopPlayerBeforePlaybackDone,
     getMaxBitrate,
-    getDeviceProfile,
     getOptimalMediaSource,
     showPlaybackInfoErrorMessage,
     supportsDirectPlay,
     createMediaInformation
 } from './maincontroller';
+
+import { getDeviceProfile } from './deviceprofileBuilder';
 
 import {
     getPlaybackInfo,
@@ -88,7 +89,7 @@ export class playbackManager {
     }
 
     // TODO eradicate any
-    playNextItem(options: any, stopPlayer: boolean): boolean {
+    playNextItem(options: any = {}, stopPlayer = false): boolean {
         const nextItemInfo = getNextPlaybackItemInfo();
 
         if (nextItemInfo) {
@@ -96,7 +97,7 @@ export class playbackManager {
 
             const item = nextItemInfo.item;
 
-            this.playItem(item, options || {}, stopPlayer);
+            this.playItem(item, options, stopPlayer);
             return true;
         }
 
@@ -104,13 +105,13 @@ export class playbackManager {
     }
 
     // TODO eradicate any
-    playPreviousItem(options: any) {
+    playPreviousItem(options: any = {}) {
         if (this.activePlaylist && this.activePlaylistIndex > 0) {
             this.activePlaylistIndex--;
 
             const item = this.activePlaylist[this.activePlaylistIndex];
 
-            this.playItem(item, options || {}, true);
+            this.playItem(item, options, true);
             return true;
         }
         return false;
@@ -131,7 +132,10 @@ export class playbackManager {
         setAppStatus('loading');
 
         const maxBitrate = await getMaxBitrate();
-        const deviceProfile = getDeviceProfile(maxBitrate);
+        const deviceProfile = getDeviceProfile({
+            enableHls: true,
+            bitrateSetting: maxBitrate
+        });
         const playbackInfo = await getPlaybackInfo(
             item,
             maxBitrate,
@@ -252,7 +256,7 @@ export class playbackManager {
         this.playerManager.setMediaInformation(mediaInfo, false);
     }
 
-    stop(continuing: boolean): Promise<any> {
+    stop(continuing = false): Promise<any> {
         $scope.playNextItem = continuing;
         stop();
 
