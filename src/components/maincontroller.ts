@@ -725,7 +725,12 @@ export function createMediaInformation(
         );
     }
 
-    mediaInfo.customData.startPositionTicks = streamInfo.startPosition || 0;
+    // wtf this breaks everything
+    // mediaInfo.customData.startPositionTicks = streamInfo.startPosition || 0;
+    // try instead:
+    // if(streamInfo.startPosition)
+    //     mediaInfo.customData.startPositionTicks = streamInfo.startPosition
+    // however this is likely to be unneeded
 
     return mediaInfo;
 }
