@@ -72,14 +72,7 @@ function getContainerProfiles(): Array<ContainerProfile> {
  * @returns Response profiles.
  */
 function getResponseProfiles(): Array<ResponseProfile> {
-    // This seems related to DLNA, it might not be needed?
-    return [
-        {
-            Container: 'm4v',
-            MimeType: 'video/mp4',
-            Type: DlnaProfileType.Video
-        }
-    ];
+    return [];
 }
 
 /**
