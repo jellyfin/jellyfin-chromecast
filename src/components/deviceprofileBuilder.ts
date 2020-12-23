@@ -430,10 +430,7 @@ export function getDeviceProfile(options: ProfileOptions): DeviceProfile {
     const profile: DeviceProfile = {
         MaxStaticBitrate: options.bitrateSetting,
         MaxStreamingBitrate: options.bitrateSetting,
-        MusicStreamingTranscodingBitrate: Math.min(
-            options.bitrateSetting,
-            192000
-        )
+        MusicStreamingTranscodingBitrate: options.bitrateSetting
     };
 
     profile.DirectPlayProfiles = getDirectPlayProfiles();
