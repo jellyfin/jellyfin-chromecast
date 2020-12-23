@@ -48,7 +48,7 @@ export function getSupportedSurroundCodecs(): string[] {
  *
  * @returns true if HEVC is supported
  */
-export function hasH265Support(): boolean {
+export function hasHEVCSupport(): boolean {
     return castContext.canDisplayType('video/mp4', 'hev1.1.6.L150.B0');
 }
 
@@ -116,38 +116,62 @@ export function getMaxWidthSupport(deviceId: number): number {
 }
 
 /**
- * Get all H.26x profiles supported by the active Cast device.
+ * Get all H.264 profiles supported by the active Cast device.
  *
- * @param deviceId - Cast device id.
- * @returns All supported H.26x profiles.
+ * @returns {string} All supported H.264 profiles.
  */
-export function getH26xProfileSupport(deviceId: number): string {
+export function getH264ProfileSupport(): string {
     // These are supported by all Cast devices, excluding audio only devices.
-    let h26xProfiles = 'high|main|baseline|constrained baseline';
-
-    if (deviceId === deviceIds.ULTRA || deviceId === deviceIds.CCGTV) {
-        h26xProfiles += '|high 10';
-    }
-
-    return h26xProfiles;
+    return 'high|main|baseline|constrained baseline';
 }
 
 /**
- * Get the highest H.26x level supported by the active Cast device.
+ * Get all HEVC profiles supported by the active Cast device.
+ *
+ * @param {number} deviceId Cast device id.
+ * @returns {string} All supported HEVC profiles.
+ */
+export function getHEVCProfileSupport(deviceId: number): string {
+    if (deviceId === deviceIds.ULTRA || deviceId === deviceIds.CCGTV) {
+        return 'main|main 10';
+    } else {
+        // The rest of the cast devices don't support it
+        return '';
+    }
+}
+
+/**
+ * Get the highest H.264 level supported by the active Cast device.
  *
  * @param deviceId - Cast device id.
- * @returns The highest supported H.26x level.
+ * @returns number - The highest supported H.264 level.
  */
-export function getH26xLevelSupport(deviceId: number): number {
+export function getH264LevelSupport(deviceId: number): number {
     switch (deviceId) {
         case deviceIds.NESTHUBANDMAX:
         case deviceIds.GEN1AND2:
             return 41;
         case deviceIds.GEN3:
             return 42;
+        case deviceIds.ULTRA: // docs say 4.2
+        case deviceIds.CCGTV: // docs say 5.1
+            return 52;
+    }
+
+    return 0;
+}
+
+/**
+ * Get the highest HEVC level supported by the active Cast device.
+ *
+ * @param {number} deviceId Cast device id.
+ * @returns {number} The highest supported HEVC level.
+ */
+export function getHEVCLevelSupport(deviceId: number): number {
+    switch (deviceId) {
         case deviceIds.ULTRA:
         case deviceIds.CCGTV:
-            return 52;
+            return 153; // AKA 5.1
     }
 
     return 0;
@@ -180,12 +204,19 @@ export function getSupportedVPXVideoCodecs(): Array<string> {
 export function getSupportedMP4VideoCodecs(): Array<string> {
     const codecs = ['h264'];
 
-    if (hasH265Support()) {
-        codecs.push('h265');
+    if (hasHEVCSupport()) {
         codecs.push('hevc');
     }
 
     return codecs;
+}
+
+/**
+ * Get supported audio codecs suitable for use in an mkv container.
+ * @returns Supported mkv audio codecs.
+ */
+export function getSupportedmkvAudioCodecs(): Array<string> {
+    return ['flac', 'aac', 'opus', 'vorbis', 'mp3', 'webma', 'wav'];
 }
 
 /**
@@ -204,7 +235,7 @@ export function getSupportedMP4AudioCodecs(): Array<string> {
  */
 export function getSupportedHLSVideoCodecs(): Array<string> {
     // Currently the server does not support fmp4 which is required
-    // by the HLS spec for streaming H.265 video.
+    // by the HLS spec for streaming HEVC video.
     return ['h264'];
 }
 
