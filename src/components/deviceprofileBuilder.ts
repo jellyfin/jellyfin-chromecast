@@ -185,24 +185,26 @@ function getCodecProfiles(): Array<CodecProfile> {
         return CodecProfiles;
     }
 
-    // TODO do this for other codecs as well.
-    CodecProfiles.push({
-        Codec: 'aac',
-        Conditions: [
-            // Not sure what secondary audio means in this context. Multiple audio tracks?
-            createProfileCondition(
-                ProfileConditionValue.IsSecondaryAudio,
-                ProfileConditionType.Equals,
-                'false'
-            ),
-            createProfileCondition(
-                ProfileConditionValue.IsSecondaryAudio,
-                ProfileConditionType.LessThanEqual,
-                '2'
-            )
-        ],
-        Type: CodecType.VideoAudio
-    });
+    for (const acodec in getSupportedmkvAudioCodecs()) {
+        CodecProfiles.push({
+            Codec: acodec,
+            Conditions: [
+                // This condition says that the codec is not supported as an additional audio track,
+                // telling the server to only send one audio track.
+                createProfileCondition(
+                    ProfileConditionValue.IsSecondaryAudio,
+                    ProfileConditionType.Equals,
+                    'false'
+                ),
+                createProfileCondition(
+                    ProfileConditionValue.IsSecondaryAudio,
+                    ProfileConditionType.LessThanEqual,
+                    '2'
+                )
+            ],
+            Type: CodecType.VideoAudio
+        });
+    }
 
     const maxWidth: number = getMaxWidthSupport(currentDeviceId);
 

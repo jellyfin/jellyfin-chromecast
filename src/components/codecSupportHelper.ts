@@ -216,7 +216,7 @@ export function getSupportedMP4VideoCodecs(): Array<string> {
  * @returns Supported mkv audio codecs.
  */
 export function getSupportedmkvAudioCodecs(): Array<string> {
-    return ['flac', 'aac', 'opus', 'vorbis', 'mp3', 'webma', 'wav'];
+    return ['flac', 'opus', 'aac', 'vorbis', 'mp3', 'webma', 'wav'];
 }
 
 /**
@@ -264,5 +264,5 @@ export function getSupportedWebMAudioCodecs(): Array<string> {
  * @returns All supported WebM audio codecs.
  */
 export function getSupportedAudioCodecs(): Array<string> {
-    return ['opus', 'mp3', 'aac', 'flac', 'webma', 'wav'];
+    return ['flac', 'opus', 'aac', 'mp3', 'webma', 'wav'];
 }
