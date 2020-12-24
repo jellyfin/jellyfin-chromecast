@@ -94,7 +94,7 @@ function onMediaElementVolumeChange(event: cast.framework.system.Event): void {
         event
     )).data;
     console.log('Received volume update: ' + window.volume.level);
-    reportEvent('volumechange', true);
+    if (JellyfinApi.serverAddress !== null) reportEvent('volumechange', true);
 }
 
 export function enableTimeUpdateListener(): void {
@@ -181,18 +181,6 @@ mgr.addEventListener(cast.framework.events.EventType.ENDED, function () {
     }
 });
 
-window.castReceiverContext.addEventListener(
-    cast.framework.system.EventType.SYSTEM_VOLUME_CHANGED,
-    function (event: any) {
-        console.log(
-            '### Cast Receiver Manager - System Volume Changed : ' +
-                JSON.stringify(event.data)
-        );
-
-        reportEvent('volumechange', true);
-    }
-);
-
 // Set the active subtitle track once the player has loaded
 window.mediaManager.addEventListener(
     cast.framework.events.EventType.PLAYER_LOAD_COMPLETE,
@@ -273,8 +261,6 @@ export function processMessage(data: any): void {
     if (data.maxBitrate) {
         window.MaxBitrate = data.maxBitrate;
     }
-
-    window.reportEventType;
 
     CommandHandler.processMessage(data, data.command);
 
