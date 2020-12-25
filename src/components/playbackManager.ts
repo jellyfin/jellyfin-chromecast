@@ -9,7 +9,6 @@ import {
     getPlaybackInfo,
     getLiveStream,
     load,
-    stop,
     stopPingInterval
 } from './jellyfinActions';
 import { getDeviceProfile } from './deviceprofileBuilder';
@@ -118,7 +117,7 @@ export class playbackManager {
         stopPlayer = false
     ): Promise<void> {
         if (stopPlayer) {
-            await this.stop(true);
+            this.stop();
         }
 
         return await onStopPlayerBeforePlaybackDone(item, options);
@@ -234,13 +233,26 @@ export class playbackManager {
         this.playerManager.setMediaInformation(mediaInfo, false);
     }
 
-    stop(continuing = false): void {
-        $scope.playNextItem = continuing;
-        stop();
+    /**
+     * stop playback, as requested by the client
+     */
+    stop(): void {
+        this.playerManager.stop();
+        // onStopped will be called when playback comes to a halt.
+    }
+
+    /**
+     * Called when media stops playing.
+     * TODO avoid doing this between tracks in a playlist
+     *
+     * @param _continue - If we have another item coming up in the playlist. Only used for notifying the cast sender.
+     */
+    onStopped(_continue: boolean): void {
+        $scope.playNextItem = _continue;
+
+        DocumentManager.setAppStatus('waiting');
 
         stopPingInterval();
-
-        this.playerManager.stop();
 
         this.activePlaylist = [];
         this.activePlaylistIndex = -1;

@@ -165,17 +165,17 @@ window.playerManager.addEventListener(
 /**
  *
  */
-function defaultOnStop(): void {
-    playbackMgr.stop();
+function defaultOnStopped(): void {
+    playbackMgr.onStopped(true);
 }
 
 window.playerManager.addEventListener(
     cast.framework.events.EventType.MEDIA_FINISHED,
-    defaultOnStop
+    defaultOnStopped
 );
 window.playerManager.addEventListener(
     cast.framework.events.EventType.ABORT,
-    defaultOnStop
+    defaultOnStopped
 );
 
 window.playerManager.addEventListener(
