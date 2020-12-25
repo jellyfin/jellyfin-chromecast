@@ -3,7 +3,6 @@ import {
     getReportingParams,
     resetPlaybackScope,
     getMetadata,
-    createStreamInfo,
     getStreamByIndex,
     getShuffleItems,
     getInstantMixItems,
@@ -20,7 +19,7 @@ import {
     play,
     startBackdropInterval,
     getPlaybackInfo,
-    stopActiveEncodings,
+    //stopActiveEncodings,
     detectBitrate
 } from './jellyfinActions';
 import { getDeviceProfile } from './deviceprofileBuilder';
@@ -72,7 +71,6 @@ export function onMediaElementPause(): void {
     if ($scope.isChangingStream) {
         return;
     }
-
     reportEvent('playstatechange', true);
 }
 
@@ -372,7 +370,7 @@ export function seek(ticks: number): Promise<void> {
     return changeStream(ticks);
 }
 
-export function changeStream(
+export async function changeStream(
     ticks: number,
     params: any = undefined
 ): Promise<void> {
@@ -382,71 +380,34 @@ export function changeStream(
     ) {
         window.mediaManager.seek(ticks / 10000000);
         reportPlaybackProgress($scope, getReportingParams($scope));
-        return Promise.resolve();
+        return;
     }
 
     params = params || {};
 
-    const playSessionId = $scope.playSessionId;
-    const liveStreamId = $scope.liveStreamId;
+    // TODO Could be useful for garbage collection.
+    //      It needs to predict if the server side transcode needs
+    //      to restart.
+    //      Possibility: Always assume it will. Downside: VTT subs switching doesn't
+    //      need to restart the transcode.
+    //const requiresStoppingTranscoding = false;
+    //if (requiresStoppingTranscoding) {
+    //    window.mediaManager.pause();
+    //    await stopActiveEncodings($scope.playSessionId);
+    //}
 
-    const item = $scope.item;
-
-    return getMaxBitrate().then(async (maxBitrate) => {
-        const deviceProfile = getDeviceProfile({
-            enableHls: true,
-            bitrateSetting: maxBitrate
-        });
-        const audioStreamIndex =
+    return await playbackMgr.playItemInternal($scope.item, {
+        audioStreamIndex:
             params.AudioStreamIndex == null
                 ? $scope.audioStreamIndex
-                : params.AudioStreamIndex;
-        const subtitleStreamIndex =
+                : params.AudioStreamIndex,
+        subtitleStreamIndex:
             params.SubtitleStreamIndex == null
                 ? $scope.subtitleStreamIndex
-                : params.SubtitleStreamIndex;
-
-        const playbackInformation = await getPlaybackInfo(
-            item,
-            maxBitrate,
-            deviceProfile,
-            ticks,
-            $scope.mediaSourceId,
-            audioStreamIndex,
-            subtitleStreamIndex,
-            liveStreamId
-        );
-        if (!validatePlaybackInfoResult(playbackInformation)) {
-            return;
-        }
-
-        const mediaSource = playbackInformation.MediaSources[0];
-        const streamInfo = createStreamInfo(item, mediaSource, ticks);
-
-        if (!streamInfo.url) {
-            showPlaybackInfoErrorMessage('NoCompatibleStream');
-            return;
-        }
-
-        const mediaInformation = createMediaInformation(
-            playSessionId,
-            item,
-            streamInfo
-        );
-        const loadRequest = new cast.framework.messages.LoadRequestData();
-        loadRequest.media = mediaInformation;
-        loadRequest.autoplay = true;
-
-        // TODO something to do with HLS?
-        const requiresStoppingTranscoding = false;
-        if (requiresStoppingTranscoding) {
-            window.mediaManager.pause();
-            await stopActiveEncodings(playSessionId);
-        }
-        window.mediaManager.load(loadRequest);
-        window.mediaManager.play();
-        $scope.subtitleStreamIndex = subtitleStreamIndex;
-        $scope.audioStreamIndex = audioStreamIndex;
+                : params.SubtitleStreamIndex,
+        startPositionTicks: ticks,
+        mediaSourceId: $scope.mediaSourceId,
+        liveStreamId: $scope.liveStreamId
     });
 }
 
@@ -579,14 +540,6 @@ export function getMaxBitrate(): Promise<number> {
             }
         );
     });
-}
-
-export function validatePlaybackInfoResult(result: any): boolean {
-    if (result.ErrorCode) {
-        showPlaybackInfoErrorMessage(result.ErrorCode);
-        return false;
-    }
-    return true;
 }
 
 export function showPlaybackInfoErrorMessage(error: string): void {
