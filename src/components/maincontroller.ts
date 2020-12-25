@@ -142,15 +142,15 @@ mgr.addEventListener(cast.framework.events.EventType.PAUSE, (): void => {
     reportPlaybackProgress($scope, getReportingParams($scope));
 });
 
-function defaultOnStop(): void {
-    playbackMgr.stop();
+function defaultOnStopped(): void {
+    playbackMgr.onStopped(true);
 }
 
 mgr.addEventListener(
     cast.framework.events.EventType.MEDIA_FINISHED,
-    defaultOnStop
+    defaultOnStopped
 );
-mgr.addEventListener(cast.framework.events.EventType.ABORT, defaultOnStop);
+mgr.addEventListener(cast.framework.events.EventType.ABORT, defaultOnStopped);
 
 mgr.addEventListener(cast.framework.events.EventType.ENDED, function () {
     // Ignore

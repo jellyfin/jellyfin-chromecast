@@ -11,7 +11,6 @@ import {
     getPlaybackInfo,
     getLiveStream,
     load,
-    stop,
     stopPingInterval,
     startBackdropInterval
 } from './jellyfinActions';
@@ -115,7 +114,7 @@ export class playbackManager {
         stopPlayer = false
     ): Promise<void> {
         if (stopPlayer) {
-            await this.stop(true);
+            this.stop();
         }
 
         return await onStopPlayerBeforePlaybackDone(item, options);
@@ -248,13 +247,20 @@ export class playbackManager {
         this.playerManager.setMediaInformation(mediaInfo, false);
     }
 
-    stop(continuing = false): void {
-        $scope.playNextItem = continuing;
-        stop();
+    /**
+     * stop playback, as requested by the client
+     */
+    stop(): void {
+        this.playerManager.stop();
+        // onStopped will be called when playback comes to a halt.
+    }
+
+    onStopped(_continue: boolean) {
+        $scope.playNextItem = _continue;
+
+        setAppStatus('waiting');
 
         stopPingInterval();
-
-        this.playerManager.stop();
 
         this.activePlaylist = [];
         this.activePlaylistIndex = -1;
