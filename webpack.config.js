@@ -3,6 +3,7 @@ const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const packagejson = require('./package.json');
+const ImageMinimizerPlugin = require('image-minimizer-webpack-plugin');
 
 const config = {
     context: path.resolve(__dirname, 'src'),
@@ -22,6 +23,22 @@ const config = {
             template: 'index.html',
             hash: false,
             favicon: 'favicon.ico'
+        }),
+        new ImageMinimizerPlugin({
+            minimizerOptions: {
+                plugins: [
+                    [
+                        'svgo',
+                        {
+                            plugins: [
+                                {
+                                    removeComments: false
+                                }
+                            ]
+                        }
+                    ]
+                ]
+            }
         })
     ],
     module: {
