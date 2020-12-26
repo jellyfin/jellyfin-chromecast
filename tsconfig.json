@@ -3,10 +3,7 @@
         "target": "ES2018",
         "module": "ESNext",
         "moduleResolution": "Node",
-        "lib": [
-            "dom",
-            "ES2018"
-        ],
+        "lib": ["dom", "ES2018"],
         "allowJs": true,
         "sourceMap": true,
         "outDir": "./dist/",

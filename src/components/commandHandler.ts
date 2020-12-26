@@ -128,12 +128,12 @@ export class commandHandler {
         console.log('ToggleMute handler not implemented');
     }
 
-    SetVolumeHandler(data: DataMessage): void {
+    SetVolumeHandler(): void {
         // This is now implemented on the sender
         console.log('SetVolume handler not implemented');
     }
 
-    IdentifyHandler(data: DataMessage): void {
+    IdentifyHandler(): void {
         if (!this.playbackManager.isPlaying()) {
             startBackdropInterval();
         } else {

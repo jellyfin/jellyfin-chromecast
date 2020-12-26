@@ -14,7 +14,7 @@ export function hasAC3Support(): boolean {
     return false;
 }
 
-export function hasSurroundSupport(deviceId: number): boolean {
+export function hasSurroundSupport(): boolean {
     // AC-3 in this client is broken. The cause is not known yet.
     // However, the device does report correctly in this check.
     // We can use that to estimate if we can send AAC 6ch.

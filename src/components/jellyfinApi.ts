@@ -33,20 +33,17 @@ export abstract class JellyfinApi {
     private static getSecurityHeaders(): Dictionary<string> {
         // TODO throw error if this fails
 
-        var auth =
-            'Emby Client="Chromecast", Device="' +
-            window.deviceInfo.deviceName +
-            '", DeviceId="' +
-            window.deviceInfo.deviceId +
-            '", Version="' +
-            window.deviceInfo.versionNumber +
-            '"';
+        let auth =
+            `Emby Client="Chromecast", ` +
+            `Device="${window.deviceInfo.deviceName}", ` +
+            `DeviceId="${window.deviceInfo.deviceId}", ` +
+            `Version="${window.deviceInfo.versionNumber}"`;
 
         if (this.userId) {
-            auth += ', UserId="' + this.userId + '"';
+            auth += `, UserId="${this.userId}"`;
         }
 
-        var headers: Dictionary<string> = {
+        const headers: Dictionary<string> = {
             Authorization: auth
         };
 

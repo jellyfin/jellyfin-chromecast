@@ -34,7 +34,7 @@ module.exports = {
     },
     overrides: [
         {
-            files: ['./src/**/*.js', './src/**/*.ts'],
+            files: ['src/**/*.js', 'src/**/*.ts'],
             env: {
                 node: false,
                 browser: true,
@@ -48,7 +48,9 @@ module.exports = {
             rules: {
                 // Disable these until we have converted the project to TS
                 '@typescript-eslint/explicit-module-boundary-types': 'off',
-                '@typescript-eslint/no-explicit-any': 'off'
+                '@typescript-eslint/no-explicit-any': 'off',
+                // prettier handles this
+                indent: 'off'
             }
         }
     ]
