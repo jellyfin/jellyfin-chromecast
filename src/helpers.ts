@@ -1,8 +1,11 @@
 import { JellyfinApi } from './components/jellyfinApi';
 
+import { BaseItemDtoQueryResult } from './api/generated/models/base-item-dto-query-result';
+import { PlaybackProgressInfo } from './api/generated/models/playback-progress-info';
+import { MediaSourceInfo } from './api/generated/models/media-source-info';
 import { BaseItemDto } from './api/generated/models/base-item-dto';
 import { BaseItemPerson } from './api/generated/models/base-item-person';
-import { GlobalScope } from './types/global';
+import { GlobalScope, BusMessage, ItemIndex, ItemQuery } from './types/global';
 
 export function getCurrentPositionTicks($scope: GlobalScope): number {
     let positionTicks = window.mediaManager.getCurrentTimeSec() * 10000000;
@@ -14,7 +17,7 @@ export function getCurrentPositionTicks($scope: GlobalScope): number {
     return positionTicks;
 }
 
-export function getReportingParams($scope: GlobalScope): any {
+export function getReportingParams($scope: GlobalScope): PlaybackProgressInfo {
     /* Math.round() calls:
      * on 10.7, any floating point will give an API error,
      * so it's actually really important to make sure that
@@ -31,7 +34,6 @@ export function getReportingParams($scope: GlobalScope): any {
         VolumeLevel: Math.round(window.volume.level * 100),
         ItemId: $scope.itemId,
         MediaSourceId: $scope.mediaSourceId,
-        QueueableMediaTypes: ['Audio', 'Video'],
         CanSeek: $scope.canSeek,
         PlayMethod: $scope.playMethod,
         LiveStreamId: $scope.liveStreamId,
@@ -40,7 +42,7 @@ export function getReportingParams($scope: GlobalScope): any {
     };
 }
 
-export function getNextPlaybackItemInfo() {
+export function getNextPlaybackItemInfo(): ItemIndex | null {
     const playlist = window.playlist;
 
     if (!playlist) {
@@ -81,19 +83,13 @@ export function getNextPlaybackItemInfo() {
 
 export function getSenderReportingData(
     $scope: GlobalScope,
-    reportingData: any
+    reportingData: PlaybackProgressInfo
 ): any {
     const state: any = {
         ItemId: reportingData.ItemId,
-        PlayState: extend({}, reportingData),
-        QueueableMediaTypes: reportingData.QueueableMediaTypes
+        PlayState: reportingData,
+        QueueableMediaTypes: ['Audio', 'Video']
     };
-
-    // Don't want this here
-    state.PlayState.QueueableMediaTypes = null;
-    delete state.PlayState.QueueableMediaTypes;
-    state.PlayState.ItemId = null;
-    delete state.PlayState.ItemId;
 
     state.NowPlayingItem = {
         Id: reportingData.ItemId,
@@ -317,7 +313,7 @@ export function getMetadata(item: BaseItemDto): any {
 
 export function createStreamInfo(
     item: BaseItemDto,
-    mediaSource: any,
+    mediaSource: MediaSourceInfo,
     startPosition: number | null
 ): any {
     let mediaUrl;
@@ -340,7 +336,7 @@ export function createStreamInfo(
     if (type == 'video') {
         contentType = 'video/' + mediaSource.Container;
 
-        if (mediaSource.enableDirectPlay) {
+        if (mediaSource.SupportsDirectPlay) {
             mediaUrl = mediaSource.Path;
             isStatic = true;
         } else if (mediaSource.SupportsDirectStream) {
@@ -353,7 +349,10 @@ export function createStreamInfo(
             isStatic = true;
             playerStartPositionTicks = startPosition || 0;
         } else {
-            mediaUrl = JellyfinApi.createUrl(mediaSource.TranscodingUrl);
+            // TODO deal with !TranscodingUrl
+            mediaUrl = JellyfinApi.createUrl(
+                <string>mediaSource.TranscodingUrl
+            );
 
             if (mediaSource.TranscodingSubProtocol == 'hls') {
                 mediaUrl += seekParam;
@@ -374,7 +373,7 @@ export function createStreamInfo(
     } else {
         contentType = 'audio/' + mediaSource.Container;
 
-        if (mediaSource.enableDirectPlay) {
+        if (mediaSource.SupportsDirectPlay) {
             mediaUrl = mediaSource.Path;
             isStatic = true;
             playerStartPositionTicks = startPosition || 0;
@@ -397,7 +396,10 @@ export function createStreamInfo(
                 streamContainer = mediaSource.TranscodingContainer;
                 contentType = 'audio/' + mediaSource.TranscodingContainer;
 
-                mediaUrl = JellyfinApi.createUrl(mediaSource.TranscodingUrl);
+                // TODO deal with !TranscodingUrl
+                mediaUrl = JellyfinApi.createUrl(
+                    <string>mediaSource.TranscodingUrl
+                );
             }
         }
     }
@@ -420,11 +422,10 @@ export function createStreamInfo(
         startPositionTicks: startPosition
     };
 
-    const subtitleStreams = mediaSource.MediaStreams.filter(function (
-        stream: any
-    ) {
-        return stream.Type === 'Subtitle';
-    });
+    const subtitleStreams =
+        mediaSource.MediaStreams?.filter(function (stream: any) {
+            return stream.Type === 'Subtitle';
+        }) ?? [];
     const subtitleTracks: Array<framework.messages.Track> = [];
     subtitleStreams.forEach(function (subtitleStream: any) {
         if (subtitleStream.DeliveryUrl === undefined) {
@@ -599,7 +600,7 @@ export function getShuffleItems(
     userId: string,
     item: BaseItemDto
 ): Promise<any> {
-    const query: any = {
+    const query: ItemQuery = {
         UserId: userId,
         Fields: requiredItemFields,
         Limit: 50,
@@ -613,7 +614,7 @@ export function getShuffleItems(
         query.ArtistIds = item.Id;
     } else if (item.Type == 'MusicGenre') {
         query.MediaTypes = 'Audio';
-        query.Genres = item.Name;
+        query.Genres = item.Name ?? undefined;
     } else {
         query.ParentId = item.Id;
     }
@@ -658,7 +659,10 @@ export function getInstantMixItems(
     }
 }
 
-export function getItemsForPlayback(userId: string, query: any): Promise<any> {
+export function getItemsForPlayback(
+    userId: string,
+    query: ItemQuery
+): Promise<BaseItemDtoQueryResult> {
     query.UserId = userId;
     query.Limit = query.Limit || 100;
     query.Fields = requiredItemFields;
@@ -686,7 +690,7 @@ export function getItemsForPlayback(userId: string, query: any): Promise<any> {
 export function getEpisodesForPlayback(
     userId: string,
     seriesId: string,
-    query: any
+    query: ItemQuery
 ): Promise<any> {
     query.UserId = userId;
     query.Fields = requiredItemFields;
@@ -699,7 +703,9 @@ export function getEpisodesForPlayback(
     });
 }
 
-export function getIntros(firstItem: BaseItemDto): Promise<any> {
+export function getIntros(
+    firstItem: BaseItemDto
+): Promise<BaseItemDtoQueryResult> {
     return JellyfinApi.authAjaxUser('Items/' + firstItem.Id + '/Intros', {
         dataType: 'json',
         type: 'GET'
@@ -717,7 +723,7 @@ export function translateRequestedItems(
     userId: string,
     items: Array<BaseItemDto>,
     smart = false
-) {
+): Promise<BaseItemDtoQueryResult> {
     const firstItem = items[0];
 
     if (firstItem.Type == 'Playlist') {
@@ -734,7 +740,7 @@ export function translateRequestedItems(
         });
     } else if (firstItem.Type == 'MusicGenre') {
         return getItemsForPlayback(userId, {
-            Genres: firstItem.Name,
+            Genres: firstItem.Name ?? undefined,
             Filters: 'IsNotFolder',
             Recursive: true,
             SortBy: 'SortName',
@@ -759,6 +765,7 @@ export function translateRequestedItems(
             return getItemsForPlayback(userId, {
                 Ids: firstItem.Id
             }).then(function (result) {
+                if (!result.Items || result.Items.length < 1) return result;
                 const episode = result.Items[0];
 
                 if (!episode.SeriesId) {
@@ -887,12 +894,12 @@ export function getMiscInfoHtml(item: BaseItemDto): string {
     return miscInfo.join('&nbsp;&nbsp;&nbsp;&nbsp;');
 }
 
-export function setAppStatus(status: string) {
+export function setAppStatus(status: string): void {
     $scope.status = status;
     document.body.className = status;
 }
 
-export function setDisplayName(name = '') {
+export function setDisplayName(name = ''): void {
     const element: HTMLElement = <HTMLElement>(
         document.querySelector('.displayName')
     );
@@ -900,13 +907,13 @@ export function setDisplayName(name = '') {
     element.innerHTML = name;
 }
 
-export function setGenres(name = '') {
+export function setGenres(name = ''): void {
     const element: HTMLElement = <HTMLElement>document.querySelector('.genres');
     $scope.genres = name;
     element.innerHTML = name;
 }
 
-export function setOverview(name = '') {
+export function setOverview(name = ''): void {
     const element: HTMLElement = <HTMLElement>(
         document.querySelector('.overview')
     );
@@ -914,7 +921,7 @@ export function setOverview(name = '') {
     element.innerHTML = name;
 }
 
-export function setPlayedPercentage(value = 0) {
+export function setPlayedPercentage(value = 0): void {
     const element: HTMLInputElement = <HTMLInputElement>(
         document.querySelector('.itemProgressBar')
     );
@@ -923,11 +930,11 @@ export function setPlayedPercentage(value = 0) {
     element.value = value.toString();
 }
 
-export function setStartPositionTicks(value: number) {
+export function setStartPositionTicks(value: number): void {
     $scope.startPositionTicks = value;
 }
 
-export function setWaitingBackdrop(src: string | null) {
+export function setWaitingBackdrop(src: string | null): void {
     const element: HTMLElement = <HTMLElement>(
         document.querySelector('#waiting-container-backdrop')
     );
@@ -935,7 +942,7 @@ export function setWaitingBackdrop(src: string | null) {
     element.style.backgroundImage = src ? 'url(' + src + ')' : '';
 }
 
-export function setHasPlayedPercentage(value: boolean) {
+export function setHasPlayedPercentage(value: boolean): void {
     const element: HTMLElement = <HTMLElement>(
         document.querySelector('.detailImageProgressContainer')
     );
@@ -943,14 +950,14 @@ export function setHasPlayedPercentage(value: boolean) {
     else element.classList.add('hide');
 }
 
-export function setLogo(src: string | null) {
+export function setLogo(src: string | null): void {
     const element: HTMLElement = <HTMLElement>(
         document.querySelector('.detailLogo')
     );
     element.style.backgroundImage = src ? 'url(' + src + ')' : '';
 }
 
-export function setDetailImage(src: string | null) {
+export function setDetailImage(src: string | null): void {
     const element: HTMLElement = <HTMLElement>(
         document.querySelector('.detailImage')
     );
@@ -958,6 +965,7 @@ export function setDetailImage(src: string | null) {
     element.style.backgroundImage = src ? 'url(' + src + ')' : '';
 }
 
+// TODO can we remove this crap
 export function extend(target: any, source: any): any {
     for (const i in source) {
         target[i] = source[i];
@@ -965,7 +973,7 @@ export function extend(target: any, source: any): any {
     return target;
 }
 
-export function parseISO8601Date(date: string) {
+export function parseISO8601Date(date: string): Date {
     return new Date(date);
 }
 
@@ -1005,19 +1013,16 @@ export function getDisplayRunningTime(ticks: number): string {
     return parts.join(':');
 }
 
-export function broadcastToMessageBus(msg: any): void {
+export function broadcastToMessageBus(message: BusMessage): void {
     window.castReceiverContext.sendCustomMessage(
         'urn:x-cast:com.connectsdk',
         window.senderId,
-        msg
+        message
     );
 }
 
 export function broadcastConnectionErrorMessage(): void {
-    broadcastToMessageBus({
-        type: 'connectionerror',
-        message: ''
-    });
+    broadcastToMessageBus({ type: 'connectionerror', message: '' });
 }
 
 export function cleanName(name: string): string {

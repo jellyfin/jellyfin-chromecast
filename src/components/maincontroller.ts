@@ -31,6 +31,7 @@ import { playbackManager } from './playbackManager';
 
 import { JellyfinApi } from './jellyfinApi';
 
+import { BaseItemDtoQueryResult } from '../api/generated/models/base-item-dto-query-result';
 import { BaseItemDto } from '../api/generated/models/base-item-dto';
 import { GlobalScope, PlayRequest } from '../types/global';
 
@@ -484,9 +485,9 @@ export function translateItems(
 ) {
     const playNow = method != 'PlayNext' && method != 'PlayLast';
     translateRequestedItems(data.userId, options.items, playNow).then(function (
-        result
+        result: BaseItemDtoQueryResult
     ) {
-        options.items = result.Items;
+        if (result.Items) options.items = result.Items;
 
         if (method == 'PlayNext' || method == 'PlayLast') {
             for (let i = 0, length = options.items.length; i < length; i++) {
@@ -581,11 +582,8 @@ export function validatePlaybackInfoResult(result: any) {
     return true;
 }
 
-export function showPlaybackInfoErrorMessage(errorCode: number | string) {
-    broadcastToMessageBus({
-        type: 'playbackerror',
-        message: errorCode
-    });
+export function showPlaybackInfoErrorMessage(error: string): void {
+    broadcastToMessageBus({ type: 'playbackerror', message: error });
 }
 
 export function getOptimalMediaSource(versions: Array<any>) {

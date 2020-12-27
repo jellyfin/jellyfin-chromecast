@@ -72,7 +72,7 @@ export class playbackManager {
         }
 
         const intros = await getIntros(firstItem);
-        options.items = intros.Items.concat(options.items);
+        options.items = intros.Items?.concat(options.items);
         this.playFromOptionsInternal(options);
     }
 

@@ -1,4 +1,5 @@
 import { RepeatMode } from '../api/generated/models/repeat-mode';
+import { BaseItemDto } from '../api/generated/models/base-item-dto';
 
 export interface DeviceInfo {
     deviceId: string | number;
@@ -12,6 +13,42 @@ export interface GlobalScope {
 
 export interface Dictionary<T> {
     [Key: string]: T;
+}
+
+// Jellyfin Server
+// Why doesn't the API have a type for this?
+/* Combined item query.
+ * Valid for item endpoints */
+export interface ItemQuery {
+    UserId?: string;
+    Limit?: number;
+    Fields?: string;
+    Filters?: string;
+    Recursive?: boolean;
+    ExcludeLocationTypes?: string;
+    Ids?: string;
+    SortBy?: string;
+    IsVirtualUnaired?: boolean;
+    IsMissing?: boolean;
+    ParentId?: string;
+    MediaTypes?: string;
+    Genres?: string;
+    ArtistIds?: string;
+}
+
+// Messagebus message
+export interface BusMessage {
+    type: string;
+    message?: string;
+    data?: string;
+}
+
+//
+// For the old queue stuff
+//
+export interface ItemIndex {
+    item: BaseItemDto;
+    index: number;
 }
 
 // From commandHandler
