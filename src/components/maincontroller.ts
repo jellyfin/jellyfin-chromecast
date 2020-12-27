@@ -54,7 +54,7 @@ let broadcastToServer = new Date();
 
 let hasReportedCapabilities = false;
 
-export function onMediaElementTimeUpdate() {
+export function onMediaElementTimeUpdate(): void {
     if ($scope.isChangingStream) {
         return;
     }
@@ -73,7 +73,7 @@ export function onMediaElementTimeUpdate() {
     }
 }
 
-export function onMediaElementPause() {
+export function onMediaElementPause(): void {
     if ($scope.isChangingStream) {
         return;
     }
@@ -81,14 +81,14 @@ export function onMediaElementPause() {
     reportEvent('playstatechange', true);
 }
 
-export function onMediaElementPlaying() {
+export function onMediaElementPlaying(): void {
     if ($scope.isChangingStream) {
         return;
     }
     reportEvent('playstatechange', true);
 }
 
-function onMediaElementVolumeChange(event: cast.framework.system.Event) {
+function onMediaElementVolumeChange(event: cast.framework.system.Event): void {
     window.volume = (<cast.framework.system.SystemVolumeChangedEvent>(
         event
     )).data;
@@ -96,7 +96,7 @@ function onMediaElementVolumeChange(event: cast.framework.system.Event) {
     reportEvent('volumechange', true);
 }
 
-export function enableTimeUpdateListener() {
+export function enableTimeUpdateListener(): void {
     window.mediaManager.addEventListener(
         cast.framework.events.EventType.TIME_UPDATE,
         onMediaElementTimeUpdate
@@ -115,7 +115,7 @@ export function enableTimeUpdateListener() {
     );
 }
 
-export function disableTimeUpdateListener() {
+export function disableTimeUpdateListener(): void {
     window.mediaManager.removeEventListener(
         cast.framework.events.EventType.TIME_UPDATE,
         onMediaElementTimeUpdate
@@ -142,19 +142,19 @@ window.addEventListener('beforeunload', function () {
     reportPlaybackStopped($scope, getReportingParams($scope));
 });
 
-function defaultOnPlay() {
+function defaultOnPlay(): void {
     play($scope);
     reportPlaybackProgress($scope, getReportingParams($scope));
 }
 
 mgr.addEventListener(cast.framework.events.EventType.PLAY, defaultOnPlay);
 
-function defaultOnPause() {
+function defaultOnPause(): void {
     reportPlaybackProgress($scope, getReportingParams($scope));
 }
 mgr.addEventListener(cast.framework.events.EventType.PAUSE, defaultOnPause);
 
-function defaultOnStop() {
+function defaultOnStop(): void {
     playbackMgr.stop();
 }
 
@@ -203,8 +203,8 @@ window.mediaManager.addEventListener(
     }
 );
 
-export function reportDeviceCapabilities() {
-    getMaxBitrate().then((maxBitrate) => {
+export function reportDeviceCapabilities(): Promise<void> {
+    return getMaxBitrate().then((maxBitrate) => {
         const deviceProfile = getDeviceProfile({
             enableHls: true,
             bitrateSetting: maxBitrate
@@ -226,7 +226,7 @@ export function reportDeviceCapabilities() {
     });
 }
 
-export function processMessage(data: any) {
+export function processMessage(data: any): void {
     if (
         !data.command ||
         !data.serverAddress ||
@@ -292,8 +292,11 @@ export function processMessage(data: any) {
     }
 }
 
-export function reportEvent(name: string, reportToServer: boolean) {
-    reportPlaybackProgress(
+export function reportEvent(
+    name: string,
+    reportToServer: boolean
+): Promise<any> {
+    return reportPlaybackProgress(
         $scope,
         getReportingParams($scope),
         reportToServer,
@@ -301,7 +304,10 @@ export function reportEvent(name: string, reportToServer: boolean) {
     );
 }
 
-export function setSubtitleStreamIndex($scope: GlobalScope, index: number) {
+export function setSubtitleStreamIndex(
+    $scope: GlobalScope,
+    index: number
+): void {
     console.log('setSubtitleStreamIndex. index: ' + index);
 
     let positionTicks;
@@ -368,25 +374,31 @@ export function setSubtitleStreamIndex($scope: GlobalScope, index: number) {
     }
 }
 
-export function setAudioStreamIndex($scope: GlobalScope, index: number) {
+export function setAudioStreamIndex(
+    $scope: GlobalScope,
+    index: number
+): Promise<void> {
     const positionTicks = getCurrentPositionTicks($scope);
-    changeStream(positionTicks, {
+    return changeStream(positionTicks, {
         AudioStreamIndex: index
     });
 }
 
-export function seek(ticks: number) {
-    changeStream(ticks);
+export function seek(ticks: number): Promise<void> {
+    return changeStream(ticks);
 }
 
-export function changeStream(ticks: number, params: any = undefined) {
+export function changeStream(
+    ticks: number,
+    params: any = undefined
+): Promise<void> {
     if (
         window.mediaManager.getMediaInformation().customData.canClientSeek &&
         params == null
     ) {
         window.mediaManager.seek(ticks / 10000000);
         reportPlaybackProgress($scope, getReportingParams($scope));
-        return;
+        return Promise.resolve();
     }
 
     params = params || {};
@@ -396,7 +408,7 @@ export function changeStream(ticks: number, params: any = undefined) {
 
     const item = $scope.item;
 
-    getMaxBitrate().then(async (maxBitrate) => {
+    return getMaxBitrate().then(async (maxBitrate) => {
         const deviceProfile = getDeviceProfile({
             enableHls: true,
             bitrateSetting: maxBitrate
@@ -482,32 +494,44 @@ export function translateItems(
     data: any,
     options: PlayRequest,
     method: string
-) {
+): Promise<void> {
     const playNow = method != 'PlayNext' && method != 'PlayLast';
-    translateRequestedItems(data.userId, options.items, playNow).then(function (
-        result: BaseItemDtoQueryResult
-    ) {
-        if (result.Items) options.items = result.Items;
+    return translateRequestedItems(data.userId, options.items, playNow).then(
+        function (result: BaseItemDtoQueryResult) {
+            if (result.Items) options.items = result.Items;
 
-        if (method == 'PlayNext' || method == 'PlayLast') {
-            for (let i = 0, length = options.items.length; i < length; i++) {
-                window.playlist.push(options.items[i]);
+            if (method == 'PlayNext' || method == 'PlayLast') {
+                for (
+                    let i = 0, length = options.items.length;
+                    i < length;
+                    i++
+                ) {
+                    window.playlist.push(options.items[i]);
+                }
+            } else {
+                playbackMgr.playFromOptions(data.options);
             }
-        } else {
-            playbackMgr.playFromOptions(data.options);
         }
-    });
+    );
 }
 
-export function instantMix(data: any, options: any, item: BaseItemDto) {
-    getInstantMixItems(data.userId, item).then(function (result) {
+export function instantMix(
+    data: any,
+    options: any,
+    item: BaseItemDto
+): Promise<void> {
+    return getInstantMixItems(data.userId, item).then(function (result) {
         options.items = result.Items;
         playbackMgr.playFromOptions(data.options);
     });
 }
 
-export function shuffle(data: any, options: any, item: BaseItemDto) {
-    getShuffleItems(data.userId, item).then(function (result) {
+export function shuffle(
+    data: any,
+    options: any,
+    item: BaseItemDto
+): Promise<void> {
+    return getShuffleItems(data.userId, item).then(function (result) {
         options.items = result.Items;
         playbackMgr.playFromOptions(data.options);
     });
@@ -516,7 +540,7 @@ export function shuffle(data: any, options: any, item: BaseItemDto) {
 export function onStopPlayerBeforePlaybackDone(
     item: BaseItemDto,
     options: any
-) {
+): Promise<void> {
     return JellyfinApi.authAjaxUser('Items/' + item.Id, {
         dataType: 'json',
         type: 'GET'
@@ -573,12 +597,11 @@ export function getMaxBitrate(): Promise<number> {
     });
 }
 
-export function validatePlaybackInfoResult(result: any) {
+export function validatePlaybackInfoResult(result: any): boolean {
     if (result.ErrorCode) {
         showPlaybackInfoErrorMessage(result.ErrorCode);
         return false;
     }
-
     return true;
 }
 
@@ -586,7 +609,7 @@ export function showPlaybackInfoErrorMessage(error: string): void {
     broadcastToMessageBus({ type: 'playbackerror', message: error });
 }
 
-export function getOptimalMediaSource(versions: Array<any>) {
+export function getOptimalMediaSource(versions: Array<any>): any {
     let optimalVersion = versions.filter(function (v) {
         v.enableDirectPlay = supportsDirectPlay(v);
 
@@ -607,7 +630,8 @@ export function getOptimalMediaSource(versions: Array<any>) {
     );
 }
 
-export function supportsDirectPlay(mediaSource: any) {
+// TODO wtf and why do we need this, direct storage access but how
+export function supportsDirectPlay(mediaSource: any): boolean {
     if (
         mediaSource.SupportsDirectPlay &&
         mediaSource.Protocol == 'Http' &&
@@ -620,7 +644,7 @@ export function supportsDirectPlay(mediaSource: any) {
     return false;
 }
 
-export function setTextTrack(index: number | null) {
+export function setTextTrack(index: number | null): void {
     try {
         const textTracksManager = window.mediaManager.getTextTracksManager();
         if (index == null) {
@@ -698,7 +722,7 @@ export function createMediaInformation(
     playSessionId: string,
     item: BaseItemDto,
     streamInfo: any
-) {
+): cast.framework.messages.MediaInformation {
     const mediaInfo = new cast.framework.messages.MediaInformation();
     mediaInfo.contentId = streamInfo.url;
     mediaInfo.contentType = streamInfo.contentType;

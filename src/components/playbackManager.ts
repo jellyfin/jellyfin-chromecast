@@ -62,22 +62,19 @@ export class playbackManager {
         );
     }
 
-    // TODO eradicate any
-    async playFromOptions(options: any) {
+    async playFromOptions(options: any): Promise<boolean> {
         const firstItem = options.items[0];
 
         if (options.startPositionTicks || firstItem.MediaType !== 'Video') {
-            this.playFromOptionsInternal(options);
-            return;
+            return this.playFromOptionsInternal(options);
         }
 
         const intros = await getIntros(firstItem);
         options.items = intros.Items?.concat(options.items);
-        this.playFromOptionsInternal(options);
+        return this.playFromOptionsInternal(options);
     }
 
-    // TODO eradicate any
-    playFromOptionsInternal(options: any) {
+    playFromOptionsInternal(options: any): boolean {
         const stopPlayer =
             this.activePlaylist && this.activePlaylist.length > 0;
 
@@ -85,10 +82,9 @@ export class playbackManager {
         window.currentPlaylistIndex = -1;
         window.playlist = this.activePlaylist;
 
-        this.playNextItem(options, stopPlayer);
+        return this.playNextItem(options, stopPlayer);
     }
 
-    // TODO eradicate any
     playNextItem(options: any = {}, stopPlayer = false): boolean {
         const nextItemInfo = getNextPlaybackItemInfo();
 
@@ -104,8 +100,7 @@ export class playbackManager {
         return false;
     }
 
-    // TODO eradicate any
-    playPreviousItem(options: any = {}) {
+    playPreviousItem(options: any = {}): boolean {
         if (this.activePlaylist && this.activePlaylistIndex > 0) {
             this.activePlaylistIndex--;
 
@@ -117,17 +112,19 @@ export class playbackManager {
         return false;
     }
 
-    // TODO eradicate any
-    async playItem(item: BaseItemDto, options: any, stopPlayer = false) {
+    async playItem(
+        item: BaseItemDto,
+        options: any,
+        stopPlayer = false
+    ): Promise<void> {
         if (stopPlayer) {
             await this.stop(true);
         }
 
-        onStopPlayerBeforePlaybackDone(item, options);
+        return await onStopPlayerBeforePlaybackDone(item, options);
     }
 
-    // TODO eradicate any
-    async playItemInternal(item: BaseItemDto, options: any) {
+    async playItemInternal(item: BaseItemDto, options: any): Promise<void> {
         $scope.isChangingStream = false;
         setAppStatus('loading');
 
@@ -189,7 +186,7 @@ export class playbackManager {
         item: BaseItemDto,
         mediaSource: any,
         options: any
-    ) {
+    ): void {
         setAppStatus('loading');
 
         const streamInfo = createStreamInfo(

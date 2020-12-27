@@ -58,7 +58,7 @@ export class credentialManager {
      * @param serverId - ID of the server the credentials belong to
      * @returns True if server was added, false if it wasn't
      */
-    remove(serverId: string) {
+    remove(serverId: string): boolean {
         if (serverId in this.credentialStore) {
             delete this.credentialStore[serverId];
             return true;
