@@ -16,15 +16,15 @@ import {
 } from './jellyfinActions';
 
 import { playbackManager } from './playbackManager';
-
-export interface DataMessage {
-    //TODO: figure out a better type for data
-    [any: string]: any;
-}
-
-interface SupportedCommands {
-    [command: string]: (data: DataMessage) => any;
-}
+import {
+    DataMessage,
+    DisplayRequest,
+    PlayRequest,
+    SeekRequest,
+    SetIndexRequest,
+    SetRepeatModeRequest,
+    SupportedCommands
+} from '../types/global';
 
 export abstract class CommandHandler {
     private static playerManager: cast.framework.PlayerManager;
@@ -64,28 +64,36 @@ export abstract class CommandHandler {
     }
 
     static playNextHandler(data: DataMessage): void {
-        translateItems(data, data.options, data.options.items, data.command);
+        translateItems(data, <PlayRequest>data.options, data.command);
     }
 
     static playNowHandler(data: DataMessage): void {
-        translateItems(data, data.options, data.options.items, data.command);
+        translateItems(data, <PlayRequest>data.options, data.command);
     }
 
     static playLastHandler(data: DataMessage): void {
-        translateItems(data, data.options, data.options.items, data.command);
+        translateItems(data, <PlayRequest>data.options, data.command);
     }
 
     static shuffleHandler(data: DataMessage): void {
-        shuffle(data, data.options, data.options.items[0]);
+        shuffle(
+            data,
+            <PlayRequest>data.options,
+            (<PlayRequest>data.options).items[0]
+        );
     }
 
     static instantMixHandler(data: DataMessage): void {
-        instantMix(data, data.options, data.options.items[0]);
+        instantMix(
+            data,
+            <PlayRequest>data.options,
+            (<PlayRequest>data.options).items[0]
+        );
     }
 
     static displayContentHandler(data: DataMessage): void {
         if (!this.playbackManager.isPlaying()) {
-            displayItem(data.options.ItemId);
+            displayItem((<DisplayRequest>data.options).ItemId);
         }
     }
 
@@ -105,11 +113,11 @@ export abstract class CommandHandler {
     }
 
     static setAudioStreamIndexHandler(data: DataMessage): void {
-        setAudioStreamIndex($scope, data.options.index);
+        setAudioStreamIndex($scope, (<SetIndexRequest>data.options).index);
     }
 
     static setSubtitleStreamIndexHandler(data: DataMessage): void {
-        setSubtitleStreamIndex($scope, data.options.index);
+        setSubtitleStreamIndex($scope, (<SetIndexRequest>data.options).index);
     }
 
     // VolumeUp, VolumeDown and ToggleMute commands seem to be handled on the sender in the current implementation.
@@ -147,7 +155,7 @@ export abstract class CommandHandler {
     }
 
     static SeekHandler(data: DataMessage): void {
-        seek(data.options.position * 10000000);
+        seek((<SeekRequest>data.options).position * 10000000);
     }
 
     static MuteHandler(): void {
@@ -180,7 +188,7 @@ export abstract class CommandHandler {
     }
 
     static SetRepeatModeHandler(data: DataMessage): void {
-        window.repeatMode = data.options.RepeatMode;
+        window.repeatMode = (<SetRepeatModeRequest>data.options).RepeatMode;
         window.reportEventType = 'repeatmodechange';
     }
 
@@ -191,7 +199,7 @@ export abstract class CommandHandler {
     // We should avoid using a defaulthandler that has a purpose other than informing the dev/user
     // Currently all unhandled commands will be treated as play commands.
     static defaultHandler(data: DataMessage): void {
-        translateItems(data, data.options, data.options.items, 'play');
+        translateItems(data, <PlayRequest>data.options, 'play');
     }
 
     static processMessage(data: DataMessage, command: string): void {

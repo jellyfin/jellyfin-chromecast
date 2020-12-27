@@ -14,6 +14,46 @@ export interface Dictionary<T> {
     [Key: string]: T;
 }
 
+// From commandHandler
+export interface PlayRequest {
+    items: BaseItemDto[];
+    startPositionTicks: number | undefined;
+    mediaSourceId: string | undefined;
+    audioStreamIndex: number | undefined;
+    subtitleStreamIndex: number | undefined;
+    liveStreamId: string | undefined;
+}
+
+export interface DisplayRequest {
+    ItemId: string;
+}
+
+export interface SetIndexRequest {
+    index: number;
+}
+
+export interface SetRepeatModeRequest {
+    RepeatMode: RepeatMode;
+}
+export interface SeekRequest {
+    position: number; // seconds
+}
+
+export interface DataMessage {
+    options:
+        | PlayRequest
+        | DisplayRequest
+        | SetIndexRequest
+        | SetRepeatModeRequest
+        | SeekRequest;
+    command: string;
+}
+
+interface SupportedCommands {
+    [command: string]: (data: DataMessage) => void;
+}
+// /From commandHandler
+
 declare global {
     export const PRODUCTION: boolean;
     export const RECEIVERVERSION: string;

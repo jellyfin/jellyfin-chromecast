@@ -32,7 +32,7 @@ import { playbackManager } from './playbackManager';
 import { JellyfinApi } from './jellyfinApi';
 
 import { BaseItemDto } from '../api/generated/models/base-item-dto';
-import { GlobalScope } from '../types/global';
+import { GlobalScope, PlayRequest } from '../types/global';
 
 window.castReceiverContext = cast.framework.CastReceiverContext.getInstance();
 window.mediaManager = window.castReceiverContext.getPlayerManager();
@@ -479,11 +479,13 @@ window.castReceiverContext.addCustomMessageListener(
 
 export function translateItems(
     data: any,
-    options: any,
-    items: Array<BaseItemDto>,
+    options: PlayRequest,
     method: string
 ) {
-    const callback = function (result: any) {
+    const playNow = method != 'PlayNext' && method != 'PlayLast';
+    translateRequestedItems(data.userId, options.items, playNow).then(function (
+        result
+    ) {
         options.items = result.Items;
 
         if (method == 'PlayNext' || method == 'PlayLast') {
@@ -493,10 +495,7 @@ export function translateItems(
         } else {
             playbackMgr.playFromOptions(data.options);
         }
-    };
-
-    const smartTranslate = method != 'PlayNext' && method != 'PlayLast';
-    translateRequestedItems(data.userId, items, smartTranslate).then(callback);
+    });
 }
 
 export function instantMix(data: any, options: any, item: BaseItemDto) {
