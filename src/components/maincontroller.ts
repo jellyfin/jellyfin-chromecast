@@ -561,7 +561,7 @@ export function getMaxBitrate(): Promise<number> {
                 lastBitrateDetect = new Date().getTime();
                 detectedBitrate = bitrate;
 
-                resolve(detectedBitrate);
+                resolve(Math.min(detectedBitrate, getMaxBitrateSupport()));
             },
             () => {
                 console.log(
