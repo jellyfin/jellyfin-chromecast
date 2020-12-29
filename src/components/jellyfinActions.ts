@@ -473,8 +473,8 @@ export function getLiveStream(
  *
  * FYI this API has a 10MB limit.
  *
- * @param byteSize number of bytes to request
- * @returns the bitrate in bits/s
+ * @param {number} byteSize number of bytes to request
+ * @returns {Promise<number>} Promise for the bitrate in bits/s
  */
 export function getDownloadSpeed(byteSize: number): Promise<number> {
     const path = 'Playback/BitrateTest?size=' + byteSize;
@@ -485,11 +485,8 @@ export function getDownloadSpeed(byteSize: number): Promise<number> {
         type: 'GET',
         timeout: 5000
     })
-        .then(function (response) {
-            // Need to wait for the whole response before calculating speed
-            return response.blob();
-        })
-        .then(function () {
+        .then((response: Response) => response.blob())
+        .then((): number => {
             const responseTimeSeconds = (new Date().getTime() - now) / 1000;
             const bytesPerSecond = byteSize / responseTimeSeconds;
             const bitrate = Math.round(bytesPerSecond * 8);
@@ -500,22 +497,27 @@ export function getDownloadSpeed(byteSize: number): Promise<number> {
 
 /**
  * Function to detect the bitrate.
- * It first tries 1MB and if bitrate is above 1Mbit/s it tries again with 2.4MB.
+ * It starts at 500kB and doubles it every time it takes under 2s, for max 10MB.
+ * This should get an accurate bitrate relatively fast on any connection
  *
- * @returns bitrate in bits/s
+ * @param {number} numBytes Number of bytes to start with, default 500k
+ * @returns {Promise<number>} bitrate in bits/s
  */
-export function detectBitrate(): Promise<number> {
-    // First try a small amount so that we don't hang up their mobile connection
-    return getDownloadSpeed(1000000).then(function (bitrate) {
-        if (bitrate < 1000000) {
-            return Math.round(bitrate * 0.8);
-        } else {
-            // If that produced a fairly high speed, try again with a larger size to get a more accurate result
-            return getDownloadSpeed(2400000).then(function (bitrate) {
-                return Math.round(bitrate * 0.8);
-            });
-        }
-    });
+export async function detectBitrate(numBytes = 500000): Promise<number> {
+    // Jellyfin has a 10MB limit on the test size
+    const byteLimit = 10000000;
+
+    if (numBytes > byteLimit) numBytes = byteLimit;
+
+    const bitrate = await getDownloadSpeed(numBytes);
+
+    if (bitrate * (2 / 8.0) < numBytes || numBytes >= byteLimit) {
+        // took > 2s, or numBytes hit the limit
+        return Math.round(bitrate * 0.8);
+    } else {
+        // If that produced a fairly high speed, try again with a larger size to get a more accurate result
+        return await detectBitrate(numBytes * 2);
+    }
 }
 
 /**
