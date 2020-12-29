@@ -228,7 +228,6 @@ export function resetPlaybackScope($scope: GlobalScope): void {
 
     $scope.playMethod = '';
     $scope.canSeek = false;
-    $scope.canClientSeek = false;
     $scope.isChangingStream = false;
     $scope.playNextItem = true;
 
@@ -809,23 +808,6 @@ export async function translateRequestedItems(
     return {
         Items: items
     };
-}
-
-/**
- * Take all properties of source and copy them over to target
- *
- * TODO can we remove this crap
- *
- * @param target - object that gets populated with entries
- * @param source - object that the entries are copied from
- * @returns reference to target object
- */
-export function extend(target: any, source: any): any {
-    for (const i in source) {
-        target[i] = source[i];
-    }
-
-    return target;
 }
 
 /**

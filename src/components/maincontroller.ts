@@ -8,7 +8,6 @@ import {
     getShuffleItems,
     getInstantMixItems,
     translateRequestedItems,
-    extend,
     broadcastToMessageBus,
     broadcastConnectionErrorMessage
 } from '../helpers';
@@ -591,8 +590,15 @@ export async function shuffle(
 }
 
 /**
- * @param item
- * @param options
+ * This function fetches the full information for an item before playing it.
+ * The provided item is not complete.
+ *
+ * Old behavior: The original properties would be copied over to the fetched one,
+ * but just the fetched item should be fine
+ *
+ * @param item - Item to look up
+ * @param options - Extra information about how it should be played back.
+ * @returns Promise waiting for the item to be loaded for playback
  */
 export async function onStopPlayerBeforePlaybackDone(
     item: BaseItemDto,
@@ -603,8 +609,6 @@ export async function onStopPlayerBeforePlaybackDone(
         type: 'GET'
     });
 
-    // Attach the custom properties we created like userId, serverAddress, itemId, etc
-    extend(data, item);
     playbackMgr.playItemInternal(data, options);
     broadcastConnectionErrorMessage();
 }
@@ -807,6 +811,7 @@ export function createMediaInformation(
 
     mediaInfo.contentId = streamInfo.url;
     mediaInfo.contentType = streamInfo.contentType;
+    // TODO make a type for this
     mediaInfo.customData = {
         audioStreamIndex: streamInfo.audioStreamIndex,
         canClientSeek: streamInfo.canClientSeek,

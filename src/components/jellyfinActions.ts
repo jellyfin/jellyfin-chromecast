@@ -1,7 +1,6 @@
 import {
     getSenderReportingData,
     resetPlaybackScope,
-    extend,
     broadcastToMessageBus
 } from '../helpers';
 
@@ -199,12 +198,22 @@ export function pingTranscoder(
  */
 export function load(
     $scope: GlobalScope,
-    customData: PlaybackProgressInfo,
+    customData: any,
     serverItem: BaseItemDto
 ): void {
     resetPlaybackScope($scope);
 
-    extend($scope, customData);
+    // These are set up in maincontroller.createMediaInformation
+    $scope.playSessionId = customData.playSessionId;
+    $scope.audioStreamIndex = customData.audioStreamIndex;
+    $scope.subtitleStreamIndex = customData.subtitleStreamIndex;
+    $scope.startPositionTicks = customData.startPositionTicks;
+    $scope.canSeek = customData.canSeek;
+    $scope.itemId = customData.itemId;
+    $scope.liveStreamId = customData.liveStreamId;
+    $scope.mediaSourceId = customData.mediaSourceId;
+    $scope.playMethod = customData.playMethod;
+    $scope.runtimeTicks = customData.runtimeTicks;
 
     $scope.item = serverItem;
 
