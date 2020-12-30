@@ -1,21 +1,4 @@
-import {
-    translateItems,
-    shuffle,
-    instantMix,
-    setAudioStreamIndex,
-    setSubtitleStreamIndex,
-    seek
-} from './maincontroller';
-
 import { getReportingParams } from '../helpers';
-
-import {
-    displayItem,
-    reportPlaybackProgress,
-    startBackdropInterval
-} from './jellyfinActions';
-
-import { playbackManager } from './playbackManager';
 import {
     DataMessage,
     DisplayRequest,
@@ -25,6 +8,22 @@ import {
     SetRepeatModeRequest,
     SupportedCommands
 } from '../types/global';
+import {
+    translateItems,
+    shuffle,
+    instantMix,
+    setAudioStreamIndex,
+    setSubtitleStreamIndex,
+    seek
+} from './maincontroller';
+
+import {
+    displayItem,
+    reportPlaybackProgress,
+    startBackdropInterval
+} from './jellyfinActions';
+
+import { playbackManager } from './playbackManager';
 
 export abstract class CommandHandler {
     private static playerManager: cast.framework.PlayerManager;

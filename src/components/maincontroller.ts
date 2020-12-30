@@ -1,14 +1,4 @@
 import {
-    reportPlaybackProgress,
-    reportPlaybackStopped,
-    play,
-    startBackdropInterval,
-    getPlaybackInfo,
-    stopActiveEncodings,
-    detectBitrate
-} from './jellyfinActions';
-import { getDeviceProfile } from './deviceprofileBuilder';
-import {
     getCurrentPositionTicks,
     getReportingParams,
     resetPlaybackScope,
@@ -23,18 +13,25 @@ import {
     broadcastConnectionErrorMessage,
     cleanName
 } from '../helpers';
-
+import {
+    reportPlaybackProgress,
+    reportPlaybackStopped,
+    play,
+    startBackdropInterval,
+    getPlaybackInfo,
+    stopActiveEncodings,
+    detectBitrate
+} from './jellyfinActions';
+import { getDeviceProfile } from './deviceprofileBuilder';
+import { JellyfinApi } from './jellyfinApi';
+import { playbackManager } from './playbackManager';
+import { CommandHandler } from './commandHandler';
 import { getMaxBitrateSupport } from './codecSupportHelper';
 
-import { CommandHandler } from './commandHandler';
-import { playbackManager } from './playbackManager';
-
-import { JellyfinApi } from './jellyfinApi';
-
-import { BaseItemDtoQueryResult } from '../api/generated/models/base-item-dto-query-result';
-import { BaseItemDto } from '../api/generated/models/base-item-dto';
-import { MediaSourceInfo } from '../api/generated/models/media-source-info';
-import { GlobalScope, PlayRequest } from '../types/global';
+import { BaseItemDtoQueryResult } from '~/api/generated/models/base-item-dto-query-result';
+import { BaseItemDto } from '~/api/generated/models/base-item-dto';
+import { MediaSourceInfo } from '~/api/generated/models/media-source-info';
+import { GlobalScope, PlayRequest } from '~/types/global';
 
 window.castReceiverContext = cast.framework.CastReceiverContext.getInstance();
 window.mediaManager = window.castReceiverContext.getPlayerManager();

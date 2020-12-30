@@ -7,17 +7,7 @@ import {
     createStreamInfo
 } from '../helpers';
 
-import {
-    onStopPlayerBeforePlaybackDone,
-    getMaxBitrate,
-    getOptimalMediaSource,
-    showPlaybackInfoErrorMessage,
-    checkDirectPlay,
-    createMediaInformation
-} from './maincontroller';
-
-import { getDeviceProfile } from './deviceprofileBuilder';
-
+import { JellyfinApi } from './jellyfinApi';
 import {
     getPlaybackInfo,
     getLiveStream,
@@ -28,9 +18,18 @@ import {
     reportPlaybackStopped,
     startBackdropInterval
 } from './jellyfinActions';
+import { getDeviceProfile } from './deviceprofileBuilder';
 
-import { JellyfinApi } from './jellyfinApi';
-import { BaseItemDto } from '../api/generated/models/base-item-dto';
+import {
+    onStopPlayerBeforePlaybackDone,
+    getMaxBitrate,
+    getOptimalMediaSource,
+    showPlaybackInfoErrorMessage,
+    checkDirectPlay,
+    createMediaInformation
+} from './maincontroller';
+
+import { BaseItemDto } from '~/api/generated/models/base-item-dto';
 
 export class playbackManager {
     private playerManager: cast.framework.PlayerManager;

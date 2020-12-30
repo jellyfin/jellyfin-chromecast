@@ -1,5 +1,5 @@
 import { ajax } from './fetchhelper';
-import { Dictionary } from '../types/global';
+import { Dictionary } from '~/types/global';
 
 export abstract class JellyfinApi {
     // userId that we are connecting as currently
