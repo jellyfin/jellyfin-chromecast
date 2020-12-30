@@ -359,7 +359,8 @@ function getSubtitleProfiles(): Array<SubtitleProfile> {
 
 /**
  * Creates a device profile containing supported codecs for the active Cast device.
- * @param Profile options
+ *
+ * @param options Profile options
  * @returns Device profile.
  */
 export function getDeviceProfile(options: ProfileOptions): DeviceProfile {

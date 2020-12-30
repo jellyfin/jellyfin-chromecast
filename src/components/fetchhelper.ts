@@ -1,4 +1,10 @@
-export function getFetchPromise(request: any): Promise<Response> {
+/**
+ * Function to send a request, with or without the timeout option
+ *
+ * @param request custom request object, mostly modeled after RequestInit.
+ * @returns response promise
+ */
+function getFetchPromise(request: any): Promise<Response> {
     const headers = request.headers || {};
     if (request.dataType === 'json') headers.accept = 'application/json';
     const fetchRequest: RequestInit = {
@@ -30,7 +36,15 @@ export function getFetchPromise(request: any): Promise<Response> {
         : fetch(url, fetchRequest);
 }
 
-export function fetchWithTimeout(
+/**
+ * Timeout wrapper for fetch()
+ *
+ * @param url url to get
+ * @param options RequestInit with additional options
+ * @param timeoutMs request timeout in ms
+ * @returns response promise
+ */
+function fetchWithTimeout(
     url: string,
     options: RequestInit,
     timeoutMs: number
@@ -59,7 +73,13 @@ export function fetchWithTimeout(
     });
 }
 
-export function paramsToString(params: Record<string, string>): string {
+/**
+ * Urlencode a dictionary of strings for use in POST form or GET requests
+ *
+ * @param params Dictionary to encode
+ * @returns string with encoded values
+ */
+function paramsToString(params: Record<string, string>): string {
     const values = [];
     for (const key in params) {
         const value = params[key];
@@ -73,6 +93,12 @@ export function paramsToString(params: Record<string, string>): string {
     return values.join('&');
 }
 
+/**
+ * Make an ajax request
+ *
+ * @param request RequestInit-like structure but with url/type/timeout parameters as well
+ * @returns response promise, may be automatically unpacked based on request datatype
+ */
 export function ajax(request: any): Promise<any> {
     if (!request) throw new Error('Request cannot be null');
     request.headers = request.headers || {};
