@@ -15,13 +15,15 @@
         "axios": "^0.21.0"
     },
     "scripts": {
-        "prepare": "webpack --config webpack.config.js --mode=production",
+        "prepare": "yarn build:production",
+        "build": "yarn build:production",
         "build:production": "webpack --config webpack.config.js --mode=production",
         "build:development": "webpack --config webpack.config.js --mode=development",
         "prettier": "prettier --check .",
-        "lint:code": "eslint --ext .ts --ext .js .",
+        "lint": "yarn lint:code && yarn lint:css",
+        "lint:code": "eslint --ext .ts,.js .",
         "lint:css": "stylelint ./src/css/*.css",
-        "pretest": "eslint --ext .ts --ext .js .",
+        "pretest": "yarn lint",
         "serve": "webpack serve --config webpack.config.js --mode=development",
         "test": "jest --passWithNoTests"
     },
