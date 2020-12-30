@@ -33,6 +33,7 @@ import { JellyfinApi } from './jellyfinApi';
 
 import { BaseItemDtoQueryResult } from '../api/generated/models/base-item-dto-query-result';
 import { BaseItemDto } from '../api/generated/models/base-item-dto';
+import { MediaSourceInfo } from '../api/generated/models/media-source-info';
 import { GlobalScope, PlayRequest } from '../types/global';
 
 window.castReceiverContext = cast.framework.CastReceiverContext.getInstance();
@@ -611,9 +612,8 @@ export function showPlaybackInfoErrorMessage(error: string): void {
 
 export function getOptimalMediaSource(versions: Array<any>): any {
     let optimalVersion = versions.filter(function (v) {
-        v.enableDirectPlay = supportsDirectPlay(v);
-
-        return v.enableDirectPlay;
+        checkDirectPlay(v);
+        return v.SupportsDirectPlay;
     })[0];
 
     if (!optimalVersion) {
@@ -630,18 +630,17 @@ export function getOptimalMediaSource(versions: Array<any>): any {
     );
 }
 
-// TODO wtf and why do we need this, direct storage access but how
-export function supportsDirectPlay(mediaSource: any): boolean {
+// Disable direct play on non-http sources
+export function checkDirectPlay(mediaSource: MediaSourceInfo): void {
     if (
         mediaSource.SupportsDirectPlay &&
         mediaSource.Protocol == 'Http' &&
-        !mediaSource.RequiredHttpHeaders.length
+        (!mediaSource.RequiredHttpHeaders ||
+            !mediaSource.RequiredHttpHeaders.length)
     ) {
-        // TODO: Need to verify the host is going to be reachable
-        return true;
+        return;
     }
-
-    return false;
+    mediaSource.SupportsDirectPlay = false;
 }
 
 export function setTextTrack(index: number | null): void {

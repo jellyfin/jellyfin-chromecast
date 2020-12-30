@@ -12,7 +12,7 @@ import {
     getMaxBitrate,
     getOptimalMediaSource,
     showPlaybackInfoErrorMessage,
-    supportsDirectPlay,
+    checkDirectPlay,
     createMediaInformation
 } from './maincontroller';
 
@@ -166,10 +166,10 @@ export class playbackManager {
                 null,
                 null
             );
-            openLiveStreamResult.MediaSource.enableDirectPlay = supportsDirectPlay(
-                openLiveStreamResult.MediaSource
-            );
-            itemToPlay = openLiveStreamResult.MediaSource;
+            if (openLiveStreamResult.MediaSource) {
+                checkDirectPlay(openLiveStreamResult.MediaSource);
+                itemToPlay = openLiveStreamResult.MediaSource;
+            }
         }
 
         this.playMediaSource(

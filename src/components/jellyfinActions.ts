@@ -26,6 +26,7 @@ import { BaseItemDto } from '../api/generated/models/base-item-dto';
 import { DeviceProfile } from '../api/generated/models/device-profile';
 import { MediaSourceInfo } from '../api/generated/models/media-source-info';
 import { PlayRequest } from '../api/generated/models/play-request';
+import { LiveStreamResponse } from '../api/generated/models/live-stream-response';
 import { JellyfinApi } from './jellyfinApi';
 
 interface PlayRequestQuery extends PlayRequest {
@@ -264,9 +265,7 @@ export function displayItem(itemId: string): void {
     JellyfinApi.authAjaxUser('Items/' + itemId, {
         dataType: 'json',
         type: 'GET'
-    }).then(function (item: BaseItemDto) {
-        showItem(item);
-    });
+    }).then((item: BaseItemDto) => showItem(item));
 }
 
 export function load(
@@ -361,7 +360,7 @@ export function getLiveStream(
     mediaSource: MediaSourceInfo,
     audioStreamIndex: number | null,
     subtitleStreamIndex: number | null
-): Promise<any> {
+): Promise<LiveStreamResponse> {
     const postData = {
         DeviceProfile: deviceProfile,
         OpenToken: mediaSource.OpenToken
