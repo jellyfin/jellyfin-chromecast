@@ -88,7 +88,7 @@ export function reportPlaybackProgress(
     reportingParams: PlaybackProgressInfo,
     reportToServer = true,
     broadcastEventName = 'playbackprogress'
-): Promise<any> {
+): Promise<void> {
     broadcastToMessageBus({
         type: broadcastEventName,
         data: getSenderReportingData($scope, reportingParams)

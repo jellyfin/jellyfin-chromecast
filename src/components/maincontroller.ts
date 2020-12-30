@@ -279,7 +279,7 @@ export function processMessage(data: any): void {
 export function reportEvent(
     name: string,
     reportToServer: boolean
-): Promise<any> {
+): Promise<void> {
     return reportPlaybackProgress(
         $scope,
         getReportingParams($scope),
