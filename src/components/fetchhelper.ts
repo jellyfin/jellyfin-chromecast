@@ -1,7 +1,7 @@
-export function getFetchPromise(request: any): Promise<any> {
+export function getFetchPromise(request: any): Promise<Response> {
     const headers = request.headers || {};
-    'json' === request.dataType && (headers.accept = 'application/json');
-    const fetchRequest: any = {
+    if (request.dataType === 'json') headers.accept = 'application/json';
+    const fetchRequest: RequestInit = {
         headers: headers,
         method: request.type,
         credentials: 'same-origin'
@@ -32,9 +32,9 @@ export function getFetchPromise(request: any): Promise<any> {
 
 export function fetchWithTimeout(
     url: string,
-    options: any,
+    options: RequestInit,
     timeoutMs: number
-): Promise<any> {
+): Promise<Response> {
     console.log('fetchWithTimeout: timeoutMs: ' + timeoutMs + ', url: ' + url);
     return new Promise(function (resolve, reject) {
         const timeout = setTimeout(reject, timeoutMs);
@@ -59,7 +59,7 @@ export function fetchWithTimeout(
     });
 }
 
-export function paramsToString(params: any): string {
+export function paramsToString(params: Record<string, string>): string {
     const values = [];
     for (const key in params) {
         const value = params[key];
@@ -79,7 +79,7 @@ export function ajax(request: any): Promise<any> {
     console.log('requesting url: ' + request.url);
 
     return getFetchPromise(request).then(
-        function (response: any) {
+        (response: Response) => {
             console.log(
                 'response status: ' + response.status + ', url: ' + request.url
             );
@@ -87,7 +87,7 @@ export function ajax(request: any): Promise<any> {
                 return Promise.reject(response);
             } else if (
                 request.dataType === 'json' ||
-                request.headers.accept === 'application/json'
+                request.headers?.accept === 'application/json'
             ) {
                 return response.json();
             } else if (
@@ -107,7 +107,3 @@ export function ajax(request: any): Promise<any> {
         }
     );
 }
-
-export default {
-    ajax
-};
