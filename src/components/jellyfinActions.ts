@@ -28,6 +28,7 @@ import { MediaSourceInfo } from '../api/generated/models/media-source-info';
 import { PlayRequest } from '../api/generated/models/play-request';
 import { LiveStreamResponse } from '../api/generated/models/live-stream-response';
 import { JellyfinApi } from './jellyfinApi';
+import { BaseItemDtoQueryResult } from '~/api/generated/models/base-item-dto-query-result';
 
 interface PlayRequestQuery extends PlayRequest {
     UserId?: string;
@@ -241,16 +242,12 @@ function setRandomUserBackdrop(): Promise<void> {
             // not everyone will want to see adult backdrops rotating on their TV.
             MaxOfficialRating: 'PG-13'
         }
-    }).then(function (result: any) {
-        const item = result.Items[0];
-
-        let backdropUrl = '';
-
-        if (item) {
-            backdropUrl = getBackdropUrl(item) || '';
+    }).then(function (result: BaseItemDtoQueryResult) {
+        let url = '';
+        if (result.Items && result.Items[0]) {
+            url = getBackdropUrl(result.Items[0]) || '';
         }
-
-        setWaitingBackdrop(backdropUrl);
+        setWaitingBackdrop(url);
     });
 }
 
