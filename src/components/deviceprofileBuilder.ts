@@ -195,7 +195,7 @@ function getCodecProfiles(): Array<CodecProfile> {
 
     CodecProfiles.push(aacConditions);
 
-    const maxWidth: number = getMaxWidthSupport(currentDeviceId);
+    const maxWidth: number = getMaxWidthSupport();
     const h26xLevel: number = getH26xLevelSupport(currentDeviceId);
     const h26xProfile: string = getH26xProfileSupport(currentDeviceId);
 
