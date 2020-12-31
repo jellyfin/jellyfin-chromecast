@@ -10,8 +10,7 @@ import {
     translateRequestedItems,
     extend,
     broadcastToMessageBus,
-    broadcastConnectionErrorMessage,
-    cleanName
+    broadcastConnectionErrorMessage
 } from '../helpers';
 import {
     reportPlaybackProgress,
@@ -261,36 +260,28 @@ export function processMessage(data: any): void {
         return;
     }
 
+    data.options = data.options || {};
+
     // Items will have properties - Id, Name, Type, MediaType, IsFolder
 
     JellyfinApi.setServerInfo(
         data.userId,
         data.accessToken,
-        data.serverAddress
+        data.serverAddress,
+        data.receiverName || ''
     );
 
     if (data.subtitleAppearance) {
         window.subtitleAppearance = data.subtitleAppearance;
     }
 
+    if (data.maxBitrate) {
+        window.MaxBitrate = data.maxBitrate;
+    }
+
     // Report device capabilities
     if (!hasReportedCapabilities) {
         reportDeviceCapabilities();
-    }
-
-    data.options = data.options || {};
-
-    const cleanReceiverName = cleanName(data.receiverName || '');
-
-    window.deviceInfo.deviceName =
-        cleanReceiverName || window.deviceInfo.deviceName;
-    // deviceId just needs to be unique-ish
-    window.deviceInfo.deviceId = cleanReceiverName
-        ? btoa(cleanReceiverName)
-        : window.deviceInfo.deviceId;
-
-    if (data.maxBitrate) {
-        window.MaxBitrate = data.maxBitrate;
     }
 
     CommandHandler.processMessage(data, data.command);
