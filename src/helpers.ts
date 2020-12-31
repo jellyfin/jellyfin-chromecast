@@ -5,6 +5,7 @@ import { PlaybackProgressInfo } from './api/generated/models/playback-progress-i
 import { MediaSourceInfo } from './api/generated/models/media-source-info';
 import { BaseItemDto } from './api/generated/models/base-item-dto';
 import { BaseItemPerson } from './api/generated/models/base-item-person';
+import { UserDto } from './api/generated/models/user-dto';
 import { GlobalScope, BusMessage, ItemIndex, ItemQuery } from './types/global';
 
 /**
@@ -741,11 +742,19 @@ export function getItemsForPlayback(
     }
 }
 
+/**
+ * Get episodes for a show given by seriesId
+ *
+ * @param userId userid to use
+ * @param seriesId series to look up
+ * @param query query parameters to build on
+ * @returns episode items
+ */
 export function getEpisodesForPlayback(
     userId: string,
     seriesId: string,
-    query: ItemQuery
-): Promise<any> {
+    query: ItemQuery = {}
+): Promise<BaseItemDtoQueryResult> {
     query.UserId = userId;
     query.Fields = requiredItemFields;
     query.ExcludeLocationTypes = 'Virtual';
@@ -757,6 +766,13 @@ export function getEpisodesForPlayback(
     });
 }
 
+/**
+ * Get intros for a given item. This item should be a video
+ * type for this to make sense
+ *
+ * @param firstItem item to get intros for
+ * @returns intro items
+ */
 export function getIntros(
     firstItem: BaseItemDto
 ): Promise<BaseItemDtoQueryResult> {
@@ -766,14 +782,29 @@ export function getIntros(
     });
 }
 
-export function getUser(): Promise<any> {
+/**
+ * Get user object for the current user
+ *
+ * @returns user object
+ */
+export function getUser(): Promise<UserDto> {
     return JellyfinApi.authAjaxUser('', {
         dataType: 'json',
         type: 'GET'
     });
 }
 
-export function translateRequestedItems(
+/**
+ * Process a list of items for playback
+ * by resolving things like folders to playable items.
+ *
+ *
+ * @param userId userId to use
+ * @param items items to resolve
+ * @param smart If enabled it will try to find the next episode given the
+ *              current one, if the connected user has enabled that in their settings
+ */
+export async function translateRequestedItems(
     userId: string,
     items: Array<BaseItemDto>,
     smart = false
@@ -781,11 +812,11 @@ export function translateRequestedItems(
     const firstItem = items[0];
 
     if (firstItem.Type == 'Playlist') {
-        return getItemsForPlayback(userId, {
+        return await getItemsForPlayback(userId, {
             ParentId: firstItem.Id
         });
     } else if (firstItem.Type == 'MusicArtist') {
-        return getItemsForPlayback(userId, {
+        return await getItemsForPlayback(userId, {
             ArtistIds: firstItem.Id,
             Filters: 'IsNotFolder',
             Recursive: true,
@@ -793,7 +824,7 @@ export function translateRequestedItems(
             MediaTypes: 'Audio'
         });
     } else if (firstItem.Type == 'MusicGenre') {
-        return getItemsForPlayback(userId, {
+        return await getItemsForPlayback(userId, {
             Genres: firstItem.Name ?? undefined,
             Filters: 'IsNotFolder',
             Recursive: true,
@@ -801,7 +832,7 @@ export function translateRequestedItems(
             MediaTypes: 'Audio'
         });
     } else if (firstItem.IsFolder) {
-        return getItemsForPlayback(userId, {
+        return await getItemsForPlayback(userId, {
             ParentId: firstItem.Id,
             Filters: 'IsNotFolder',
             Recursive: true,
@@ -809,53 +840,59 @@ export function translateRequestedItems(
             MediaTypes: 'Audio,Video'
         });
     } else if (smart && firstItem.Type == 'Episode' && items.length == 1) {
-        return getUser().then(function (user) {
-            if (!user.Configuration.EnableNextEpisodeAutoPlay) {
-                return {
-                    Items: items
-                };
+        const user = await getUser();
+
+        if (!user.Configuration?.EnableNextEpisodeAutoPlay) {
+            return {
+                Items: items
+            };
+        }
+
+        const result = await getItemsForPlayback(userId, {
+            Ids: firstItem.Id
+        });
+
+        if (!result.Items || result.Items.length < 1) return result;
+
+        const episode = result.Items[0];
+
+        if (!episode.SeriesId) {
+            return result;
+        }
+
+        const episodesResult = await getEpisodesForPlayback(
+            userId,
+            episode.SeriesId,
+            {
+                IsVirtualUnaired: false,
+                IsMissing: false,
+                UserId: userId
+            }
+        );
+
+        let foundItem = false;
+        episodesResult.Items = episodesResult.Items?.filter(function (
+            e: BaseItemDto
+        ) {
+            if (foundItem) {
+                return true;
+            }
+            if (e.Id == episode.Id) {
+                foundItem = true;
+                return true;
             }
 
-            return getItemsForPlayback(userId, {
-                Ids: firstItem.Id
-            }).then(function (result) {
-                if (!result.Items || result.Items.length < 1) return result;
-                const episode = result.Items[0];
-
-                if (!episode.SeriesId) {
-                    return result;
-                }
-
-                return getEpisodesForPlayback(userId, episode.SeriesId, {
-                    IsVirtualUnaired: false,
-                    IsMissing: false,
-                    UserId: userId
-                }).then(function (episodesResult) {
-                    let foundItem = false;
-                    episodesResult.Items = episodesResult.Items.filter(
-                        function (e: BaseItemDto) {
-                            if (foundItem) {
-                                return true;
-                            }
-                            if (e.Id == episode.Id) {
-                                foundItem = true;
-                                return true;
-                            }
-
-                            return false;
-                        }
-                    );
-                    episodesResult.TotalRecordCount =
-                        episodesResult.Items.length;
-                    return episodesResult;
-                });
-            });
+            return false;
         });
+
+        episodesResult.TotalRecordCount = episodesResult.Items?.length || 0;
+
+        return episodesResult;
     }
 
-    return Promise.resolve({
+    return {
         Items: items
-    });
+    };
 }
 
 export function getMiscInfoHtml(item: BaseItemDto): string {
