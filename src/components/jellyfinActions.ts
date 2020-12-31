@@ -126,14 +126,17 @@ export function reportPlaybackStopped(
     });
 }
 
-/* This keeps the session alive when playback is paused by refreshing the server.
+/**
+ * This keeps the session alive when playback is paused by refreshing the server.
  * /Sessions/Playing/Progress does work but may not be called during pause.
  * The web client calls that during pause, but this endpoint gets the job done
  * as well.
- * */
+ *
+ * @param reportingParams progress information to carry
+ */
 export function pingTranscoder(
     reportingParams: PlaybackProgressInfo
-): Promise<any> {
+): Promise<void> {
     const now = new Date().getTime();
 
     // 10s is the timeout value, so use half that to report often enough

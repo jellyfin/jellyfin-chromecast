@@ -7,6 +7,12 @@ import { BaseItemDto } from './api/generated/models/base-item-dto';
 import { BaseItemPerson } from './api/generated/models/base-item-person';
 import { GlobalScope, BusMessage, ItemIndex, ItemQuery } from './types/global';
 
+/**
+ * Get current playback position in ticks, adjusted for server seeking
+ *
+ * @param $scope global context variable
+ * @returns position in ticks
+ */
 export function getCurrentPositionTicks($scope: GlobalScope): number {
     let positionTicks = window.mediaManager.getCurrentTimeSec() * 10000000;
     const mediaInformation = window.mediaManager.getMediaInformation();
@@ -17,6 +23,12 @@ export function getCurrentPositionTicks($scope: GlobalScope): number {
     return positionTicks;
 }
 
+/**
+ * Get parameters used for playback reporting
+ *
+ * @param $scope global context variable
+ * @returns progress information for use with the reporting APIs
+ */
 export function getReportingParams($scope: GlobalScope): PlaybackProgressInfo {
     /* Math.round() calls:
      * on 10.7, any floating point will give an API error,
@@ -42,6 +54,11 @@ export function getReportingParams($scope: GlobalScope): PlaybackProgressInfo {
     };
 }
 
+/**
+ * Get information about the next item to play from window.playlist
+ *
+ * @returns ItemIndex including item and index, or null to end playback
+ */
 export function getNextPlaybackItemInfo(): ItemIndex | null {
     const playlist = window.playlist;
 
@@ -81,6 +98,15 @@ export function getNextPlaybackItemInfo(): ItemIndex | null {
     return null;
 }
 
+/**
+ * This is used in playback reporting to find out information
+ * about the item that is currently playing. This is sent over the cast protocol over to
+ * the connected client (or clients?).
+ *
+ * @param $scope global context
+ * @param reportingData object full of random information
+ * @returns lots of data for the connected client
+ */
 export function getSenderReportingData(
     $scope: GlobalScope,
     reportingData: PlaybackProgressInfo
@@ -175,6 +201,11 @@ export function getSenderReportingData(
     return state;
 }
 
+/**
+ * Attempt to clean the receiver state.
+ *
+ * @param $scope global context variable
+ */
 export function resetPlaybackScope($scope: GlobalScope): void {
     setAppStatus('waiting');
 
@@ -204,55 +235,47 @@ export function resetPlaybackScope($scope: GlobalScope): void {
     setDetailImage('');
 }
 
+/**
+ * Create CAF-native metadata for a given item
+ *
+ * @param item item to look up
+ * @returns one of the metadata classes in cast.framework.messages.*Metadata
+ */
 export function getMetadata(item: BaseItemDto): any {
     let metadata: any;
     let posterUrl = '';
 
-    if (item.SeriesPrimaryImageTag) {
+    if (item.SeriesPrimaryImageTag)
         posterUrl = JellyfinApi.createUrl(
-            'Items/' +
-                item.SeriesId +
-                '/Images/Primary?tag=' +
-                item.SeriesPrimaryImageTag
+            `Items/${item.SeriesId}/Images/Primary?tag=${item.SeriesPrimaryImageTag}`
         );
-    } else if (item.AlbumPrimaryImageTag) {
+    else if (item.AlbumPrimaryImageTag)
         posterUrl = JellyfinApi.createUrl(
-            'Items/' +
-                item.AlbumId +
-                '/Images/Primary?tag=' +
-                item.AlbumPrimaryImageTag
+            `Items/${item.AlbumId}/Images/Primary?tag=${item.AlbumPrimaryImageTag}`
         );
-    } else if (item.ImageTags?.Primary) {
+    else if (item.ImageTags?.Primary)
         posterUrl = JellyfinApi.createUrl(
-            'Items/' + item.Id + '/Images/Primary?tag=' + item.ImageTags.Primary
+            `Items/${item.Id}/Images/Primary?tag=${item.ImageTags.Primary}`
         );
-    }
 
     if (item.Type == 'Episode') {
         metadata = new cast.framework.messages.TvShowMediaMetadata();
         metadata.seriesTitle = item.SeriesName;
 
-        if (item.PremiereDate) {
+        if (item.PremiereDate)
             metadata.originalAirdate = parseISO8601Date(
                 item.PremiereDate
             ).toISOString();
-        }
-
-        if (item.IndexNumber != null) {
-            metadata.episode = item.IndexNumber;
-        }
-
-        if (item.ParentIndexNumber != null) {
+        if (item.IndexNumber != null) metadata.episode = item.IndexNumber;
+        if (item.ParentIndexNumber != null)
             metadata.season = item.ParentIndexNumber;
-        }
     } else if (item.Type == 'Photo') {
         metadata = new cast.framework.messages.PhotoMediaMetadata();
 
-        if (item.PremiereDate) {
+        if (item.PremiereDate)
             metadata.creationDateTime = parseISO8601Date(
                 item.PremiereDate
             ).toISOString();
-        }
         // TODO more metadata?
     } else if (item.Type == 'Audio') {
         metadata = new cast.framework.messages.MusicTrackMediaMetadata();
@@ -262,48 +285,33 @@ export function getMetadata(item: BaseItemDto): any {
         metadata.albumArtist = item.AlbumArtist;
         metadata.albumName = item.Album;
 
-        if (item.PremiereDate) {
+        if (item.PremiereDate)
             metadata.releaseDate = parseISO8601Date(
                 item.PremiereDate
             ).toISOString();
-        }
-
-        if (item.IndexNumber != null) {
-            metadata.trackNumber = item.IndexNumber;
-        }
-
-        if (item.ParentIndexNumber != null) {
+        if (item.IndexNumber != null) metadata.trackNumber = item.IndexNumber;
+        if (item.ParentIndexNumber != null)
             metadata.discNumber = item.ParentIndexNumber;
-        }
-
-        const composer = (item.People || []).filter(function (
-            p: BaseItemPerson
-        ) {
-            // previously: p.PersonType == 'Type'.. wtf?
-            return p.Type == 'Composer';
-        })[0];
-
-        if (composer) {
-            metadata.composer = composer.Name;
-        }
+        // previously: p.PersonType == 'Type'.. wtf?
+        const composer = (item.People || []).filter(
+            (p: BaseItemPerson) => p.Type == 'Composer'
+        )[0];
+        if (composer) metadata.composer = composer.Name;
     } else if (item.Type == 'Movie') {
         metadata = new cast.framework.messages.MovieMediaMetadata();
-        if (item.PremiereDate) {
+        if (item.PremiereDate)
             metadata.releaseDate = parseISO8601Date(
                 item.PremiereDate
             ).toISOString();
-        }
     } else {
         metadata = new cast.framework.messages.GenericMediaMetadata();
 
-        if (item.PremiereDate) {
+        if (item.PremiereDate)
             metadata.releaseDate = parseISO8601Date(
                 item.PremiereDate
             ).toISOString();
-        }
-        if (item.Studios && item.Studios.length) {
+        if (item.Studios && item.Studios.length)
             metadata.studio = item.Studios[0];
-        }
     }
 
     metadata.title = item.Name ?? '????';
@@ -311,6 +319,15 @@ export function getMetadata(item: BaseItemDto): any {
     return metadata;
 }
 
+/**
+ * Create the necessary information about an item
+ * needed for playback
+ *
+ * @param item Item to play
+ * @param mediaSource MediaSourceInfo for the item
+ * @param startPosition Where to seek to (possibly server seeking)
+ * @returns object with enough information to start playback
+ */
 export function createStreamInfo(
     item: BaseItemDto,
     mediaSource: MediaSourceInfo,
@@ -319,6 +336,7 @@ export function createStreamInfo(
     let mediaUrl;
     let contentType;
 
+    // server seeking
     const startPositionInSeekParam = startPosition
         ? startPosition / 10000000
         : 0;
@@ -341,11 +359,8 @@ export function createStreamInfo(
             isStatic = true;
         } else if (mediaSource.SupportsDirectStream) {
             mediaUrl = JellyfinApi.createUrl(
-                'videos/' + item.Id + '/stream.' + mediaSource.Container
+                `videos/${item.Id}/stream.${mediaSource.Container}?mediaSourceId=${mediaSource.Id}&api_key=${JellyfinApi.accessToken}&static=true${seekParam}`
             );
-            mediaUrl += '?mediaSourceId=' + mediaSource.Id;
-            mediaUrl += '&api_key=' + JellyfinApi.accessToken;
-            mediaUrl += '&static=true' + seekParam;
             isStatic = true;
             playerStartPositionTicks = startPosition || 0;
         } else {
@@ -386,11 +401,8 @@ export function createStreamInfo(
                 ).toLowerCase();
 
                 mediaUrl = JellyfinApi.createUrl(
-                    'Audio/' + item.Id + '/stream.' + outputContainer
+                    `Audio/${item.Id}/stream.${outputContainer}?mediaSourceId=${mediaSource.Id}&api_key=${JellyfinApi.accessToken}&static=true${seekParam}`
                 );
-                mediaUrl += '?mediaSourceId=' + mediaSource.Id;
-                mediaUrl += '&api_key=' + JellyfinApi.accessToken;
-                mediaUrl += '&static=true' + seekParam;
                 isStatic = true;
             } else {
                 streamContainer = mediaSource.TranscodingContainer;
@@ -461,6 +473,14 @@ export function createStreamInfo(
     return info;
 }
 
+/**
+ * Get stream by its index while making a type assertion
+ *
+ * @param streams array streams to consider
+ * @param type type of stream
+ * @param index index of stream
+ * @returns first first matching stream
+ */
 export function getStreamByIndex(
     streams: Array<any>,
     type: string,
@@ -471,79 +491,84 @@ export function getStreamByIndex(
     })[0];
 }
 
+/**
+ * Get url for backdrop image for a given item
+ *
+ * @param item item to look up
+ * @returns url to backdrop image or null
+ */
 export function getBackdropUrl(item: BaseItemDto): string | null {
-    let url: string | null = null;
-
     if (item.BackdropImageTags && item.BackdropImageTags.length) {
-        url = JellyfinApi.createUrl(
-            'Items/' +
-                item.Id +
-                '/Images/Backdrop/0?tag=' +
-                item.BackdropImageTags[0]
+        return JellyfinApi.createUrl(
+            `Items/${item.Id}/Images/Backdrop/0?tag=${item.BackdropImageTags[0]}`
         );
     } else if (
         item.ParentBackdropItemId &&
         item.ParentBackdropImageTags &&
         item.ParentBackdropImageTags.length
     ) {
-        url = JellyfinApi.createUrl(
-            'Items/' +
-                item.ParentBackdropItemId +
-                '/Images/Backdrop/0?tag=' +
-                item.ParentBackdropImageTags[0]
+        return JellyfinApi.createUrl(
+            `Items/${item.ParentBackdropItemId}/Images/Backdrop/0?tag=${item.ParentBackdropImageTags[0]}`
         );
     }
 
-    return url;
+    return null;
 }
 
+/**
+ * Get url for logo image for a given item
+ *
+ * @param item item to look up
+ * @returns url to logo image or null
+ */
 export function getLogoUrl(item: BaseItemDto): string | null {
-    let url: string | null = null;
     if (item.ImageTags && item.ImageTags.Logo) {
-        url = JellyfinApi.createUrl(
-            'Items/' + item.Id + '/Images/Logo/0?tag=' + item.ImageTags.Logo
+        return JellyfinApi.createUrl(
+            `Items/${item.Id}/Images/Logo/0?tag=${item.ImageTags.Logo}`
         );
     } else if (item.ParentLogoItemId && item.ParentLogoImageTag) {
-        url = JellyfinApi.createUrl(
-            'Items/' +
-                item.ParentLogoItemId +
-                '/Images/Logo/0?tag=' +
-                item.ParentLogoImageTag
+        return JellyfinApi.createUrl(
+            `Items/${item.ParentLogoItemId}/Images/Logo/0?tag=${item.ParentLogoImageTag}`
         );
     }
 
-    return url;
+    return null;
 }
 
-export function getPrimaryImageUrl(item: BaseItemDto): string {
-    let posterUrl = '';
+/**
+ * Get url for primary image for a given item
+ *
+ * @param item item to look up
+ * @returns url to primary image or null
+ */
+export function getPrimaryImageUrl(item: BaseItemDto): string | null {
     if (item.AlbumPrimaryImageTag) {
-        posterUrl = JellyfinApi.createUrl(
-            'Items/' +
-                item.AlbumId +
-                '/Images/Primary?tag=' +
-                item.AlbumPrimaryImageTag
+        return JellyfinApi.createUrl(
+            `Items/${item.AlbumId}/Images/Primary?tag=${item.AlbumPrimaryImageTag}`
         );
     } else if (item.ImageTags?.Primary) {
-        posterUrl = JellyfinApi.createUrl(
-            'Items/' +
-                item.Id +
-                '/Images/Primary?tag=' +
-                item.ImageTags?.Primary
+        return JellyfinApi.createUrl(
+            `Items/${item.Id}/Images/Primary?tag=${item.ImageTags?.Primary}`
         );
     }
 
-    return posterUrl;
+    return null;
 }
 
-export function getDisplayName(item: BaseItemDto): string {
-    let name: string = (item.EpisodeTitle || item.Name) ?? '???';
+/**
+ * Get human readable name for an item
+ *
+ * @param item item to get displayname for
+ * @returns displayname
+ */
+export function getDisplayName(item: BaseItemDto): string | null {
+    const name = (item.EpisodeTitle || item.Name) ?? null;
+
+    if (name === null) return null;
 
     if (item.Type == 'TvChannel') {
-        if (item.Number) {
-            return item.Number + ' ' + name;
-        }
-        return name;
+        if (item.Number) return `${item.Number} ${name}`;
+        else return name;
     }
 
     if (
@@ -551,28 +576,29 @@ export function getDisplayName(item: BaseItemDto): string {
         item.IndexNumber != null &&
         item.ParentIndexNumber != null
     ) {
-        let displayIndexNumber = item.IndexNumber;
-
-        let number = 'E' + displayIndexNumber;
-
-        number = 'S' + item.ParentIndexNumber + ', ' + number;
+        let episode = `S${item.ParentIndexNumber}, E${item.IndexNumber}`;
 
         if (item.IndexNumberEnd) {
-            displayIndexNumber = item.IndexNumberEnd;
-            number += '-' + displayIndexNumber;
+            episode += '-' + item.IndexNumberEnd;
         }
 
-        name = number + ' - ' + name;
+        return `${episode} - ${name}`;
     }
 
     return name;
 }
 
+/**
+ * Get HTML content used to display the rating of an item
+ *
+ * @param item to look up
+ * @returns html string to put in document
+ */
 export function getRatingHtml(item: BaseItemDto): string {
     let html = '';
 
     if (item.CommunityRating) {
-        html +=
+        html =
             `<div class="starRating" title="${item.CommunityRating}"></div>` +
             '<div class="starRatingValue">' +
             item.CommunityRating.toFixed(1) +
@@ -580,26 +606,37 @@ export function getRatingHtml(item: BaseItemDto): string {
     }
 
     if (item.CriticRating != null) {
-        if (item.CriticRating >= 60) {
-            html +=
-                '<div class="fresh rottentomatoesicon" title="fresh"></div>';
-        } else {
-            html +=
-                '<div class="rotten rottentomatoesicon" title="rotten"></div>';
-        }
+        const verdict = item.CriticRating >= 60 ? 'fresh' : 'rotten';
 
-        html += '<div class="criticRating">' + item.CriticRating + '%</div>';
+        html +=
+            `<div class="${verdict} rottentomatoesicon" title="${verdict}"></div>` +
+            `<div class="criticRating">${item.CriticRating}%</div>`;
     }
 
     return html;
 }
 
+// defined for use in the 3 next functions
 const requiredItemFields = 'MediaSources,Chapters';
 
+/**
+ * Get a random selection of items given one item,
+ * this item can be a music artist item, or a music genre item,
+ * or something else. If something else it searches for child items
+ * of the provided one.
+ *
+ * It's used only in maincomponents.shuffle.
+ *
+ * TODO: JellyfinApi.userId should be fine for this.
+ *
+ * @param userId User ID to look up items with
+ * @param item Parent item of shuffle search
+ * @returns items for the queue
+ */
 export function getShuffleItems(
     userId: string,
     item: BaseItemDto
-): Promise<any> {
+): Promise<BaseItemDtoQueryResult> {
     const query: ItemQuery = {
         UserId: userId,
         Fields: requiredItemFields,
@@ -622,17 +659,27 @@ export function getShuffleItems(
     return getItemsForPlayback(userId, query);
 }
 
+/**
+ * Get an "Instant Mix" given an item, which can be a
+ * music artist, genre, album, playlist
+ *
+ * TODO: JellyfinApi.userId should be fine for this.
+ *
+ * @param userId User ID to look up items with
+ * @param item Parent item of the search
+ * @returns items for the queue
+ */
 export function getInstantMixItems(
     userId: string,
     item: BaseItemDto
-): Promise<any> {
+): Promise<BaseItemDtoQueryResult> {
     const query: any = {
         UserId: userId,
         Fields: requiredItemFields,
         Limit: 50
     };
 
-    let url = '';
+    let url: string | null = null;
 
     if (item.Type == 'MusicArtist') {
         url = 'Artists/InstantMix';
@@ -659,6 +706,13 @@ export function getInstantMixItems(
     }
 }
 
+/**
+ * Get items to be played back
+ *
+ * @param userId user for the search
+ * @param query specification on what to search for
+ * @returns items to be played back
+ */
 export function getItemsForPlayback(
     userId: string,
     query: ItemQuery
@@ -899,7 +953,13 @@ export function setAppStatus(status: string): void {
     document.body.className = status;
 }
 
-export function setDisplayName(name = ''): void {
+/**
+ * Set the displayname, part of the details page
+ *
+ * @param name name to set, if null then remove it
+ */
+export function setDisplayName(name: string | null = null): void {
+    if (name === null) name = '';
     const element: HTMLElement = <HTMLElement>(
         document.querySelector('.displayName')
     );
