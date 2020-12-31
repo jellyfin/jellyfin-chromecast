@@ -772,7 +772,7 @@ if (!PRODUCTION) {
 
     window.mediaManager.addEventListener(
         cast.framework.events.category.CORE,
-        (event: any) => {
+        (event: cast.framework.events.Event) => {
             console.log('Core event: ' + event.type);
             console.log(event);
         }

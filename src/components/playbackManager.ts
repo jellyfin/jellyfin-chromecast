@@ -30,6 +30,7 @@ import {
 } from './maincontroller';
 
 import { BaseItemDto } from '~/api/generated/models/base-item-dto';
+import { MediaSourceInfo } from '~/api/generated/models/media-source-info';
 
 export class playbackManager {
     private playerManager: cast.framework.PlayerManager;
@@ -183,7 +184,7 @@ export class playbackManager {
     playMediaSource(
         playSessionId: string,
         item: BaseItemDto,
-        mediaSource: any,
+        mediaSource: MediaSourceInfo,
         options: any
     ): void {
         setAppStatus('loading');
