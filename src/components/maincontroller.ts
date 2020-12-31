@@ -459,7 +459,7 @@ window.castReceiverContext.addCustomMessageListener(
 
         // Apparently chromium likes to pass it as json, not as object.
         // chrome on android works fine
-        if (typeof data == 'string') {
+        if (typeof data === 'string') {
             console.log('Event data is a string.. Chromium detected..');
             data = JSON.parse(data);
         }
