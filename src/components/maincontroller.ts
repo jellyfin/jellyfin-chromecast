@@ -40,11 +40,7 @@ const playbackMgr = new playbackManager(window.mediaManager);
 
 CommandHandler.configure(window.mediaManager, playbackMgr);
 
-const init = function () {
-    resetPlaybackScope($scope);
-};
-
-init();
+resetPlaybackScope($scope);
 
 const mgr = window.mediaManager;
 
@@ -140,17 +136,14 @@ window.addEventListener('beforeunload', function () {
     reportPlaybackStopped($scope, getReportingParams($scope));
 });
 
-function defaultOnPlay(): void {
+mgr.addEventListener(cast.framework.events.EventType.PLAY, (): void => {
     play($scope);
     reportPlaybackProgress($scope, getReportingParams($scope));
-}
+});
 
-mgr.addEventListener(cast.framework.events.EventType.PLAY, defaultOnPlay);
-
-function defaultOnPause(): void {
+mgr.addEventListener(cast.framework.events.EventType.PAUSE, (): void => {
     reportPlaybackProgress($scope, getReportingParams($scope));
-}
-mgr.addEventListener(cast.framework.events.EventType.PAUSE, defaultOnPause);
+});
 
 function defaultOnStop(): void {
     playbackMgr.stop();
@@ -169,7 +162,7 @@ mgr.addEventListener(cast.framework.events.EventType.ENDED, function () {
     }
 
     reportPlaybackStopped($scope, getReportingParams($scope));
-    init();
+    resetPlaybackScope($scope);
 
     if (!playbackMgr.playNextItem()) {
         window.playlist = [];
@@ -262,9 +255,8 @@ export function processMessage(data: any): void {
     CommandHandler.processMessage(data, data.command);
 
     if (window.reportEventType) {
-        const report = function () {
+        const report = (): Promise<void> =>
             reportPlaybackProgress($scope, getReportingParams($scope));
-        };
         reportPlaybackProgress(
             $scope,
             getReportingParams($scope),
