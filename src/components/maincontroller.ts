@@ -564,14 +564,14 @@ export function getMaxBitrate(): Promise<number> {
         console.log('detecting bitrate');
 
         detectBitrate().then(
-            function (bitrate) {
+            (bitrate) => {
                 console.log('Max bitrate auto detected to ' + bitrate);
                 lastBitrateDetect = new Date().getTime();
                 detectedBitrate = bitrate;
 
                 resolve(detectedBitrate);
             },
-            function () {
+            () => {
                 console.log(
                     'Error detecting bitrate, will return device maximum.'
                 );
