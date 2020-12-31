@@ -895,6 +895,13 @@ export async function translateRequestedItems(
     };
 }
 
+/**
+ * Get information about mainly an episode or series
+ * for the item details page
+ *
+ * @param item to look up
+ * @returns html code to use
+ */
 export function getMiscInfoHtml(item: BaseItemDto): string {
     const miscInfo: string[] = [];
     let date: Date;
@@ -985,6 +992,12 @@ export function getMiscInfoHtml(item: BaseItemDto): string {
     return miscInfo.join('&nbsp;&nbsp;&nbsp;&nbsp;');
 }
 
+/**
+ * Set the status of the app, and switch the visible view by
+ * modifying document.body.className
+ *
+ * @param status name of view to show
+ */
 export function setAppStatus(status: string): void {
     $scope.status = status;
     document.body.className = status;
@@ -1004,12 +1017,22 @@ export function setDisplayName(name: string | null = null): void {
     element.innerHTML = name;
 }
 
+/**
+ * Set the html of the genres container
+ *
+ * @param name string or html to insert
+ */
 export function setGenres(name = ''): void {
     const element: HTMLElement = <HTMLElement>document.querySelector('.genres');
     $scope.genres = name;
     element.innerHTML = name;
 }
 
+/**
+ * Set the html of the overview container
+ *
+ * @param name string or html to insert
+ */
 export function setOverview(name = ''): void {
     const element: HTMLElement = <HTMLElement>(
         document.querySelector('.overview')
@@ -1018,6 +1041,12 @@ export function setOverview(name = ''): void {
     element.innerHTML = name;
 }
 
+/**
+ * Set the progress of the progress bar in the
+ * item details page. (Not the same as the playback ui)
+ *
+ * @param value percentage to set
+ */
 export function setPlayedPercentage(value = 0): void {
     const element: HTMLInputElement = <HTMLInputElement>(
         document.querySelector('.itemProgressBar')
@@ -1027,6 +1056,11 @@ export function setPlayedPercentage(value = 0): void {
     element.value = value.toString();
 }
 
+/**
+ * Set the url of the idle screen backdrop
+ *
+ * @param src URL to image
+ */
 export function setWaitingBackdrop(src: string | null): void {
     const element: HTMLElement = <HTMLElement>(
         document.querySelector('#waiting-container-backdrop')
@@ -1035,6 +1069,12 @@ export function setWaitingBackdrop(src: string | null): void {
     element.style.backgroundImage = src ? 'url(' + src + ')' : '';
 }
 
+/**
+ * Set the visibility of the item progress bar in the
+ * item details page
+ *
+ * @param value show it if true
+ */
 export function setHasPlayedPercentage(value: boolean): void {
     const element: HTMLElement = <HTMLElement>(
         document.querySelector('.detailImageProgressContainer')
@@ -1043,6 +1083,11 @@ export function setHasPlayedPercentage(value: boolean): void {
     else element.classList.add('hide');
 }
 
+/**
+ * Set the URL to the item logo, or null to remove it
+ *
+ * @param src url or null
+ */
 export function setLogo(src: string | null): void {
     const element: HTMLElement = <HTMLElement>(
         document.querySelector('.detailLogo')
@@ -1050,6 +1095,12 @@ export function setLogo(src: string | null): void {
     element.style.backgroundImage = src ? 'url(' + src + ')' : '';
 }
 
+/**
+ * Set the URL to the item banner image (I think?),
+ * or null to remove it
+ *
+ * @param src url or null
+ */
 export function setDetailImage(src: string | null): void {
     const element: HTMLElement = <HTMLElement>(
         document.querySelector('.detailImage')
@@ -1058,7 +1109,14 @@ export function setDetailImage(src: string | null): void {
     element.style.backgroundImage = src ? 'url(' + src + ')' : '';
 }
 
-// TODO can we remove this crap
+/**
+ * Take all properties of source and copy them over to target
+ *
+ * TODO can we remove this crap
+ *
+ * @param target object that gets populated with entries
+ * @param source object that the entries are copied from
+ */
 export function extend(target: any, source: any): any {
     for (const i in source) {
         target[i] = source[i];
@@ -1066,10 +1124,25 @@ export function extend(target: any, source: any): any {
     return target;
 }
 
+/**
+ * Parse a date.. Just a wrapper around new Date,
+ * but could be useful to deal with weird date strings
+ * in the future.
+ *
+ * @param date string date to parse
+ * @returns date object
+ */
 export function parseISO8601Date(date: string): Date {
     return new Date(date);
 }
 
+/**
+ * Get a human readable representation of the current position
+ * in ticks
+ *
+ * @param ticks tick position
+ * @returns human readable position
+ */
 export function getDisplayRunningTime(ticks: number): string {
     const ticksPerHour = 36000000000;
     const ticksPerMinute = 600000000;
@@ -1106,6 +1179,11 @@ export function getDisplayRunningTime(ticks: number): string {
     return parts.join(':');
 }
 
+/**
+ * Send a message over the custom message transport
+ *
+ * @param message to send
+ */
 export function broadcastToMessageBus(message: BusMessage): void {
     window.castReceiverContext.sendCustomMessage(
         'urn:x-cast:com.connectsdk',
@@ -1114,10 +1192,19 @@ export function broadcastToMessageBus(message: BusMessage): void {
     );
 }
 
+/**
+ * Inform the cast sender that we couldn't connect
+ */
 export function broadcastConnectionErrorMessage(): void {
     broadcastToMessageBus({ type: 'connectionerror', message: '' });
 }
 
+/**
+ * Remove all special characters from a string
+ *
+ * @param name input string
+ * @returns string with non-whitespace non-word characters removed
+ */
 export function cleanName(name: string): string {
     return name.replace(/[^\w\s]/gi, '');
 }
