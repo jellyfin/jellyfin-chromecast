@@ -12,6 +12,7 @@
     },
     "homepage": "https://jellyfin.org/",
     "dependencies": {
+        "@jellyfin/client-axios": "^10.7.0",
         "axios": "^0.21.0"
     },
     "scripts": {

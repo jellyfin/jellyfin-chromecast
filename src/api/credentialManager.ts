@@ -1,4 +1,4 @@
-import { Configuration } from './generated/configuration';
+import { Configuration } from '@jellyfin/client-axios/configuration';
 
 interface CredentialStore {
     [id: string]: Configuration;

@@ -1,17 +1,19 @@
-import { CodecProfile } from '../api/generated/models/codec-profile';
-import { ContainerProfile } from '../api/generated/models/container-profile';
-import { DeviceProfile } from '../api/generated/models/device-profile';
-import { DirectPlayProfile } from '../api/generated/models/direct-play-profile';
-import { DlnaProfileType } from '../api/generated/models/dlna-profile-type';
-import { EncodingContext } from '../api/generated/models/encoding-context';
-import { ProfileCondition } from '../api/generated/models/profile-condition';
-import { ProfileConditionType } from '../api/generated/models/profile-condition-type';
-import { ResponseProfile } from '../api/generated/models/response-profile';
-import { SubtitleDeliveryMethod } from '../api/generated/models/subtitle-delivery-method';
-import { SubtitleProfile } from '../api/generated/models/subtitle-profile';
-import { TranscodingProfile } from '../api/generated/models/transcoding-profile';
-import { CodecType } from '../api/generated/models/codec-type';
-import { ProfileConditionValue } from '../api/generated/models/profile-condition-value';
+import {
+    CodecProfile,
+    ContainerProfile,
+    DeviceProfile,
+    DirectPlayProfile,
+    DlnaProfileType,
+    EncodingContext,
+    ProfileCondition,
+    ProfileConditionType,
+    ResponseProfile,
+    SubtitleDeliveryMethod,
+    SubtitleProfile,
+    TranscodingProfile,
+    CodecType,
+    ProfileConditionValue
+} from '@jellyfin/client-axios';
 
 import { deviceIds, getActiveDeviceId } from './castDevices';
 
