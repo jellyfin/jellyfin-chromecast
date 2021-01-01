@@ -16,375 +16,373 @@ import { ProfileConditionValue } from '../api/generated/models/profile-condition
 import { deviceIds, getActiveDeviceId } from './castDevices';
 
 import {
-    hasSurroundSupport,
-    hasTextTrackSupport,
-    hasVP8Support,
-    hasVP9Support,
-    getMaxWidthSupport,
-    getH26xProfileSupport,
-    getH26xLevelSupport,
-    getSupportedVPXVideoCodecs,
-    getSupportedMP4VideoCodecs,
-    getSupportedMP4AudioCodecs,
-    getSupportedHLSVideoCodecs,
-    getSupportedHLSAudioCodecs,
-    getSupportedWebMAudioCodecs,
-    getSupportedAudioCodecs
+  hasSurroundSupport,
+  hasTextTrackSupport,
+  hasVP8Support,
+  hasVP9Support,
+  getMaxWidthSupport,
+  getH26xProfileSupport,
+  getH26xLevelSupport,
+  getSupportedVPXVideoCodecs,
+  getSupportedMP4VideoCodecs,
+  getSupportedMP4AudioCodecs,
+  getSupportedHLSVideoCodecs,
+  getSupportedHLSAudioCodecs,
+  getSupportedWebMAudioCodecs,
+  getSupportedAudioCodecs
 } from './codecSupportHelper';
 
 interface ProfileOptions {
-    enableHls: boolean;
-    bitrateSetting: number;
+  enableHls: boolean;
+  bitrateSetting: number;
 }
 
 let profileOptions: ProfileOptions;
 let currentDeviceId: number;
 
 /**
- * @param {ProfileConditionValue} Property What property the condition should test.
- * @param {ProfileConditionType} Condition The condition to test the values for.
- * @param {string} Value The value to compare against.
- * @param {boolean} [IsRequired=false] Don't permit unknown values
- * @returns {ProfileCondition} A profile condition created from the parameters.
+ * @param Property - What property the condition should test.
+ * @param Condition - The condition to test the values for.
+ * @param Value - The value to compare against.
+ * @param [IsRequired=false] - Don't permit unknown values
+ * @returns A profile condition created from the parameters.
  */
 function createProfileCondition(
-    Property: ProfileConditionValue,
-    Condition: ProfileConditionType,
-    Value: string,
-    IsRequired = false
+  Property: ProfileConditionValue,
+  Condition: ProfileConditionType,
+  Value: string,
+  IsRequired = false
 ): ProfileCondition {
-    return {
-        Condition,
-        Property,
-        Value,
-        IsRequired
-    };
+  return {
+    Condition,
+    Property,
+    Value,
+    IsRequired
+  };
 }
 
 /**
  * @returns Container profiles.
  */
 function getContainerProfiles(): Array<ContainerProfile> {
-    return [];
+  return [];
 }
 
 /**
  * @returns Response profiles.
  */
 function getResponseProfiles(): Array<ResponseProfile> {
-    // This seems related to DLNA, it might not be needed?
-    return [
-        {
-            Type: DlnaProfileType.Video,
-            Container: 'm4v',
-            MimeType: 'video/mp4'
-        }
-    ];
+  // This seems related to DLNA, it might not be needed?
+  return [
+    {
+      Type: DlnaProfileType.Video,
+      Container: 'm4v',
+      MimeType: 'video/mp4'
+    }
+  ];
 }
 
 /**
  * @returns Direct play profiles.
  */
 function getDirectPlayProfiles(): Array<DirectPlayProfile> {
-    const DirectPlayProfiles: Array<DirectPlayProfile> = [];
+  const DirectPlayProfiles: Array<DirectPlayProfile> = [];
 
-    if (currentDeviceId !== deviceIds.AUDIO) {
-        const mp4VideoCodecs = getSupportedMP4VideoCodecs();
-        const mp4AudioCodecs = getSupportedMP4AudioCodecs();
-        const vpxVideoCodecs = getSupportedVPXVideoCodecs();
-        const webmAudioCodecs = getSupportedWebMAudioCodecs();
+  if (currentDeviceId !== deviceIds.AUDIO) {
+    const mp4VideoCodecs = getSupportedMP4VideoCodecs();
+    const mp4AudioCodecs = getSupportedMP4AudioCodecs();
+    const vpxVideoCodecs = getSupportedVPXVideoCodecs();
+    const webmAudioCodecs = getSupportedWebMAudioCodecs();
 
-        for (const codec of vpxVideoCodecs) {
-            DirectPlayProfiles.push({
-                Container: 'webm',
-                Type: DlnaProfileType.Video,
-                AudioCodec: webmAudioCodecs.join(','),
-                VideoCodec: codec
-            });
-        }
-
-        DirectPlayProfiles.push({
-            Container: 'mp4,m4v',
-            Type: DlnaProfileType.Video,
-            VideoCodec: mp4VideoCodecs.join(','),
-            AudioCodec: mp4AudioCodecs.join(',')
-        });
+    for (const codec of vpxVideoCodecs) {
+      DirectPlayProfiles.push({
+        Container: 'webm',
+        Type: DlnaProfileType.Video,
+        AudioCodec: webmAudioCodecs.join(','),
+        VideoCodec: codec
+      });
     }
 
-    const supportedAudio = getSupportedAudioCodecs();
+    DirectPlayProfiles.push({
+      Container: 'mp4,m4v',
+      Type: DlnaProfileType.Video,
+      VideoCodec: mp4VideoCodecs.join(','),
+      AudioCodec: mp4AudioCodecs.join(',')
+    });
+  }
 
-    for (const audioFormat of supportedAudio) {
-        if (audioFormat === 'mp3') {
-            DirectPlayProfiles.push({
-                Container: audioFormat,
-                Type: DlnaProfileType.Audio,
-                AudioCodec: audioFormat
-            });
-        } else if (audioFormat === 'webma') {
-            DirectPlayProfiles.push({
-                Container: 'webma,webm',
-                Type: DlnaProfileType.Audio
-            });
-        } else {
-            DirectPlayProfiles.push({
-                Container: audioFormat,
-                Type: DlnaProfileType.Audio
-            });
-        }
+  const supportedAudio = getSupportedAudioCodecs();
 
-        // aac also appears in the m4a and m4b container
-        if (audioFormat === 'aac') {
-            DirectPlayProfiles.push({
-                Container: 'm4a,m4b',
-                AudioCodec: audioFormat,
-                Type: DlnaProfileType.Audio
-            });
-        }
+  for (const audioFormat of supportedAudio) {
+    if (audioFormat === 'mp3') {
+      DirectPlayProfiles.push({
+        Container: audioFormat,
+        Type: DlnaProfileType.Audio,
+        AudioCodec: audioFormat
+      });
+    } else if (audioFormat === 'webma') {
+      DirectPlayProfiles.push({
+        Container: 'webma,webm',
+        Type: DlnaProfileType.Audio
+      });
+    } else {
+      DirectPlayProfiles.push({
+        Container: audioFormat,
+        Type: DlnaProfileType.Audio
+      });
     }
 
-    return DirectPlayProfiles;
+    // aac also appears in the m4a and m4b container
+    if (audioFormat === 'aac') {
+      DirectPlayProfiles.push({
+        Container: 'm4a,m4b',
+        AudioCodec: audioFormat,
+        Type: DlnaProfileType.Audio
+      });
+    }
+  }
+
+  return DirectPlayProfiles;
 }
 
 /**
  * @returns Codec profiles.
  */
 function getCodecProfiles(): Array<CodecProfile> {
-    const CodecProfiles: Array<CodecProfile> = [];
+  const CodecProfiles: Array<CodecProfile> = [];
 
-    const audioConditions: CodecProfile = {
-        Type: CodecType.Audio,
-        Codec: 'flac',
-        Conditions: [
-            createProfileCondition(
-                ProfileConditionValue.AudioSampleRate,
-                ProfileConditionType.LessThanEqual,
-                '96000'
-            ),
-            createProfileCondition(
-                ProfileConditionValue.AudioBitDepth,
-                ProfileConditionType.LessThanEqual,
-                '24'
-            )
-        ]
-    };
+  const audioConditions: CodecProfile = {
+    Type: CodecType.Audio,
+    Codec: 'flac',
+    Conditions: [
+      createProfileCondition(
+        ProfileConditionValue.AudioSampleRate,
+        ProfileConditionType.LessThanEqual,
+        '96000'
+      ),
+      createProfileCondition(
+        ProfileConditionValue.AudioBitDepth,
+        ProfileConditionType.LessThanEqual,
+        '24'
+      )
+    ]
+  };
 
-    CodecProfiles.push(audioConditions);
+  CodecProfiles.push(audioConditions);
 
-    // If device is audio only, don't add all the video related stuff
-    if (currentDeviceId == deviceIds.AUDIO) {
-        return CodecProfiles;
-    }
-
-    const aacConditions: CodecProfile = {
-        Type: CodecType.VideoAudio,
-        Codec: 'aac',
-        Conditions: [
-            // Not sure what secondary audio means in this context. Multiple audio tracks?
-            createProfileCondition(
-                ProfileConditionValue.IsSecondaryAudio,
-                ProfileConditionType.Equals,
-                'false'
-            ),
-            createProfileCondition(
-                ProfileConditionValue.IsSecondaryAudio,
-                ProfileConditionType.LessThanEqual,
-                '2'
-            )
-        ]
-    };
-
-    CodecProfiles.push(aacConditions);
-
-    const maxWidth: number = getMaxWidthSupport(currentDeviceId);
-    const h26xLevel: number = getH26xLevelSupport(currentDeviceId);
-    const h26xProfile: string = getH26xProfileSupport(currentDeviceId);
-
-    const h26xConditions: CodecProfile = {
-        Type: CodecType.Video,
-        Codec: 'h264',
-        Conditions: [
-            createProfileCondition(
-                ProfileConditionValue.IsAnamorphic,
-                ProfileConditionType.NotEquals,
-                'true'
-            ),
-            createProfileCondition(
-                ProfileConditionValue.VideoProfile,
-                ProfileConditionType.EqualsAny,
-                h26xProfile
-            ),
-            createProfileCondition(
-                ProfileConditionValue.VideoLevel,
-                ProfileConditionType.LessThanEqual,
-                h26xLevel.toString()
-            ),
-            createProfileCondition(
-                ProfileConditionValue.Width,
-                ProfileConditionType.LessThanEqual,
-                maxWidth.toString(),
-                true
-            )
-        ]
-    };
-
-    CodecProfiles.push(h26xConditions);
-
-    const videoConditions: CodecProfile = {
-        Type: CodecType.Video,
-        Conditions: [
-            createProfileCondition(
-                ProfileConditionValue.Width,
-                ProfileConditionType.LessThanEqual,
-                maxWidth.toString(),
-                true
-            )
-        ]
-    };
-
-    CodecProfiles.push(videoConditions);
-
-    const videoAudioConditions: CodecProfile = {
-        Type: CodecType.VideoAudio,
-        Conditions: [
-            createProfileCondition(
-                ProfileConditionValue.IsSecondaryAudio,
-                ProfileConditionType.Equals,
-                'false'
-            )
-        ]
-    };
-
-    CodecProfiles.push(videoAudioConditions);
-
+  // If device is audio only, don't add all the video related stuff
+  if (currentDeviceId == deviceIds.AUDIO) {
     return CodecProfiles;
+  }
+
+  const aacConditions: CodecProfile = {
+    Type: CodecType.VideoAudio,
+    Codec: 'aac',
+    Conditions: [
+      // Not sure what secondary audio means in this context. Multiple audio tracks?
+      createProfileCondition(
+        ProfileConditionValue.IsSecondaryAudio,
+        ProfileConditionType.Equals,
+        'false'
+      ),
+      createProfileCondition(
+        ProfileConditionValue.IsSecondaryAudio,
+        ProfileConditionType.LessThanEqual,
+        '2'
+      )
+    ]
+  };
+
+  CodecProfiles.push(aacConditions);
+
+  const maxWidth: number = getMaxWidthSupport(currentDeviceId);
+  const h26xLevel: number = getH26xLevelSupport(currentDeviceId);
+  const h26xProfile: string = getH26xProfileSupport(currentDeviceId);
+
+  const h26xConditions: CodecProfile = {
+    Type: CodecType.Video,
+    Codec: 'h264',
+    Conditions: [
+      createProfileCondition(
+        ProfileConditionValue.IsAnamorphic,
+        ProfileConditionType.NotEquals,
+        'true'
+      ),
+      createProfileCondition(
+        ProfileConditionValue.VideoProfile,
+        ProfileConditionType.EqualsAny,
+        h26xProfile
+      ),
+      createProfileCondition(
+        ProfileConditionValue.VideoLevel,
+        ProfileConditionType.LessThanEqual,
+        h26xLevel.toString()
+      ),
+      createProfileCondition(
+        ProfileConditionValue.Width,
+        ProfileConditionType.LessThanEqual,
+        maxWidth.toString(),
+        true
+      )
+    ]
+  };
+
+  CodecProfiles.push(h26xConditions);
+
+  const videoConditions: CodecProfile = {
+    Type: CodecType.Video,
+    Conditions: [
+      createProfileCondition(
+        ProfileConditionValue.Width,
+        ProfileConditionType.LessThanEqual,
+        maxWidth.toString(),
+        true
+      )
+    ]
+  };
+
+  CodecProfiles.push(videoConditions);
+
+  const videoAudioConditions: CodecProfile = {
+    Type: CodecType.VideoAudio,
+    Conditions: [
+      createProfileCondition(
+        ProfileConditionValue.IsSecondaryAudio,
+        ProfileConditionType.Equals,
+        'false'
+      )
+    ]
+  };
+
+  CodecProfiles.push(videoAudioConditions);
+
+  return CodecProfiles;
 }
 
 /**
  * @returns Transcoding profiles.
  */
 function getTranscodingProfiles(): Array<TranscodingProfile> {
-    const TranscodingProfiles: Array<TranscodingProfile> = [];
+  const TranscodingProfiles: Array<TranscodingProfile> = [];
 
-    const hlsAudioCodecs = getSupportedHLSAudioCodecs();
-    const audioChannels: number = hasSurroundSupport() ? 6 : 2;
+  const hlsAudioCodecs = getSupportedHLSAudioCodecs();
+  const audioChannels: number = hasSurroundSupport() ? 6 : 2;
 
-    if (profileOptions.enableHls !== false) {
-        TranscodingProfiles.push({
-            Container: 'ts',
-            Type: DlnaProfileType.Audio,
-            AudioCodec: hlsAudioCodecs.join(','),
-            Context: EncodingContext.Streaming,
-            Protocol: 'hls',
-            MaxAudioChannels: audioChannels.toString(),
-            MinSegments: 1,
-            BreakOnNonKeyFrames: false
-        });
-    }
+  if (profileOptions.enableHls !== false) {
+    TranscodingProfiles.push({
+      Container: 'ts',
+      Type: DlnaProfileType.Audio,
+      AudioCodec: hlsAudioCodecs.join(','),
+      Context: EncodingContext.Streaming,
+      Protocol: 'hls',
+      MaxAudioChannels: audioChannels.toString(),
+      MinSegments: 1,
+      BreakOnNonKeyFrames: false
+    });
+  }
 
-    const supportedAudio = getSupportedAudioCodecs();
+  const supportedAudio = getSupportedAudioCodecs();
 
-    // audio only profiles here
-    for (const audioFormat of supportedAudio) {
-        TranscodingProfiles.push({
-            Container: audioFormat,
-            Type: DlnaProfileType.Audio,
-            AudioCodec: audioFormat,
-            Context: EncodingContext.Streaming,
-            Protocol: 'http',
-            MaxAudioChannels: audioChannels.toString()
-        });
-    }
+  // audio only profiles here
+  for (const audioFormat of supportedAudio) {
+    TranscodingProfiles.push({
+      Container: audioFormat,
+      Type: DlnaProfileType.Audio,
+      AudioCodec: audioFormat,
+      Context: EncodingContext.Streaming,
+      Protocol: 'http',
+      MaxAudioChannels: audioChannels.toString()
+    });
+  }
 
-    // If device is audio only, don't add all the video related stuff
-    if (currentDeviceId == deviceIds.AUDIO) {
-        return TranscodingProfiles;
-    }
-
-    const hlsVideoCodecs = getSupportedHLSVideoCodecs();
-    if (
-        hlsVideoCodecs.length &&
-        hlsAudioCodecs.length &&
-        profileOptions.enableHls !== false
-    ) {
-        TranscodingProfiles.push({
-            Container: 'ts',
-            Type: DlnaProfileType.Video,
-            AudioCodec: hlsAudioCodecs.join(','),
-            VideoCodec: hlsVideoCodecs.join(','),
-            Context: EncodingContext.Streaming,
-            Protocol: 'hls',
-            MaxAudioChannels: audioChannels.toString(),
-            MinSegments: 1,
-            BreakOnNonKeyFrames: false
-        });
-    }
-
-    if (hasVP8Support() || hasVP9Support()) {
-        TranscodingProfiles.push({
-            Container: 'webm',
-            Type: DlnaProfileType.Video,
-            AudioCodec: 'vorbis',
-            VideoCodec: 'vpx',
-            Context: EncodingContext.Streaming,
-            Protocol: 'http',
-            // If audio transcoding is needed, limit channels to number of physical audio channels
-            // Trying to transcode to 5 channels when there are only 2 speakers generally does not sound good
-            MaxAudioChannels: audioChannels.toString()
-        });
-    }
-
+  // If device is audio only, don't add all the video related stuff
+  if (currentDeviceId == deviceIds.AUDIO) {
     return TranscodingProfiles;
+  }
+
+  const hlsVideoCodecs = getSupportedHLSVideoCodecs();
+
+  if (
+    hlsVideoCodecs.length &&
+    hlsAudioCodecs.length &&
+    profileOptions.enableHls !== false
+  ) {
+    TranscodingProfiles.push({
+      Container: 'ts',
+      Type: DlnaProfileType.Video,
+      AudioCodec: hlsAudioCodecs.join(','),
+      VideoCodec: hlsVideoCodecs.join(','),
+      Context: EncodingContext.Streaming,
+      Protocol: 'hls',
+      MaxAudioChannels: audioChannels.toString(),
+      MinSegments: 1,
+      BreakOnNonKeyFrames: false
+    });
+  }
+
+  if (hasVP8Support() || hasVP9Support()) {
+    TranscodingProfiles.push({
+      Container: 'webm',
+      Type: DlnaProfileType.Video,
+      AudioCodec: 'vorbis',
+      VideoCodec: 'vpx',
+      Context: EncodingContext.Streaming,
+      Protocol: 'http',
+      // If audio transcoding is needed, limit channels to number of physical audio channels
+      // Trying to transcode to 5 channels when there are only 2 speakers generally does not sound good
+      MaxAudioChannels: audioChannels.toString()
+    });
+  }
+
+  return TranscodingProfiles;
 }
 
 /**
  * @returns Subtitle profiles.
  */
 function getSubtitleProfiles(): Array<SubtitleProfile> {
-    const subProfiles: Array<SubtitleProfile> = [];
+  const subProfiles: Array<SubtitleProfile> = [];
 
-    if (hasTextTrackSupport(currentDeviceId)) {
-        subProfiles.push({
-            Format: 'vtt',
-            Method: SubtitleDeliveryMethod.External
-        });
+  if (hasTextTrackSupport(currentDeviceId)) {
+    subProfiles.push({
+      Format: 'vtt',
+      Method: SubtitleDeliveryMethod.External
+    });
 
-        subProfiles.push({
-            Format: 'vtt',
-            Method: SubtitleDeliveryMethod.Hls
-        });
-    }
+    subProfiles.push({
+      Format: 'vtt',
+      Method: SubtitleDeliveryMethod.Hls
+    });
+  }
 
-    return subProfiles;
+  return subProfiles;
 }
 
 /**
  * Creates a device profile containing supported codecs for the active Cast device.
  *
- * @param options Profile options
+ * @param options - Profile options
  * @returns Device profile.
  */
 export function getDeviceProfile(options: ProfileOptions): DeviceProfile {
-    profileOptions = options;
-    currentDeviceId = getActiveDeviceId();
+  profileOptions = options;
+  currentDeviceId = getActiveDeviceId();
 
-    // MaxStaticBitrate seems to be for offline sync only
-    const profile: DeviceProfile = {
-        MaxStreamingBitrate: options.bitrateSetting,
-        MaxStaticBitrate: options.bitrateSetting,
-        MusicStreamingTranscodingBitrate: Math.min(
-            options.bitrateSetting,
-            192000
-        )
-    };
+  // MaxStaticBitrate seems to be for offline sync only
+  const profile: DeviceProfile = {
+    MaxStreamingBitrate: options.bitrateSetting,
+    MaxStaticBitrate: options.bitrateSetting,
+    MusicStreamingTranscodingBitrate: Math.min(options.bitrateSetting, 192000)
+  };
 
-    profile.DirectPlayProfiles = getDirectPlayProfiles();
-    profile.TranscodingProfiles = getTranscodingProfiles();
-    profile.ContainerProfiles = getContainerProfiles();
-    profile.CodecProfiles = getCodecProfiles();
-    profile.SubtitleProfiles = getSubtitleProfiles();
-    profile.ResponseProfiles = getResponseProfiles();
+  profile.DirectPlayProfiles = getDirectPlayProfiles();
+  profile.TranscodingProfiles = getTranscodingProfiles();
+  profile.ContainerProfiles = getContainerProfiles();
+  profile.CodecProfiles = getCodecProfiles();
+  profile.SubtitleProfiles = getSubtitleProfiles();
+  profile.ResponseProfiles = getResponseProfiles();
 
-    return profile;
+  return profile;
 }
 
 export default getDeviceProfile;
