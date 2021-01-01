@@ -1,6 +1,7 @@
 /* eslint @typescript-eslint/no-var-requires: "off" */
 const path = require('path');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const ImageMinimizerPlugin = require('image-minimizer-webpack-plugin');
@@ -24,6 +25,9 @@ const config = {
             template: 'index.html',
             hash: false,
             favicon: 'favicon.ico'
+        }),
+        new CopyWebpackPlugin({
+            patterns: [{ from: 'locales', to: 'locales' }]
         }),
         new ImageMinimizerPlugin({
             minimizerOptions: {
@@ -57,6 +61,9 @@ const config = {
             { test: /\.tsx?$/, loader: 'ts-loader' },
             { test: /\.js$/, loader: 'source-map-loader' }
         ]
+    },
+    experiments: {
+        topLevelAwait: true
     }
 };
 

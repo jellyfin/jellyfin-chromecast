@@ -1,3 +1,4 @@
+import { i18n } from 'i18next';
 import { RepeatMode } from '../api/generated/models/repeat-mode';
 import { BaseItemDto } from '../api/generated/models/base-item-dto';
 
@@ -108,5 +109,6 @@ declare global {
         MaxBitrate: number | undefined;
         senderId: string | undefined;
         volume: cast.framework.system.SystemVolumeData;
+        i18n: i18n;
     }
 }
