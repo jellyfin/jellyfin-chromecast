@@ -1,5 +1,4 @@
 import {
-    getNextPlaybackItemInfo,
     getIntros,
     setAppStatus,
     broadcastConnectionErrorMessage,
@@ -32,19 +31,18 @@ import {
 import { BaseItemDto } from '~/api/generated/models/base-item-dto';
 import { MediaSourceInfo } from '~/api/generated/models/media-source-info';
 
-export class playbackManager {
-    private playerManager: cast.framework.PlayerManager;
-    // TODO remove any
-    private activePlaylist: Array<BaseItemDto>;
-    private activePlaylistIndex: number;
+import { ItemIndex } from '~/types/global';
 
-    constructor(playerManager: cast.framework.PlayerManager) {
+export abstract class PlaybackManager {
+    private static playerManager: cast.framework.PlayerManager;
+    private static activePlaylist: Array<BaseItemDto>;
+    private static activePlaylistIndex: number;
+
+    static setPlayerManager(playerManager: cast.framework.PlayerManager): void {
         // Parameters
         this.playerManager = playerManager;
 
-        // Properties
-        this.activePlaylist = [];
-        this.activePlaylistIndex = 0;
+        this.resetPlaylist();
     }
 
     /* This is used to check if we can switch to
@@ -53,7 +51,7 @@ export class playbackManager {
      * Returns true when playing or paused.
      * (before: true only when playing)
      * */
-    isPlaying(): boolean {
+    static isPlaying(): boolean {
         return (
             this.playerManager.getPlayerState() ===
                 cast.framework.messages.PlayerState.PLAYING ||
@@ -62,7 +60,7 @@ export class playbackManager {
         );
     }
 
-    async playFromOptions(options: any): Promise<boolean> {
+    static async playFromOptions(options: any): Promise<boolean> {
         const firstItem = options.items[0];
 
         if (options.startPositionTicks || firstItem.MediaType !== 'Video') {
@@ -74,46 +72,64 @@ export class playbackManager {
         return this.playFromOptionsInternal(options);
     }
 
-    playFromOptionsInternal(options: any): boolean {
+    private static playFromOptionsInternal(options: any): boolean {
         const stopPlayer =
             this.activePlaylist && this.activePlaylist.length > 0;
 
         this.activePlaylist = options.items;
-        window.currentPlaylistIndex = -1;
-        window.playlist = this.activePlaylist;
+        // We need to set -1 so the next index will be 0
+        this.activePlaylistIndex = -1;
+
+        console.log('Loaded new playlist:', this.activePlaylist);
 
         return this.playNextItem(options, stopPlayer);
     }
 
-    playNextItem(options: any = {}, stopPlayer = false): boolean {
-        const nextItemInfo = getNextPlaybackItemInfo();
+    // add item to playlist
+    static enqueue(item: BaseItemDto): void {
+        this.activePlaylist.push(item);
+    }
+
+    static resetPlaylist(): void {
+        this.activePlaylistIndex = -1;
+        this.activePlaylist = [];
+    }
+
+    // If there are items in the queue after the current one
+    static hasNextItem(): boolean {
+        return this.activePlaylistIndex < this.activePlaylist.length - 1;
+    }
+
+    // If there are items in the queue before the current one
+    static hasPrevItem(): boolean {
+        return this.activePlaylistIndex > 0;
+    }
+
+    static playNextItem(options: any = {}, stopPlayer = false): boolean {
+        const nextItemInfo = this.getNextPlaybackItemInfo();
 
         if (nextItemInfo) {
             this.activePlaylistIndex = nextItemInfo.index;
 
-            const item = nextItemInfo.item;
-
-            this.playItem(item, options, stopPlayer);
+            this.playItem(options, stopPlayer);
             return true;
         }
 
         return false;
     }
 
-    playPreviousItem(options: any = {}): boolean {
+    static playPreviousItem(options: any = {}): boolean {
         if (this.activePlaylist && this.activePlaylistIndex > 0) {
             this.activePlaylistIndex--;
 
-            const item = this.activePlaylist[this.activePlaylistIndex];
-
-            this.playItem(item, options, true);
+            this.playItem(options, true);
             return true;
         }
         return false;
     }
 
-    async playItem(
-        item: BaseItemDto,
+    // play item from playlist
+    private static async playItem(
         options: any,
         stopPlayer = false
     ): Promise<void> {
@@ -121,10 +137,18 @@ export class playbackManager {
             await this.stop(true);
         }
 
+        const item = this.activePlaylist[this.activePlaylistIndex];
+
+        console.log(`Playing index ${this.activePlaylistIndex}`, item);
+
         return await onStopPlayerBeforePlaybackDone(item, options);
     }
 
-    async playItemInternal(item: BaseItemDto, options: any): Promise<void> {
+    // Would set private, but some refactorings need to happen first.
+    static async playItemInternal(
+        item: BaseItemDto,
+        options: any
+    ): Promise<void> {
         $scope.isChangingStream = false;
         setAppStatus('loading');
 
@@ -180,8 +204,7 @@ export class playbackManager {
         );
     }
 
-    // TODO eradicate any
-    playMediaSource(
+    private static playMediaSource(
         playSessionId: string,
         item: BaseItemDto,
         mediaSource: MediaSourceInfo,
@@ -253,7 +276,7 @@ export class playbackManager {
         this.playerManager.setMediaInformation(mediaInfo, false);
     }
 
-    stop(continuing = false): Promise<any> {
+    static stop(continuing = false): Promise<any> {
         $scope.playNextItem = continuing;
         stop();
 
@@ -269,12 +292,50 @@ export class playbackManager {
 
         this.playerManager.stop();
 
-        this.activePlaylist = [];
-        this.activePlaylistIndex = -1;
         startBackdropInterval();
 
         promise = promise || Promise.resolve();
 
         return promise;
+    }
+
+    /**
+     * Get information about the next item to play from window.playlist
+     *
+     * @returns ItemIndex including item and index, or null to end playback
+     */
+    static getNextPlaybackItemInfo(): ItemIndex | null {
+        if (this.activePlaylist.length < 1) {
+            return null;
+        }
+
+        let newIndex: number;
+
+        if (this.activePlaylistIndex < 0) {
+            // negative = play the first item
+            newIndex = 0;
+        } else
+            switch (window.repeatMode) {
+                case 'RepeatOne':
+                    newIndex = this.activePlaylistIndex;
+                    break;
+                case 'RepeatAll':
+                    newIndex = this.activePlaylistIndex + 1;
+                    if (newIndex >= this.activePlaylist.length) {
+                        newIndex = 0;
+                    }
+                    break;
+                default:
+                    newIndex = this.activePlaylistIndex + 1;
+                    break;
+            }
+
+        if (newIndex < this.activePlaylist.length) {
+            return {
+                item: this.activePlaylist[newIndex],
+                index: newIndex
+            };
+        }
+        return null;
     }
 }

@@ -24,7 +24,7 @@ import {
 } from './jellyfinActions';
 import { getDeviceProfile } from './deviceprofileBuilder';
 import { JellyfinApi } from './jellyfinApi';
-import { playbackManager } from './playbackManager';
+import { PlaybackManager } from './playbackManager';
 import { CommandHandler } from './commandHandler';
 import { getMaxBitrateSupport } from './codecSupportHelper';
 
@@ -36,9 +36,9 @@ import { GlobalScope, PlayRequest } from '~/types/global';
 window.castReceiverContext = cast.framework.CastReceiverContext.getInstance();
 window.mediaManager = window.castReceiverContext.getPlayerManager();
 
-const playbackMgr = new playbackManager(window.mediaManager);
+PlaybackManager.setPlayerManager(window.mediaManager);
 
-CommandHandler.configure(window.mediaManager, playbackMgr);
+CommandHandler.configure(window.mediaManager);
 
 resetPlaybackScope($scope);
 
@@ -146,7 +146,7 @@ mgr.addEventListener(cast.framework.events.EventType.PAUSE, (): void => {
 });
 
 function defaultOnStop(): void {
-    playbackMgr.stop();
+    PlaybackManager.stop();
 }
 
 mgr.addEventListener(
@@ -164,9 +164,8 @@ mgr.addEventListener(cast.framework.events.EventType.ENDED, function () {
     reportPlaybackStopped($scope, getReportingParams($scope));
     resetPlaybackScope($scope);
 
-    if (!playbackMgr.playNextItem()) {
-        window.playlist = [];
-        window.currentPlaylistIndex = -1;
+    if (!PlaybackManager.playNextItem()) {
+        PlaybackManager.resetPlaylist();
         startBackdropInterval();
     }
 });
@@ -482,10 +481,10 @@ export function translateItems(
                     i < length;
                     i++
                 ) {
-                    window.playlist.push(options.items[i]);
+                    PlaybackManager.enqueue(options.items[i]);
                 }
             } else {
-                playbackMgr.playFromOptions(data.options);
+                PlaybackManager.playFromOptions(data.options);
             }
         }
     );
@@ -498,7 +497,7 @@ export function instantMix(
 ): Promise<void> {
     return getInstantMixItems(data.userId, item).then(function (result) {
         options.items = result.Items;
-        playbackMgr.playFromOptions(data.options);
+        PlaybackManager.playFromOptions(data.options);
     });
 }
 
@@ -509,7 +508,7 @@ export function shuffle(
 ): Promise<void> {
     return getShuffleItems(data.userId, item).then(function (result) {
         options.items = result.Items;
-        playbackMgr.playFromOptions(data.options);
+        PlaybackManager.playFromOptions(data.options);
     });
 }
 
@@ -524,7 +523,7 @@ export function onStopPlayerBeforePlaybackDone(
         // Attach the custom properties we created like userId, serverAddress, itemId, etc
         extend(data, item);
 
-        playbackMgr.playItemInternal(data, options);
+        PlaybackManager.playItemInternal(data, options);
     }, broadcastConnectionErrorMessage);
 }
 

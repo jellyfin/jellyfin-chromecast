@@ -100,8 +100,6 @@ declare global {
         mediaElement: HTMLElement | null;
         mediaManager: cast.framework.PlayerManager;
         castReceiverContext: cast.framework.CastReceiverContext;
-        playlist: Array<any>;
-        currentPlaylistIndex: number;
         repeatMode: RepeatMode;
         reportEventType: 'repeatmodechange';
         subtitleAppearance: any;
