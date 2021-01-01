@@ -20,7 +20,6 @@ import {
     hasTextTrackSupport,
     hasVP8Support,
     hasVP9Support,
-    getMaxBitrateSupport,
     getMaxWidthSupport,
     getH26xProfileSupport,
     getH26xLevelSupport,
@@ -267,7 +266,7 @@ function getTranscodingProfiles(): Array<TranscodingProfile> {
     const TranscodingProfiles: Array<TranscodingProfile> = [];
 
     const hlsAudioCodecs = getSupportedHLSAudioCodecs();
-    const audioChannels: number = hasSurroundSupport(currentDeviceId) ? 6 : 2;
+    const audioChannels: number = hasSurroundSupport() ? 6 : 2;
 
     if (profileOptions.enableHls !== false) {
         TranscodingProfiles.push({
@@ -360,7 +359,8 @@ function getSubtitleProfiles(): Array<SubtitleProfile> {
 
 /**
  * Creates a device profile containing supported codecs for the active Cast device.
- * @param Profile options
+ *
+ * @param options Profile options
  * @returns Device profile.
  */
 export function getDeviceProfile(options: ProfileOptions): DeviceProfile {

@@ -26,7 +26,9 @@ import { BaseItemDto } from '../api/generated/models/base-item-dto';
 import { DeviceProfile } from '../api/generated/models/device-profile';
 import { MediaSourceInfo } from '../api/generated/models/media-source-info';
 import { PlayRequest } from '../api/generated/models/play-request';
+import { LiveStreamResponse } from '../api/generated/models/live-stream-response';
 import { JellyfinApi } from './jellyfinApi';
+import { BaseItemDtoQueryResult } from '~/api/generated/models/base-item-dto-query-result';
 
 interface PlayRequestQuery extends PlayRequest {
     UserId?: string;
@@ -41,6 +43,14 @@ let pingInterval: number;
 let backdropInterval: number;
 let lastTranscoderPing = 0;
 
+/**
+ * Start the transcoder pinging.
+ *
+ * This is used to keep the transcode available during pauses
+ *
+ * @param $scope global context
+ * @param reportingParams parameters to report to the server
+ */
 function restartPingInterval(
     $scope: GlobalScope,
     reportingParams: PlaybackProgressInfo
@@ -54,6 +64,11 @@ function restartPingInterval(
     }
 }
 
+/**
+ * Stop the transcoder ping
+ *
+ * Needed to stop the pinging when it's not needed anymore
+ */
 export function stopPingInterval(): void {
     if (pingInterval !== 0) {
         clearInterval(pingInterval);
@@ -61,13 +76,18 @@ export function stopPingInterval(): void {
     }
 }
 
+/**
+ * Report to the server that playback has started.
+ *
+ * @param $scope global scope
+ * @param reportingParams parameters to send to the server
+ * @returns promise to wait for the request
+ */
 export function reportPlaybackStart(
     $scope: GlobalScope,
     reportingParams: PlaybackProgressInfo
-): Promise<any> {
+): Promise<void> {
     clearBackdropInterval();
-
-    const url = JellyfinApi.createUrl('Sessions/Playing');
 
     broadcastToMessageBus({
         //TODO: convert these to use a defined type in the type field
@@ -77,21 +97,29 @@ export function reportPlaybackStart(
 
     restartPingInterval($scope, reportingParams);
 
-    return JellyfinApi.authAjax(url, {
+    return JellyfinApi.authAjax('Sessions/Playing', {
         type: 'POST',
         data: JSON.stringify(reportingParams),
         contentType: 'application/json'
     });
 }
 
+/**
+ * Report to the server the progress of the playback.
+ *
+ * @param $scope global scope
+ * @param reportingParams parameters for jellyfin
+ * @param reportToServer if jellyfin should be informed
+ * @param broadcastEventName name of event to send to the cast sender
+ */
 export function reportPlaybackProgress(
     $scope: GlobalScope,
     reportingParams: PlaybackProgressInfo,
-    reportToServer: boolean,
-    broadcastEventName: string
-): Promise<any> {
+    reportToServer = true,
+    broadcastEventName = 'playbackprogress'
+): Promise<void> {
     broadcastToMessageBus({
-        type: broadcastEventName || 'playbackprogress',
+        type: broadcastEventName,
         data: getSenderReportingData($scope, reportingParams)
     });
 
@@ -99,46 +127,53 @@ export function reportPlaybackProgress(
         return Promise.resolve();
     }
 
-    const url = JellyfinApi.createUrl('Sessions/Playing/Progress');
-
     restartPingInterval($scope, reportingParams);
     lastTranscoderPing = new Date().getTime();
 
-    return JellyfinApi.authAjax(url, {
+    return JellyfinApi.authAjax('Sessions/Playing/Progress', {
         type: 'POST',
         data: JSON.stringify(reportingParams),
         contentType: 'application/json'
     });
 }
 
+/**
+ * Report to the server that playback has stopped.
+ *
+ * @param $scope global scope
+ * @param reportingParams parameters to send to the server
+ * @returns promise for waiting for the request
+ */
 export function reportPlaybackStopped(
     $scope: GlobalScope,
     reportingParams: PlaybackProgressInfo
-): Promise<any> {
+): Promise<void> {
     stopPingInterval();
-
-    const url = JellyfinApi.createUrl('Sessions/Playing/Stopped');
 
     broadcastToMessageBus({
         type: 'playbackstop',
         data: getSenderReportingData($scope, reportingParams)
     });
 
-    return JellyfinApi.authAjax(url, {
+    return JellyfinApi.authAjax('Sessions/Playing/Stopped', {
         type: 'POST',
         data: JSON.stringify(reportingParams),
         contentType: 'application/json'
     });
 }
 
-/* This keeps the session alive when playback is paused by refreshing the server.
+/**
+ * This keeps the session alive when playback is paused by refreshing the server.
  * /Sessions/Playing/Progress does work but may not be called during pause.
  * The web client calls that during pause, but this endpoint gets the job done
  * as well.
- * */
+ *
+ * @param reportingParams progress information to carry
+ * @returns promise for waiting for the request
+ */
 export function pingTranscoder(
     reportingParams: PlaybackProgressInfo
-): Promise<any> {
+): Promise<void> {
     const now = new Date().getTime();
 
     // 10s is the timeout value, so use half that to report often enough
@@ -149,22 +184,25 @@ export function pingTranscoder(
         });
     }
 
-    // 10.7 oddly wants it as a query string parameter. This is a server bug for now.
-    const url = JellyfinApi.createUrl(
-        'Sessions/Playing/Ping?playSessionId=' + reportingParams.PlaySessionId
-    );
     lastTranscoderPing = new Date().getTime();
 
-    return JellyfinApi.authAjax(url, {
-        type: 'POST',
-        data: JSON.stringify({
-            // jellyfin <= 10.6 wants it in the post data.
-            PlaySessionId: reportingParams.PlaySessionId
-        }),
-        contentType: 'application/json'
-    });
+    // 10.7 oddly wants it as a query string parameter. This is a server bug for now.
+    return JellyfinApi.authAjax(
+        'Sessions/Playing/Ping?playSessionId=' + reportingParams.PlaySessionId,
+        {
+            type: 'POST',
+            data: JSON.stringify({
+                // jellyfin <= 10.6 wants it in the post data.
+                PlaySessionId: reportingParams.PlaySessionId
+            }),
+            contentType: 'application/json'
+        }
+    );
 }
 
+/**
+ * Stop the backdrop rotation
+ */
 function clearBackdropInterval(): void {
     if (backdropInterval !== 0) {
         clearInterval(backdropInterval);
@@ -172,6 +210,9 @@ function clearBackdropInterval(): void {
     }
 }
 
+/**
+ * Start the backdrop rotation
+ */
 export function startBackdropInterval(): void {
     clearBackdropInterval();
 
@@ -182,10 +223,13 @@ export function startBackdropInterval(): void {
     }, 30000);
 }
 
-function setRandomUserBackdrop(): void {
-    const url = JellyfinApi.createUserUrl('Items');
-
-    JellyfinApi.authAjax(url, {
+/**
+ * Get a random backdrop to set on the waiting container
+ *
+ * @returns promise to wait for the request
+ */
+function setRandomUserBackdrop(): Promise<void> {
+    return JellyfinApi.authAjaxUser('Items', {
         dataType: 'json',
         type: 'GET',
         query: {
@@ -198,19 +242,21 @@ function setRandomUserBackdrop(): void {
             // not everyone will want to see adult backdrops rotating on their TV.
             MaxOfficialRating: 'PG-13'
         }
-    }).then(function (result: any) {
-        const item = result.Items[0];
-
-        let backdropUrl = '';
-
-        if (item) {
-            backdropUrl = getBackdropUrl(item) || '';
+    }).then(function (result: BaseItemDtoQueryResult) {
+        let url = '';
+        if (result.Items && result.Items[0]) {
+            url = getBackdropUrl(result.Items[0]) || '';
         }
-
-        setWaitingBackdrop(backdropUrl);
+        setWaitingBackdrop(url);
     });
 }
 
+/**
+ * This function takes an item and shows details about it.
+ * This function is responsible for the details page that is shown while browsing jellyfin
+ *
+ * @param item item to show information about
+ */
 function showItem(item: BaseItemDto): void {
     clearBackdropInterval();
 
@@ -268,25 +314,26 @@ function showItem(item: BaseItemDto): void {
     setDetailImage(detailImageUrl);
 }
 
-export function displayItem(itemId: string): void {
-    const url = JellyfinApi.createUserUrl('Items/' + itemId);
-
-    JellyfinApi.authAjax(url, {
+/**
+ * Show item, but resolve it from an id number first
+ *
+ * @param itemId id to look up
+ * @returns promise to wait for the request
+ */
+export function displayItem(itemId: string): Promise<void> {
+    return JellyfinApi.authAjaxUser('Items/' + itemId, {
         dataType: 'json',
         type: 'GET'
-    }).then(function (item) {
-        showItem(item);
-    });
+    }).then((item: BaseItemDto) => showItem(item));
 }
 
-// TODO: Part of JellyfinApi
-export function getSubtitle(subtitleStreamUrl: string): Promise<any> {
-    return JellyfinApi.authAjax(subtitleStreamUrl, {
-        type: 'GET',
-        dataType: 'json'
-    });
-}
-
+/**
+ * Update the context about the item we are playing.
+ *
+ * @param $scope global context
+ * @param customData data to set on $scope
+ * @param serverItem item that is playing
+ */
 export function load(
     $scope: GlobalScope,
     customData: PlaybackProgressInfo,
@@ -302,7 +349,16 @@ export function load(
     $scope.mediaType = serverItem?.MediaType;
 }
 
-//TODO: rename these
+/**
+ * Tell the media manager to play and switch back into the correct view for Audio at least
+ * It's really weird and I don't get the 20ms delay.
+ *
+ * I also don't get doing nothing based on the currently visible app status
+ *
+ * TODO: rename these
+ *
+ * @param $scope global scope
+ */
 export function play($scope: GlobalScope): void {
     if (
         $scope.status == 'backdrop' ||
@@ -321,6 +377,9 @@ export function play($scope: GlobalScope): void {
     }
 }
 
+/**
+ * Don't actually stop, just show the idle view after 20ms
+ */
 export function stop(): void {
     setTimeout(function () {
         setAppStatus('waiting');
@@ -361,9 +420,7 @@ export function getPlaybackInfo(
         query.LiveStreamId = liveStreamId;
     }
 
-    const url = JellyfinApi.createUrl('Items/' + item.Id + '/PlaybackInfo');
-
-    return JellyfinApi.authAjax(url, {
+    return JellyfinApi.authAjax('Items/' + item.Id + '/PlaybackInfo', {
         query: query,
         type: 'POST',
         dataType: 'json',
@@ -379,9 +436,9 @@ export function getLiveStream(
     deviceProfile: DeviceProfile,
     startPosition: number,
     mediaSource: MediaSourceInfo,
-    audioStreamIndex: number,
-    subtitleStreamIndex: number
-): Promise<any> {
+    audioStreamIndex: number | null,
+    subtitleStreamIndex: number | null
+): Promise<LiveStreamResponse> {
     const postData = {
         DeviceProfile: deviceProfile,
         OpenToken: mediaSource.OpenToken
@@ -402,9 +459,7 @@ export function getLiveStream(
         query.SubtitleStreamIndex = subtitleStreamIndex;
     }
 
-    const url = JellyfinApi.createUrl('LiveStreams/Open');
-
-    return JellyfinApi.authAjax(url, {
+    return JellyfinApi.authAjax('LiveStreams/Open', {
         query: query,
         type: 'POST',
         dataType: 'json',
@@ -413,24 +468,42 @@ export function getLiveStream(
     });
 }
 
-export function getDownloadSpeed(byteSize: number): Promise<any> {
-    let url = JellyfinApi.createUrl('Playback/BitrateTest');
-    url += '?size=' + byteSize;
+/**
+ * Get download speed based on the jellyfin bitratetest api.
+ *
+ * FYI this API has a 10MB limit.
+ *
+ * @param byteSize number of bytes to request
+ * @returns the bitrate in bits/s
+ */
+export function getDownloadSpeed(byteSize: number): Promise<number> {
+    const path = 'Playback/BitrateTest?size=' + byteSize;
 
     const now = new Date().getTime();
 
-    return JellyfinApi.authAjax(url, {
+    return JellyfinApi.authAjax(path, {
         type: 'GET',
         timeout: 5000
-    }).then(function () {
-        const responseTimeSeconds = (new Date().getTime() - now) / 1000;
-        const bytesPerSecond = byteSize / responseTimeSeconds;
-        const bitrate = Math.round(bytesPerSecond * 8);
+    })
+        .then(function (response) {
+            // Need to wait for the whole response before calculating speed
+            return response.blob();
+        })
+        .then(function () {
+            const responseTimeSeconds = (new Date().getTime() - now) / 1000;
+            const bytesPerSecond = byteSize / responseTimeSeconds;
+            const bitrate = Math.round(bytesPerSecond * 8);
 
-        return bitrate;
-    });
+            return bitrate;
+        });
 }
 
+/**
+ * Function to detect the bitrate.
+ * It first tries 1MB and if bitrate is above 1Mbit/s it tries again with 2.4MB.
+ *
+ * @returns bitrate in bits/s
+ */
 export function detectBitrate(): Promise<number> {
     // First try a small amount so that we don't hang up their mobile connection
     return getDownloadSpeed(1000000).then(function (bitrate) {
@@ -445,7 +518,12 @@ export function detectBitrate(): Promise<number> {
     });
 }
 
-export function stopActiveEncodings($scope: GlobalScope): Promise<any> {
+/**
+ * Tell Jellyfin to kill off our active transcoding session
+ *
+ * @param $scope
+ */
+export function stopActiveEncodings($scope: GlobalScope): Promise<void> {
     const options = {
         deviceId: window.deviceInfo.deviceId,
         PlaySessionId: undefined
@@ -455,9 +533,7 @@ export function stopActiveEncodings($scope: GlobalScope): Promise<any> {
         options.PlaySessionId = $scope.playSessionId;
     }
 
-    const url = JellyfinApi.createUrl('Videos/ActiveEncodings');
-
-    return JellyfinApi.authAjax(url, {
+    return JellyfinApi.authAjax('Videos/ActiveEncodings', {
         type: 'DELETE',
         query: options
     });

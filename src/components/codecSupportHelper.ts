@@ -2,57 +2,94 @@ import { deviceIds } from './castDevices';
 
 const castContext = cast.framework.CastReceiverContext.getInstance();
 
+/**
+ * Checks if there is E-AC-3 support.
+ * This check returns in line with the cast settings made in Google Home.
+ * If the device is in auto, EDID information will be used, otherwise it
+ * depends on the manual setting.
+ *
+ * Currently it's disabled because of problems getting it to work with HLS.
+ *
+ * @returns true if E-AC-3 can be played
+ */
 export function hasEAC3Support(): boolean {
-    // Some error causes this not to work at all
     //return castContext.canDisplayType('audio/mp4', 'ec-3');
     return false;
 }
 
+/**
+ * Checks if there is AC-3 support.
+ * This check returns in line with the cast settings made in Google Home.
+ * If the device is in auto, EDID information will be used, otherwise it
+ * depends on the manual setting.
+ *
+ * Currently it's disabled because of problems getting it to work with HLS.
+ *
+ * @returns true if AC-3 can be played
+ *
+ */
 export function hasAC3Support(): boolean {
-    // Some error causes this not to work at all
     //return castContext.canDisplayType('audio/mp4', 'ac-3');
     return false;
 }
 
-export function hasSurroundSupport(deviceId: number): boolean {
-    // AC-3 in this client is broken. The cause is not known yet.
-    // However, the device does report correctly in this check.
-    // We can use that to estimate if we can send AAC 6ch.
-
-    // From my testing:
-    // GEN1+GEN2+GEN3 can only do 2.0 when AC3 is lacking.
-    // AUDIO has toslink at most, which doesn't do pcm 6ch.
-    // Forums indicate that they only support the passthrough option across the lineup.
-    // See https://support.google.com/chromecast/thread/362511
-
+/**
+ * Checks if the device can play any surround codecs.
+ *
+ * Potentially, we could guess that systems with E-AC-3 or AC-3
+ * will mostly support 6ch pcm, and if any generation of cast devices
+ * is actually capable of decoding e.g. aac 6ch, we can return true here
+ * and give it a shot.
+ *
+ * @returns true if surround codecs can be played
+ */
+export function hasSurroundSupport(): boolean {
     // This will turn on surround support if passthrough is available.
     return hasAC3Support();
-
-    // If there are cast devices that can decode 6ch audio:
-    // We cannot check if the connected system supports pcm 6ch, but we can check for ac-3.
-    // Sadly there are some situations (toslink) that supports ac-3 but not pcm 6ch.
-    // In those cases we will rely on chromecast downmixing.
-    //return castContext.canDisplayType('audio/mp4', 'ac-3');
 }
 
+/**
+ * Check if this device can play HEVC content.
+ *
+ * @returns true if HEVC is supported
+ */
 export function hasH265Support(): boolean {
     return castContext.canDisplayType('video/mp4', 'hev1.1.6.L150.B0');
 }
 
+/**
+ * Check if this device can play text tracks.
+ * This is not supported on Chromecast Audio,
+ * but otherwise is.
+ *
+ * @param deviceId the device id
+ * @returns true if text tracks are supported
+ */
 export function hasTextTrackSupport(deviceId: number): boolean {
     return deviceId !== deviceIds.AUDIO;
 }
 
+/**
+ * Check if this device can play VP-8 content.
+ *
+ * @returns true if VP-8 is supported
+ */
 export function hasVP8Support(): boolean {
     return castContext.canDisplayType('video/webm', 'vp8');
 }
 
+/**
+ * Check if this device can play VP-9 content.
+ *
+ * @returns true if VP-9 is supported
+ */
 export function hasVP9Support(): boolean {
     return castContext.canDisplayType('video/webm', 'vp9');
 }
 
 /**
  * Get the max supported media bitrate for the active Cast device.
+ *
  * @returns Max supported bitrate.
  */
 export function getMaxBitrateSupport(): number {
@@ -64,6 +101,7 @@ export function getMaxBitrateSupport(): number {
 
 /**
  * Get the max supported video width the active Cast device supports.
+ *
  * @param deviceId Cast device id.
  * @returns Max supported width.
  */
@@ -84,6 +122,7 @@ export function getMaxWidthSupport(deviceId: number): number {
 
 /**
  * Get all H.26x profiles supported by the active Cast device.
+ *
  * @param {number} deviceId Cast device id.
  * @returns {string} All supported H.26x profiles.
  */
@@ -100,6 +139,7 @@ export function getH26xProfileSupport(deviceId: number): string {
 
 /**
  * Get the highest H.26x level supported by the active Cast device.
+ *
  * @param deviceId Cast device id.
  * @returns The highest supported H.26x level.
  */
@@ -120,6 +160,7 @@ export function getH26xLevelSupport(deviceId: number): number {
 
 /**
  * Get VPX (VP8, VP9) codecs supported by the active Cast device.
+ *
  * @returns Supported VPX codecs.
  */
 export function getSupportedVPXVideoCodecs(): Array<string> {
@@ -137,6 +178,7 @@ export function getSupportedVPXVideoCodecs(): Array<string> {
 
 /**
  * Get supported video codecs suitable for use in an MP4 container.
+ *
  * @returns Supported MP4 video codecs.
  */
 export function getSupportedMP4VideoCodecs(): Array<string> {
@@ -152,6 +194,7 @@ export function getSupportedMP4VideoCodecs(): Array<string> {
 
 /**
  * Get supported audio codecs suitable for use in an MP4 container.
+ *
  * @returns Supported MP4 audio codecs.
  */
 export function getSupportedMP4AudioCodecs(): Array<string> {
@@ -169,6 +212,7 @@ export function getSupportedMP4AudioCodecs(): Array<string> {
 
 /**
  * Get supported video codecs suitable for use with HLS.
+ *
  * @returns Supported HLS video codecs.
  */
 export function getSupportedHLSVideoCodecs(): Array<string> {
@@ -179,6 +223,7 @@ export function getSupportedHLSVideoCodecs(): Array<string> {
 
 /**
  * Get supported audio codecs suitable for use with HLS.
+ *
  * @returns All supported HLS audio codecs.
  */
 export function getSupportedHLSAudioCodecs(): Array<string> {
@@ -188,6 +233,7 @@ export function getSupportedHLSAudioCodecs(): Array<string> {
 
 /**
  * Get supported audio codecs suitable for use in a WebM container.
+ *
  * @returns All supported WebM audio codecs.
  */
 export function getSupportedWebMAudioCodecs(): Array<string> {
@@ -196,6 +242,7 @@ export function getSupportedWebMAudioCodecs(): Array<string> {
 
 /**
  * Get supported audio codecs suitable for use in a WebM container.
+ *
  * @returns All supported WebM audio codecs.
  */
 export function getSupportedAudioCodecs(): Array<string> {

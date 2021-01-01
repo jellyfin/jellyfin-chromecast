@@ -39,7 +39,7 @@ jobs:
               run: yarn install --frozen-lockfile
 
             - name: Run ESLint
-              run: yarn run lint:js
+              run: yarn run lint:code
 
     lint-css:
         name: Lint CSS

@@ -1,5 +1,5 @@
 import { ajax } from './fetchhelper';
-import { Dictionary } from '../types/global';
+import { Dictionary } from '~/types/global';
 
 export abstract class JellyfinApi {
     // userId that we are connecting as currently
@@ -15,14 +15,9 @@ export abstract class JellyfinApi {
         userId: string,
         accessToken: string,
         serverAddress: string
-    ) {
+    ): void {
         console.debug(
-            'JellyfinApi.setServerInfo: user:' +
-                userId +
-                ', token:' +
-                accessToken +
-                ', server:' +
-                serverAddress
+            `JellyfinApi.setServerInfo: user:${userId}, token:${accessToken}, server:${serverAddress}`
         );
         this.userId = userId;
         this.accessToken = accessToken;
@@ -33,20 +28,17 @@ export abstract class JellyfinApi {
     private static getSecurityHeaders(): Dictionary<string> {
         // TODO throw error if this fails
 
-        var auth =
-            'Emby Client="Chromecast", Device="' +
-            window.deviceInfo.deviceName +
-            '", DeviceId="' +
-            window.deviceInfo.deviceId +
-            '", Version="' +
-            window.deviceInfo.versionNumber +
-            '"';
+        let auth =
+            `Emby Client="Chromecast", ` +
+            `Device="${window.deviceInfo.deviceName}", ` +
+            `DeviceId="${window.deviceInfo.deviceId}", ` +
+            `Version="${window.deviceInfo.versionNumber}"`;
 
         if (this.userId) {
-            auth += ', UserId="' + this.userId + '"';
+            auth += `, UserId="${this.userId}"`;
         }
 
-        var headers: Dictionary<string> = {
+        const headers: Dictionary<string> = {
             Authorization: auth
         };
 
@@ -59,6 +51,10 @@ export abstract class JellyfinApi {
     // Create a basic url.
     // Cannot start with /.
     public static createUrl(path: string): string {
+        if (this.serverAddress === null) {
+            console.error('JellyfinApi.createUrl: no server address present');
+            return '';
+        }
         // Remove leading slashes
         while (path.charAt(0) === '/') path = path.substring(1);
 
@@ -75,9 +71,39 @@ export abstract class JellyfinApi {
     }
 
     // Authenticated ajax
-    public static authAjax(url: string, args: any): Promise<any> {
+    public static authAjax(path: string, args: any): Promise<any> {
+        if (
+            this.userId === null ||
+            this.accessToken === null ||
+            this.serverAddress === null
+        ) {
+            console.error(
+                'JellyfinApi.authAjax: No userid/accesstoken/serverAddress present. Skipping request'
+            );
+            return Promise.reject('no server info present');
+        }
         const params = {
-            url: url,
+            url: this.createUrl(path),
+            headers: this.getSecurityHeaders()
+        };
+
+        return ajax({ ...params, ...args });
+    }
+
+    // Authenticated ajax
+    public static authAjaxUser(path: string, args: any): Promise<any> {
+        if (
+            this.userId === null ||
+            this.accessToken === null ||
+            this.serverAddress === null
+        ) {
+            console.error(
+                'JellyfinApi.authAjaxUser: No userid/accesstoken/serverAddress present. Skipping request'
+            );
+            return Promise.reject('no server info present');
+        }
+        const params = {
+            url: this.createUserUrl(path),
             headers: this.getSecurityHeaders()
         };
 

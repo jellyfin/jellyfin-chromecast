@@ -1,9 +1,10 @@
+/* eslint @typescript-eslint/no-var-requires: "off" */
 const path = require('path');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const webpack = require('webpack');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const packagejson = require('./package.json');
 const ImageMinimizerPlugin = require('image-minimizer-webpack-plugin');
+const packagejson = require('./package.json');
 
 const config = {
     context: path.resolve(__dirname, 'src'),

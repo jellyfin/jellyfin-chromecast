@@ -1,2 +1,3 @@
-api
+src/api/generated
+node_modules
 dist

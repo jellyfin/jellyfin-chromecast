@@ -1,4 +1,6 @@
 dist/
-src/api/
+node_modules/
+src/api/generated/
 
 *.html
+LICENSE.md
