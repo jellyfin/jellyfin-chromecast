@@ -19,10 +19,9 @@ import {
 } from './jellyfinActions';
 import { getDeviceProfile } from './deviceprofileBuilder';
 import { JellyfinApi } from './jellyfinApi';
-import { playbackManager } from './playbackManager';
+import { PlaybackManager } from './playbackManager';
 import { CommandHandler } from './commandHandler';
 import { getMaxBitrateSupport } from './codecSupportHelper';
-import { DocumentManager } from './documentManager';
 import { BaseItemDto } from '~/api/generated/models/base-item-dto';
 import { MediaSourceInfo } from '~/api/generated/models/media-source-info';
 import { GlobalScope, PlayRequest } from '~/types/global';
@@ -30,9 +29,9 @@ import { GlobalScope, PlayRequest } from '~/types/global';
 window.castReceiverContext = cast.framework.CastReceiverContext.getInstance();
 window.playerManager = window.castReceiverContext.getPlayerManager();
 
-const playbackMgr = new playbackManager(window.playerManager);
+PlaybackManager.setPlayerManager(window.playerManager);
 
-CommandHandler.configure(window.playerManager, playbackMgr);
+CommandHandler.configure(window.playerManager);
 
 resetPlaybackScope($scope);
 
@@ -166,7 +165,7 @@ window.playerManager.addEventListener(
  *
  */
 function defaultOnStopped(): void {
-    playbackMgr.onStopped(true);
+    PlaybackManager.onStopped();
 }
 
 window.playerManager.addEventListener(
@@ -189,10 +188,9 @@ window.playerManager.addEventListener(
         reportPlaybackStopped($scope, getReportingParams($scope));
         resetPlaybackScope($scope);
 
-        if (!playbackMgr.playNextItem()) {
-            window.playlist = [];
-            window.currentPlaylistIndex = -1;
-            DocumentManager.startBackdropInterval();
+        if (!PlaybackManager.playNextItem()) {
+            PlaybackManager.resetPlaylist();
+            PlaybackManager.onStopped();
         }
     }
 );
@@ -459,7 +457,7 @@ export async function changeStream(
     //    await stopActiveEncodings($scope.playSessionId);
     //}
 
-    return await playbackMgr.playItemInternal($scope.item, {
+    return await PlaybackManager.playItemInternal($scope.item, {
         audioStreamIndex:
             params.AudioStreamIndex == null
                 ? $scope.audioStreamIndex
@@ -522,10 +520,10 @@ export async function translateItems(
 
     if (method == 'PlayNext' || method == 'PlayLast') {
         for (let i = 0, length = options.items.length; i < length; i++) {
-            window.playlist.push(options.items[i]);
+            PlaybackManager.enqueue(options.items[i]);
         }
     } else {
-        playbackMgr.playFromOptions(data.options);
+        PlaybackManager.playFromOptions(data.options);
     }
 }
 
@@ -542,7 +540,7 @@ export async function instantMix(
     const result = await getInstantMixItems(data.userId, item);
 
     options.items = result.Items;
-    playbackMgr.playFromOptions(data.options);
+    PlaybackManager.playFromOptions(data.options);
 }
 
 /**
@@ -558,7 +556,7 @@ export async function shuffle(
     const result = await getShuffleItems(data.userId, item);
 
     options.items = result.Items;
-    playbackMgr.playFromOptions(data.options);
+    PlaybackManager.playFromOptions(data.options);
 }
 
 /**
@@ -578,7 +576,7 @@ export async function onStopPlayerBeforePlaybackDone(
         type: 'GET'
     });
 
-    playbackMgr.playItemInternal(data, options);
+    PlaybackManager.playItemInternal(data, options);
     broadcastConnectionErrorMessage();
 }
 

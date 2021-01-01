@@ -1,5 +1,6 @@
 import { JellyfinApi } from './components/jellyfinApi';
 import { DocumentManager } from './components/documentManager';
+import { PlaybackManager } from './components/playbackManager';
 
 import { BaseItemDtoQueryResult } from './api/generated/models/base-item-dto-query-result';
 import { PlaybackProgressInfo } from './api/generated/models/playback-progress-info';
@@ -7,7 +8,7 @@ import { MediaSourceInfo } from './api/generated/models/media-source-info';
 import { BaseItemDto } from './api/generated/models/base-item-dto';
 import { BaseItemPerson } from './api/generated/models/base-item-person';
 import { UserDto } from './api/generated/models/user-dto';
-import { GlobalScope, BusMessage, ItemIndex, ItemQuery } from './types/global';
+import { GlobalScope, BusMessage, ItemQuery } from './types/global';
 
 /**
  * Get current playback position in ticks, adjusted for server seeking
@@ -55,53 +56,6 @@ export function getReportingParams($scope: GlobalScope): PlaybackProgressInfo {
         SubtitleStreamIndex: $scope.subtitleStreamIndex,
         VolumeLevel: Math.round(window.volume.level * 100)
     };
-}
-
-/**
- * Get information about the next item to play from window.playlist
- *
- * @returns ItemIndex including item and index, or null to end playback
- */
-export function getNextPlaybackItemInfo(): ItemIndex | null {
-    const playlist = window.playlist;
-
-    if (!playlist) {
-        return null;
-    }
-
-    let newIndex: number;
-
-    if (window.currentPlaylistIndex == -1) {
-        newIndex = 0;
-    } else {
-        switch (window.repeatMode) {
-            case 'RepeatOne':
-                newIndex = window.currentPlaylistIndex;
-                break;
-            case 'RepeatAll':
-                newIndex = window.currentPlaylistIndex + 1;
-
-                if (newIndex >= window.playlist.length) {
-                    newIndex = 0;
-                }
-
-                break;
-            default:
-                newIndex = window.currentPlaylistIndex + 1;
-                break;
-        }
-    }
-
-    if (newIndex < playlist.length) {
-        const item = playlist[newIndex];
-
-        return {
-            index: newIndex,
-            item: item
-        };
-    }
-
-    return null;
 }
 
 /**
@@ -196,7 +150,7 @@ export function getSenderReportingData(
         }
 
         if ($scope.playNextItem) {
-            const nextItemInfo = getNextPlaybackItemInfo();
+            const nextItemInfo = PlaybackManager.getNextPlaybackItemInfo();
 
             if (nextItemInfo) {
                 state.NextMediaType = nextItemInfo.item.MediaType;
