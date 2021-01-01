@@ -1,0 +1,6 @@
+{
+    "welcome": {
+        "readyToCast": "Ready to Cast",
+        "selectMedia": "Select your media in Jellyfin and play it here"
+    }
+}

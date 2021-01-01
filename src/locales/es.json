@@ -1,0 +1,6 @@
+{
+    "welcome": {
+        "readyToCast": "Listo para reproducir",
+        "selectMedia": "Selecciona tu contenido en Jellyfin y reprodúcelo aquí"
+    }
+}
