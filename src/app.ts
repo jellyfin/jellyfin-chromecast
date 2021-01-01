@@ -1,4 +1,4 @@
-import { RepeatMode } from './api/generated/models/repeat-mode';
+import { RepeatMode } from '@jellyfin/client-axios';
 import './components/maincontroller';
 import './css/jellyfin.css';
 

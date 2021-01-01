@@ -1,4 +1,9 @@
 import {
+    BaseItemDtoQueryResult,
+    BaseItemDto,
+    MediaSourceInfo
+} from '@jellyfin/client-axios';
+import {
     getCurrentPositionTicks,
     getReportingParams,
     resetPlaybackScope,
@@ -27,10 +32,6 @@ import { JellyfinApi } from './jellyfinApi';
 import { playbackManager } from './playbackManager';
 import { CommandHandler } from './commandHandler';
 import { getMaxBitrateSupport } from './codecSupportHelper';
-
-import { BaseItemDtoQueryResult } from '~/api/generated/models/base-item-dto-query-result';
-import { BaseItemDto } from '~/api/generated/models/base-item-dto';
-import { MediaSourceInfo } from '~/api/generated/models/media-source-info';
 import { GlobalScope, PlayRequest } from '~/types/global';
 
 window.castReceiverContext = cast.framework.CastReceiverContext.getInstance();

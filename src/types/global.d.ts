@@ -1,5 +1,4 @@
-import { RepeatMode } from '../api/generated/models/repeat-mode';
-import { BaseItemDto } from '../api/generated/models/base-item-dto';
+import { RepeatMode, BaseItemDto } from '@jellyfin/client-axios';
 
 export interface DeviceInfo {
     deviceId: string | number;

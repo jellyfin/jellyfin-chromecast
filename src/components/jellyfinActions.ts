@@ -1,4 +1,13 @@
 import {
+    PlaybackProgressInfo,
+    BaseItemDto,
+    DeviceProfile,
+    MediaSourceInfo,
+    PlayRequest,
+    LiveStreamResponse,
+    BaseItemDtoQueryResult
+} from '@jellyfin/client-axios';
+import {
     getSenderReportingData,
     resetPlaybackScope,
     getBackdropUrl,
@@ -21,14 +30,7 @@ import {
 } from '../helpers';
 
 import { GlobalScope } from '../types/global';
-import { PlaybackProgressInfo } from '../api/generated/models/playback-progress-info';
-import { BaseItemDto } from '../api/generated/models/base-item-dto';
-import { DeviceProfile } from '../api/generated/models/device-profile';
-import { MediaSourceInfo } from '../api/generated/models/media-source-info';
-import { PlayRequest } from '../api/generated/models/play-request';
-import { LiveStreamResponse } from '../api/generated/models/live-stream-response';
 import { JellyfinApi } from './jellyfinApi';
-import { BaseItemDtoQueryResult } from '~/api/generated/models/base-item-dto-query-result';
 
 interface PlayRequestQuery extends PlayRequest {
     UserId?: string;

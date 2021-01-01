@@ -1,3 +1,4 @@
+import { BaseItemDto, MediaSourceInfo } from '@jellyfin/client-axios';
 import {
     getNextPlaybackItemInfo,
     getIntros,
@@ -28,9 +29,6 @@ import {
     checkDirectPlay,
     createMediaInformation
 } from './maincontroller';
-
-import { BaseItemDto } from '~/api/generated/models/base-item-dto';
-import { MediaSourceInfo } from '~/api/generated/models/media-source-info';
 
 export class playbackManager {
     private playerManager: cast.framework.PlayerManager;

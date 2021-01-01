@@ -1,11 +1,12 @@
+import {
+    BaseItemDtoQueryResult,
+    PlaybackProgressInfo,
+    MediaSourceInfo,
+    BaseItemDto,
+    BaseItemPerson,
+    UserDto
+} from '@jellyfin/client-axios';
 import { JellyfinApi } from './components/jellyfinApi';
-
-import { BaseItemDtoQueryResult } from './api/generated/models/base-item-dto-query-result';
-import { PlaybackProgressInfo } from './api/generated/models/playback-progress-info';
-import { MediaSourceInfo } from './api/generated/models/media-source-info';
-import { BaseItemDto } from './api/generated/models/base-item-dto';
-import { BaseItemPerson } from './api/generated/models/base-item-person';
-import { UserDto } from './api/generated/models/user-dto';
 import { GlobalScope, BusMessage, ItemIndex, ItemQuery } from './types/global';
 
 /**
