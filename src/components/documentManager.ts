@@ -12,8 +12,10 @@ export abstract class DocumentManager {
     // TODO make enum
     private static status = '';
 
+    /**
+     * Hide the document body on chromecast audio to save resources
+     */
     public static initialize(): void {
-        // Hide the body on cc audio to save resources
         if (getActiveDeviceId() === deviceIds.AUDIO)
             document.body.style.display = 'none';
     }
