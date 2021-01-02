@@ -1,5 +1,6 @@
 import { parseISO8601Date } from '../helpers';
 import { JellyfinApi } from './jellyfinApi';
+import { deviceIds, getActiveDeviceId } from './castDevices';
 import { BaseItemDto } from '~/api/generated/models/base-item-dto';
 
 export abstract class DocumentManager {
@@ -10,6 +11,12 @@ export abstract class DocumentManager {
 
     // TODO make enum
     private static status = '';
+
+    public static initialize(): void {
+        // Hide the body on cc audio to save resources
+        if (getActiveDeviceId() === deviceIds.AUDIO)
+            document.body.style.display = 'none';
+    }
 
     /**
      * Set the background image for a html element, with image preloading.
@@ -78,6 +85,9 @@ export abstract class DocumentManager {
      * @param {BaseItemDto} item to show information about
      */
     public static showItem(item: BaseItemDto): void {
+        // no showItem for cc audio
+        if (getActiveDeviceId() === deviceIds.AUDIO) return;
+
         // stop cycling backdrops
         this.clearBackdropInterval();
 
@@ -140,11 +150,19 @@ export abstract class DocumentManager {
      * @param {string} itemId id of item to look up
      * @returns {Promise<void>} promise that resolves when the item is shown
      */
-    public static showItemId(itemId: string): Promise<void> {
-        return JellyfinApi.authAjaxUser('Items/' + itemId, {
-            dataType: 'json',
-            type: 'GET'
-        }).then((item: BaseItemDto) => DocumentManager.showItem(item));
+    public static async showItemId(itemId: string): Promise<void> {
+        // no showItemId for cc audio
+        if (getActiveDeviceId() === deviceIds.AUDIO) return;
+
+        const item: BaseItemDto = await JellyfinApi.authAjaxUser(
+            'Items/' + itemId,
+            {
+                dataType: 'json',
+                type: 'GET'
+            }
+        );
+
+        DocumentManager.showItem(item);
     }
 
     /**
@@ -278,14 +296,17 @@ export abstract class DocumentManager {
      *
      * @returns {Promise<void>} promise for the first backdrop to be set
      */
-    public static startBackdropInterval(): Promise<void> {
+    public static async startBackdropInterval(): Promise<void> {
+        // no backdrop rotation for cc audio
+        if (getActiveDeviceId() === deviceIds.AUDIO) return;
+
         // avoid running it multiple times
         this.clearBackdropInterval();
 
         // skip out if it's disabled
         if (!this.backdropPeriodMs) {
             this.setWaitingBackdrop(null);
-            return Promise.resolve();
+            return;
         }
 
         this.backdropTimer = <any>(
@@ -295,7 +316,7 @@ export abstract class DocumentManager {
             )
         );
 
-        return this.setRandomUserBackdrop();
+        await this.setRandomUserBackdrop();
     }
 
     /**
@@ -328,6 +349,9 @@ export abstract class DocumentManager {
      * @param {BaseItemDto} item to get backdrop from
      */
     public static setPlayerBackdrop(item: BaseItemDto): void {
+        // no backdrop rotation for cc audio
+        if (getActiveDeviceId() === deviceIds.AUDIO) return;
+
         let backdropUrl: string | null = null;
 
         if (item.BackdropImageTags && item.BackdropImageTags.length) {
@@ -629,3 +653,5 @@ export abstract class DocumentManager {
         }
     }
 }
+
+DocumentManager.initialize();
