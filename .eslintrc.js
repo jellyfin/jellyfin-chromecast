@@ -3,7 +3,8 @@ module.exports = {
     plugins: ['@typescript-eslint', 'prettier', 'promise', 'import', 'jsdoc'],
     env: {
         node: true,
-        es6: true
+        es6: true,
+        browser: true
     },
     extends: [
         'eslint:recommended',

@@ -12,6 +12,29 @@ export abstract class DocumentManager {
     private static status = '';
 
     /**
+     * Set the background image for a html element, with image preloading.
+     *
+     * @param {HTMLElement} element HTML Element
+     * @param {string | null} src URL to the image or null to remove the active one
+     */
+    private static setBackgroundImage(
+        element: HTMLElement,
+        src: string | null
+    ): void {
+        if (src) {
+            const preload = new Image();
+            preload.src = src;
+            preload.addEventListener('load', () => {
+                requestAnimationFrame(() => {
+                    element.style.backgroundImage = `url(${src})`;
+                });
+            });
+        } else {
+            element.style.backgroundImage = '';
+        }
+    }
+
+    /**
      * Get url for primary image for a given item
      *
      * @param {BaseItemDto} item to look up
@@ -205,13 +228,12 @@ export abstract class DocumentManager {
             '#waiting-container-backdrop'
         );
 
-        if (element === null) {
+        if (element) {
+            this.setBackgroundImage(element, src);
+        } else {
             console.error(
                 'documentManager: Cannot find #waiting-container-backdrop'
             );
-        } else {
-            (<HTMLElement>element).style.backgroundImage =
-                src != null ? `url(${src})` : '';
         }
     }
 
@@ -342,11 +364,10 @@ export abstract class DocumentManager {
         const element: HTMLElement | null = document.querySelector(
             '.detailLogo'
         );
-        if (element === null) {
-            console.error('documentManager: Cannot find .detailLogo');
+        if (element) {
+            this.setBackgroundImage(element, src);
         } else {
-            (<HTMLElement>element).style.backgroundImage =
-                src != null ? `url(${src})` : '';
+            console.error('documentManager: Cannot find .detailLogo');
         }
     }
 
@@ -360,11 +381,10 @@ export abstract class DocumentManager {
         const element: HTMLElement | null = document.querySelector(
             '.detailImage'
         );
-        if (element === null) {
-            console.error('documentManager: Cannot find .detailImage');
+        if (element) {
+            this.setBackgroundImage(element, src);
         } else {
-            (<HTMLElement>element).style.backgroundImage =
-                src != null ? `url(${src})` : '';
+            console.error('documentManager: Cannot find .detailImage');
         }
     }
 
