@@ -47,7 +47,9 @@ body {
     background-position: center;
     background-size: cover;
     background-repeat: no-repeat;
-    background-color: rgba(15, 15, 15, 0.82);
+
+    /* Layer on top of the backdrop image: */
+    background-color: rgba(15, 15, 15, 0.6);
     position: absolute;
     top: 0;
     left: 0;
@@ -244,15 +246,24 @@ body {
     text-overflow: ellipsis;
 }
 
+/* Container for "ready to cast" and the logo */
 .waitingContent {
     position: fixed;
-    top: 50%;
-    right: 0;
-    bottom: auto;
+    bottom: 0;
     left: 0;
-    height: 415px;
-    margin-top: -207px;
     text-align: center;
+    font-size: 45px;
+    margin-bottom: 3%;
+    margin-left: 5%;
+}
+
+/* Container for backdrop description */
+.waitingDescription {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    margin-right: 5%;
+    margin-bottom: 3%;
 }
 
 #waiting-container h1,
@@ -261,7 +272,7 @@ body {
 }
 
 #waiting-container h1 {
-    font-size: 60px;
+    font-size: 45px;
     font-weight: 300;
 }
 
@@ -273,11 +284,11 @@ body {
 }
 /* stylelint-enable no-descending-specificity */
 
+/* jellyfin logo in the waiting container */
 #waiting-container .logo {
-    height: 200px;
-    margin: 0 auto;
-    width: auto;
-    display: block;
+    height: 55px;
+    display: inline-block;
+    vertical-align: text-bottom;
 }
 
 .waiting > #waiting-container-backdrop,

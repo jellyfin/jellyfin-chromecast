@@ -25,21 +25,29 @@ export abstract class DocumentManager {
      *
      * @param {HTMLElement} element HTML Element
      * @param {string | null} src URL to the image or null to remove the active one
+     * @returns {Promise<void>} wait for the background to be switched
      */
     private static setBackgroundImage(
         element: HTMLElement,
         src: string | null
-    ): void {
+    ): Promise<void> {
         if (src) {
-            const preload = new Image();
-            preload.src = src;
-            preload.addEventListener('load', () => {
-                requestAnimationFrame(() => {
-                    element.style.backgroundImage = `url(${src})`;
+            return new Promise((resolve, reject) => {
+                const preload = new Image();
+                preload.src = src;
+                preload.addEventListener('load', () => {
+                    requestAnimationFrame(() => {
+                        element.style.backgroundImage = `url(${src})`;
+                        resolve();
+                    });
+                });
+                preload.addEventListener('error', () => {
+                    reject();
                 });
             });
         } else {
             element.style.backgroundImage = '';
+            return Promise.resolve();
         }
     }
 
@@ -222,7 +230,9 @@ export abstract class DocumentManager {
      *
      * @param {BaseItemDto | null} item Item to use for waiting backdrop, null to remove it.
      */
-    public static setWaitingBackdrop(item: BaseItemDto | null): void {
+    public static async setWaitingBackdrop(
+        item: BaseItemDto | null
+    ): Promise<void> {
         // no backdrop as a fallback
         let src: string | null = null;
 
@@ -244,16 +254,24 @@ export abstract class DocumentManager {
             }
         }
 
-        const element: HTMLElement | null = document.querySelector(
+        let element: HTMLElement | null = document.querySelector(
             '#waiting-container-backdrop'
         );
 
         if (element) {
-            this.setBackgroundImage(element, src);
+            await this.setBackgroundImage(element, src);
         } else {
             console.error(
                 'documentManager: Cannot find #waiting-container-backdrop'
             );
+        }
+
+        element = document.querySelector('.waitingDescription');
+
+        if (!element) {
+            console.error('documentManager: Cannot find .detailImage');
+        } else {
+            element.innerHTML = item?.Name ?? '';
         }
     }
 
