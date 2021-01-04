@@ -6,7 +6,6 @@
         "lib": ["dom", "ESNext"],
         "allowJs": true,
         "resolveJsonModule": true,
-        "allowSyntheticDefaultImports": true,
         "esModuleInterop": true,
         "sourceMap": true,
         "outDir": "./dist/",

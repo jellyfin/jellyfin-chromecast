@@ -7,14 +7,14 @@ module.exports = {
     },
     extends: [
         'eslint:recommended',
-        'prettier',
         'plugin:prettier/recommended',
         'plugin:promise/recommended',
         'plugin:@typescript-eslint/recommended',
         'plugin:jsdoc/recommended',
         'plugin:import/errors',
         'plugin:import/warnings',
-        'plugin:import/typescript'
+        'plugin:import/typescript',
+        'prettier'
     ],
     rules: {
         '@typescript-eslint/explicit-function-return-type': 'error',

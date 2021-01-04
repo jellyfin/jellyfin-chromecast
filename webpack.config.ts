@@ -2,9 +2,11 @@
 
 import * as path from 'path';
 import * as webpack from 'webpack';
+import { DefinePlugin } from 'webpack';
 import { merge } from 'webpack-merge';
 import { CleanWebpackPlugin } from 'clean-webpack-plugin';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
+import ImageMinimizerPlugin from 'image-minimizer-webpack-plugin';
 
 import packagejson from './package.json';
 
@@ -26,6 +28,22 @@ const common: webpack.Configuration = {
             template: 'index.html',
             hash: false,
             favicon: 'favicon.ico'
+        }),
+        new ImageMinimizerPlugin({
+            minimizerOptions: {
+                plugins: [
+                    [
+                        'svgo',
+                        {
+                            plugins: [
+                                {
+                                    removeComments: false
+                                }
+                            ]
+                        }
+                    ]
+                ]
+            }
         })
     ],
     module: {
@@ -58,7 +76,7 @@ const development: webpack.Configuration = {
         publicPath: '/'
     },
     plugins: [
-        new webpack.DefinePlugin({
+        new DefinePlugin({
             PRODUCTION: JSON.stringify(false),
             RECEIVERVERSION: JSON.stringify(packagejson.version)
         })
@@ -68,14 +86,17 @@ const development: webpack.Configuration = {
 const production: webpack.Configuration = {
     mode: 'production',
     plugins: [
-        new webpack.DefinePlugin({
+        new DefinePlugin({
             PRODUCTION: JSON.stringify(true),
             RECEIVERVERSION: JSON.stringify(packagejson.version)
         })
     ]
 };
 
-module.exports = (env: string, argv: { [key: string]: string }) => {
+module.exports = (
+    env: string,
+    argv: { [key: string]: string }
+): webpack.Configuration => {
     let config;
     if (argv.mode === 'production') {
         config = merge(common, production);
