@@ -54,7 +54,7 @@ export abstract class PlaybackManager {
         );
     }
 
-    static async playFromOptions(options: any): Promise<boolean> {
+    static async playFromOptions(options: any): Promise<void> {
         const firstItem = options.items[0];
 
         if (options.startPositionTicks || firstItem.MediaType !== 'Video') {
@@ -68,17 +68,18 @@ export abstract class PlaybackManager {
         return this.playFromOptionsInternal(options);
     }
 
-    private static playFromOptionsInternal(options: any): boolean {
+    private static playFromOptionsInternal(options: any): Promise<void> {
         const stopPlayer =
             this.activePlaylist && this.activePlaylist.length > 0;
 
         this.activePlaylist = options.items;
-        // We need to set -1 so the next index will be 0
-        this.activePlaylistIndex = -1;
+        this.activePlaylistIndex = options.startIndex || 0;
 
         console.log('Loaded new playlist:', this.activePlaylist);
 
-        return this.playNextItem(options, stopPlayer);
+        // When starting playback initially, don't use
+        // the next item facility.
+        return this.playItem(options, stopPlayer);
     }
 
     // add item to playlist
