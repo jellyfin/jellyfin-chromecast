@@ -111,24 +111,15 @@ export abstract class DocumentManager {
 
         this.setMiscInfo(item);
 
-        const detailRating = document.getElementById('detailRating');
-        if (detailRating) {
-            detailRating.innerHTML = this.getRatingHtml(item);
-        }
+        const detailRating = this.getElementById('detailRating');
+        detailRating.innerHTML = this.getRatingHtml(item);
 
-        const playedIndicator = document.getElementById('playedIndicator');
-
-        if (playedIndicator) {
-            if (item?.UserData?.Played) {
-                playedIndicator.style.display = 'block';
-                playedIndicator.innerHTML =
-                    '<span class="glyphicon glyphicon-ok"></span>';
-            } else if (item?.UserData?.UnplayedItemCount) {
-                playedIndicator.style.display = 'block';
-                playedIndicator.innerHTML = item.UserData.UnplayedItemCount.toString();
-            } else {
-                playedIndicator.style.display = 'none';
-            }
+        if (item?.UserData?.Played) {
+            this.setPlayedIndicator(true);
+        } else if (item?.UserData?.UnplayedItemCount) {
+            this.setPlayedIndicator(item?.UserData?.UnplayedItemCount);
+        } else {
+            this.setPlayedIndicator(false);
         }
 
         let detailImageUrl = this.getPrimaryImageUrl(item);
@@ -151,6 +142,29 @@ export abstract class DocumentManager {
         }
 
         this.setDetailImage(detailImageUrl);
+    }
+
+    /**
+     * Set value of played indicator
+     *
+     * @param {boolean | number} value True = played, false = not visible, number = number of unplayed items
+     */
+    private static setPlayedIndicator(value: boolean | number): void {
+        const playedIndicator = this.getElementById('playedIndicator');
+
+        if (value === true) {
+            // All items played
+            this.setVisibility(playedIndicator, true);
+            playedIndicator.innerHTML =
+                '<span class="glyphicon glyphicon-ok"></span>';
+        } else if (value === false) {
+            // No indicator
+            this.setVisibility(playedIndicator, false);
+        } else {
+            // number
+            this.setVisibility(playedIndicator, true);
+            playedIndicator.innerHTML = value.toString();
+        }
     }
 
     /**
@@ -254,25 +268,14 @@ export abstract class DocumentManager {
             }
         }
 
-        let element: HTMLElement | null = document.querySelector(
+        let element: HTMLElement = this.querySelector(
             '#waiting-container-backdrop'
         );
 
-        if (element) {
-            await this.setBackgroundImage(element, src);
-        } else {
-            console.error(
-                'documentManager: Cannot find #waiting-container-backdrop'
-            );
-        }
+        await this.setBackgroundImage(element, src);
 
-        element = document.querySelector('.waitingDescription');
-
-        if (!element) {
-            console.error('documentManager: Cannot find .detailImage');
-        } else {
-            element.innerHTML = item?.Name ?? '';
-        }
+        element = this.querySelector('.waitingDescription');
+        element.innerHTML = item?.Name ?? '';
     }
 
     /**
@@ -405,14 +408,8 @@ export abstract class DocumentManager {
      * @param {string | null} src Source url or null
      */
     public static setLogo(src: string | null): void {
-        const element: HTMLElement | null = document.querySelector(
-            '.detailLogo'
-        );
-        if (element) {
-            this.setBackgroundImage(element, src);
-        } else {
-            console.error('documentManager: Cannot find .detailLogo');
-        }
+        const element: HTMLElement = this.querySelector('.detailLogo');
+        this.setBackgroundImage(element, src);
     }
 
     /**
@@ -422,14 +419,8 @@ export abstract class DocumentManager {
      * @param {string | null} src Source url or null
      */
     public static setDetailImage(src: string | null): void {
-        const element: HTMLElement | null = document.querySelector(
-            '.detailImage'
-        );
-        if (element) {
-            this.setBackgroundImage(element, src);
-        } else {
-            console.error('documentManager: Cannot find .detailImage');
-        }
+        const element: HTMLElement = this.querySelector('.detailImage');
+        this.setBackgroundImage(element, src);
     }
 
     /**
@@ -461,14 +452,8 @@ export abstract class DocumentManager {
             displayName = `${episode} - ${name}`;
         }
 
-        const element: HTMLElement | null = document.querySelector(
-            '.displayName'
-        );
-        if (element === null) {
-            console.error('documentManager: Cannot find .displayName');
-        } else {
-            (<HTMLElement>element).innerHTML = displayName || '';
-        }
+        const element = this.querySelector('.displayName');
+        element.innerHTML = displayName || '';
     }
 
     /**
@@ -477,12 +462,8 @@ export abstract class DocumentManager {
      * @param {string | null} name String/html for genres box, null to empty
      */
     private static setGenres(name: string | null): void {
-        const element: HTMLElement | null = document.querySelector('.genres');
-        if (element === null) {
-            console.error('documentManager: Cannot find .genres');
-        } else {
-            (<HTMLElement>element).innerHTML = name || '';
-        }
+        const element = this.querySelector('.genres');
+        element.innerHTML = name || '';
     }
 
     /**
@@ -491,12 +472,8 @@ export abstract class DocumentManager {
      * @param {string | null} name string or html to insert
      */
     private static setOverview(name: string | null): void {
-        const element: HTMLElement | null = document.querySelector('.overview');
-        if (element === null) {
-            console.error('documentManager: Cannot find .overview');
-        } else {
-            (<HTMLElement>element).innerHTML = name || '';
-        }
+        const element = this.querySelector('.overview');
+        element.innerHTML = name || '';
     }
 
     /**
@@ -506,14 +483,10 @@ export abstract class DocumentManager {
      * @param {number} value Percentage to set
      */
     private static setPlayedPercentage(value = 0): void {
-        const element: HTMLInputElement | null = <HTMLInputElement | null>(
-            document.querySelector('.itemProgressBar')
+        const element = <HTMLInputElement>(
+            this.querySelector('.itemProgressBar')
         );
-        if (element === null) {
-            console.error('documentManager: Cannot find .itemProgressBar');
-        } else {
-            (<HTMLInputElement>element).value = value.toString();
-        }
+        element.value = value.toString();
     }
 
     /**
@@ -523,17 +496,9 @@ export abstract class DocumentManager {
      * @param {boolean} value If true, show progress on details page
      */
     private static setHasPlayedPercentage(value: boolean): void {
-        const element: HTMLElement | null = document.querySelector(
-            '.detailImageProgressContainer'
-        );
-        if (element === null) {
-            console.error(
-                'documentManager: Cannot find .detailImageProgressContainer'
-            );
-        } else {
-            if (value) (<HTMLElement>element).classList.remove('hide');
-            else (<HTMLElement>element).classList.add('hide');
-        }
+        const element = this.querySelector('.detailImageProgressContainer');
+        if (value) (<HTMLElement>element).classList.remove('d-none');
+        else (<HTMLElement>element).classList.add('d-none');
     }
 
     /**
@@ -665,12 +630,53 @@ export abstract class DocumentManager {
             info.push('3D');
         }
 
-        const element = document.getElementById('miscInfo');
-        if (element === null) {
-            console.error('documentManager: Cannot find element miscInfo');
+        const element = this.getElementById('miscInfo');
+        element.innerHTML = info.join('&nbsp;&nbsp;&nbsp;&nbsp;');
+    }
+
+    // Generic / Helper functions
+    /**
+     * Set the visibility of an element
+     *
+     * @param {HTMLElement} element Element to set visibility on
+     * @param {boolean} visible True if the element should be visible.
+     */
+    private static setVisibility(element: HTMLElement, visible: boolean): void {
+        if (visible) {
+            element.classList.remove('d-none');
         } else {
-            element.innerHTML = info.join('&nbsp;&nbsp;&nbsp;&nbsp;');
+            element.classList.add('d-none');
         }
+    }
+
+    /**
+     * Get a HTMLElement from id or throw an error
+     *
+     * @param {string} id ID to look up
+     * @returns {HTMLElement} HTML Element
+     */
+    private static getElementById(id: string): HTMLElement {
+        const element = document.getElementById(id);
+        if (!element) {
+            throw new ReferenceError(`Cannot find element ${id} by id`);
+        }
+
+        return element;
+    }
+
+    /**
+     * Get a HTMLElement by class
+     *
+     * @param {string} cls Class to look up
+     * @returns {HTMLElement} HTML Element
+     */
+    private static querySelector(cls: string): HTMLElement {
+        const element: HTMLElement | null = document.querySelector(cls);
+        if (!element) {
+            throw new ReferenceError(`Cannot find element ${cls} by class`);
+        }
+
+        return element;
     }
 }
 
