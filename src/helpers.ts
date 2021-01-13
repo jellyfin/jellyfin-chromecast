@@ -212,7 +212,7 @@ export function resetPlaybackScope($scope: GlobalScope): void {
     DocumentManager.setAppStatus('waiting');
 
     $scope.startPositionTicks = 0;
-    DocumentManager.setWaitingBackdrop(null);
+    DocumentManager.setWaitingBackdrop(null, null);
     $scope.mediaType = '';
     $scope.itemId = '';
 

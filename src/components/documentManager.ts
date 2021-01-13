@@ -21,33 +21,44 @@ export abstract class DocumentManager {
     }
 
     /**
-     * Set the background image for a html element, with image preloading.
+     * Set the background image for a html element, without preload.
+     * You should do the preloading first with preloadImage.
      *
      * @param {HTMLElement} element HTML Element
      * @param {string | null} src URL to the image or null to remove the active one
-     * @returns {Promise<void>} wait for the background to be switched
      */
     private static setBackgroundImage(
         element: HTMLElement,
         src: string | null
-    ): Promise<void> {
+    ): void {
+        if (src) {
+            element.style.backgroundImage = `url(${src})`;
+        } else {
+            element.style.backgroundImage = '';
+        }
+    }
+
+    /**
+     * Preload an image
+     *
+     * @param {string | null} src URL to the image or null
+     * @returns {Promise<string | null>} wait for the preload and return the url to use. Might be nulled after loading error.
+     */
+    private static preloadImage(src: string | null): Promise<string | null> {
         if (src) {
             return new Promise((resolve, reject) => {
                 const preload = new Image();
                 preload.src = src;
                 preload.addEventListener('load', () => {
-                    requestAnimationFrame(() => {
-                        element.style.backgroundImage = `url(${src})`;
-                        resolve();
-                    });
+                    resolve(src);
                 });
                 preload.addEventListener('error', () => {
+                    // might also resolve and return null here, to have the caller take away the background.
                     reject();
                 });
             });
         } else {
-            element.style.backgroundImage = '';
-            return Promise.resolve();
+            return Promise.resolve(null);
         }
     }
 
@@ -55,48 +66,62 @@ export abstract class DocumentManager {
      * Get url for primary image for a given item
      *
      * @param {BaseItemDto} item to look up
-     * @returns {string | null} url to primary image
+     * @returns {Promise<string | null>} url to image after preload
      */
-    private static getPrimaryImageUrl(item: BaseItemDto): string | null {
+    private static getPrimaryImageUrl(
+        item: BaseItemDto
+    ): Promise<string | null> {
+        let src: string | null = null;
+
         if (item.AlbumPrimaryImageTag && item.AlbumId) {
-            return JellyfinApi.createImageUrl(
+            src = JellyfinApi.createImageUrl(
                 item.AlbumId,
                 'Primary',
                 item.AlbumPrimaryImageTag
             );
         } else if (item.ImageTags?.Primary && item.Id) {
-            return JellyfinApi.createImageUrl(
+            src = JellyfinApi.createImageUrl(
                 item.Id,
                 'Primary',
                 item.ImageTags.Primary
             );
-        } else {
-            return null;
         }
+
+        if (
+            item?.UserData?.PlayedPercentage &&
+            item?.UserData?.PlayedPercentage < 100 &&
+            !item.IsFolder &&
+            src != null
+        ) {
+            src += `&PercentPlayed=${item.UserData.PlayedPercentage}`;
+        }
+
+        return this.preloadImage(src);
     }
 
     /**
      * Get url for logo image for a given item
      *
      * @param {BaseItemDto} item to look up
-     * @returns {string | null} url to logo image
+     * @returns {Promise<string | null>} url to logo image after preload
      */
-    private static getLogoUrl(item: BaseItemDto): string | null {
+    private static getLogoUrl(item: BaseItemDto): Promise<string | null> {
+        let src: string | null = null;
         if (item.ImageTags?.Logo && item.Id) {
-            return JellyfinApi.createImageUrl(
+            src = JellyfinApi.createImageUrl(
                 item.Id,
                 'Logo',
                 item.ImageTags.Logo
             );
         } else if (item.ParentLogoItemId && item.ParentLogoImageTag) {
-            return JellyfinApi.createImageUrl(
+            src = JellyfinApi.createImageUrl(
                 item.ParentLogoItemId,
                 'Logo',
                 item.ParentLogoImageTag
             );
-        } else {
-            return null;
         }
+
+        return this.preloadImage(src);
     }
 
     /**
@@ -105,54 +130,58 @@ export abstract class DocumentManager {
      * and the connected client is browsing the library.
      *
      * @param {BaseItemDto} item to show information about
+     * @returns {Promise<void>} for the page to load
      */
-    public static showItem(item: BaseItemDto): void {
+    public static showItem(item: BaseItemDto): Promise<void> {
         // no showItem for cc audio
-        if (getActiveDeviceId() === deviceIds.AUDIO) return;
+        if (getActiveDeviceId() === deviceIds.AUDIO) {
+            return Promise.resolve();
+        }
 
         // stop cycling backdrops
         this.clearBackdropInterval();
 
-        this.setAppStatus('details');
-        this.setWaitingBackdrop(item);
+        return Promise.all([
+            this.getWaitingBackdropUrl(item),
+            this.getPrimaryImageUrl(item),
+            this.getLogoUrl(item)
+        ]).then((urls) => {
+            requestAnimationFrame(() => {
+                this.setWaitingBackdrop(urls[0], item);
+                this.setDetailImage(urls[1]);
+                this.setLogo(urls[2]);
 
-        this.setLogo(this.getLogoUrl(item));
-        this.setOverview(item.Overview ?? null);
-        this.setGenres(item?.Genres?.join(' / ') ?? null);
-        this.setDisplayName(item);
+                this.setOverview(item.Overview ?? null);
+                this.setGenres(item?.Genres?.join(' / ') ?? null);
+                this.setDisplayName(item);
+                this.setMiscInfo(item);
 
-        this.setMiscInfo(item);
+                this.setRating(item);
 
-        this.setRating(item);
+                if (item?.UserData?.Played) {
+                    this.setPlayedIndicator(true);
+                } else if (item?.UserData?.UnplayedItemCount) {
+                    this.setPlayedIndicator(item?.UserData?.UnplayedItemCount);
+                } else {
+                    this.setPlayedIndicator(false);
+                }
 
-        if (item?.UserData?.Played) {
-            this.setPlayedIndicator(true);
-        } else if (item?.UserData?.UnplayedItemCount) {
-            this.setPlayedIndicator(item?.UserData?.UnplayedItemCount);
-        } else {
-            this.setPlayedIndicator(false);
-        }
+                if (
+                    item?.UserData?.PlayedPercentage &&
+                    item?.UserData?.PlayedPercentage < 100 &&
+                    !item.IsFolder
+                ) {
+                    this.setHasPlayedPercentage(false);
+                    this.setPlayedPercentage(item.UserData.PlayedPercentage);
+                } else {
+                    this.setHasPlayedPercentage(false);
+                    this.setPlayedPercentage(0);
+                }
 
-        let detailImageUrl = this.getPrimaryImageUrl(item);
-
-        if (
-            item?.UserData?.PlayedPercentage &&
-            item?.UserData?.PlayedPercentage < 100 &&
-            !item.IsFolder
-        ) {
-            this.setHasPlayedPercentage(false);
-            this.setPlayedPercentage(item.UserData.PlayedPercentage);
-
-            if (detailImageUrl != null)
-                detailImageUrl +=
-                    '&PercentPlayed=' +
-                    item.UserData.PlayedPercentage.toString();
-        } else {
-            this.setHasPlayedPercentage(false);
-            this.setPlayedPercentage(0);
-        }
-
-        this.setDetailImage(detailImageUrl);
+                // Switch visible view!
+                this.setAppStatus('details');
+            });
+        });
     }
 
     /**
@@ -265,18 +294,17 @@ export abstract class DocumentManager {
         return this.status;
     }
 
+    // BACKDROP LOGIC
+
     /**
-     * BACKDROP LOGIC
-     *
-     * Backdrops are set on the waiting container.
-     * They are switched around every 30 seconds by default
-     * (governed by startBackdropInterval)
+     * Get url to the backdrop image, and return a preload promise.
      *
      * @param {BaseItemDto | null} item Item to use for waiting backdrop, null to remove it.
+     * @returns {Promise<string | null>} promise for the preload to complete
      */
-    public static async setWaitingBackdrop(
+    public static getWaitingBackdropUrl(
         item: BaseItemDto | null
-    ): Promise<void> {
+    ): Promise<string | null> {
         // no backdrop as a fallback
         let src: string | null = null;
 
@@ -306,11 +334,26 @@ export abstract class DocumentManager {
             }
         }
 
+        return this.preloadImage(src);
+    }
+
+    /**
+     * Backdrops are set on the waiting container.
+     * They are switched around every 30 seconds by default
+     * (governed by startBackdropInterval)
+     *
+     * @param {string | null} src Url to image
+     * @param {BaseItemDto | null} item Item to use for waiting backdrop, null to remove it.
+     */
+    public static async setWaitingBackdrop(
+        src: string | null,
+        item: BaseItemDto | null
+    ): Promise<void> {
         let element: HTMLElement = this.querySelector(
             '#waiting-container-backdrop'
         );
 
-        await this.setBackgroundImage(element, src);
+        this.setBackgroundImage(element, src);
 
         element = this.getElementById('waiting-description');
         element.innerHTML = item?.Name ?? '';
@@ -321,8 +364,8 @@ export abstract class DocumentManager {
      *
      * @returns {Promise<void>} promise waiting for the backdrop to be set
      */
-    private static setRandomUserBackdrop(): Promise<void> {
-        return JellyfinApi.authAjaxUser('Items', {
+    private static async setRandomUserBackdrop(): Promise<void> {
+        const result = await JellyfinApi.authAjaxUser('Items', {
             dataType: 'json',
             type: 'GET',
             query: {
@@ -335,10 +378,18 @@ export abstract class DocumentManager {
                 // not everyone will want to see adult backdrops rotating on their TV.
                 MaxOfficialRating: 'PG-13'
             }
-        }).then((result) => {
-            if (result.Items && result.Items[0])
-                return DocumentManager.setWaitingBackdrop(result.Items[0]);
-            else return DocumentManager.setWaitingBackdrop(null);
+        });
+
+        let src: string | null = null;
+        let item: BaseItemDto | null = null;
+
+        if (result.Items && result.Items[0]) {
+            item = result.Items[0];
+            src = await DocumentManager.getWaitingBackdropUrl(item);
+        }
+
+        requestAnimationFrame(() => {
+            DocumentManager.setWaitingBackdrop(src, item);
         });
     }
 
@@ -366,7 +417,7 @@ export abstract class DocumentManager {
 
         // skip out if it's disabled
         if (!this.backdropPeriodMs) {
-            this.setWaitingBackdrop(null);
+            this.setWaitingBackdrop(null, null);
             return;
         }
 
@@ -398,7 +449,7 @@ export abstract class DocumentManager {
             if (period === null) {
                 // No backdrop is wanted, and the timer has been cleared.
                 // This call will remove any present backdrop.
-                this.setWaitingBackdrop(null);
+                this.setWaitingBackdrop(null, null);
             }
         }
     }
