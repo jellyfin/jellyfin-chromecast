@@ -92,7 +92,7 @@ body {
     width: 20%;
 }
 
-#playedIndicator {
+.playedIndicator {
     display: block;
     position: absolute;
     top: 5px;
@@ -159,7 +159,7 @@ body {
     margin: 10px 0;
 }
 
-#detailRating {
+.detailRating {
     margin: -4px 0 0;
 }
 

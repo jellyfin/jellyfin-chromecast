@@ -20,19 +20,31 @@
             <img class="logo" src="img/logo.svg" />
             Ready to cast
         </div>
-        <div class="waitingDescription"></div>
+        <div id="waiting-description" class="waitingDescription"></div>
     </div>
     <cast-media-player id="video-player" crossorigin="anonymous" preload="auto"></cast-media-player>
     <div class="detailContent">
         <div class="detailImage">
-            <div id="playedIndicator"></div>
+            <div
+                id="played-indicator-ok"
+                class="playedIndicator glyphicon glyphicon-ok d-none"
+            ></div>
+            <div
+                id="played-indicator-value"
+                class="playedIndicator d-none"
+            ></div>
 
             <div class="detailImageProgressContainer"><progress class="itemProgressBar" min="0" max="100"></progress></div>
         </div>
 
         <div class="detailInfo">
             <p class="displayNameContainer"><span class="displayName"></span><span id="miscInfo"></span></p>
-            <div id="detailRating"></div>
+            <div class="detailRating">
+                <div id="star-rating" class="starRating"></div>
+                <div id="star-rating-value" class="starRatingValue"></div>
+                <div id="critic-rating" class="rottentomatoesicon"></div>
+                <div id="critic-rating-value" class="criticRating"></div>
+            </div>
             <p class="genres"></p>
             <p class="overview"></p>
         </div>

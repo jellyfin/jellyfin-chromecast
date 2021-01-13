@@ -123,8 +123,7 @@ export abstract class DocumentManager {
 
         this.setMiscInfo(item);
 
-        const detailRating = this.getElementById('detailRating');
-        detailRating.innerHTML = this.getRatingHtml(item);
+        this.setRating(item);
 
         if (item?.UserData?.Played) {
             this.setPlayedIndicator(true);
@@ -162,20 +161,24 @@ export abstract class DocumentManager {
      * @param {boolean | number} value True = played, false = not visible, number = number of unplayed items
      */
     private static setPlayedIndicator(value: boolean | number): void {
-        const playedIndicator = this.getElementById('playedIndicator');
+        const playedIndicatorOk = this.getElementById('played-indicator-ok');
+        const playedIndicatorValue = this.getElementById(
+            'played-indicator-value'
+        );
 
         if (value === true) {
             // All items played
-            this.setVisibility(playedIndicator, true);
-            playedIndicator.innerHTML =
-                '<span class="glyphicon glyphicon-ok"></span>';
+            this.setVisibility(playedIndicatorValue, false);
+            this.setVisibility(playedIndicatorOk, true);
         } else if (value === false) {
             // No indicator
-            this.setVisibility(playedIndicator, false);
+            this.setVisibility(playedIndicatorValue, false);
+            this.setVisibility(playedIndicatorOk, false);
         } else {
             // number
-            this.setVisibility(playedIndicator, true);
-            playedIndicator.innerHTML = value.toString();
+            playedIndicatorValue.innerHTML = value.toString();
+            this.setVisibility(playedIndicatorValue, true);
+            this.setVisibility(playedIndicatorOk, false);
         }
     }
 
@@ -202,29 +205,44 @@ export abstract class DocumentManager {
     }
 
     /**
-     * Get HTML content used to display the rating of an item
+     * Update item rating elements
      *
      * @param {BaseItemDto} item to look up
-     * @returns {string} html to put in document
      */
-    private static getRatingHtml(item: BaseItemDto): string {
-        let html = '';
+    private static setRating(item: BaseItemDto): void {
+        const starRating = this.getElementById('star-rating');
+        const starRatingValue = this.getElementById('star-rating-value');
+
         if (item.CommunityRating != null) {
-            html +=
-                `<div class="starRating" title="${item.CommunityRating}"></div>` +
-                '<div class="starRatingValue">' +
-                item.CommunityRating.toFixed(1) +
-                '</div>';
+            starRating.setAttribute('title', item.CommunityRating.toFixed(1));
+            starRatingValue.innerHTML = item.CommunityRating.toFixed(1);
+            this.setVisibility(starRating, true);
+            this.setVisibility(starRatingValue, true);
+        } else {
+            this.setVisibility(starRating, false);
+            this.setVisibility(starRatingValue, false);
         }
+
+        const criticRating = this.getElementById('critic-rating');
+        const criticRatingValue = this.getElementById('critic-rating-value');
 
         if (item.CriticRating != null) {
             const verdict = item.CriticRating >= 60 ? 'fresh' : 'rotten';
-            html +=
-                `<div class="${verdict} rottentomatoesicon" title="${verdict}"></div>` +
-                `<div class="criticRating">${item.CriticRating}%</div>`;
-        }
 
-        return html;
+            criticRating.classList.add(verdict);
+            criticRating.classList.remove(
+                verdict == 'fresh' ? 'rotten' : 'fresh'
+            );
+            criticRating.setAttribute('title', verdict);
+
+            criticRatingValue.innerHTML = item.CriticRating.toString();
+
+            this.setVisibility(criticRating, true);
+            this.setVisibility(criticRatingValue, true);
+        } else {
+            this.setVisibility(criticRating, false);
+            this.setVisibility(criticRatingValue, false);
+        }
     }
 
     /**
@@ -294,7 +312,7 @@ export abstract class DocumentManager {
 
         await this.setBackgroundImage(element, src);
 
-        element = this.querySelector('.waitingDescription');
+        element = this.getElementById('waiting-description');
         element.innerHTML = item?.Name ?? '';
     }
 
