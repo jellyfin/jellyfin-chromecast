@@ -58,15 +58,21 @@ export abstract class DocumentManager {
      * @returns {string | null} url to primary image
      */
     private static getPrimaryImageUrl(item: BaseItemDto): string | null {
-        if (item.AlbumPrimaryImageTag)
-            return JellyfinApi.createUrl(
-                `Items/${item.AlbumId}/Images/Primary?tag=${item.AlbumPrimaryImageTag}`
+        if (item.AlbumPrimaryImageTag && item.AlbumId) {
+            return JellyfinApi.createImageUrl(
+                item.AlbumId,
+                'Primary',
+                item.AlbumPrimaryImageTag
             );
-        else if (item.ImageTags?.Primary)
-            return JellyfinApi.createUrl(
-                `Items/${item.Id}/Images/Primary?tag=${item.ImageTags.Primary}`
+        } else if (item.ImageTags?.Primary && item.Id) {
+            return JellyfinApi.createImageUrl(
+                item.Id,
+                'Primary',
+                item.ImageTags.Primary
             );
-        else return null;
+        } else {
+            return null;
+        }
     }
 
     /**
@@ -76,15 +82,21 @@ export abstract class DocumentManager {
      * @returns {string | null} url to logo image
      */
     private static getLogoUrl(item: BaseItemDto): string | null {
-        if (item.ImageTags?.Logo)
-            return JellyfinApi.createUrl(
-                `Items/${item.Id}/Images/Logo/0?tag=${item.ImageTags.Logo}`
+        if (item.ImageTags?.Logo && item.Id) {
+            return JellyfinApi.createImageUrl(
+                item.Id,
+                'Logo',
+                item.ImageTags.Logo
             );
-        else if (item.ParentLogoItemId && item.ParentLogoImageTag)
-            return JellyfinApi.createUrl(
-                `Items/${item.ParentLogoItemId}/Images/Logo/0?tag=${item.ParentLogoImageTag}`
+        } else if (item.ParentLogoItemId && item.ParentLogoImageTag) {
+            return JellyfinApi.createImageUrl(
+                item.ParentLogoItemId,
+                'Logo',
+                item.ParentLogoImageTag
             );
-        else return null;
+        } else {
+            return null;
+        }
     }
 
     /**
@@ -251,10 +263,16 @@ export abstract class DocumentManager {
         let src: string | null = null;
 
         if (item != null) {
-            if (item.BackdropImageTags && item.BackdropImageTags.length) {
+            if (
+                item.BackdropImageTags &&
+                item.BackdropImageTags.length &&
+                item.Id
+            ) {
                 // get first backdrop of image if applicable
-                src = JellyfinApi.createUrl(
-                    `Items/${item.Id}/Images/Backdrop/0?tag=${item.BackdropImageTags[0]}`
+                src = JellyfinApi.createImageUrl(
+                    item.Id,
+                    'Backdrop',
+                    item.BackdropImageTags[0]
                 );
             } else if (
                 item.ParentBackdropItemId &&
@@ -262,8 +280,10 @@ export abstract class DocumentManager {
                 item.ParentBackdropImageTags.length
             ) {
                 // otherwise get first backdrop from parent
-                src = JellyfinApi.createUrl(
-                    `Items/${item.ParentBackdropItemId}/Images/Backdrop/0?tag=${item.ParentBackdropImageTags[0]}`
+                src = JellyfinApi.createImageUrl(
+                    item.ParentBackdropItemId,
+                    'Backdrop',
+                    item.ParentBackdropImageTags[0]
                 );
             }
         }
@@ -377,17 +397,25 @@ export abstract class DocumentManager {
 
         let backdropUrl: string | null = null;
 
-        if (item.BackdropImageTags && item.BackdropImageTags.length) {
-            backdropUrl = JellyfinApi.createUrl(
-                `Items/${item.Id}/Images/Backdrop/0?tag=${item.BackdropImageTags[0]}`
+        if (
+            item.BackdropImageTags &&
+            item.BackdropImageTags.length &&
+            item.Id
+        ) {
+            backdropUrl = JellyfinApi.createImageUrl(
+                item.Id,
+                'Backdrop',
+                item.BackdropImageTags[0]
             );
         } else if (
             item.ParentBackdropItemId &&
             item.ParentBackdropImageTags &&
             item.ParentBackdropImageTags.length
         ) {
-            backdropUrl = JellyfinApi.createUrl(
-                `Items/${item.ParentBackdropItemId}/Images/Backdrop/0?tag=${item.ParentBackdropImageTags[0]}`
+            backdropUrl = JellyfinApi.createImageUrl(
+                item.ParentBackdropItemId,
+                'Backdrop',
+                item.ParentBackdropImageTags[0]
             );
         }
 
