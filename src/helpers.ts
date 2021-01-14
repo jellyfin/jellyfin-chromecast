@@ -1,4 +1,5 @@
 import { JellyfinApi } from './components/jellyfinApi';
+import { DocumentManager } from './components/documentManager';
 
 import { BaseItemDtoQueryResult } from './api/generated/models/base-item-dto-query-result';
 import { PlaybackProgressInfo } from './api/generated/models/playback-progress-info';
@@ -208,10 +209,10 @@ export function getSenderReportingData(
  * @param $scope global context variable
  */
 export function resetPlaybackScope($scope: GlobalScope): void {
-    setAppStatus('waiting');
+    DocumentManager.setAppStatus('waiting');
 
     $scope.startPositionTicks = 0;
-    setWaitingBackdrop('');
+    DocumentManager.setWaitingBackdrop(null, null);
     $scope.mediaType = '';
     $scope.itemId = '';
 
@@ -232,8 +233,8 @@ export function resetPlaybackScope($scope: GlobalScope): void {
     $scope.playSessionId = '';
 
     // Detail content
-    setLogo('');
-    setDetailImage('');
+    DocumentManager.setLogo(null);
+    DocumentManager.setDetailImage(null);
 }
 
 /**
@@ -492,131 +493,6 @@ export function getStreamByIndex(
     })[0];
 }
 
-/**
- * Get url for backdrop image for a given item
- *
- * @param item item to look up
- * @returns url to backdrop image or null
- */
-export function getBackdropUrl(item: BaseItemDto): string | null {
-    if (item.BackdropImageTags && item.BackdropImageTags.length) {
-        return JellyfinApi.createUrl(
-            `Items/${item.Id}/Images/Backdrop/0?tag=${item.BackdropImageTags[0]}`
-        );
-    } else if (
-        item.ParentBackdropItemId &&
-        item.ParentBackdropImageTags &&
-        item.ParentBackdropImageTags.length
-    ) {
-        return JellyfinApi.createUrl(
-            `Items/${item.ParentBackdropItemId}/Images/Backdrop/0?tag=${item.ParentBackdropImageTags[0]}`
-        );
-    }
-
-    return null;
-}
-
-/**
- * Get url for logo image for a given item
- *
- * @param item item to look up
- * @returns url to logo image or null
- */
-export function getLogoUrl(item: BaseItemDto): string | null {
-    if (item.ImageTags && item.ImageTags.Logo) {
-        return JellyfinApi.createUrl(
-            `Items/${item.Id}/Images/Logo/0?tag=${item.ImageTags.Logo}`
-        );
-    } else if (item.ParentLogoItemId && item.ParentLogoImageTag) {
-        return JellyfinApi.createUrl(
-            `Items/${item.ParentLogoItemId}/Images/Logo/0?tag=${item.ParentLogoImageTag}`
-        );
-    }
-
-    return null;
-}
-
-/**
- * Get url for primary image for a given item
- *
- * @param item item to look up
- * @returns url to primary image or null
- */
-export function getPrimaryImageUrl(item: BaseItemDto): string | null {
-    if (item.AlbumPrimaryImageTag) {
-        return JellyfinApi.createUrl(
-            `Items/${item.AlbumId}/Images/Primary?tag=${item.AlbumPrimaryImageTag}`
-        );
-    } else if (item.ImageTags?.Primary) {
-        return JellyfinApi.createUrl(
-            `Items/${item.Id}/Images/Primary?tag=${item.ImageTags?.Primary}`
-        );
-    }
-
-    return null;
-}
-
-/**
- * Get human readable name for an item
- *
- * @param item item to get displayname for
- * @returns displayname
- */
-export function getDisplayName(item: BaseItemDto): string | null {
-    const name = (item.EpisodeTitle || item.Name) ?? null;
-
-    if (name === null) return null;
-
-    if (item.Type == 'TvChannel') {
-        if (item.Number) return `${item.Number} ${name}`;
-        else return name;
-    }
-
-    if (
-        item.Type == 'Episode' &&
-        item.IndexNumber != null &&
-        item.ParentIndexNumber != null
-    ) {
-        let episode = `S${item.ParentIndexNumber}, E${item.IndexNumber}`;
-
-        if (item.IndexNumberEnd) {
-            episode += '-' + item.IndexNumberEnd;
-        }
-
-        return `${episode} - ${name}`;
-    }
-
-    return name;
-}
-
-/**
- * Get HTML content used to display the rating of an item
- *
- * @param item to look up
- * @returns html string to put in document
- */
-export function getRatingHtml(item: BaseItemDto): string {
-    let html = '';
-
-    if (item.CommunityRating) {
-        html =
-            `<div class="starRating" title="${item.CommunityRating}"></div>` +
-            '<div class="starRatingValue">' +
-            item.CommunityRating.toFixed(1) +
-            '</div>';
-    }
-
-    if (item.CriticRating != null) {
-        const verdict = item.CriticRating >= 60 ? 'fresh' : 'rotten';
-
-        html +=
-            `<div class="${verdict} rottentomatoesicon" title="${verdict}"></div>` +
-            `<div class="criticRating">${item.CriticRating}%</div>`;
-    }
-
-    return html;
-}
-
 // defined for use in the 3 next functions
 const requiredItemFields = 'MediaSources,Chapters';
 
@@ -803,6 +679,7 @@ export function getUser(): Promise<UserDto> {
  * @param items items to resolve
  * @param smart If enabled it will try to find the next episode given the
  *              current one, if the connected user has enabled that in their settings
+ * @returns {Promise<BaseItemDtoQueryResult>} Promise for search result containing items to play
  */
 export async function translateRequestedItems(
     userId: string,
@@ -896,226 +773,13 @@ export async function translateRequestedItems(
 }
 
 /**
- * Get information about mainly an episode or series
- * for the item details page
- *
- * @param item to look up
- * @returns html code to use
- */
-export function getMiscInfoHtml(item: BaseItemDto): string {
-    const miscInfo: string[] = [];
-    let date: Date;
-
-    if (item.Type == 'Episode') {
-        if (item.PremiereDate) {
-            try {
-                date = parseISO8601Date(item.PremiereDate);
-
-                miscInfo.push(date.toLocaleDateString());
-            } catch (e) {
-                console.log('Error parsing date: ' + item.PremiereDate);
-            }
-        }
-    }
-
-    if (item.StartDate) {
-        try {
-            date = parseISO8601Date(item.StartDate);
-
-            miscInfo.push(date.toLocaleDateString());
-        } catch (e) {
-            console.log('Error parsing date: ' + item.PremiereDate);
-        }
-    }
-
-    if (item.ProductionYear && item.Type == 'Series') {
-        if (item.Status == 'Continuing') {
-            miscInfo.push(item.ProductionYear + '-Present');
-        } else if (item.ProductionYear) {
-            let text: string = item.ProductionYear.toString();
-            if (item.EndDate) {
-                try {
-                    const endYear = parseISO8601Date(
-                        item.EndDate
-                    ).getFullYear();
-
-                    if (endYear != item.ProductionYear) {
-                        text +=
-                            '-' + parseISO8601Date(item.EndDate).getFullYear();
-                    }
-                } catch (e) {
-                    console.log('Error parsing date: ' + item.EndDate);
-                }
-            }
-
-            miscInfo.push(text);
-        }
-    }
-
-    if (item.Type != 'Series' && item.Type != 'Episode') {
-        if (item.ProductionYear) {
-            miscInfo.push(item.ProductionYear.toString());
-        } else if (item.PremiereDate) {
-            try {
-                miscInfo.push(
-                    parseISO8601Date(item.PremiereDate).getFullYear().toString()
-                );
-            } catch (e) {
-                console.log('Error parsing date: ' + item.PremiereDate);
-            }
-        }
-    }
-
-    if (item.RunTimeTicks && item.Type != 'Series') {
-        if (item.Type == 'Audio') {
-            miscInfo.push(getDisplayRunningTime(item.RunTimeTicks));
-        } else {
-            miscInfo.push(
-                Math.round(item.RunTimeTicks / 600000000 || 1).toString() +
-                    'min'
-            );
-        }
-    }
-
-    if (
-        item.OfficialRating &&
-        item.Type !== 'Season' &&
-        item.Type !== 'Episode'
-    ) {
-        miscInfo.push(item.OfficialRating);
-    }
-
-    if (item.Video3DFormat) {
-        miscInfo.push('3D');
-    }
-
-    return miscInfo.join('&nbsp;&nbsp;&nbsp;&nbsp;');
-}
-
-/**
- * Set the status of the app, and switch the visible view by
- * modifying document.body.className
- *
- * @param status name of view to show
- */
-export function setAppStatus(status: string): void {
-    $scope.status = status;
-    document.body.className = status;
-}
-
-/**
- * Set the displayname, part of the details page
- *
- * @param name name to set, if null then remove it
- */
-export function setDisplayName(name: string | null = null): void {
-    if (name === null) name = '';
-    const element: HTMLElement = <HTMLElement>(
-        document.querySelector('.displayName')
-    );
-    $scope.displayName = name;
-    element.innerHTML = name;
-}
-
-/**
- * Set the html of the genres container
- *
- * @param name string or html to insert
- */
-export function setGenres(name = ''): void {
-    const element: HTMLElement = <HTMLElement>document.querySelector('.genres');
-    $scope.genres = name;
-    element.innerHTML = name;
-}
-
-/**
- * Set the html of the overview container
- *
- * @param name string or html to insert
- */
-export function setOverview(name = ''): void {
-    const element: HTMLElement = <HTMLElement>(
-        document.querySelector('.overview')
-    );
-    $scope.overview = name;
-    element.innerHTML = name;
-}
-
-/**
- * Set the progress of the progress bar in the
- * item details page. (Not the same as the playback ui)
- *
- * @param value percentage to set
- */
-export function setPlayedPercentage(value = 0): void {
-    const element: HTMLInputElement = <HTMLInputElement>(
-        document.querySelector('.itemProgressBar')
-    );
-
-    $scope.playedPercentage = value;
-    element.value = value.toString();
-}
-
-/**
- * Set the url of the idle screen backdrop
- *
- * @param src URL to image
- */
-export function setWaitingBackdrop(src: string | null): void {
-    const element: HTMLElement = <HTMLElement>(
-        document.querySelector('#waiting-container-backdrop')
-    );
-
-    element.style.backgroundImage = src ? 'url(' + src + ')' : '';
-}
-
-/**
- * Set the visibility of the item progress bar in the
- * item details page
- *
- * @param value show it if true
- */
-export function setHasPlayedPercentage(value: boolean): void {
-    const element: HTMLElement = <HTMLElement>(
-        document.querySelector('.detailImageProgressContainer')
-    );
-    if (value) element.classList.remove('hide');
-    else element.classList.add('hide');
-}
-
-/**
- * Set the URL to the item logo, or null to remove it
- *
- * @param src url or null
- */
-export function setLogo(src: string | null): void {
-    const element: HTMLElement = <HTMLElement>(
-        document.querySelector('.detailLogo')
-    );
-    element.style.backgroundImage = src ? 'url(' + src + ')' : '';
-}
-
-/**
- * Set the URL to the item banner image (I think?),
- * or null to remove it
- *
- * @param src url or null
- */
-export function setDetailImage(src: string | null): void {
-    const element: HTMLElement = <HTMLElement>(
-        document.querySelector('.detailImage')
-    );
-
-    element.style.backgroundImage = src ? 'url(' + src + ')' : '';
-}
-
-/**
  * Take all properties of source and copy them over to target
  *
  * TODO can we remove this crap
  *
  * @param target object that gets populated with entries
  * @param source object that the entries are copied from
+ * @returns {any} reference to target object
  */
 export function extend(target: any, source: any): any {
     for (const i in source) {
@@ -1134,49 +798,6 @@ export function extend(target: any, source: any): any {
  */
 export function parseISO8601Date(date: string): Date {
     return new Date(date);
-}
-
-/**
- * Get a human readable representation of the current position
- * in ticks
- *
- * @param ticks tick position
- * @returns human readable position
- */
-export function getDisplayRunningTime(ticks: number): string {
-    const ticksPerHour = 36000000000;
-    const ticksPerMinute = 600000000;
-    const ticksPerSecond = 10000000;
-
-    const parts: string[] = [];
-
-    const hours: number = Math.floor(ticks / ticksPerHour);
-
-    if (hours) {
-        parts.push(hours.toString());
-    }
-
-    ticks -= hours * ticksPerHour;
-
-    const minutes: number = Math.floor(ticks / ticksPerMinute);
-
-    ticks -= minutes * ticksPerMinute;
-
-    if (minutes < 10 && hours) {
-        parts.push('0' + minutes.toString());
-    } else {
-        parts.push(minutes.toString());
-    }
-
-    const seconds: number = Math.floor(ticks / ticksPerSecond);
-
-    if (seconds < 10) {
-        parts.push('0' + seconds.toString());
-    } else {
-        parts.push(seconds.toString());
-    }
-
-    return parts.join(':');
 }
 
 /**

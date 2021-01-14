@@ -70,6 +70,26 @@ export abstract class JellyfinApi {
         }
     }
 
+    /**
+     * Create url to image
+     *
+     * @param {string} itemId Item id
+     * @param {string} imgType Image type: Primary, Logo, Backdrop
+     * @param {string} imgTag Image tag
+     * @param {number} imgIdx Image index, default 0
+     * @returns {string} URL
+     */
+    public static createImageUrl(
+        itemId: string,
+        imgType: string,
+        imgTag: string,
+        imgIdx = 0
+    ): string {
+        return this.createUrl(
+            `Items/${itemId}/Images/${imgType}/${imgIdx.toString()}?tag=${imgTag}`
+        );
+    }
+
     // Authenticated ajax
     public static authAjax(path: string, args: any): Promise<any> {
         if (

@@ -1,21 +1,6 @@
 import {
     getSenderReportingData,
     resetPlaybackScope,
-    getBackdropUrl,
-    getLogoUrl,
-    getPrimaryImageUrl,
-    getDisplayName,
-    getRatingHtml,
-    getMiscInfoHtml,
-    setAppStatus,
-    setDisplayName,
-    setGenres,
-    setOverview,
-    setPlayedPercentage,
-    setWaitingBackdrop,
-    setHasPlayedPercentage,
-    setLogo,
-    setDetailImage,
     extend,
     broadcastToMessageBus
 } from '../helpers';
@@ -28,7 +13,7 @@ import { MediaSourceInfo } from '../api/generated/models/media-source-info';
 import { PlayRequest } from '../api/generated/models/play-request';
 import { LiveStreamResponse } from '../api/generated/models/live-stream-response';
 import { JellyfinApi } from './jellyfinApi';
-import { BaseItemDtoQueryResult } from '~/api/generated/models/base-item-dto-query-result';
+import { DocumentManager } from './documentManager';
 
 interface PlayRequestQuery extends PlayRequest {
     UserId?: string;
@@ -40,7 +25,6 @@ interface PlayRequestQuery extends PlayRequest {
 }
 
 let pingInterval: number;
-let backdropInterval: number;
 let lastTranscoderPing = 0;
 
 /**
@@ -87,7 +71,11 @@ export function reportPlaybackStart(
     $scope: GlobalScope,
     reportingParams: PlaybackProgressInfo
 ): Promise<void> {
-    clearBackdropInterval();
+    // it's just "reporting" that the playback is starting
+    // but it's also disabling the rotating backdrops
+    // in the line below.
+    // TODO move the responsibility to the caller.
+    DocumentManager.clearBackdropInterval();
 
     broadcastToMessageBus({
         //TODO: convert these to use a defined type in the type field
@@ -111,6 +99,7 @@ export function reportPlaybackStart(
  * @param reportingParams parameters for jellyfin
  * @param reportToServer if jellyfin should be informed
  * @param broadcastEventName name of event to send to the cast sender
+ * @returns {Promise<void>} Promise for the http request
  */
 export function reportPlaybackProgress(
     $scope: GlobalScope,
@@ -201,133 +190,6 @@ export function pingTranscoder(
 }
 
 /**
- * Stop the backdrop rotation
- */
-function clearBackdropInterval(): void {
-    if (backdropInterval !== 0) {
-        clearInterval(backdropInterval);
-        backdropInterval = 0;
-    }
-}
-
-/**
- * Start the backdrop rotation
- */
-export function startBackdropInterval(): void {
-    clearBackdropInterval();
-
-    setRandomUserBackdrop();
-
-    backdropInterval = <any>setInterval(function () {
-        setRandomUserBackdrop();
-    }, 30000);
-}
-
-/**
- * Get a random backdrop to set on the waiting container
- *
- * @returns promise to wait for the request
- */
-function setRandomUserBackdrop(): Promise<void> {
-    return JellyfinApi.authAjaxUser('Items', {
-        dataType: 'json',
-        type: 'GET',
-        query: {
-            SortBy: 'Random',
-            IncludeItemTypes: 'Movie,Series',
-            ImageTypes: 'Backdrop',
-            Recursive: true,
-            Limit: 1,
-            // Although we're limiting to what the user has access to,
-            // not everyone will want to see adult backdrops rotating on their TV.
-            MaxOfficialRating: 'PG-13'
-        }
-    }).then(function (result: BaseItemDtoQueryResult) {
-        let url = '';
-        if (result.Items && result.Items[0]) {
-            url = getBackdropUrl(result.Items[0]) || '';
-        }
-        setWaitingBackdrop(url);
-    });
-}
-
-/**
- * This function takes an item and shows details about it.
- * This function is responsible for the details page that is shown while browsing jellyfin
- *
- * @param item item to show information about
- */
-function showItem(item: BaseItemDto): void {
-    clearBackdropInterval();
-
-    const backdropUrl = getBackdropUrl(item) || '';
-    let detailImageUrl = getPrimaryImageUrl(item) || '';
-
-    setAppStatus('details');
-    setWaitingBackdrop(backdropUrl);
-
-    setLogo(getLogoUrl(item) || '');
-    setOverview(item.Overview || '');
-    setGenres(item?.Genres?.join(' / '));
-    setDisplayName(getDisplayName(item));
-
-    const detailRating = document.getElementById('detailRating');
-    const miscInfo = document.getElementById('miscInfo');
-    if (miscInfo) {
-        miscInfo.innerHTML = getMiscInfoHtml(item) || '';
-    }
-
-    if (detailRating) {
-        detailRating.innerHTML = getRatingHtml(item);
-    }
-
-    const playedIndicator = document.getElementById('playedIndicator');
-
-    if (playedIndicator) {
-        if (item?.UserData?.Played) {
-            playedIndicator.style.display = 'block';
-            playedIndicator.innerHTML =
-                '<span class="glyphicon glyphicon-ok"></span>';
-        } else if (item?.UserData?.UnplayedItemCount) {
-            playedIndicator.style.display = 'block';
-            playedIndicator.innerHTML = item.UserData.UnplayedItemCount.toString();
-        } else {
-            playedIndicator.style.display = 'none';
-        }
-    }
-
-    if (
-        item?.UserData?.PlayedPercentage &&
-        item?.UserData?.PlayedPercentage < 100 &&
-        !item.IsFolder
-    ) {
-        setHasPlayedPercentage(false);
-        setPlayedPercentage(item.UserData.PlayedPercentage);
-
-        detailImageUrl +=
-            '&PercentPlayed=' + item.UserData.PlayedPercentage.toString();
-    } else {
-        setHasPlayedPercentage(false);
-        setPlayedPercentage(0);
-    }
-
-    setDetailImage(detailImageUrl);
-}
-
-/**
- * Show item, but resolve it from an id number first
- *
- * @param itemId id to look up
- * @returns promise to wait for the request
- */
-export function displayItem(itemId: string): Promise<void> {
-    return JellyfinApi.authAjaxUser('Items/' + itemId, {
-        dataType: 'json',
-        type: 'GET'
-    }).then((item: BaseItemDto) => showItem(item));
-}
-
-/**
  * Update the context about the item we are playing.
  *
  * @param $scope global context
@@ -345,7 +207,7 @@ export function load(
 
     $scope.item = serverItem;
 
-    setAppStatus('backdrop');
+    DocumentManager.setAppStatus('backdrop');
     $scope.mediaType = serverItem?.MediaType;
 }
 
@@ -361,17 +223,18 @@ export function load(
  */
 export function play($scope: GlobalScope): void {
     if (
-        $scope.status == 'backdrop' ||
-        $scope.status == 'playing-with-controls' ||
-        $scope.status == 'playing' ||
-        $scope.status == 'audio'
+        DocumentManager.getAppStatus() == 'backdrop' ||
+        DocumentManager.getAppStatus() == 'playing-with-controls' ||
+        DocumentManager.getAppStatus() == 'playing' ||
+        DocumentManager.getAppStatus() == 'audio'
     ) {
         setTimeout(function () {
             window.mediaManager.play();
 
-            setAppStatus('playing-with-controls');
             if ($scope.mediaType == 'Audio') {
-                setAppStatus('audio');
+                DocumentManager.setAppStatus('audio');
+            } else {
+                DocumentManager.setAppStatus('playing-with-controls');
             }
         }, 20);
     }
@@ -382,7 +245,7 @@ export function play($scope: GlobalScope): void {
  */
 export function stop(): void {
     setTimeout(function () {
-        setAppStatus('waiting');
+        DocumentManager.setAppStatus('waiting');
     }, 20);
 }
 
@@ -471,7 +334,7 @@ export function getLiveStream(
 /**
  * Get download speed based on the jellyfin bitratetest api.
  *
- * FYI this API has a 10MB limit.
+ * The API has a 10MB limit.
  *
  * @param byteSize number of bytes to request
  * @returns the bitrate in bits/s
@@ -502,7 +365,7 @@ export function getDownloadSpeed(byteSize: number): Promise<number> {
  * Function to detect the bitrate.
  * It first tries 1MB and if bitrate is above 1Mbit/s it tries again with 2.4MB.
  *
- * @returns bitrate in bits/s
+ * @returns {Promise<number>} bitrate in bits/s
  */
 export function detectBitrate(): Promise<number> {
     // First try a small amount so that we don't hang up their mobile connection
@@ -521,7 +384,8 @@ export function detectBitrate(): Promise<number> {
 /**
  * Tell Jellyfin to kill off our active transcoding session
  *
- * @param $scope
+ * @param {GlobalScope} $scope Global scope variable
+ * @returns {Promise<void>} Promise for the http request to go through
  */
 export function stopActiveEncodings($scope: GlobalScope): Promise<void> {
     const options = {

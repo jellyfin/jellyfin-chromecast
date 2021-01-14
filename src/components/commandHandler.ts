@@ -17,13 +17,11 @@ import {
     seek
 } from './maincontroller';
 
-import {
-    displayItem,
-    reportPlaybackProgress,
-    startBackdropInterval
-} from './jellyfinActions';
+import { reportPlaybackProgress } from './jellyfinActions';
 
 import { playbackManager } from './playbackManager';
+
+import { DocumentManager } from './documentManager';
 
 export abstract class CommandHandler {
     private static playerManager: cast.framework.PlayerManager;
@@ -92,7 +90,7 @@ export abstract class CommandHandler {
 
     static displayContentHandler(data: DataMessage): void {
         if (!this.playbackManager.isPlaying()) {
-            displayItem((<DisplayRequest>data.options).ItemId);
+            DocumentManager.showItemId((<DisplayRequest>data.options).ItemId);
         }
     }
 
@@ -141,7 +139,7 @@ export abstract class CommandHandler {
 
     static IdentifyHandler(): void {
         if (!this.playbackManager.isPlaying()) {
-            startBackdropInterval();
+            DocumentManager.startBackdropInterval();
         } else {
             // When a client connects send back the initial device state (volume etc) via a playbackstop message
             reportPlaybackProgress(
