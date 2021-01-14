@@ -1,20 +1,19 @@
 module.exports = {
     root: true,
-    plugins: ['@typescript-eslint', 'prettier', 'promise', 'import', 'jsdoc'],
+    plugins: ['@typescript-eslint', 'promise', 'import', 'jsdoc'],
     env: {
         node: true,
         es6: true
     },
     extends: [
         'eslint:recommended',
-        'plugin:prettier/recommended',
         'plugin:promise/recommended',
         'plugin:@typescript-eslint/recommended',
         'plugin:jsdoc/recommended',
         'plugin:import/errors',
         'plugin:import/warnings',
         'plugin:import/typescript',
-        'prettier'
+        'plugin:prettier/recommended'
     ],
     rules: {
         '@typescript-eslint/explicit-function-return-type': 'error',
