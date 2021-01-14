@@ -98,14 +98,13 @@ body {
     top: 5px;
     right: 5px;
     text-align: center;
-    width: 24px;
-    height: 19px;
-    padding-top: 3px;
+    width: 1.8vw;
+    height: 1.6vw;
+    padding-top: 0.1vw;
     border-radius: 50%;
     color: #fff;
     background: rgba(0, 128, 0, 0.8);
-    font-size: 13px;
-    line-height: 16.9px;
+    font-size: 1.1vw;
 }
 
 .detailImageProgressContainer {
@@ -151,7 +150,7 @@ body {
     top: 22%;
     height: 63%;
     left: 30.5%;
-    font-size: 23px;
+    font-size: 1.2vw;
     width: 60%;
 }
 
@@ -168,24 +167,23 @@ body {
 }
 
 .displayName {
-    font-size: 40px;
+    font-size: 3vw;
 }
 
 #miscInfo {
-    font-size: 17px;
-    margin-left: 25px;
+    font-size: 1.5vw;
+    margin-left: 2vw;
 }
 
 .starRating {
     background-image: url('../img/stars.svg');
     background-position: left center;
     background-repeat: no-repeat;
-    width: 21px;
-    height: 18px;
-    display: inline-block;
     background-size: cover;
-    vertical-align: top;
-    position: relative;
+    width: 1.6vw;
+    height: 1.4vw;
+    display: inline-block;
+    vertical-align: text-bottom;
     top: 6px;
 }
 
@@ -196,13 +194,12 @@ body {
 
 .rottentomatoesicon {
     display: inline-block;
-    width: 18px;
-    height: 18px;
+    width: 1.4vw;
+    height: 1.4vw;
     background-size: cover;
     background-position: left center;
     background-repeat: no-repeat;
-    vertical-align: top;
-    position: relative;
+    vertical-align: text-bottom;
     top: 6px;
 }
 
@@ -252,7 +249,7 @@ body {
     bottom: 0;
     left: 0;
     text-align: center;
-    font-size: 45px;
+    font-size: 3vw;
     margin-bottom: 3%;
     margin-left: 5%;
 }
@@ -264,6 +261,7 @@ body {
     right: 0;
     margin-right: 5%;
     margin-bottom: 3%;
+    font-size: 1.5vw;
 }
 
 #waiting-container h1,
@@ -286,7 +284,7 @@ body {
 
 /* jellyfin logo in the waiting container */
 #waiting-container .logo {
-    height: 55px;
+    width: 4vw;
     display: inline-block;
     vertical-align: text-bottom;
 }

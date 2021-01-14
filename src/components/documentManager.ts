@@ -243,7 +243,6 @@ export abstract class DocumentManager {
         const starRatingValue = this.getElementById('star-rating-value');
 
         if (item.CommunityRating != null) {
-            starRating.setAttribute('title', item.CommunityRating.toFixed(1));
             starRatingValue.innerHTML = item.CommunityRating.toFixed(1);
             this.setVisibility(starRating, true);
             this.setVisibility(starRatingValue, true);
@@ -262,7 +261,6 @@ export abstract class DocumentManager {
             criticRating.classList.remove(
                 verdict == 'fresh' ? 'rotten' : 'fresh'
             );
-            criticRating.setAttribute('title', verdict);
 
             criticRatingValue.innerHTML = item.CriticRating.toString();
 
