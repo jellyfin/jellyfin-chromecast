@@ -196,8 +196,8 @@
         lastTranscoderPing = new Date().getTime();
 
         return fetchhelper.ajax({
-
-            url: url,
+            // 10.7 needs it there instead of in POST
+            url: url + '?playSessionId=' + options.PlaySessionId,
             headers: getSecurityHeaders($scope.accessToken, $scope.userId),
             type: 'POST',
             data: JSON.stringify(options),

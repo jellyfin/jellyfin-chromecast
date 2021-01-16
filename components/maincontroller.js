@@ -170,7 +170,7 @@
 
         window.VolumeInfo.Level = (event.data['level'] || 1) * 100;
         window.VolumeInfo.IsMuted = event.data['muted'] || false;
-        
+
         if ($scope.userId != null) {
             reportEvent('volumechange', true);
         }
@@ -503,6 +503,12 @@
 
         var data = event.data;
 
+        // Apparently chromium likes to pass it as json, not as object.
+        // chrome on android works fine
+        if (typeof data === 'string') {
+            data = JSON.parse(data);
+        }
+
         data.options = data.options || {};
         data.options.senderId = event.senderId;
 
@@ -692,6 +698,17 @@
             Format: 'js',
             Method: 'External'
         });
+
+        // clean up deviceprofile since in this version it's in the submodule.
+        for(var pi in profile.CodecProfiles) {
+            var p = profile.CodecProfiles[pi];
+            for(var ci in p.Conditions) {
+                var c = p.Conditions[ci];
+                if (c.IsRequired === 'false') {
+                    c.IsRequired = false;
+                }
+            }
+        }
 
         return profile;
     }
