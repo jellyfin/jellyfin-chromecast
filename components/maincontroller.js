@@ -170,7 +170,7 @@
 
         window.VolumeInfo.Level = (event.data['level'] || 1) * 100;
         window.VolumeInfo.IsMuted = event.data['muted'] || false;
-        
+
         if ($scope.userId != null) {
             reportEvent('volumechange', true);
         }
@@ -502,6 +502,12 @@
         console.log('Playlist message: ' + JSON.stringify(event));
 
         var data = event.data;
+
+        // Apparently chromium likes to pass it as json, not as object.
+        // chrome on android works fine
+        if (typeof data === 'string') {
+            data = JSON.parse(data);
+        }
 
         data.options = data.options || {};
         data.options.senderId = event.senderId;
