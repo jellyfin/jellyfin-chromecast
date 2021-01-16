@@ -699,6 +699,17 @@
             Method: 'External'
         });
 
+        // clean up deviceprofile since in this version it's in the submodule.
+        for(var pi in profile.CodecProfiles) {
+            var p = profile.CodecProfiles[pi];
+            for(var ci in p.Conditions) {
+                var c = p.Conditions[ci];
+                if (c.IsRequired === 'false') {
+                    c.IsRequired = false;
+                }
+            }
+        }
+
         return profile;
     }
 

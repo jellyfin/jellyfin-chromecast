@@ -30,12 +30,12 @@ function getCurrentPositionTicks($scope) {
 function getReportingParams($scope) {
 
     return {
-        PositionTicks: getCurrentPositionTicks($scope),
+        PositionTicks: Math.round(getCurrentPositionTicks($scope)),
         IsPaused: window.mediaElement.paused,
         IsMuted: window.VolumeInfo.IsMuted,
         AudioStreamIndex: $scope.audioStreamIndex,
         SubtitleStreamIndex: $scope.subtitleStreamIndex,
-        VolumeLevel: window.VolumeInfo.Level,
+        VolumeLevel: Math.round(window.VolumeInfo.Level),
         ItemId: $scope.itemId,
         MediaSourceId: $scope.mediaSourceId,
         QueueableMediaTypes: ['Audio', 'Video'],
