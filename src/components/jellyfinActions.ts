@@ -169,7 +169,7 @@ export function pingTranscoder(
     if (now - lastTranscoderPing < 5000) {
         console.debug('Skipping ping due to recent progress check-in');
         return new Promise(function (resolve) {
-            resolve();
+            resolve(undefined);
         });
     }
 

@@ -4,6 +4,8 @@
         "module": "ESNext",
         "moduleResolution": "Node",
         "lib": ["dom", "ESNext"],
+        "resolveJsonModule": true,
+        "allowSyntheticDefaultImports": true,
         "allowJs": true,
         "sourceMap": true,
         "outDir": "./dist/",

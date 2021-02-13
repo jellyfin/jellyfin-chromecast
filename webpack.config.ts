@@ -1,12 +1,16 @@
-/* eslint @typescript-eslint/no-var-requires: "off" */
-const path = require('path');
-const { CleanWebpackPlugin } = require('clean-webpack-plugin');
-const webpack = require('webpack');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
-const ImageMinimizerPlugin = require('image-minimizer-webpack-plugin');
-const packagejson = require('./package.json');
+/* eslint-env node */
 
-const config = {
+import * as path from 'path';
+import * as webpack from 'webpack';
+import { DefinePlugin } from 'webpack';
+import { merge } from 'webpack-merge';
+import { CleanWebpackPlugin } from 'clean-webpack-plugin';
+import HtmlWebpackPlugin from 'html-webpack-plugin';
+import ImageMinimizerPlugin from 'image-minimizer-webpack-plugin';
+
+import packagejson from './package.json';
+
+const common: webpack.Configuration = {
     context: path.resolve(__dirname, 'src'),
     entry: './app.ts',
     output: {
@@ -60,18 +64,44 @@ const config = {
     }
 };
 
-module.exports = (env, argv) => {
-    const isProduction = argv.mode === 'production';
-
-    config.plugins.push(
-        new webpack.DefinePlugin({
-            PRODUCTION: JSON.stringify(isProduction),
+const development: webpack.Configuration = {
+    mode: 'development',
+    devtool: 'inline-source-map',
+    devServer: {
+        contentBase: path.join(__dirname, 'dist'),
+        compress: true,
+        port: process.env.RECEIVER_PORT
+            ? Number.parseInt(process.env.RECEIVER_PORT, 10)
+            : 9000,
+        publicPath: '/'
+    },
+    plugins: [
+        new DefinePlugin({
+            PRODUCTION: JSON.stringify(false),
             RECEIVERVERSION: JSON.stringify(packagejson.version)
         })
-    );
+    ]
+};
 
-    if (!isProduction) {
-        config.devtool = 'inline-source-map';
+const production: webpack.Configuration = {
+    mode: 'production',
+    plugins: [
+        new DefinePlugin({
+            PRODUCTION: JSON.stringify(true),
+            RECEIVERVERSION: JSON.stringify(packagejson.version)
+        })
+    ]
+};
+
+module.exports = (
+    env: string,
+    argv: { [key: string]: string }
+): webpack.Configuration => {
+    let config;
+    if (argv.mode === 'production') {
+        config = merge(common, production);
+    } else {
+        config = merge(common, development);
     }
 
     return config;
