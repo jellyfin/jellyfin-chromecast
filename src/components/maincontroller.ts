@@ -590,11 +590,8 @@ export async function shuffle(
 }
 
 /**
- * This function fetches the full information for an item before playing it.
- * The provided item is not complete.
- *
- * Old behavior: The original properties would be copied over to the fetched one,
- * but just the fetched item should be fine
+ * This function fetches the full information of an item before playing it.
+ * Only item.Id needs to be set.
  *
  * @param item - Item to look up
  * @param options - Extra information about how it should be played back.
@@ -837,7 +834,9 @@ export function createMediaInformation(
         );
     }
 
-    mediaInfo.customData.startPositionTicks = streamInfo.startPosition || 0;
+    // If the client actually sets startPosition:
+    // if(streamInfo.startPosition)
+    //     mediaInfo.customData.startPositionTicks = streamInfo.startPosition
 
     return mediaInfo;
 }
