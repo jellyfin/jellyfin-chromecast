@@ -4,7 +4,7 @@
 
 ### Development Environment
 
-The development environment is setup with editorconfig, Code style is enforced by prettier and eslint for Javascipt/Typescript linting
+The development environment is setup with editorconfig. Code style is enforced by prettier and eslint for Javascript/Typescript linting
 
 -   [editorconfig](https://editorconfig.org/)
 -   [prettier](https://prettier.io/)
@@ -14,13 +14,13 @@ The development environment is setup with editorconfig, Code style is enforced b
 
 | name          | required | description                                                | default if not set |
 | ------------- | -------- | ---------------------------------------------------------- | ------------------ |
-| RECEIVER_PORT | No       | The port used for the dev server when `yarn serve` is used | 9000               |
+| RECEIVER_PORT | No       | The port used for the dev server when `npm start` is used | 9000               |
 
 ### Building/Using
 
-`yarn build:development` - Build a development version
-`yarn serve` / `yarn start` - Build a development version and start a dev server
-`yarn build:production` - Build a production version
+`npm run build:development` - Build a development version
+`npm start` - Build a development version and start a dev server
+`npm run build:production` - Build a production version
 
 ## Pull Requests
 
