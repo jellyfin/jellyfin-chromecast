@@ -14,7 +14,7 @@ module.exports = {
         'plugin:import/errors',
         'plugin:import/warnings',
         'plugin:import/typescript',
-        'plugin:prettier/recommended'
+        'prettier'
     ],
     rules: {
         '@typescript-eslint/explicit-function-return-type': 'error',
