@@ -129,55 +129,55 @@ export abstract class DocumentManager {
    * @param item - to show information about
    * @returns for the page to load
    */
-  public static showItem(item: BaseItemDto): Promise<void> {
+  public static async showItem(item: BaseItemDto): Promise<void> {
     // no showItem for cc audio
     if (getActiveDeviceId() === deviceIds.AUDIO) {
-      return Promise.resolve();
+      return;
     }
 
     // stop cycling backdrops
     this.clearBackdropInterval();
 
-    return Promise.all([
-      this.getWaitingBackdropUrl(item),
-      this.getPrimaryImageUrl(item),
-      this.getLogoUrl(item)
-    ]).then((urls) => {
-      requestAnimationFrame(() => {
-        this.setWaitingBackdrop(urls[0], item);
-        this.setDetailImage(urls[1]);
-        this.setLogo(urls[2]);
+    const urls = [
+      await this.getWaitingBackdropUrl(item),
+      await this.getPrimaryImageUrl(item),
+      await this.getLogoUrl(item)
+    ];
 
-        this.setOverview(item.Overview ?? null);
-        this.setGenres(item?.Genres?.join(' / ') ?? null);
-        this.setDisplayName(item);
-        this.setMiscInfo(item);
+    requestAnimationFrame(() => {
+      this.setWaitingBackdrop(urls[0], item);
+      this.setDetailImage(urls[1]);
+      this.setLogo(urls[2]);
 
-        this.setRating(item);
+      this.setOverview(item.Overview ?? null);
+      this.setGenres(item?.Genres?.join(' / ') ?? null);
+      this.setDisplayName(item);
+      this.setMiscInfo(item);
 
-        if (item?.UserData?.Played) {
-          this.setPlayedIndicator(true);
-        } else if (item?.UserData?.UnplayedItemCount) {
-          this.setPlayedIndicator(item?.UserData?.UnplayedItemCount);
-        } else {
-          this.setPlayedIndicator(false);
-        }
+      this.setRating(item);
 
-        if (
-          item?.UserData?.PlayedPercentage &&
-          item?.UserData?.PlayedPercentage < 100 &&
-          !item.IsFolder
-        ) {
-          this.setHasPlayedPercentage(false);
-          this.setPlayedPercentage(item.UserData.PlayedPercentage);
-        } else {
-          this.setHasPlayedPercentage(false);
-          this.setPlayedPercentage(0);
-        }
+      if (item?.UserData?.Played) {
+        this.setPlayedIndicator(true);
+      } else if (item?.UserData?.UnplayedItemCount) {
+        this.setPlayedIndicator(item?.UserData?.UnplayedItemCount);
+      } else {
+        this.setPlayedIndicator(false);
+      }
 
-        // Switch visible view!
-        this.setAppStatus('details');
-      });
+      if (
+        item?.UserData?.PlayedPercentage &&
+        item?.UserData?.PlayedPercentage < 100 &&
+        !item.IsFolder
+      ) {
+        this.setHasPlayedPercentage(false);
+        this.setPlayedPercentage(item.UserData.PlayedPercentage);
+      } else {
+        this.setHasPlayedPercentage(false);
+        this.setPlayedPercentage(0);
+      }
+
+      // Switch visible view!
+      this.setAppStatus('details');
     });
   }
 

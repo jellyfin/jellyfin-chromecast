@@ -27,8 +27,6 @@ import { playbackManager } from './playbackManager';
 import { CommandHandler } from './commandHandler';
 import { getMaxBitrateSupport } from './codecSupportHelper';
 import { DocumentManager } from './documentManager';
-
-import { BaseItemDtoQueryResult } from '~/api/generated/models/base-item-dto-query-result';
 import { BaseItemDto } from '~/api/generated/models/base-item-dto';
 import { MediaSourceInfo } from '~/api/generated/models/media-source-info';
 import { GlobalScope, PlayRequest } from '~/types/global';
@@ -207,27 +205,27 @@ window.mediaManager.addEventListener(
 /**
  *
  */
-export function reportDeviceCapabilities(): Promise<void> {
-  return getMaxBitrate().then((maxBitrate) => {
-    const deviceProfile = getDeviceProfile({
-      enableHls: true,
-      bitrateSetting: maxBitrate
-    });
+export async function reportDeviceCapabilities(): Promise<void> {
+  const maxBitrate = await getMaxBitrate();
 
-    const capabilities = {
-      PlayableMediaTypes: ['Audio', 'Video'],
-      SupportsPersistentIdentifier: false,
-      SupportsMediaControl: true,
-      DeviceProfile: deviceProfile
-    };
+  const deviceProfile = getDeviceProfile({
+    enableHls: true,
+    bitrateSetting: maxBitrate
+  });
 
-    hasReportedCapabilities = true;
+  const capabilities = {
+    PlayableMediaTypes: ['Audio', 'Video'],
+    SupportsPersistentIdentifier: false,
+    SupportsMediaControl: true,
+    DeviceProfile: deviceProfile
+  };
 
-    return JellyfinApi.authAjax('Sessions/Capabilities/Full', {
-      type: 'POST',
-      data: JSON.stringify(capabilities),
-      contentType: 'application/json'
-    });
+  hasReportedCapabilities = true;
+
+  return JellyfinApi.authAjax('Sessions/Capabilities/Full', {
+    type: 'POST',
+    data: JSON.stringify(capabilities),
+    contentType: 'application/json'
   });
 }
 
@@ -414,7 +412,7 @@ export function seek(ticks: number): Promise<void> {
  * @param ticks
  * @param params
  */
-export function changeStream(
+export async function changeStream(
   ticks: number,
   params: any = undefined
 ): Promise<void> {
@@ -434,68 +432,67 @@ export function changeStream(
   const liveStreamId = $scope.liveStreamId;
 
   const item = $scope.item;
+  const maxBitrate = await getMaxBitrate();
 
-  return getMaxBitrate().then(async (maxBitrate) => {
-    const deviceProfile = getDeviceProfile({
-      enableHls: true,
-      bitrateSetting: maxBitrate
-    });
-    const audioStreamIndex =
-      params.AudioStreamIndex == null
-        ? $scope.audioStreamIndex
-        : params.AudioStreamIndex;
-    const subtitleStreamIndex =
-      params.SubtitleStreamIndex == null
-        ? $scope.subtitleStreamIndex
-        : params.SubtitleStreamIndex;
-
-    const playbackInformation = await getPlaybackInfo(
-      item,
-      maxBitrate,
-      deviceProfile,
-      ticks,
-      $scope.mediaSourceId,
-      audioStreamIndex,
-      subtitleStreamIndex,
-      liveStreamId
-    );
-
-    if (!validatePlaybackInfoResult(playbackInformation)) {
-      return;
-    }
-
-    const mediaSource = playbackInformation.MediaSources[0];
-    const streamInfo = createStreamInfo(item, mediaSource, ticks);
-
-    if (!streamInfo.url) {
-      showPlaybackInfoErrorMessage('NoCompatibleStream');
-
-      return;
-    }
-
-    const mediaInformation = createMediaInformation(
-      playSessionId,
-      item,
-      streamInfo
-    );
-    const loadRequest = new cast.framework.messages.LoadRequestData();
-
-    loadRequest.media = mediaInformation;
-    loadRequest.autoplay = true;
-
-    // TODO something to do with HLS?
-    const requiresStoppingTranscoding = false;
-
-    if (requiresStoppingTranscoding) {
-      window.mediaManager.pause();
-      await stopActiveEncodings(playSessionId);
-    }
-
-    window.mediaManager.load(loadRequest);
-    window.mediaManager.play();
-    $scope.subtitleStreamIndex = subtitleStreamIndex;
-    $scope.audioStreamIndex = audioStreamIndex;
+  const deviceProfile = getDeviceProfile({
+    enableHls: true,
+    bitrateSetting: maxBitrate
   });
+  const audioStreamIndex =
+    params.AudioStreamIndex == null
+      ? $scope.audioStreamIndex
+      : params.AudioStreamIndex;
+  const subtitleStreamIndex =
+    params.SubtitleStreamIndex == null
+      ? $scope.subtitleStreamIndex
+      : params.SubtitleStreamIndex;
+
+  const playbackInformation = await getPlaybackInfo(
+    item,
+    maxBitrate,
+    deviceProfile,
+    ticks,
+    $scope.mediaSourceId,
+    audioStreamIndex,
+    subtitleStreamIndex,
+    liveStreamId
+  );
+
+  if (!validatePlaybackInfoResult(playbackInformation)) {
+    return;
+  }
+
+  const mediaSource = playbackInformation.MediaSources[0];
+  const streamInfo = createStreamInfo(item, mediaSource, ticks);
+
+  if (!streamInfo.url) {
+    showPlaybackInfoErrorMessage('NoCompatibleStream');
+
+    return;
+  }
+
+  const mediaInformation = createMediaInformation(
+    playSessionId,
+    item,
+    streamInfo
+  );
+  const loadRequest = new cast.framework.messages.LoadRequestData();
+
+  loadRequest.media = mediaInformation;
+  loadRequest.autoplay = true;
+
+  // TODO something to do with HLS?
+  const requiresStoppingTranscoding = false;
+
+  if (requiresStoppingTranscoding) {
+    window.mediaManager.pause();
+    await stopActiveEncodings(playSessionId);
+  }
+
+  window.mediaManager.load(loadRequest);
+  window.mediaManager.play();
+  $scope.subtitleStreamIndex = subtitleStreamIndex;
+  $scope.audioStreamIndex = audioStreamIndex;
 }
 
 // Create a message handler for the custome namespace channel
@@ -527,28 +524,30 @@ window.castReceiverContext.addCustomMessageListener(
  * @param options
  * @param method
  */
-export function translateItems(
+export async function translateItems(
   data: any,
   options: PlayRequest,
   method: string
 ): Promise<void> {
   const playNow = method != 'PlayNext' && method != 'PlayLast';
 
-  return translateRequestedItems(data.userId, options.items, playNow).then(
-    (result: BaseItemDtoQueryResult) => {
-      if (result.Items) {
-        options.items = result.Items;
-      }
-
-      if (method == 'PlayNext' || method == 'PlayLast') {
-        for (let i = 0, length = options.items.length; i < length; i++) {
-          window.playlist.push(options.items[i]);
-        }
-      } else {
-        playbackMgr.playFromOptions(data.options);
-      }
-    }
+  const result = await translateRequestedItems(
+    data.userId,
+    options.items,
+    playNow
   );
+
+  if (result.Items) {
+    options.items = result.Items;
+  }
+
+  if (method == 'PlayNext' || method == 'PlayLast') {
+    for (let i = 0, length = options.items.length; i < length; i++) {
+      window.playlist.push(options.items[i]);
+    }
+  } else {
+    playbackMgr.playFromOptions(data.options);
+  }
 }
 
 /**
@@ -556,15 +555,15 @@ export function translateItems(
  * @param options
  * @param item
  */
-export function instantMix(
+export async function instantMix(
   data: any,
   options: any,
   item: BaseItemDto
 ): Promise<void> {
-  return getInstantMixItems(data.userId, item).then((result) => {
-    options.items = result.Items;
-    playbackMgr.playFromOptions(data.options);
-  });
+  const result = await getInstantMixItems(data.userId, item);
+
+  options.items = result.Items;
+  playbackMgr.playFromOptions(data.options);
 }
 
 /**
@@ -572,34 +571,34 @@ export function instantMix(
  * @param options
  * @param item
  */
-export function shuffle(
+export async function shuffle(
   data: any,
   options: any,
   item: BaseItemDto
 ): Promise<void> {
-  return getShuffleItems(data.userId, item).then((result) => {
-    options.items = result.Items;
-    playbackMgr.playFromOptions(data.options);
-  });
+  const result = await getShuffleItems(data.userId, item);
+
+  options.items = result.Items;
+  playbackMgr.playFromOptions(data.options);
 }
 
 /**
  * @param item
  * @param options
  */
-export function onStopPlayerBeforePlaybackDone(
+export async function onStopPlayerBeforePlaybackDone(
   item: BaseItemDto,
   options: any
 ): Promise<void> {
-  return JellyfinApi.authAjaxUser(`Items/${item.Id}`, {
+  const data = await JellyfinApi.authAjaxUser(`Items/${item.Id}`, {
     dataType: 'json',
     type: 'GET'
-  }).then((data) => {
-    // Attach the custom properties we created like userId, serverAddress, itemId, etc
-    extend(data, item);
+  });
 
-    playbackMgr.playItemInternal(data, options);
-  }, broadcastConnectionErrorMessage);
+  // Attach the custom properties we created like userId, serverAddress, itemId, etc
+  extend(data, item);
+  playbackMgr.playItemInternal(data, options);
+  broadcastConnectionErrorMessage();
 }
 
 let lastBitrateDetect = 0;
@@ -607,42 +606,37 @@ let detectedBitrate = 0;
 /**
  *
  */
-export function getMaxBitrate(): Promise<number> {
+export async function getMaxBitrate(): Promise<number> {
   console.log('getMaxBitrate');
 
-  return new Promise((resolve) => {
+  if (window.MaxBitrate) {
+    console.log(`bitrate is set to ${window.MaxBitrate}`);
+
+    return window.MaxBitrate;
+  }
+
+  if (detectedBitrate && new Date().getTime() - lastBitrateDetect < 600000) {
+    console.log(`returning previous detected bitrate of ${detectedBitrate}`);
+
+    return detectedBitrate;
+  }
+
+  console.log('detecting bitrate');
+
+  const bitrate = await detectBitrate();
+
+  try {
+    console.log(`Max bitrate auto detected to ${bitrate}`);
+    lastBitrateDetect = new Date().getTime();
+    detectedBitrate = bitrate;
+
+    return detectedBitrate;
+  } catch (e) {
     // The client can set this number
-    if (window.MaxBitrate) {
-      console.log(`bitrate is set to ${window.MaxBitrate}`);
+    console.log('Error detecting bitrate, will return device maximum.');
 
-      resolve(window.MaxBitrate);
-
-      return;
-    }
-
-    if (detectedBitrate && new Date().getTime() - lastBitrateDetect < 600000) {
-      console.log(`returning previous detected bitrate of ${detectedBitrate}`);
-      resolve(detectedBitrate);
-
-      return;
-    }
-
-    console.log('detecting bitrate');
-
-    detectBitrate().then(
-      (bitrate) => {
-        console.log(`Max bitrate auto detected to ${bitrate}`);
-        lastBitrateDetect = new Date().getTime();
-        detectedBitrate = bitrate;
-
-        resolve(detectedBitrate);
-      },
-      () => {
-        console.log('Error detecting bitrate, will return device maximum.');
-        resolve(getMaxBitrateSupport());
-      }
-    );
-  });
+    return getMaxBitrateSupport();
+  }
 }
 
 /**

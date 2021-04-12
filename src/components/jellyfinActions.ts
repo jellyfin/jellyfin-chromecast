@@ -364,26 +364,21 @@ export function getLiveStream(
  * @param byteSize - number of bytes to request
  * @returns the bitrate in bits/s
  */
-export function getDownloadSpeed(byteSize: number): Promise<number> {
+export async function getDownloadSpeed(byteSize: number): Promise<number> {
   const path = `Playback/BitrateTest?size=${byteSize}`;
 
   const now = new Date().getTime();
 
-  return JellyfinApi.authAjax(path, {
+  await JellyfinApi.authAjax(path, {
     type: 'GET',
     timeout: 5000
-  })
-    .then((response) => {
-      // Need to wait for the whole response before calculating speed
-      return response.blob();
-    })
-    .then(() => {
-      const responseTimeSeconds = (new Date().getTime() - now) / 1000;
-      const bytesPerSecond = byteSize / responseTimeSeconds;
-      const bitrate = Math.round(bytesPerSecond * 8);
+  });
 
-      return bitrate;
-    });
+  const responseTimeSeconds = (new Date().getTime() - now) / 1000;
+  const bytesPerSecond = byteSize / responseTimeSeconds;
+  const bitrate = Math.round(bytesPerSecond * 8);
+
+  return bitrate;
 }
 
 /**
@@ -392,18 +387,18 @@ export function getDownloadSpeed(byteSize: number): Promise<number> {
  *
  * @returns bitrate in bits/s
  */
-export function detectBitrate(): Promise<number> {
+export async function detectBitrate(): Promise<number> {
   // First try a small amount so that we don't hang up their mobile connection
-  return getDownloadSpeed(1000000).then((bitrate) => {
-    if (bitrate < 1000000) {
-      return Math.round(bitrate * 0.8);
-    } else {
-      // If that produced a fairly high speed, try again with a larger size to get a more accurate result
-      return getDownloadSpeed(2400000).then((bitrate) => {
-        return Math.round(bitrate * 0.8);
-      });
-    }
-  });
+
+  let bitrate = await getDownloadSpeed(1000000);
+
+  if (bitrate < 1000000) {
+    return Math.round(bitrate * 0.8);
+  }
+
+  bitrate = await getDownloadSpeed(2400000);
+
+  return Math.round(bitrate * 0.8);
 }
 
 /**

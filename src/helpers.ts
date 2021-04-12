@@ -559,7 +559,7 @@ export function getShuffleItems(
  * @param item - Parent item of the search
  * @returns items for the queue
  */
-export function getInstantMixItems(
+export async function getInstantMixItems(
   userId: string,
   item: BaseItemDto
 ): Promise<BaseItemDtoQueryResult> {
@@ -592,7 +592,7 @@ export function getInstantMixItems(
       dataType: 'json'
     });
   } else {
-    return Promise.reject(`InstantMix: Unknown item type: ${item.Type}`);
+    throw new Error(`InstantMix: Unknown item type: ${item.Type}`);
   }
 }
 
@@ -603,7 +603,7 @@ export function getInstantMixItems(
  * @param query - specification on what to search for
  * @returns items to be played back
  */
-export function getItemsForPlayback(
+export async function getItemsForPlayback(
   userId: string,
   query: ItemQuery
 ): Promise<BaseItemDtoQueryResult> {
@@ -613,15 +613,18 @@ export function getItemsForPlayback(
   query.ExcludeLocationTypes = 'Virtual';
 
   if (query.Ids && query.Ids.split(',').length == 1) {
-    return JellyfinApi.authAjaxUser(`Items/${query.Ids.split(',')[0]}`, {
-      type: 'GET',
-      dataType: 'json'
-    }).then((item) => {
-      return {
-        Items: [item],
-        TotalRecordCount: 1
-      };
-    });
+    const item = await JellyfinApi.authAjaxUser(
+      `Items/${query.Ids.split(',')[0]}`,
+      {
+        type: 'GET',
+        dataType: 'json'
+      }
+    );
+
+    return {
+      Items: [item],
+      TotalRecordCount: 1
+    };
   } else {
     return JellyfinApi.authAjaxUser('Items', {
       query: query,
@@ -690,8 +693,8 @@ export function getUser(): Promise<UserDto> {
  *
  * @param userId - userId to use
  * @param items - items to resolve
- * @param smart - If enabled it will try to find the next episode given the
- *              current one, if the connected user has enabled that in their settings
+ * @param smart - If enabled it will try to find the next episode given the current one,
+ * if the connected user has enabled that in their settings
  * @returns Promise for search result containing items to play
  */
 export async function translateRequestedItems(
