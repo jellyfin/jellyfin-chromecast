@@ -6,14 +6,14 @@
 
 The development environment is setup with editorconfig. Code style is enforced by prettier and eslint for Javascript/Typescript linting
 
--   [editorconfig](https://editorconfig.org/)
--   [prettier](https://prettier.io/)
--   [eslint](https://eslint.org/)
+- [editorconfig](https://editorconfig.org/)
+- [prettier](https://prettier.io/)
+- [eslint](https://eslint.org/)
 
 ### Environment variables
 
-| name          | required | description                                                | default if not set |
-| ------------- | -------- | ---------------------------------------------------------- | ------------------ |
+| name          | required | description                                               | default if not set |
+| ------------- | -------- | --------------------------------------------------------- | ------------------ |
 | RECEIVER_PORT | No       | The port used for the dev server when `npm start` is used | 9000               |
 
 ### Building/Using
