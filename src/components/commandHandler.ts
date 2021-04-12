@@ -24,7 +24,7 @@ import { playbackManager } from './playbackManager';
 import { DocumentManager } from './documentManager';
 
 export abstract class CommandHandler {
-    private static playerManager: cast.framework.PlayerManager;
+    private static playerManager: framework.PlayerManager;
     private static playbackManager: playbackManager;
     private static supportedCommands: SupportedCommands = {
         PlayNext: CommandHandler.playNextHandler,
@@ -53,7 +53,7 @@ export abstract class CommandHandler {
     };
 
     static configure(
-        playerManager: cast.framework.PlayerManager,
+        playerManager: framework.PlayerManager,
         playbackManager: playbackManager
     ): void {
         this.playerManager = playerManager;

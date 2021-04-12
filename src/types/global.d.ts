@@ -1,3 +1,9 @@
+import { cast } from 'chromecast-caf-receiver';
+import {
+    CastReceiverContext,
+    PlayerManager
+} from 'chromecast-caf-receiver/cast.framework';
+import { SystemVolumeData } from 'chromecast-caf-receiver/cast.framework.system';
 import { RepeatMode } from '../api/generated/models/repeat-mode';
 import { BaseItemDto } from '../api/generated/models/base-item-dto';
 
@@ -98,8 +104,8 @@ declare global {
     export interface Window {
         deviceInfo: DeviceInfo;
         mediaElement: HTMLElement | null;
-        mediaManager: cast.framework.PlayerManager;
-        castReceiverContext: cast.framework.CastReceiverContext;
+        mediaManager: PlayerManager;
+        castReceiverContext: CastReceiverContext;
         playlist: Array<any>;
         currentPlaylistIndex: number;
         repeatMode: RepeatMode;
@@ -107,6 +113,6 @@ declare global {
         subtitleAppearance: any;
         MaxBitrate: number | undefined;
         senderId: string | undefined;
-        volume: cast.framework.system.SystemVolumeData;
+        volume: SystemVolumeData;
     }
 }

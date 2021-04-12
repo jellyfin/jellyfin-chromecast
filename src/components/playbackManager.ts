@@ -31,12 +31,12 @@ import { BaseItemDto } from '~/api/generated/models/base-item-dto';
 import { MediaSourceInfo } from '~/api/generated/models/media-source-info';
 
 export class playbackManager {
-    private playerManager: cast.framework.PlayerManager;
+    private playerManager: framework.PlayerManager;
     // TODO remove any
     private activePlaylist: Array<BaseItemDto>;
     private activePlaylistIndex: number;
 
-    constructor(playerManager: cast.framework.PlayerManager) {
+    constructor(playerManager: framework.PlayerManager) {
         // Parameters
         this.playerManager = playerManager;
 

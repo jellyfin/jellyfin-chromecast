@@ -82,10 +82,8 @@ export function onMediaElementPlaying(): void {
     reportEvent('playstatechange', true);
 }
 
-function onMediaElementVolumeChange(event: cast.framework.system.Event): void {
-    window.volume = (<cast.framework.system.SystemVolumeChangedEvent>(
-        event
-    )).data;
+function onMediaElementVolumeChange(event: framework.system.Event): void {
+    window.volume = (<framework.system.SystemVolumeChangedEvent>event).data;
     console.log('Received volume update: ' + window.volume.level);
     if (JellyfinApi.serverAddress !== null) reportEvent('volumechange', true);
 }
@@ -628,13 +626,10 @@ export function setTextTrack(index: number | null): void {
             return;
         }
 
-        const tracks: Array<cast.framework.messages.Track> = textTracksManager.getTracks();
-        const subtitleTrack:
-            | cast.framework.messages.Track
-            | undefined = tracks.find(function (
-            track: cast.framework.messages.Track
-        ) {
-            return track.trackId === index;
+        const tracks: Array<framework.messages.Track> = textTracksManager.getTracks();
+        const subtitleTrack: framework.messages.Track | undefined = tracks.find(
+            (track: framework.messages.Track) => {
+                return track.trackId === index;
         });
         if (subtitleTrack && subtitleTrack.trackId !== undefined) {
             textTracksManager.setActiveByIds([subtitleTrack.trackId]);
@@ -696,7 +691,7 @@ export function createMediaInformation(
     playSessionId: string,
     item: BaseItemDto,
     streamInfo: any
-): cast.framework.messages.MediaInformation {
+): framework.messages.MediaInformation {
     const mediaInfo = new cast.framework.messages.MediaInformation();
     mediaInfo.contentId = streamInfo.url;
     mediaInfo.contentType = streamInfo.contentType;
@@ -764,7 +759,7 @@ if (!PRODUCTION) {
 
     window.mediaManager.addEventListener(
         cast.framework.events.category.CORE,
-        (event: cast.framework.events.Event) => {
+        (event: framework.events.Event) => {
             console.log('Core event: ' + event.type);
             console.log(event);
         }
