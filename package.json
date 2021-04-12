@@ -72,7 +72,7 @@
     "lint": "npm run lint:code && npm run lint:css && npm run prettier",
     "lint:code": "eslint --ext .ts,.js .",
     "lint:css": "stylelint ./src/css/*.css",
-    "prepare": "npm run build:production",
+    "prepare": "npm run build:production && husky install",
     "prettier": "prettier --check .",
     "start": "TS_NODE_PROJECT=\"tsconfig-webpack.json\" webpack serve --config webpack.config.ts",
     "test": "jest --passWithNoTests",
