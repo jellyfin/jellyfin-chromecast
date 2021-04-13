@@ -7,8 +7,7 @@ import { merge } from 'webpack-merge';
 import { CleanWebpackPlugin } from 'clean-webpack-plugin';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import ImageMinimizerPlugin from 'image-minimizer-webpack-plugin';
-
-import packagejson from './package.json';
+import version from './package.json';
 
 const common: webpack.Configuration = {
     context: path.resolve(__dirname, 'src'),
@@ -22,6 +21,7 @@ const common: webpack.Configuration = {
         extensions: ['.ts', '.js']
     },
     plugins: [
+        // @ts-expect-error - Typings mismatch between versions
         new CleanWebpackPlugin(),
         new HtmlWebpackPlugin({
             filename: 'index.html',
@@ -67,6 +67,7 @@ const common: webpack.Configuration = {
 const development: webpack.Configuration = {
     mode: 'development',
     devtool: 'inline-source-map',
+    // @ts-expect-error - Typings mismatch between versions
     devServer: {
         contentBase: path.join(__dirname, 'dist'),
         compress: true,
@@ -78,7 +79,7 @@ const development: webpack.Configuration = {
     plugins: [
         new DefinePlugin({
             PRODUCTION: JSON.stringify(false),
-            RECEIVERVERSION: JSON.stringify(packagejson.version)
+            RECEIVERVERSION: JSON.stringify(version)
         })
     ]
 };
@@ -88,13 +89,12 @@ const production: webpack.Configuration = {
     plugins: [
         new DefinePlugin({
             PRODUCTION: JSON.stringify(true),
-            RECEIVERVERSION: JSON.stringify(packagejson.version)
+            RECEIVERVERSION: JSON.stringify(version)
         })
     ]
 };
 
 module.exports = (
-    env: string,
     argv: { [key: string]: string }
 ): webpack.Configuration => {
     let config;
