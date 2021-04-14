@@ -23,6 +23,7 @@ module.exports = {
     'import/order': 'error',
     'jsdoc/require-hyphen-before-param-description': 'error',
     'jsdoc/require-description': 'warn',
+    'jsdoc/require-param-description': 'warn',
     'jsdoc/require-jsdoc': 'error',
     //TypeScript and IntelliSense already provides us information about the function typings while hovering and
     // eslint-jsdoc doesn't detect a mismatch between what's declared in the function and what's declared in
