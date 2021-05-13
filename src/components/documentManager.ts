@@ -372,17 +372,17 @@ export abstract class DocumentManager {
     private static async setRandomUserBackdrop(): Promise<void> {
         const result = await JellyfinApi.authAjaxUser('Items', {
             dataType: 'json',
-            type: 'GET',
             query: {
-                SortBy: 'Random',
-                IncludeItemTypes: 'Movie,Series',
                 ImageTypes: 'Backdrop',
-                Recursive: true,
+                IncludeItemTypes: 'Movie,Series',
                 Limit: 1,
+                MaxOfficialRating: 'PG-13',
+                Recursive: true,
+                SortBy: 'Random'
                 // Although we're limiting to what the user has access to,
                 // not everyone will want to see adult backdrops rotating on their TV.
-                MaxOfficialRating: 'PG-13'
-            }
+            },
+            type: 'GET'
         });
 
         let src: string | null = null;

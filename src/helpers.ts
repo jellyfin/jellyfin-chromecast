@@ -39,21 +39,21 @@ export function getReportingParams($scope: GlobalScope): PlaybackProgressInfo {
      * those fields are always rounded.
      */
     return {
-        PositionTicks: Math.round(getCurrentPositionTicks($scope)),
+        AudioStreamIndex: $scope.audioStreamIndex,
+        CanSeek: $scope.canSeek,
+        IsMuted: window.volume.muted,
         IsPaused:
             window.mediaManager.getPlayerState() ===
             cast.framework.messages.PlayerState.PAUSED,
-        IsMuted: window.volume.muted,
-        AudioStreamIndex: $scope.audioStreamIndex,
-        SubtitleStreamIndex: $scope.subtitleStreamIndex,
-        VolumeLevel: Math.round(window.volume.level * 100),
         ItemId: $scope.itemId,
-        MediaSourceId: $scope.mediaSourceId,
-        CanSeek: $scope.canSeek,
-        PlayMethod: $scope.playMethod,
         LiveStreamId: $scope.liveStreamId,
+        MediaSourceId: $scope.mediaSourceId,
+        PlayMethod: $scope.playMethod,
         PlaySessionId: $scope.playSessionId,
-        RepeatMode: window.repeatMode
+        PositionTicks: Math.round(getCurrentPositionTicks($scope)),
+        RepeatMode: window.repeatMode,
+        SubtitleStreamIndex: $scope.subtitleStreamIndex,
+        VolumeLevel: Math.round(window.volume.level * 100)
     };
 }
 
@@ -96,8 +96,8 @@ export function getNextPlaybackItemInfo(): ItemIndex | null {
         const item = playlist[newIndex];
 
         return {
-            item: item,
-            index: newIndex
+            index: newIndex,
+            item: item
         };
     }
 
@@ -451,17 +451,17 @@ export function createStreamInfo(
     const canSeek = (mediaSource.RunTimeTicks || 0) > 0;
 
     const info: any = {
-        url: mediaUrl,
-        mediaSource: mediaSource,
-        isStatic: isStatic,
-        contentType: contentType,
-        streamContainer: streamContainer,
-        canSeek: canSeek,
-        canClientSeek: isStatic || (canSeek && streamContainer == 'm3u8'),
         audioStreamIndex: mediaSource.DefaultAudioStreamIndex,
-        subtitleStreamIndex: mediaSource.DefaultSubtitleStreamIndex,
+        canClientSeek: isStatic || (canSeek && streamContainer == 'm3u8'),
+        canSeek: canSeek,
+        contentType: contentType,
+        isStatic: isStatic,
+        mediaSource: mediaSource,
         playerStartPositionTicks: playerStartPositionTicks,
-        startPositionTicks: startPosition
+        startPositionTicks: startPosition,
+        streamContainer: streamContainer,
+        subtitleStreamIndex: mediaSource.DefaultSubtitleStreamIndex,
+        url: mediaUrl
     };
 
     const subtitleStreams =
@@ -546,12 +546,12 @@ export function getShuffleItems(
     item: BaseItemDto
 ): Promise<BaseItemDtoQueryResult> {
     const query: ItemQuery = {
-        UserId: userId,
         Fields: requiredItemFields,
-        Limit: 50,
         Filters: 'IsNotFolder',
+        Limit: 50,
         Recursive: true,
-        SortBy: 'Random'
+        SortBy: 'Random',
+        UserId: userId
     };
 
     if (item.Type == 'MusicArtist') {
@@ -582,9 +582,9 @@ export async function getInstantMixItems(
     item: BaseItemDto
 ): Promise<BaseItemDtoQueryResult> {
     const query: any = {
-        UserId: userId,
         Fields: requiredItemFields,
-        Limit: 50
+        Limit: 50,
+        UserId: userId
     };
 
     let url: string | null = null;
@@ -605,9 +605,9 @@ export async function getInstantMixItems(
 
     if (url) {
         return JellyfinApi.authAjax(url, {
+            dataType: 'json',
             query: query,
-            type: 'GET',
-            dataType: 'json'
+            type: 'GET'
         });
     } else {
         throw new Error(`InstantMix: Unknown item type: ${item.Type}`);
@@ -634,8 +634,8 @@ export async function getItemsForPlayback(
         const item = await JellyfinApi.authAjaxUser(
             `Items/${query.Ids.split(',')[0]}`,
             {
-                type: 'GET',
-                dataType: 'json'
+                dataType: 'json',
+                type: 'GET'
             }
         );
 
@@ -645,9 +645,9 @@ export async function getItemsForPlayback(
         };
     } else {
         return JellyfinApi.authAjaxUser('Items', {
+            dataType: 'json',
             query: query,
-            type: 'GET',
-            dataType: 'json'
+            type: 'GET'
         });
     }
 }
@@ -670,9 +670,9 @@ export function getEpisodesForPlayback(
     query.ExcludeLocationTypes = 'Virtual';
 
     return JellyfinApi.authAjax(`Shows/${seriesId}/Episodes`, {
+        dataType: 'json',
         query: query,
-        type: 'GET',
-        dataType: 'json'
+        type: 'GET'
     });
 }
 
@@ -730,25 +730,25 @@ export async function translateRequestedItems(
         return await getItemsForPlayback(userId, {
             ArtistIds: firstItem.Id,
             Filters: 'IsNotFolder',
+            MediaTypes: 'Audio',
             Recursive: true,
-            SortBy: 'SortName',
-            MediaTypes: 'Audio'
+            SortBy: 'SortName'
         });
     } else if (firstItem.Type == 'MusicGenre') {
         return await getItemsForPlayback(userId, {
-            Genres: firstItem.Name ?? undefined,
             Filters: 'IsNotFolder',
+            Genres: firstItem.Name ?? undefined,
+            MediaTypes: 'Audio',
             Recursive: true,
-            SortBy: 'SortName',
-            MediaTypes: 'Audio'
+            SortBy: 'SortName'
         });
     } else if (firstItem.IsFolder) {
         return await getItemsForPlayback(userId, {
-            ParentId: firstItem.Id,
             Filters: 'IsNotFolder',
+            MediaTypes: 'Audio,Video',
+            ParentId: firstItem.Id,
             Recursive: true,
-            SortBy: 'SortName',
-            MediaTypes: 'Audio,Video'
+            SortBy: 'SortName'
         });
     } else if (smart && firstItem.Type == 'Episode' && items.length == 1) {
         const user = await getUser();
@@ -777,8 +777,8 @@ export async function translateRequestedItems(
             userId,
             episode.SeriesId,
             {
-                IsVirtualUnaired: false,
                 IsMissing: false,
+                IsVirtualUnaired: false,
                 UserId: userId
             }
         );
@@ -857,7 +857,7 @@ export function broadcastToMessageBus(message: BusMessage): void {
  * Inform the cast sender that we couldn't connect
  */
 export function broadcastConnectionErrorMessage(): void {
-    broadcastToMessageBus({ type: 'connectionerror', message: '' });
+    broadcastToMessageBus({ message: '', type: 'connectionerror' });
 }
 
 /**

@@ -133,8 +133,8 @@ export class playbackManager {
 
         const maxBitrate = await getMaxBitrate();
         const deviceProfile = getDeviceProfile({
-            enableHls: true,
-            bitrateSetting: maxBitrate
+            bitrateSetting: maxBitrate,
+            enableHls: true
         });
         const playbackInfo = await getPlaybackInfo(
             item,

@@ -76,7 +76,7 @@
         "lint:code": "eslint --ext .ts,.js,.json .",
         "lint:css": "stylelint **/*.css",
         "prepare": "npm run build:production",
-        "prettier": "prettier --write .",
+        "prettier": "prettier --check .",
         "start": "TS_NODE_PROJECT=\"tsconfig-webpack.json\" webpack serve --config webpack.config.ts",
         "test": "jest --passWithNoTests",
         "watch": "TS_NODE_PROJECT=\"tsconfig-webpack.json\" webpack --config webpack.config.ts --watch"

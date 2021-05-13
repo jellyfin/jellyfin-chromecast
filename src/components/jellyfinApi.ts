@@ -110,8 +110,8 @@ export abstract class JellyfinApi {
         }
 
         const params = {
-            url: this.createUrl(path),
-            headers: this.getSecurityHeaders()
+            headers: this.getSecurityHeaders(),
+            url: this.createUrl(path)
         };
 
         return ajax({ ...params, ...args });
@@ -132,8 +132,8 @@ export abstract class JellyfinApi {
         }
 
         const params = {
-            url: this.createUserUrl(path),
-            headers: this.getSecurityHeaders()
+            headers: this.getSecurityHeaders(),
+            url: this.createUserUrl(path)
         };
 
         return ajax({ ...params, ...args });

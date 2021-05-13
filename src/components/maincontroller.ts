@@ -210,23 +210,23 @@ export async function reportDeviceCapabilities(): Promise<void> {
     const maxBitrate = await getMaxBitrate();
 
     const deviceProfile = getDeviceProfile({
-        enableHls: true,
-        bitrateSetting: maxBitrate
+        bitrateSetting: maxBitrate,
+        enableHls: true
     });
 
     const capabilities = {
+        DeviceProfile: deviceProfile,
         PlayableMediaTypes: ['Audio', 'Video'],
-        SupportsPersistentIdentifier: false,
         SupportsMediaControl: true,
-        DeviceProfile: deviceProfile
+        SupportsPersistentIdentifier: false
     };
 
     hasReportedCapabilities = true;
 
     return JellyfinApi.authAjax('Sessions/Capabilities/Full', {
-        type: 'POST',
+        contentType: 'application/json',
         data: JSON.stringify(capabilities),
-        contentType: 'application/json'
+        type: 'POST'
     });
 }
 
@@ -243,9 +243,9 @@ export function processMessage(data: any): void {
         console.log('Invalid message sent from sender. Sending error response');
 
         broadcastToMessageBus({
-            type: 'error',
             message:
-                'Missing one or more required params - command,options,userId,accessToken,serverAddress'
+                'Missing one or more required params - command,options,userId,accessToken,serverAddress',
+            type: 'error'
         });
 
         return;
@@ -442,8 +442,8 @@ export async function changeStream(
     const maxBitrate = await getMaxBitrate();
 
     const deviceProfile = getDeviceProfile({
-        enableHls: true,
-        bitrateSetting: maxBitrate
+        bitrateSetting: maxBitrate,
+        enableHls: true
     });
     const audioStreamIndex =
         params.AudioStreamIndex == null
@@ -665,7 +665,7 @@ export function validatePlaybackInfoResult(result: any): boolean {
  * @param error
  */
 export function showPlaybackInfoErrorMessage(error: string): void {
-    broadcastToMessageBus({ type: 'playbackerror', message: error });
+    broadcastToMessageBus({ message: error, type: 'playbackerror' });
 }
 
 /**
@@ -805,17 +805,17 @@ export function createMediaInformation(
     mediaInfo.contentId = streamInfo.url;
     mediaInfo.contentType = streamInfo.contentType;
     mediaInfo.customData = {
-        startPositionTicks: streamInfo.startPositionTicks || 0,
-        itemId: item.Id,
-        mediaSourceId: streamInfo.mediaSource.Id,
         audioStreamIndex: streamInfo.audioStreamIndex,
-        subtitleStreamIndex: streamInfo.subtitleStreamIndex,
-        playMethod: streamInfo.isStatic ? 'DirectStream' : 'Transcode',
-        runtimeTicks: streamInfo.mediaSource.RunTimeTicks,
-        liveStreamId: streamInfo.mediaSource.LiveStreamId,
-        canSeek: streamInfo.canSeek,
         canClientSeek: streamInfo.canClientSeek,
-        playSessionId: playSessionId
+        canSeek: streamInfo.canSeek,
+        itemId: item.Id,
+        liveStreamId: streamInfo.mediaSource.LiveStreamId,
+        mediaSourceId: streamInfo.mediaSource.Id,
+        playMethod: streamInfo.isStatic ? 'DirectStream' : 'Transcode',
+        playSessionId: playSessionId,
+        runtimeTicks: streamInfo.mediaSource.RunTimeTicks,
+        startPositionTicks: streamInfo.startPositionTicks || 0,
+        subtitleStreamIndex: streamInfo.subtitleStreamIndex
     };
 
     mediaInfo.metadata = getMetadata(item);

@@ -79,16 +79,16 @@ export function reportPlaybackStart(
 
     broadcastToMessageBus({
         //TODO: convert these to use a defined type in the type field
-        type: 'playbackstart',
-        data: getSenderReportingData($scope, reportingParams)
+        data: getSenderReportingData($scope, reportingParams),
+        type: 'playbackstart'
     });
 
     restartPingInterval($scope, reportingParams);
 
     return JellyfinApi.authAjax('Sessions/Playing', {
-        type: 'POST',
+        contentType: 'application/json',
         data: JSON.stringify(reportingParams),
-        contentType: 'application/json'
+        type: 'POST'
     });
 }
 
@@ -108,8 +108,8 @@ export function reportPlaybackProgress(
     broadcastEventName = 'playbackprogress'
 ): Promise<void> {
     broadcastToMessageBus({
-        type: broadcastEventName,
-        data: getSenderReportingData($scope, reportingParams)
+        data: getSenderReportingData($scope, reportingParams),
+        type: broadcastEventName
     });
 
     if (reportToServer === false) {
@@ -120,9 +120,9 @@ export function reportPlaybackProgress(
     lastTranscoderPing = new Date().getTime();
 
     return JellyfinApi.authAjax('Sessions/Playing/Progress', {
-        type: 'POST',
+        contentType: 'application/json',
         data: JSON.stringify(reportingParams),
-        contentType: 'application/json'
+        type: 'POST'
     });
 }
 
@@ -140,14 +140,14 @@ export function reportPlaybackStopped(
     stopPingInterval();
 
     broadcastToMessageBus({
-        type: 'playbackstop',
-        data: getSenderReportingData($scope, reportingParams)
+        data: getSenderReportingData($scope, reportingParams),
+        type: 'playbackstop'
     });
 
     return JellyfinApi.authAjax('Sessions/Playing/Stopped', {
-        type: 'POST',
+        contentType: 'application/json',
         data: JSON.stringify(reportingParams),
-        contentType: 'application/json'
+        type: 'POST'
     });
 }
 
@@ -180,12 +180,12 @@ export function pingTranscoder(
     return JellyfinApi.authAjax(
         `Sessions/Playing/Ping?playSessionId=${reportingParams.PlaySessionId}`,
         {
-            type: 'POST',
+            contentType: 'application/json',
             data: JSON.stringify({
                 // jellyfin <= 10.6 wants it in the post data.
                 PlaySessionId: reportingParams.PlaySessionId
             }),
-            contentType: 'application/json'
+            type: 'POST'
         }
     );
 }
@@ -276,9 +276,9 @@ export function getPlaybackInfo(
 
     // TODO: PlayRequestQuery might not be the proper type for this
     const query: PlayRequestQuery = {
-        UserId: JellyfinApi.userId ?? undefined,
+        MaxStreamingBitrate: maxBitrate,
         StartTimeTicks: startPosition || 0,
-        MaxStreamingBitrate: maxBitrate
+        UserId: JellyfinApi.userId ?? undefined
     };
 
     if (audioStreamIndex != null) {
@@ -298,11 +298,11 @@ export function getPlaybackInfo(
     }
 
     return JellyfinApi.authAjax(`Items/${item.Id}/PlaybackInfo`, {
-        query: query,
-        type: 'POST',
-        dataType: 'json',
+        contentType: 'application/json',
         data: JSON.stringify(postData),
-        contentType: 'application/json'
+        dataType: 'json',
+        query: query,
+        type: 'POST'
     });
 }
 
@@ -332,11 +332,11 @@ export function getLiveStream(
     };
 
     const query: PlayRequestQuery = {
-        UserId: JellyfinApi.userId ?? undefined,
-        StartTimeTicks: startPosition || 0,
         ItemId: item.Id,
         MaxStreamingBitrate: maxBitrate,
-        PlaySessionId: playSessionId
+        PlaySessionId: playSessionId,
+        StartTimeTicks: startPosition || 0,
+        UserId: JellyfinApi.userId ?? undefined
     };
 
     if (audioStreamIndex != null) {
@@ -348,11 +348,11 @@ export function getLiveStream(
     }
 
     return JellyfinApi.authAjax('LiveStreams/Open', {
-        query: query,
-        type: 'POST',
-        dataType: 'json',
+        contentType: 'application/json',
         data: JSON.stringify(postData),
-        contentType: 'application/json'
+        dataType: 'json',
+        query: query,
+        type: 'POST'
     });
 }
 
@@ -370,8 +370,8 @@ export async function getDownloadSpeed(byteSize: number): Promise<number> {
     const now = new Date().getTime();
 
     await JellyfinApi.authAjax(path, {
-        type: 'GET',
-        timeout: 5000
+        timeout: 5000,
+        type: 'GET'
     });
 
     const responseTimeSeconds = (new Date().getTime() - now) / 1000;
@@ -418,7 +418,7 @@ export function stopActiveEncodings($scope: GlobalScope): Promise<void> {
     }
 
     return JellyfinApi.authAjax('Videos/ActiveEncodings', {
-        type: 'DELETE',
-        query: options
+        query: options,
+        type: 'DELETE'
     });
 }

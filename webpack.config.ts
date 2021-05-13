@@ -12,22 +12,35 @@ import { version } from './package.json';
 const common: webpack.Configuration = {
     context: path.resolve(__dirname, 'src'),
     entry: './app.ts',
+    module: {
+        rules: [
+            { loader: 'html-loader', test: /\.html$/ },
+            {
+                test: /\.(png|svg|jpg|gif)$/,
+                use: 'file-loader'
+            },
+            {
+                loader: 'file-loader',
+                test: /\.(ttf|eot|woff(2)?)(\?[a-z0-9=&.]+)?$/
+            },
+            { test: /\.css$/i, use: ['style-loader', 'css-loader'] },
+            { loader: 'ts-loader', test: /\.tsx?$/ },
+            { loader: 'source-map-loader', test: /\.js$/ }
+        ]
+    },
     output: {
         filename: '[name].[fullhash].js',
         path: path.resolve(__dirname, 'dist'),
         publicPath: './'
     },
-    resolve: {
-        extensions: ['.ts', '.js']
-    },
     plugins: [
         // @ts-expect-error - Typings mismatch between versions
         new CleanWebpackPlugin(),
         new HtmlWebpackPlugin({
+            favicon: 'favicon.ico',
             filename: 'index.html',
-            template: 'index.html',
             hash: false,
-            favicon: 'favicon.ico'
+            template: 'index.html'
         }),
         new ImageMinimizerPlugin({
             minimizerOptions: {
@@ -46,36 +59,23 @@ const common: webpack.Configuration = {
             }
         })
     ],
-    module: {
-        rules: [
-            { test: /\.html$/, loader: 'html-loader' },
-            {
-                test: /\.(png|svg|jpg|gif)$/,
-                use: 'file-loader'
-            },
-            {
-                test: /\.(ttf|eot|woff(2)?)(\?[a-z0-9=&.]+)?$/,
-                loader: 'file-loader'
-            },
-            { test: /\.css$/i, use: ['style-loader', 'css-loader'] },
-            { test: /\.tsx?$/, loader: 'ts-loader' },
-            { test: /\.js$/, loader: 'source-map-loader' }
-        ]
+    resolve: {
+        extensions: ['.ts', '.js']
     }
 };
 
 const development: webpack.Configuration = {
-    mode: 'development',
-    devtool: 'inline-source-map',
     // @ts-expect-error - Typings mismatch between versions
     devServer: {
-        contentBase: path.join(__dirname, 'dist'),
         compress: true,
+        contentBase: path.join(__dirname, 'dist'),
         port: process.env.RECEIVER_PORT
             ? Number.parseInt(process.env.RECEIVER_PORT, 10)
             : 9000,
         publicPath: '/'
     },
+    devtool: 'inline-source-map',
+    mode: 'development',
     plugins: [
         new DefinePlugin({
             PRODUCTION: JSON.stringify(false),

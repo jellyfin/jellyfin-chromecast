@@ -12,9 +12,9 @@ function getFetchPromise(request: any): Promise<Response> {
     }
 
     const fetchRequest: RequestInit = {
+        credentials: 'same-origin',
         headers: headers,
-        method: request.type,
-        credentials: 'same-origin'
+        method: request.type
     };
     let contentType = request.contentType;
 
