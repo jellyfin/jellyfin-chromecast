@@ -724,7 +724,8 @@ export function setTextTrack(index: number | null): void {
             return;
         }
 
-        const tracks: Array<framework.messages.Track> = textTracksManager.getTracks();
+        const tracks: Array<framework.messages.Track> =
+            textTracksManager.getTracks();
         const subtitleTrack: framework.messages.Track | undefined = tracks.find(
             (track: framework.messages.Track) => {
                 return track.trackId === index;
@@ -737,7 +738,8 @@ export function setTextTrack(index: number | null): void {
             const subtitleAppearance = window.subtitleAppearance;
 
             if (subtitleAppearance) {
-                const textTrackStyle = new cast.framework.messages.TextTrackStyle();
+                const textTrackStyle =
+                    new cast.framework.messages.TextTrackStyle();
 
                 if (subtitleAppearance.dropShadow != null) {
                     // Empty string is DROP_SHADOW
