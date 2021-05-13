@@ -144,11 +144,13 @@ export abstract class DocumentManager {
         // stop cycling backdrops
         this.clearBackdropInterval();
 
-        const urls = [
-            await this.getWaitingBackdropUrl(item),
-            await this.getPrimaryImageUrl(item),
-            await this.getLogoUrl(item)
+        const promises = [
+            this.getWaitingBackdropUrl(item),
+            this.getPrimaryImageUrl(item),
+            this.getLogoUrl(item)
         ];
+
+        const urls = await Promise.all(promises);
 
         requestAnimationFrame(() => {
             this.setWaitingBackdrop(urls[0], item);
