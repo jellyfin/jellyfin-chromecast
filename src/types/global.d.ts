@@ -1,4 +1,3 @@
-import { cast } from 'chromecast-caf-receiver';
 import {
     CastReceiverContext,
     PlayerManager
@@ -25,6 +24,7 @@ export interface Dictionary<T> {
 // Why doesn't the API have a type for this?
 /* Combined item query.
  * Valid for item endpoints */
+// TODO: API has an endpoint for this. Replace on https://github.com/jellyfin/jellyfin-chromecast/pull/109
 export interface ItemQuery {
     UserId?: string;
     Limit?: number;

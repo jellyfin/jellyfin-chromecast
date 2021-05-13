@@ -20,7 +20,9 @@ let deviceId: number | null = null;
  * @returns Active Cast device Id.
  */
 export function getActiveDeviceId(): number {
-    if (deviceId !== null) return deviceId;
+    if (deviceId !== null) {
+        return deviceId;
+    }
 
     if (
         castContext.canDisplayType('video/mp4', 'hev1.1.6.L153.B0') &&
@@ -36,5 +38,6 @@ export function getActiveDeviceId(): number {
     } else {
         deviceId = deviceIds.AUDIO;
     }
+
     return deviceId;
 }

@@ -16,16 +16,17 @@ export abstract class DocumentManager {
      * Hide the document body on chromecast audio to save resources
      */
     public static initialize(): void {
-        if (getActiveDeviceId() === deviceIds.AUDIO)
+        if (getActiveDeviceId() === deviceIds.AUDIO) {
             document.body.style.display = 'none';
+        }
     }
 
     /**
      * Set the background image for a html element, without preload.
      * You should do the preloading first with preloadImage.
      *
-     * @param {HTMLElement} element HTML Element
-     * @param {string | null} src URL to the image or null to remove the active one
+     * @param element - HTML Element
+     * @param src - URL to the image or null to remove the active one
      */
     private static setBackgroundImage(
         element: HTMLElement,
@@ -41,13 +42,14 @@ export abstract class DocumentManager {
     /**
      * Preload an image
      *
-     * @param {string | null} src URL to the image or null
-     * @returns {Promise<string | null>} wait for the preload and return the url to use. Might be nulled after loading error.
+     * @param src - URL to the image or null
+     * @returns wait for the preload and return the url to use. Might be nulled after loading error.
      */
     private static preloadImage(src: string | null): Promise<string | null> {
         if (src) {
             return new Promise((resolve, reject) => {
                 const preload = new Image();
+
                 preload.src = src;
                 preload.addEventListener('load', () => {
                     resolve(src);
@@ -65,8 +67,8 @@ export abstract class DocumentManager {
     /**
      * Get url for primary image for a given item
      *
-     * @param {BaseItemDto} item to look up
-     * @returns {Promise<string | null>} url to image after preload
+     * @param item - to look up
+     * @returns url to image after preload
      */
     private static getPrimaryImageUrl(
         item: BaseItemDto
@@ -102,11 +104,12 @@ export abstract class DocumentManager {
     /**
      * Get url for logo image for a given item
      *
-     * @param {BaseItemDto} item to look up
-     * @returns {Promise<string | null>} url to logo image after preload
+     * @param item - to look up
+     * @returns url to logo image after preload
      */
     private static getLogoUrl(item: BaseItemDto): Promise<string | null> {
         let src: string | null = null;
+
         if (item.ImageTags?.Logo && item.Id) {
             src = JellyfinApi.createImageUrl(
                 item.Id,
@@ -129,65 +132,67 @@ export abstract class DocumentManager {
      * on the details page. This happens when no media is playing,
      * and the connected client is browsing the library.
      *
-     * @param {BaseItemDto} item to show information about
-     * @returns {Promise<void>} for the page to load
+     * @param item - to show information about
+     * @returns for the page to load
      */
-    public static showItem(item: BaseItemDto): Promise<void> {
+    public static async showItem(item: BaseItemDto): Promise<void> {
         // no showItem for cc audio
         if (getActiveDeviceId() === deviceIds.AUDIO) {
-            return Promise.resolve();
+            return;
         }
 
         // stop cycling backdrops
         this.clearBackdropInterval();
 
-        return Promise.all([
+        const promises = [
             this.getWaitingBackdropUrl(item),
             this.getPrimaryImageUrl(item),
             this.getLogoUrl(item)
-        ]).then((urls) => {
-            requestAnimationFrame(() => {
-                this.setWaitingBackdrop(urls[0], item);
-                this.setDetailImage(urls[1]);
-                this.setLogo(urls[2]);
+        ];
 
-                this.setOverview(item.Overview ?? null);
-                this.setGenres(item?.Genres?.join(' / ') ?? null);
-                this.setDisplayName(item);
-                this.setMiscInfo(item);
+        const urls = await Promise.all(promises);
 
-                this.setRating(item);
+        requestAnimationFrame(() => {
+            this.setWaitingBackdrop(urls[0], item);
+            this.setDetailImage(urls[1]);
+            this.setLogo(urls[2]);
 
-                if (item?.UserData?.Played) {
-                    this.setPlayedIndicator(true);
-                } else if (item?.UserData?.UnplayedItemCount) {
-                    this.setPlayedIndicator(item?.UserData?.UnplayedItemCount);
-                } else {
-                    this.setPlayedIndicator(false);
-                }
+            this.setOverview(item.Overview ?? null);
+            this.setGenres(item?.Genres?.join(' / ') ?? null);
+            this.setDisplayName(item);
+            this.setMiscInfo(item);
 
-                if (
-                    item?.UserData?.PlayedPercentage &&
-                    item?.UserData?.PlayedPercentage < 100 &&
-                    !item.IsFolder
-                ) {
-                    this.setHasPlayedPercentage(false);
-                    this.setPlayedPercentage(item.UserData.PlayedPercentage);
-                } else {
-                    this.setHasPlayedPercentage(false);
-                    this.setPlayedPercentage(0);
-                }
+            this.setRating(item);
 
-                // Switch visible view!
-                this.setAppStatus('details');
-            });
+            if (item?.UserData?.Played) {
+                this.setPlayedIndicator(true);
+            } else if (item?.UserData?.UnplayedItemCount) {
+                this.setPlayedIndicator(item?.UserData?.UnplayedItemCount);
+            } else {
+                this.setPlayedIndicator(false);
+            }
+
+            if (
+                item?.UserData?.PlayedPercentage &&
+                item?.UserData?.PlayedPercentage < 100 &&
+                !item.IsFolder
+            ) {
+                this.setHasPlayedPercentage(false);
+                this.setPlayedPercentage(item.UserData.PlayedPercentage);
+            } else {
+                this.setHasPlayedPercentage(false);
+                this.setPlayedPercentage(0);
+            }
+
+            // Switch visible view!
+            this.setAppStatus('details');
         });
     }
 
     /**
      * Set value of played indicator
      *
-     * @param {boolean | number} value True = played, false = not visible, number = number of unplayed items
+     * @param value - True = played, false = not visible, number = number of unplayed items
      */
     private static setPlayedIndicator(value: boolean | number): void {
         const playedIndicatorOk = this.getElementById('played-indicator-ok');
@@ -215,15 +220,17 @@ export abstract class DocumentManager {
      * Show item, but from just the id number, not an actual item.
      * Looks up the item and then calls showItem
      *
-     * @param {string} itemId id of item to look up
-     * @returns {Promise<void>} promise that resolves when the item is shown
+     * @param itemId - id of item to look up
+     * @returns promise that resolves when the item is shown
      */
     public static async showItemId(itemId: string): Promise<void> {
         // no showItemId for cc audio
-        if (getActiveDeviceId() === deviceIds.AUDIO) return;
+        if (getActiveDeviceId() === deviceIds.AUDIO) {
+            return;
+        }
 
         const item: BaseItemDto = await JellyfinApi.authAjaxUser(
-            'Items/' + itemId,
+            `Items/${itemId}`,
             {
                 dataType: 'json',
                 type: 'GET'
@@ -236,7 +243,7 @@ export abstract class DocumentManager {
     /**
      * Update item rating elements
      *
-     * @param {BaseItemDto} item to look up
+     * @param item - to look up
      */
     private static setRating(item: BaseItemDto): void {
         const starRating = this.getElementById('star-rating');
@@ -276,7 +283,7 @@ export abstract class DocumentManager {
      * Set the status of the app, and switch the visible view
      * to the corresponding one.
      *
-     * @param {string} status to set
+     * @param status - to set
      */
     public static setAppStatus(status: string): void {
         this.status = status;
@@ -286,7 +293,7 @@ export abstract class DocumentManager {
     /**
      * Get the status of the app
      *
-     * @returns {string} app status
+     * @returns app status
      */
     public static getAppStatus(): string {
         return this.status;
@@ -297,8 +304,8 @@ export abstract class DocumentManager {
     /**
      * Get url to the backdrop image, and return a preload promise.
      *
-     * @param {BaseItemDto | null} item Item to use for waiting backdrop, null to remove it.
-     * @returns {Promise<string | null>} promise for the preload to complete
+     * @param item - Item to use for waiting backdrop, null to remove it.
+     * @returns promise for the preload to complete
      */
     public static getWaitingBackdropUrl(
         item: BaseItemDto | null
@@ -340,8 +347,8 @@ export abstract class DocumentManager {
      * They are switched around every 30 seconds by default
      * (governed by startBackdropInterval)
      *
-     * @param {string | null} src Url to image
-     * @param {BaseItemDto | null} item Item to use for waiting backdrop, null to remove it.
+     * @param src - Url to image
+     * @param item - Item to use for waiting backdrop, null to remove it.
      */
     public static async setWaitingBackdrop(
         src: string | null,
@@ -360,22 +367,22 @@ export abstract class DocumentManager {
     /**
      * Set a random backdrop on the waiting container
      *
-     * @returns {Promise<void>} promise waiting for the backdrop to be set
+     * @returns promise waiting for the backdrop to be set
      */
     private static async setRandomUserBackdrop(): Promise<void> {
         const result = await JellyfinApi.authAjaxUser('Items', {
             dataType: 'json',
-            type: 'GET',
             query: {
-                SortBy: 'Random',
-                IncludeItemTypes: 'Movie,Series',
                 ImageTypes: 'Backdrop',
-                Recursive: true,
+                IncludeItemTypes: 'Movie,Series',
                 Limit: 1,
+                MaxOfficialRating: 'PG-13',
+                Recursive: true,
+                SortBy: 'Random'
                 // Although we're limiting to what the user has access to,
                 // not everyone will want to see adult backdrops rotating on their TV.
-                MaxOfficialRating: 'PG-13'
-            }
+            },
+            type: 'GET'
         });
 
         let src: string | null = null;
@@ -404,11 +411,13 @@ export abstract class DocumentManager {
     /**
      * Start the backdrop rotation, restart if running, stop if disabled
      *
-     * @returns {Promise<void>} promise for the first backdrop to be set
+     * @returns promise for the first backdrop to be set
      */
     public static async startBackdropInterval(): Promise<void> {
         // no backdrop rotation for cc audio
-        if (getActiveDeviceId() === deviceIds.AUDIO) return;
+        if (getActiveDeviceId() === deviceIds.AUDIO) {
+            return;
+        }
 
         // avoid running it multiple times
         this.clearBackdropInterval();
@@ -416,6 +425,7 @@ export abstract class DocumentManager {
         // skip out if it's disabled
         if (!this.backdropPeriodMs) {
             this.setWaitingBackdrop(null, null);
+
             return;
         }
 
@@ -432,7 +442,7 @@ export abstract class DocumentManager {
     /**
      * Set interval between backdrop changes, null to disable
      *
-     * @param {number | null} period in milliseconds or null
+     * @param period - in milliseconds or null
      */
     public static setBackdropPeriodMs(period: number | null): void {
         if (period !== this.backdropPeriodMs) {
@@ -456,11 +466,13 @@ export abstract class DocumentManager {
      * Set background behind the media player,
      * this is shown while the media is loading.
      *
-     * @param {BaseItemDto} item to get backdrop from
+     * @param item - to get backdrop from
      */
     public static setPlayerBackdrop(item: BaseItemDto): void {
         // no backdrop rotation for cc audio
-        if (getActiveDeviceId() === deviceIds.AUDIO) return;
+        if (getActiveDeviceId() === deviceIds.AUDIO) {
+            return;
+        }
 
         let backdropUrl: string | null = null;
 
@@ -500,10 +512,11 @@ export abstract class DocumentManager {
     /**
      * Set the URL to the item logo, or null to remove it
      *
-     * @param {string | null} src Source url or null
+     * @param src - Source url or null
      */
     public static setLogo(src: string | null): void {
         const element: HTMLElement = this.querySelector('.detailLogo');
+
         this.setBackgroundImage(element, src);
     }
 
@@ -511,10 +524,11 @@ export abstract class DocumentManager {
      * Set the URL to the item banner image (I think?),
      * or null to remove it
      *
-     * @param {string | null} src Source url or null
+     * @param src - Source url or null
      */
     public static setDetailImage(src: string | null): void {
         const element: HTMLElement = this.querySelector('.detailImage');
+
         this.setBackgroundImage(element, src);
     }
 
@@ -524,7 +538,7 @@ export abstract class DocumentManager {
      * This combines the old statement setDisplayName(getDisplayName(item))
      * into setDisplayName(item).
      *
-     * @param {BaseItemDto} item source for the displayed name
+     * @param item - source for the displayed name
      */
     private static setDisplayName(item: BaseItemDto): void {
         const name: string = item.EpisodeTitle ?? <string>item.Name;
@@ -532,7 +546,9 @@ export abstract class DocumentManager {
         let displayName: string = name;
 
         if (item.Type == 'TvChannel') {
-            if (item.Number) displayName = `${item.Number} ${name}`;
+            if (item.Number) {
+                displayName = `${item.Number} ${name}`;
+            }
         } else if (
             item.Type == 'Episode' &&
             item.IndexNumber != null &&
@@ -548,26 +564,29 @@ export abstract class DocumentManager {
         }
 
         const element = this.querySelector('.displayName');
+
         element.innerHTML = displayName || '';
     }
 
     /**
      * Set the html of the genres container
      *
-     * @param {string | null} name String/html for genres box, null to empty
+     * @param name - String/html for genres box, null to empty
      */
     private static setGenres(name: string | null): void {
         const element = this.querySelector('.genres');
+
         element.innerHTML = name || '';
     }
 
     /**
      * Set the html of the overview container
      *
-     * @param {string | null} name string or html to insert
+     * @param name - string or html to insert
      */
     private static setOverview(name: string | null): void {
         const element = this.querySelector('.overview');
+
         element.innerHTML = name || '';
     }
 
@@ -575,12 +594,13 @@ export abstract class DocumentManager {
      * Set the progress of the progress bar in the
      * item details page. (Not the same as the playback ui)
      *
-     * @param {number} value Percentage to set
+     * @param value - Percentage to set
      */
     private static setPlayedPercentage(value = 0): void {
         const element = <HTMLInputElement>(
             this.querySelector('.itemProgressBar')
         );
+
         element.value = value.toString();
     }
 
@@ -588,20 +608,24 @@ export abstract class DocumentManager {
      * Set the visibility of the item progress bar in the
      * item details page
      *
-     * @param {boolean} value If true, show progress on details page
+     * @param value - If true, show progress on details page
      */
     private static setHasPlayedPercentage(value: boolean): void {
         const element = this.querySelector('.detailImageProgressContainer');
-        if (value) (<HTMLElement>element).classList.remove('d-none');
-        else (<HTMLElement>element).classList.add('d-none');
+
+        if (value) {
+            (<HTMLElement>element).classList.remove('d-none');
+        } else {
+            (<HTMLElement>element).classList.add('d-none');
+        }
     }
 
     /**
      * Get a human readable representation of the current position
      * in ticks
      *
-     * @param {number} ticks tick position
-     * @returns {string} human readable position
+     * @param ticks - tick position
+     * @returns human readable position
      */
     private static formatRunningTime(ticks: number): string {
         const ticksPerHour = 36000000000;
@@ -623,7 +647,7 @@ export abstract class DocumentManager {
         ticks -= minutes * ticksPerMinute;
 
         if (minutes < 10 && hours) {
-            parts.push('0' + minutes.toString());
+            parts.push(`0${minutes.toString()}`);
         } else {
             parts.push(minutes.toString());
         }
@@ -631,7 +655,7 @@ export abstract class DocumentManager {
         const seconds: number = Math.floor(ticks / ticksPerSecond);
 
         if (seconds < 10) {
-            parts.push('0' + seconds.toString());
+            parts.push(`0${seconds.toString()}`);
         } else {
             parts.push(seconds.toString());
         }
@@ -643,10 +667,11 @@ export abstract class DocumentManager {
      * Set information about mostly episodes or series
      * on the item details page
      *
-     * @param {BaseItemDto} item to look up
+     * @param item - to look up
      */
     private static setMiscInfo(item: BaseItemDto): void {
         const info: Array<string> = [];
+
         if (item.Type == 'Episode') {
             if (item.PremiereDate) {
                 try {
@@ -654,41 +679,47 @@ export abstract class DocumentManager {
                         parseISO8601Date(item.PremiereDate).toLocaleDateString()
                     );
                 } catch (e) {
-                    console.log('Error parsing date: ' + item.PremiereDate);
+                    console.log(`Error parsing date: ${item.PremiereDate}`);
                 }
             }
         }
+
         if (item.StartDate) {
             try {
                 info.push(
                     parseISO8601Date(item.StartDate).toLocaleDateString()
                 );
             } catch (e) {
-                console.log('Error parsing date: ' + item.PremiereDate);
+                console.log(`Error parsing date: ${item.PremiereDate}`);
             }
         }
+
         if (item.ProductionYear && item.Type == 'Series') {
             if (item.Status == 'Continuing') {
                 info.push(`${item.ProductionYear}-Present`);
             } else if (item.ProductionYear) {
                 let text: string = item.ProductionYear.toString();
+
                 if (item.EndDate) {
                     try {
                         const endYear = parseISO8601Date(
                             item.EndDate
                         ).getFullYear();
+
                         if (endYear != item.ProductionYear) {
-                            text +=
-                                '-' +
-                                parseISO8601Date(item.EndDate).getFullYear();
+                            text += `-${parseISO8601Date(
+                                item.EndDate
+                            ).getFullYear()}`;
                         }
                     } catch (e) {
-                        console.log('Error parsing date: ' + item.EndDate);
+                        console.log(`Error parsing date: ${item.EndDate}`);
                     }
                 }
+
                 info.push(text);
             }
         }
+
         if (item.Type != 'Series' && item.Type != 'Episode') {
             if (item.ProductionYear) {
                 info.push(item.ProductionYear.toString());
@@ -700,20 +731,23 @@ export abstract class DocumentManager {
                             .toString()
                     );
                 } catch (e) {
-                    console.log('Error parsing date: ' + item.PremiereDate);
+                    console.log(`Error parsing date: ${item.PremiereDate}`);
                 }
             }
         }
+
         let minutes;
+
         if (item.RunTimeTicks && item.Type != 'Series') {
             if (item.Type == 'Audio') {
                 info.push(this.formatRunningTime(item.RunTimeTicks));
             } else {
                 minutes = item.RunTimeTicks / 600000000;
                 minutes = minutes || 1;
-                info.push(Math.round(minutes) + 'min');
+                info.push(`${Math.round(minutes)}min`);
             }
         }
+
         if (
             item.OfficialRating &&
             item.Type !== 'Season' &&
@@ -721,11 +755,13 @@ export abstract class DocumentManager {
         ) {
             info.push(item.OfficialRating);
         }
+
         if (item.Video3DFormat) {
             info.push('3D');
         }
 
         const element = this.getElementById('miscInfo');
+
         element.innerHTML = info.join('&nbsp;&nbsp;&nbsp;&nbsp;');
     }
 
@@ -733,8 +769,8 @@ export abstract class DocumentManager {
     /**
      * Set the visibility of an element
      *
-     * @param {HTMLElement} element Element to set visibility on
-     * @param {boolean} visible True if the element should be visible.
+     * @param element - Element to set visibility on
+     * @param visible - True if the element should be visible.
      */
     private static setVisibility(element: HTMLElement, visible: boolean): void {
         if (visible) {
@@ -747,11 +783,12 @@ export abstract class DocumentManager {
     /**
      * Get a HTMLElement from id or throw an error
      *
-     * @param {string} id ID to look up
-     * @returns {HTMLElement} HTML Element
+     * @param id - ID to look up
+     * @returns HTML Element
      */
     private static getElementById(id: string): HTMLElement {
         const element = document.getElementById(id);
+
         if (!element) {
             throw new ReferenceError(`Cannot find element ${id} by id`);
         }
@@ -762,11 +799,12 @@ export abstract class DocumentManager {
     /**
      * Get a HTMLElement by class
      *
-     * @param {string} cls Class to look up
-     * @returns {HTMLElement} HTML Element
+     * @param cls - Class to look up
+     * @returns HTML Element
      */
     private static querySelector(cls: string): HTMLElement {
         const element: HTMLElement | null = document.querySelector(cls);
+
         if (!element) {
             throw new ReferenceError(`Cannot find element ${cls} by class`);
         }

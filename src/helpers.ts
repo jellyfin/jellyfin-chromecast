@@ -12,12 +12,13 @@ import { GlobalScope, BusMessage, ItemIndex, ItemQuery } from './types/global';
 /**
  * Get current playback position in ticks, adjusted for server seeking
  *
- * @param $scope global context variable
+ * @param $scope - global context variable
  * @returns position in ticks
  */
 export function getCurrentPositionTicks($scope: GlobalScope): number {
     let positionTicks = window.mediaManager.getCurrentTimeSec() * 10000000;
     const mediaInformation = window.mediaManager.getMediaInformation();
+
     if (mediaInformation && !mediaInformation.customData.canClientSeek) {
         positionTicks += $scope.startPositionTicks || 0;
     }
@@ -28,7 +29,7 @@ export function getCurrentPositionTicks($scope: GlobalScope): number {
 /**
  * Get parameters used for playback reporting
  *
- * @param $scope global context variable
+ * @param $scope - global context variable
  * @returns progress information for use with the reporting APIs
  */
 export function getReportingParams($scope: GlobalScope): PlaybackProgressInfo {
@@ -38,21 +39,21 @@ export function getReportingParams($scope: GlobalScope): PlaybackProgressInfo {
      * those fields are always rounded.
      */
     return {
-        PositionTicks: Math.round(getCurrentPositionTicks($scope)),
+        AudioStreamIndex: $scope.audioStreamIndex,
+        CanSeek: $scope.canSeek,
+        IsMuted: window.volume.muted,
         IsPaused:
             window.mediaManager.getPlayerState() ===
             cast.framework.messages.PlayerState.PAUSED,
-        IsMuted: window.volume.muted,
-        AudioStreamIndex: $scope.audioStreamIndex,
-        SubtitleStreamIndex: $scope.subtitleStreamIndex,
-        VolumeLevel: Math.round(window.volume.level * 100),
         ItemId: $scope.itemId,
-        MediaSourceId: $scope.mediaSourceId,
-        CanSeek: $scope.canSeek,
-        PlayMethod: $scope.playMethod,
         LiveStreamId: $scope.liveStreamId,
+        MediaSourceId: $scope.mediaSourceId,
+        PlayMethod: $scope.playMethod,
         PlaySessionId: $scope.playSessionId,
-        RepeatMode: window.repeatMode
+        PositionTicks: Math.round(getCurrentPositionTicks($scope)),
+        RepeatMode: window.repeatMode,
+        SubtitleStreamIndex: $scope.subtitleStreamIndex,
+        VolumeLevel: Math.round(window.volume.level * 100)
     };
 }
 
@@ -79,9 +80,11 @@ export function getNextPlaybackItemInfo(): ItemIndex | null {
                 break;
             case 'RepeatAll':
                 newIndex = window.currentPlaylistIndex + 1;
+
                 if (newIndex >= window.playlist.length) {
                     newIndex = 0;
                 }
+
                 break;
             default:
                 newIndex = window.currentPlaylistIndex + 1;
@@ -93,10 +96,11 @@ export function getNextPlaybackItemInfo(): ItemIndex | null {
         const item = playlist[newIndex];
 
         return {
-            item: item,
-            index: newIndex
+            index: newIndex,
+            item: item
         };
     }
+
     return null;
 }
 
@@ -105,8 +109,8 @@ export function getNextPlaybackItemInfo(): ItemIndex | null {
  * about the item that is currently playing. This is sent over the cast protocol over to
  * the connected client (or clients?).
  *
- * @param $scope global context
- * @param reportingData object full of random information
+ * @param $scope - global context
+ * @param reportingData - object full of random information
  * @returns lots of data for the connected client
  */
 export function getSenderReportingData(
@@ -133,7 +137,7 @@ export function getSenderReportingData(
         nowPlayingItem.Chapters = item.Chapters || [];
 
         // TODO: Fill these
-        const mediaSource = item.MediaSources.filter(function (m: any) {
+        const mediaSource = item.MediaSources.filter((m: any) => {
             return m.Id == reportingData.MediaSourceId;
         })[0];
 
@@ -206,7 +210,7 @@ export function getSenderReportingData(
 /**
  * Attempt to clean the receiver state.
  *
- * @param $scope global context variable
+ * @param $scope - global context variable
  */
 export function resetPlaybackScope($scope: GlobalScope): void {
     DocumentManager.setAppStatus('waiting');
@@ -240,44 +244,52 @@ export function resetPlaybackScope($scope: GlobalScope): void {
 /**
  * Create CAF-native metadata for a given item
  *
- * @param item item to look up
+ * @param item - item to look up
  * @returns one of the metadata classes in cast.framework.messages.*Metadata
  */
 export function getMetadata(item: BaseItemDto): any {
     let metadata: any;
     let posterUrl = '';
 
-    if (item.SeriesPrimaryImageTag)
+    if (item.SeriesPrimaryImageTag) {
         posterUrl = JellyfinApi.createUrl(
             `Items/${item.SeriesId}/Images/Primary?tag=${item.SeriesPrimaryImageTag}`
         );
-    else if (item.AlbumPrimaryImageTag)
+    } else if (item.AlbumPrimaryImageTag) {
         posterUrl = JellyfinApi.createUrl(
             `Items/${item.AlbumId}/Images/Primary?tag=${item.AlbumPrimaryImageTag}`
         );
-    else if (item.ImageTags?.Primary)
+    } else if (item.ImageTags?.Primary) {
         posterUrl = JellyfinApi.createUrl(
             `Items/${item.Id}/Images/Primary?tag=${item.ImageTags.Primary}`
         );
+    }
 
     if (item.Type == 'Episode') {
         metadata = new cast.framework.messages.TvShowMediaMetadata();
         metadata.seriesTitle = item.SeriesName;
 
-        if (item.PremiereDate)
+        if (item.PremiereDate) {
             metadata.originalAirdate = parseISO8601Date(
                 item.PremiereDate
             ).toISOString();
-        if (item.IndexNumber != null) metadata.episode = item.IndexNumber;
-        if (item.ParentIndexNumber != null)
+        }
+
+        if (item.IndexNumber != null) {
+            metadata.episode = item.IndexNumber;
+        }
+
+        if (item.ParentIndexNumber != null) {
             metadata.season = item.ParentIndexNumber;
+        }
     } else if (item.Type == 'Photo') {
         metadata = new cast.framework.messages.PhotoMediaMetadata();
 
-        if (item.PremiereDate)
+        if (item.PremiereDate) {
             metadata.creationDateTime = parseISO8601Date(
                 item.PremiereDate
             ).toISOString();
+        }
         // TODO more metadata?
     } else if (item.Type == 'Audio') {
         metadata = new cast.framework.messages.MusicTrackMediaMetadata();
@@ -287,37 +299,53 @@ export function getMetadata(item: BaseItemDto): any {
         metadata.albumArtist = item.AlbumArtist;
         metadata.albumName = item.Album;
 
-        if (item.PremiereDate)
+        if (item.PremiereDate) {
             metadata.releaseDate = parseISO8601Date(
                 item.PremiereDate
             ).toISOString();
-        if (item.IndexNumber != null) metadata.trackNumber = item.IndexNumber;
-        if (item.ParentIndexNumber != null)
+        }
+
+        if (item.IndexNumber != null) {
+            metadata.trackNumber = item.IndexNumber;
+        }
+
+        if (item.ParentIndexNumber != null) {
             metadata.discNumber = item.ParentIndexNumber;
+        }
+
         // previously: p.PersonType == 'Type'.. wtf?
         const composer = (item.People || []).filter(
             (p: BaseItemPerson) => p.Type == 'Composer'
         )[0];
-        if (composer) metadata.composer = composer.Name;
+
+        if (composer) {
+            metadata.composer = composer.Name;
+        }
     } else if (item.Type == 'Movie') {
         metadata = new cast.framework.messages.MovieMediaMetadata();
-        if (item.PremiereDate)
+
+        if (item.PremiereDate) {
             metadata.releaseDate = parseISO8601Date(
                 item.PremiereDate
             ).toISOString();
+        }
     } else {
         metadata = new cast.framework.messages.GenericMediaMetadata();
 
-        if (item.PremiereDate)
+        if (item.PremiereDate) {
             metadata.releaseDate = parseISO8601Date(
                 item.PremiereDate
             ).toISOString();
-        if (item.Studios && item.Studios.length)
+        }
+
+        if (item.Studios && item.Studios.length) {
             metadata.studio = item.Studios[0];
+        }
     }
 
     metadata.title = item.Name ?? '????';
     metadata.images = [new cast.framework.messages.Image(posterUrl)];
+
     return metadata;
 }
 
@@ -325,9 +353,9 @@ export function getMetadata(item: BaseItemDto): any {
  * Create the necessary information about an item
  * needed for playback
  *
- * @param item Item to play
- * @param mediaSource MediaSourceInfo for the item
- * @param startPosition Where to seek to (possibly server seeking)
+ * @param item - Item to play
+ * @param mediaSource - MediaSourceInfo for the item
+ * @param startPosition - Where to seek to (possibly server seeking)
  * @returns object with enough information to start playback
  */
 export function createStreamInfo(
@@ -343,7 +371,7 @@ export function createStreamInfo(
         ? startPosition / 10000000
         : 0;
     const seekParam = startPositionInSeekParam
-        ? '#t=' + startPositionInSeekParam
+        ? `#t=${startPositionInSeekParam}`
         : '';
 
     let isStatic = false;
@@ -354,7 +382,7 @@ export function createStreamInfo(
     const type = item.MediaType?.toLowerCase();
 
     if (type == 'video') {
-        contentType = 'video/' + mediaSource.Container;
+        contentType = `video/${mediaSource.Container}`;
 
         if (mediaSource.SupportsDirectPlay) {
             mediaUrl = mediaSource.Path;
@@ -377,7 +405,7 @@ export function createStreamInfo(
                 contentType = 'application/x-mpegURL';
                 streamContainer = 'm3u8';
             } else {
-                contentType = 'video/' + mediaSource.TranscodingContainer;
+                contentType = `video/${mediaSource.TranscodingContainer}`;
                 streamContainer = mediaSource.TranscodingContainer;
 
                 if (
@@ -388,7 +416,7 @@ export function createStreamInfo(
             }
         }
     } else {
-        contentType = 'audio/' + mediaSource.Container;
+        contentType = `audio/${mediaSource.Container}`;
 
         if (mediaSource.SupportsDirectPlay) {
             mediaUrl = mediaSource.Path;
@@ -408,7 +436,7 @@ export function createStreamInfo(
                 isStatic = true;
             } else {
                 streamContainer = mediaSource.TranscodingContainer;
-                contentType = 'audio/' + mediaSource.TranscodingContainer;
+                contentType = `audio/${mediaSource.TranscodingContainer}`;
 
                 // TODO deal with !TranscodingUrl
                 mediaUrl = JellyfinApi.createUrl(
@@ -423,25 +451,26 @@ export function createStreamInfo(
     const canSeek = (mediaSource.RunTimeTicks || 0) > 0;
 
     const info: any = {
-        url: mediaUrl,
-        mediaSource: mediaSource,
-        isStatic: isStatic,
-        contentType: contentType,
-        streamContainer: streamContainer,
-        canSeek: canSeek,
-        canClientSeek: isStatic || (canSeek && streamContainer == 'm3u8'),
         audioStreamIndex: mediaSource.DefaultAudioStreamIndex,
-        subtitleStreamIndex: mediaSource.DefaultSubtitleStreamIndex,
+        canClientSeek: isStatic || (canSeek && streamContainer == 'm3u8'),
+        canSeek: canSeek,
+        contentType: contentType,
+        isStatic: isStatic,
+        mediaSource: mediaSource,
         playerStartPositionTicks: playerStartPositionTicks,
-        startPositionTicks: startPosition
+        startPositionTicks: startPosition,
+        streamContainer: streamContainer,
+        subtitleStreamIndex: mediaSource.DefaultSubtitleStreamIndex,
+        url: mediaUrl
     };
 
     const subtitleStreams =
-        mediaSource.MediaStreams?.filter(function (stream: any) {
+        mediaSource.MediaStreams?.filter((stream: any) => {
             return stream.Type === 'Subtitle';
         }) ?? [];
     const subtitleTracks: Array<framework.messages.Track> = [];
-    subtitleStreams.forEach(function (subtitleStream: any) {
+
+    subtitleStreams.forEach((subtitleStream: any) => {
         if (subtitleStream.DeliveryUrl === undefined) {
             /* The CAF v3 player only supports vtt currently,
              * SRT subs can be "transcoded" to vtt by jellyfin.
@@ -451,6 +480,7 @@ export function createStreamInfo(
              **/
             return;
         }
+
         const textStreamUrl = subtitleStream.IsExternalUrl
             ? subtitleStream.DeliveryUrl
             : JellyfinApi.createUrl(subtitleStream.DeliveryUrl);
@@ -459,6 +489,7 @@ export function createStreamInfo(
             info.subtitleStreamIndex,
             cast.framework.messages.TrackType.TEXT
         );
+
         track.trackId = subtitleStream.Index;
         track.trackContentId = textStreamUrl;
         track.language = subtitleStream.Language;
@@ -467,7 +498,7 @@ export function createStreamInfo(
         track.trackContentType = 'text/vtt';
         track.subtype = cast.framework.messages.TextTrackType.SUBTITLES;
         subtitleTracks.push(track);
-        console.log('Subtitle url: ' + info.subtitleStreamUrl);
+        console.log(`Subtitle url: ${info.subtitleStreamUrl}`);
     });
 
     info.tracks = subtitleTracks;
@@ -478,9 +509,9 @@ export function createStreamInfo(
 /**
  * Get stream by its index while making a type assertion
  *
- * @param streams array streams to consider
- * @param type type of stream
- * @param index index of stream
+ * @param streams - array streams to consider
+ * @param type - type of stream
+ * @param index - index of stream
  * @returns first first matching stream
  */
 export function getStreamByIndex(
@@ -488,7 +519,7 @@ export function getStreamByIndex(
     type: string,
     index: number
 ): any {
-    return streams.filter(function (s) {
+    return streams.filter((s) => {
         return s.Type == type && s.Index == index;
     })[0];
 }
@@ -506,8 +537,8 @@ const requiredItemFields = 'MediaSources,Chapters';
  *
  * TODO: JellyfinApi.userId should be fine for this.
  *
- * @param userId User ID to look up items with
- * @param item Parent item of shuffle search
+ * @param userId - User ID to look up items with
+ * @param item - Parent item of shuffle search
  * @returns items for the queue
  */
 export function getShuffleItems(
@@ -515,12 +546,12 @@ export function getShuffleItems(
     item: BaseItemDto
 ): Promise<BaseItemDtoQueryResult> {
     const query: ItemQuery = {
-        UserId: userId,
         Fields: requiredItemFields,
-        Limit: 50,
         Filters: 'IsNotFolder',
+        Limit: 50,
         Recursive: true,
-        SortBy: 'Random'
+        SortBy: 'Random',
+        UserId: userId
     };
 
     if (item.Type == 'MusicArtist') {
@@ -542,18 +573,18 @@ export function getShuffleItems(
  *
  * TODO: JellyfinApi.userId should be fine for this.
  *
- * @param userId User ID to look up items with
- * @param item Parent item of the search
+ * @param userId - User ID to look up items with
+ * @param item - Parent item of the search
  * @returns items for the queue
  */
-export function getInstantMixItems(
+export async function getInstantMixItems(
     userId: string,
     item: BaseItemDto
 ): Promise<BaseItemDtoQueryResult> {
     const query: any = {
-        UserId: userId,
         Fields: requiredItemFields,
-        Limit: 50
+        Limit: 50,
+        UserId: userId
     };
 
     let url: string | null = null;
@@ -565,32 +596,32 @@ export function getInstantMixItems(
         url = 'MusicGenres/InstantMix';
         query.Id = item.Id;
     } else if (item.Type == 'MusicAlbum') {
-        url = 'Albums/' + item.Id + '/InstantMix';
+        url = `Albums/${item.Id}/InstantMix`;
     } else if (item.Type == 'Audio') {
-        url = 'Songs/' + item.Id + '/InstantMix';
+        url = `Songs/${item.Id}/InstantMix`;
     } else if (item.Type == 'Playlist') {
-        url = 'Playlists/' + item.Id + '/InstantMix';
+        url = `Playlists/${item.Id}/InstantMix`;
     }
 
     if (url) {
         return JellyfinApi.authAjax(url, {
+            dataType: 'json',
             query: query,
-            type: 'GET',
-            dataType: 'json'
+            type: 'GET'
         });
     } else {
-        return Promise.reject('InstantMix: Unknown item type: ' + item.Type);
+        throw new Error(`InstantMix: Unknown item type: ${item.Type}`);
     }
 }
 
 /**
  * Get items to be played back
  *
- * @param userId user for the search
- * @param query specification on what to search for
+ * @param userId - user for the search
+ * @param query - specification on what to search for
  * @returns items to be played back
  */
-export function getItemsForPlayback(
+export async function getItemsForPlayback(
     userId: string,
     query: ItemQuery
 ): Promise<BaseItemDtoQueryResult> {
@@ -600,20 +631,23 @@ export function getItemsForPlayback(
     query.ExcludeLocationTypes = 'Virtual';
 
     if (query.Ids && query.Ids.split(',').length == 1) {
-        return JellyfinApi.authAjaxUser('Items/' + query.Ids.split(',')[0], {
-            type: 'GET',
-            dataType: 'json'
-        }).then(function (item) {
-            return {
-                Items: [item],
-                TotalRecordCount: 1
-            };
-        });
+        const item = await JellyfinApi.authAjaxUser(
+            `Items/${query.Ids.split(',')[0]}`,
+            {
+                dataType: 'json',
+                type: 'GET'
+            }
+        );
+
+        return {
+            Items: [item],
+            TotalRecordCount: 1
+        };
     } else {
         return JellyfinApi.authAjaxUser('Items', {
+            dataType: 'json',
             query: query,
-            type: 'GET',
-            dataType: 'json'
+            type: 'GET'
         });
     }
 }
@@ -621,9 +655,9 @@ export function getItemsForPlayback(
 /**
  * Get episodes for a show given by seriesId
  *
- * @param userId userid to use
- * @param seriesId series to look up
- * @param query query parameters to build on
+ * @param userId - userid to use
+ * @param seriesId - series to look up
+ * @param query - query parameters to build on
  * @returns episode items
  */
 export function getEpisodesForPlayback(
@@ -635,10 +669,10 @@ export function getEpisodesForPlayback(
     query.Fields = requiredItemFields;
     query.ExcludeLocationTypes = 'Virtual';
 
-    return JellyfinApi.authAjax('Shows/' + seriesId + '/Episodes', {
+    return JellyfinApi.authAjax(`Shows/${seriesId}/Episodes`, {
+        dataType: 'json',
         query: query,
-        type: 'GET',
-        dataType: 'json'
+        type: 'GET'
     });
 }
 
@@ -646,13 +680,13 @@ export function getEpisodesForPlayback(
  * Get intros for a given item. This item should be a video
  * type for this to make sense
  *
- * @param firstItem item to get intros for
+ * @param firstItem - item to get intros for
  * @returns intro items
  */
 export function getIntros(
     firstItem: BaseItemDto
 ): Promise<BaseItemDtoQueryResult> {
-    return JellyfinApi.authAjaxUser('Items/' + firstItem.Id + '/Intros', {
+    return JellyfinApi.authAjaxUser(`Items/${firstItem.Id}/Intros`, {
         dataType: 'json',
         type: 'GET'
     });
@@ -675,11 +709,11 @@ export function getUser(): Promise<UserDto> {
  * by resolving things like folders to playable items.
  *
  *
- * @param userId userId to use
- * @param items items to resolve
- * @param smart If enabled it will try to find the next episode given the
- *              current one, if the connected user has enabled that in their settings
- * @returns {Promise<BaseItemDtoQueryResult>} Promise for search result containing items to play
+ * @param userId - userId to use
+ * @param items - items to resolve
+ * @param smart - If enabled it will try to find the next episode given the current one,
+ * if the connected user has enabled that in their settings
+ * @returns Promise for search result containing items to play
  */
 export async function translateRequestedItems(
     userId: string,
@@ -696,25 +730,25 @@ export async function translateRequestedItems(
         return await getItemsForPlayback(userId, {
             ArtistIds: firstItem.Id,
             Filters: 'IsNotFolder',
+            MediaTypes: 'Audio',
             Recursive: true,
-            SortBy: 'SortName',
-            MediaTypes: 'Audio'
+            SortBy: 'SortName'
         });
     } else if (firstItem.Type == 'MusicGenre') {
         return await getItemsForPlayback(userId, {
-            Genres: firstItem.Name ?? undefined,
             Filters: 'IsNotFolder',
+            Genres: firstItem.Name ?? undefined,
+            MediaTypes: 'Audio',
             Recursive: true,
-            SortBy: 'SortName',
-            MediaTypes: 'Audio'
+            SortBy: 'SortName'
         });
     } else if (firstItem.IsFolder) {
         return await getItemsForPlayback(userId, {
-            ParentId: firstItem.Id,
             Filters: 'IsNotFolder',
+            MediaTypes: 'Audio,Video',
+            ParentId: firstItem.Id,
             Recursive: true,
-            SortBy: 'SortName',
-            MediaTypes: 'Audio,Video'
+            SortBy: 'SortName'
         });
     } else if (smart && firstItem.Type == 'Episode' && items.length == 1) {
         const user = await getUser();
@@ -729,7 +763,9 @@ export async function translateRequestedItems(
             Ids: firstItem.Id
         });
 
-        if (!result.Items || result.Items.length < 1) return result;
+        if (!result.Items || result.Items.length < 1) {
+            return result;
+        }
 
         const episode = result.Items[0];
 
@@ -741,26 +777,29 @@ export async function translateRequestedItems(
             userId,
             episode.SeriesId,
             {
-                IsVirtualUnaired: false,
                 IsMissing: false,
+                IsVirtualUnaired: false,
                 UserId: userId
             }
         );
 
         let foundItem = false;
-        episodesResult.Items = episodesResult.Items?.filter(function (
-            e: BaseItemDto
-        ) {
-            if (foundItem) {
-                return true;
-            }
-            if (e.Id == episode.Id) {
-                foundItem = true;
-                return true;
-            }
 
-            return false;
-        });
+        episodesResult.Items = episodesResult.Items?.filter(
+            (e: BaseItemDto) => {
+                if (foundItem) {
+                    return true;
+                }
+
+                if (e.Id == episode.Id) {
+                    foundItem = true;
+
+                    return true;
+                }
+
+                return false;
+            }
+        );
 
         episodesResult.TotalRecordCount = episodesResult.Items?.length || 0;
 
@@ -777,14 +816,15 @@ export async function translateRequestedItems(
  *
  * TODO can we remove this crap
  *
- * @param target object that gets populated with entries
- * @param source object that the entries are copied from
- * @returns {any} reference to target object
+ * @param target - object that gets populated with entries
+ * @param source - object that the entries are copied from
+ * @returns reference to target object
  */
 export function extend(target: any, source: any): any {
     for (const i in source) {
         target[i] = source[i];
     }
+
     return target;
 }
 
@@ -793,7 +833,7 @@ export function extend(target: any, source: any): any {
  * but could be useful to deal with weird date strings
  * in the future.
  *
- * @param date string date to parse
+ * @param date - string date to parse
  * @returns date object
  */
 export function parseISO8601Date(date: string): Date {
@@ -803,7 +843,7 @@ export function parseISO8601Date(date: string): Date {
 /**
  * Send a message over the custom message transport
  *
- * @param message to send
+ * @param message - to send
  */
 export function broadcastToMessageBus(message: BusMessage): void {
     window.castReceiverContext.sendCustomMessage(
@@ -817,13 +857,13 @@ export function broadcastToMessageBus(message: BusMessage): void {
  * Inform the cast sender that we couldn't connect
  */
 export function broadcastConnectionErrorMessage(): void {
-    broadcastToMessageBus({ type: 'connectionerror', message: '' });
+    broadcastToMessageBus({ message: '', type: 'connectionerror' });
 }
 
 /**
  * Remove all special characters from a string
  *
- * @param name input string
+ * @param name - input string
  * @returns string with non-whitespace non-word characters removed
  */
 export function cleanName(name: string): string {

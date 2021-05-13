@@ -16,8 +16,7 @@ export class credentialManager {
      * Get credentials for the provided server ID
      *
      * @param serverId - ID of the server the credentials belong to
-     * @returns Credentials for the provided server ID
-     *      or undefined if the store has no server with that ID
+     * @returns Credentials for the provided server ID or undefined if the store has no server with that ID
      */
     get(serverId: string): Configuration | undefined {
         if (serverId in this.credentialStore) {
@@ -35,6 +34,7 @@ export class credentialManager {
     update(serverId: string, newConfig: Configuration): boolean {
         if (serverId in this.credentialStore) {
             this.credentialStore[serverId] = newConfig;
+
             return true;
         }
 
@@ -54,6 +54,7 @@ export class credentialManager {
         }
 
         this.credentialStore[serverId] = configuration;
+
         return true;
     }
 
@@ -66,6 +67,7 @@ export class credentialManager {
     remove(serverId: string): boolean {
         if (serverId in this.credentialStore) {
             delete this.credentialStore[serverId];
+
             return true;
         }
 

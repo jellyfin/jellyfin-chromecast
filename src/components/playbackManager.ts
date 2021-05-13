@@ -68,7 +68,9 @@ export class playbackManager {
         }
 
         const intros = await getIntros(firstItem);
+
         options.items = intros.Items?.concat(options.items);
+
         return this.playFromOptionsInternal(options);
     }
 
@@ -92,6 +94,7 @@ export class playbackManager {
             const item = nextItemInfo.item;
 
             this.playItem(item, options, stopPlayer);
+
             return true;
         }
 
@@ -105,8 +108,10 @@ export class playbackManager {
             const item = this.activePlaylist[this.activePlaylistIndex];
 
             this.playItem(item, options, true);
+
             return true;
         }
+
         return false;
     }
 
@@ -128,8 +133,8 @@ export class playbackManager {
 
         const maxBitrate = await getMaxBitrate();
         const deviceProfile = getDeviceProfile({
-            enableHls: true,
-            bitrateSetting: maxBitrate
+            bitrateSetting: maxBitrate,
+            enableHls: true
         });
         const playbackInfo = await getPlaybackInfo(
             item,
@@ -148,11 +153,13 @@ export class playbackManager {
         const mediaSource = await getOptimalMediaSource(
             playbackInfo.MediaSources
         );
+
         if (!mediaSource) {
             return showPlaybackInfoErrorMessage('NoCompatibleStream');
         }
 
         let itemToPlay = mediaSource;
+
         if (mediaSource.RequiresOpening) {
             const openLiveStreamResult = await getLiveStream(
                 item,
@@ -164,6 +171,7 @@ export class playbackManager {
                 null,
                 null
             );
+
             if (openLiveStreamResult.MediaSource) {
                 checkDirectPlay(openLiveStreamResult.MediaSource);
                 itemToPlay = openLiveStreamResult.MediaSource;
@@ -201,6 +209,7 @@ export class playbackManager {
             streamInfo
         );
         const loadRequestData = new cast.framework.messages.LoadRequestData();
+
         loadRequestData.media = mediaInfo;
         loadRequestData.autoplay = true;
 
@@ -209,7 +218,7 @@ export class playbackManager {
 
         $scope.PlaybackMediaSource = mediaSource;
 
-        console.log('setting src to ' + url);
+        console.log(`setting src to ${url}`);
         $scope.mediaSource = mediaSource;
 
         DocumentManager.setPlayerBackdrop(item);

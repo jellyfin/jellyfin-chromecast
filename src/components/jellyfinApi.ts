@@ -42,8 +42,9 @@ export abstract class JellyfinApi {
             Authorization: auth
         };
 
-        if (this.accessToken != null)
+        if (this.accessToken != null) {
             headers['X-MediaBrowser-Token'] = this.accessToken;
+        }
 
         return headers;
     }
@@ -53,31 +54,35 @@ export abstract class JellyfinApi {
     public static createUrl(path: string): string {
         if (this.serverAddress === null) {
             console.error('JellyfinApi.createUrl: no server address present');
+
             return '';
         }
-        // Remove leading slashes
-        while (path.charAt(0) === '/') path = path.substring(1);
 
-        return this.serverAddress + '/' + path;
+        // Remove leading slashes
+        while (path.charAt(0) === '/') {
+            path = path.substring(1);
+        }
+
+        return `${this.serverAddress}/${path}`;
     }
 
     // create a path in /Users/userId/ <path>
     public static createUserUrl(path: string | null = null): string {
         if (path) {
-            return this.createUrl('Users/' + this.userId + '/' + path);
+            return this.createUrl(`Users/${this.userId}/${path}`);
         } else {
-            return this.createUrl('Users/' + this.userId);
+            return this.createUrl(`Users/${this.userId}`);
         }
     }
 
     /**
      * Create url to image
      *
-     * @param {string} itemId Item id
-     * @param {string} imgType Image type: Primary, Logo, Backdrop
-     * @param {string} imgTag Image tag
-     * @param {number} imgIdx Image index, default 0
-     * @returns {string} URL
+     * @param itemId - Item id
+     * @param imgType - Image type: Primary, Logo, Backdrop
+     * @param imgTag - Image tag
+     * @param imgIdx - Image index, default 0
+     * @returns URL
      */
     public static createImageUrl(
         itemId: string,
@@ -100,11 +105,13 @@ export abstract class JellyfinApi {
             console.error(
                 'JellyfinApi.authAjax: No userid/accesstoken/serverAddress present. Skipping request'
             );
+
             return Promise.reject('no server info present');
         }
+
         const params = {
-            url: this.createUrl(path),
-            headers: this.getSecurityHeaders()
+            headers: this.getSecurityHeaders(),
+            url: this.createUrl(path)
         };
 
         return ajax({ ...params, ...args });
@@ -120,11 +127,13 @@ export abstract class JellyfinApi {
             console.error(
                 'JellyfinApi.authAjaxUser: No userid/accesstoken/serverAddress present. Skipping request'
             );
+
             return Promise.reject('no server info present');
         }
+
         const params = {
-            url: this.createUserUrl(path),
-            headers: this.getSecurityHeaders()
+            headers: this.getSecurityHeaders(),
+            url: this.createUserUrl(path)
         };
 
         return ajax({ ...params, ...args });
