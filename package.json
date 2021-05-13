@@ -15,7 +15,7 @@
         "@types/jest": "^26.0.22",
         "@types/node": "^15.0.3",
         "@types/webpack": "^5.28.0",
-        "@types/webpack-dev-server": "^3.11.3",
+        "@types/webpack-dev-server": "^3.11.4",
         "@types/webpack-merge": "^5.0.0",
         "@typescript-eslint/eslint-plugin": "^4.23.0",
         "@typescript-eslint/parser": "^4.23.0",
