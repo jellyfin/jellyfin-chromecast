@@ -1,16 +1,16 @@
 html,
 body {
-  height: 100%;
-  width: 100%;
+    height: 100%;
+    width: 100%;
 }
 
 body {
-  font-family: 'Quicksand', sans-serif;
-  font-weight: 300;
-  color: #ddd;
-  background-color: #000;
-  margin: 0;
-  padding: 0;
+    font-family: 'Quicksand', sans-serif;
+    font-weight: 300;
+    color: #ddd;
+    background-color: #000;
+    margin: 0;
+    padding: 0;
 }
 
 #waiting-container,
@@ -19,274 +19,274 @@ body {
 .details > #video-player,
 .detailContent,
 .detailLogo {
-  /* There is an open bug on the chromecast, transitions are buggy and sometimes are not triggered.
+    /* There is an open bug on the chromecast, transitions are buggy and sometimes are not triggered.
     opacity: 0;
     -webkit-transition: opacity .25s ease-in-out;
     transition: opacity .25s ease-in-out;
     */
-  display: none;
+    display: none;
 }
 
 .d-none {
-  display: none !important;
+    display: none !important;
 }
 
 #waiting-container-backdrop {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #000;
-  background-position: center;
-  background-size: cover;
-  background-repeat: no-repeat;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #000;
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
 }
 
 #waiting-container {
-  background-position: center;
-  background-size: cover;
-  background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
 
-  /* Layer on top of the backdrop image: */
-  background-color: rgba(15, 15, 15, 0.6);
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  padding: 18px 32px;
+    /* Layer on top of the backdrop image: */
+    background-color: rgba(15, 15, 15, 0.6);
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 18px 32px;
 }
 
 .detailContent {
-  background-position: center;
-  background-size: cover;
-  background-repeat: no-repeat;
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(15, 15, 15, 0.82);
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(15, 15, 15, 0.82);
 }
 
 .detailLogo {
-  height: 50px;
-  width: 300px;
-  background-position: left top;
-  background-size: contain;
-  background-repeat: no-repeat;
-  position: absolute;
-  top: 35px;
-  left: 50px;
+    height: 50px;
+    width: 300px;
+    background-position: left top;
+    background-size: contain;
+    background-repeat: no-repeat;
+    position: absolute;
+    top: 35px;
+    left: 50px;
 }
 
 .detailImage {
-  background-position: left top;
-  background-size: contain;
-  background-repeat: no-repeat;
-  position: absolute;
-  top: 22%;
-  height: 63%;
-  left: 8%;
-  width: 20%;
+    background-position: left top;
+    background-size: contain;
+    background-repeat: no-repeat;
+    position: absolute;
+    top: 22%;
+    height: 63%;
+    left: 8%;
+    width: 20%;
 }
 
 .playedIndicator {
-  display: block;
-  position: absolute;
-  top: 5px;
-  right: 5px;
-  text-align: center;
-  width: 1.8vw;
-  height: 1.6vw;
-  padding-top: 0.1vw;
-  border-radius: 50%;
-  color: #fff;
-  background: rgba(0, 128, 0, 0.8);
-  font-size: 1.1vw;
+    display: block;
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    text-align: center;
+    width: 1.8vw;
+    height: 1.6vw;
+    padding-top: 0.1vw;
+    border-radius: 50%;
+    color: #fff;
+    background: rgba(0, 128, 0, 0.8);
+    font-size: 1.1vw;
 }
 
 .detailImageProgressContainer {
-  position: absolute;
-  bottom: 10px;
-  right: 0;
-  left: 0;
-  text-align: center;
+    position: absolute;
+    bottom: 10px;
+    right: 0;
+    left: 0;
+    text-align: center;
 }
 
 .detailImageProgressContainer progress {
-  width: 100%;
-  margin: 0 auto;
-  height: 6px;
+    width: 100%;
+    margin: 0 auto;
+    height: 6px;
 }
 
 /* Chrome */
 .itemProgressBar::-webkit-progress-value {
-  border-radius: 0;
-  background-image: none;
-  background-color: #52b54b;
+    border-radius: 0;
+    background-image: none;
+    background-color: #52b54b;
 }
 
 /* Polyfill */
 .itemProgressBar[aria-valuenow]::before {
-  border-radius: 0;
-  background-image: none;
-  background-color: #52b54b;
+    border-radius: 0;
+    background-image: none;
+    background-color: #52b54b;
 }
 
 .itemProgressBar {
-  background: #000 !important;
-  appearance: none;
-  -moz-appearance: none;
-  -webkit-appearance: none;
-  border: 0;
-  border: 0 solid #222;
-  border-radius: 0;
+    background: #000 !important;
+    appearance: none;
+    -moz-appearance: none;
+    -webkit-appearance: none;
+    border: 0;
+    border: 0 solid #222;
+    border-radius: 0;
 }
 
 .detailInfo {
-  position: absolute;
-  top: 22%;
-  height: 63%;
-  left: 30.5%;
-  font-size: 1.2vw;
-  width: 60%;
+    position: absolute;
+    top: 22%;
+    height: 63%;
+    left: 30.5%;
+    font-size: 1.2vw;
+    width: 60%;
 }
 
 .detailInfo p {
-  margin: 10px 0;
+    margin: 10px 0;
 }
 
 .detailRating {
-  margin: -4px 0 0;
+    margin: -4px 0 0;
 }
 
 .displayNameContainer {
-  margin-top: -6px !important;
+    margin-top: -6px !important;
 }
 
 .displayName {
-  font-size: 3vw;
+    font-size: 3vw;
 }
 
 #miscInfo {
-  font-size: 1.5vw;
-  margin-left: 2vw;
+    font-size: 1.5vw;
+    margin-left: 2vw;
 }
 
 .starRating {
-  background-image: url('../img/stars.svg');
-  background-position: left center;
-  background-repeat: no-repeat;
-  background-size: cover;
-  width: 1.6vw;
-  height: 1.4vw;
-  display: inline-block;
-  vertical-align: text-bottom;
-  top: 6px;
+    background-image: url('../img/stars.svg');
+    background-position: left center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    width: 1.6vw;
+    height: 1.4vw;
+    display: inline-block;
+    vertical-align: text-bottom;
+    top: 6px;
 }
 
 .starRatingValue {
-  display: inline-block;
-  margin-left: 1px;
+    display: inline-block;
+    margin-left: 1px;
 }
 
 .rottentomatoesicon {
-  display: inline-block;
-  width: 1.4vw;
-  height: 1.4vw;
-  background-size: cover;
-  background-position: left center;
-  background-repeat: no-repeat;
-  vertical-align: text-bottom;
-  top: 6px;
+    display: inline-block;
+    width: 1.4vw;
+    height: 1.4vw;
+    background-size: cover;
+    background-position: left center;
+    background-repeat: no-repeat;
+    vertical-align: text-bottom;
+    top: 6px;
 }
 
 .starRatingValue + .rottentomatoesicon {
-  margin-left: 1em;
+    margin-left: 1em;
 }
 
 .fresh {
-  background-image: url('../img/fresh.svg');
+    background-image: url('../img/fresh.svg');
 }
 
 .rotten {
-  background-image: url('../img/rotten.svg');
+    background-image: url('../img/rotten.svg');
 }
 
 .metascorehigh {
-  background-color: rgba(102, 204, 51, 0.7);
+    background-color: rgba(102, 204, 51, 0.7);
 }
 
 .metascoremid {
-  background-color: rgba(255, 204, 51, 0.7);
+    background-color: rgba(255, 204, 51, 0.7);
 }
 
 .metascorelow {
-  background-color: rgba(240, 0, 0, 0.7);
+    background-color: rgba(240, 0, 0, 0.7);
 }
 
 .criticRating + .metascore,
 .starRatingValue + .metascore {
-  margin-left: 1em;
+    margin-left: 1em;
 }
 
 .criticRating {
-  display: inline-block;
-  margin-left: 1px;
+    display: inline-block;
+    margin-left: 1px;
 }
 
 .overview {
-  max-height: 350px;
-  overflow: hidden;
-  text-overflow: ellipsis;
+    max-height: 350px;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* Container for "ready to cast" and the logo */
 .waitingContent {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  text-align: center;
-  font-size: 3vw;
-  margin-bottom: 3%;
-  margin-left: 5%;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    text-align: center;
+    font-size: 3vw;
+    margin-bottom: 3%;
+    margin-left: 5%;
 }
 
 /* Container for backdrop description */
 .waitingDescription {
-  position: fixed;
-  bottom: 0;
-  right: 0;
-  margin-right: 5%;
-  margin-bottom: 3%;
-  font-size: 1.5vw;
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    margin-right: 5%;
+    margin-bottom: 3%;
+    font-size: 1.5vw;
 }
 
 #waiting-container h1,
 #waiting-container h2 {
-  margin: 25px 0;
+    margin: 25px 0;
 }
 
 #waiting-container h1 {
-  font-size: 45px;
-  font-weight: 300;
+    font-size: 45px;
+    font-weight: 300;
 }
 
 /* stylelint-disable no-descending-specificity */
 .error-container h2,
 #waiting-container h2 {
-  font-size: 30px;
-  font-weight: 300;
+    font-size: 30px;
+    font-weight: 300;
 }
 /* stylelint-enable no-descending-specificity */
 
 /* jellyfin logo in the waiting container */
 #waiting-container .logo {
-  width: 4vw;
-  display: inline-block;
-  vertical-align: text-bottom;
+    width: 4vw;
+    display: inline-block;
+    vertical-align: text-bottom;
 }
 
 .waiting > #waiting-container-backdrop,
@@ -294,18 +294,18 @@ body {
 .details .detailContent,
 .details .detailLogo,
 .details #waiting-container-backdrop {
-  /* opacity: 1; */
-  display: initial;
+    /* opacity: 1; */
+    display: initial;
 }
 
 /* stylelint-disable selector-type-no-unknown */
 cast-media-player {
-  --spinner-image: url('../img/spinner.png');
-  --playback-logo-image: url('../img/banner.svg');
-  --watermark-image: url('../img/banner.svg');
-  --watermark-size: 225px;
-  --watermark-position: top right;
-  --theme-hue: 195.3; /* Jellyfin blue */
-  --progress-color: #00a4dc;
+    --spinner-image: url('../img/spinner.png');
+    --playback-logo-image: url('../img/banner.svg');
+    --watermark-image: url('../img/banner.svg');
+    --watermark-size: 225px;
+    --watermark-position: top right;
+    --theme-hue: 195.3; /* Jellyfin blue */
+    --progress-color: #00a4dc;
 }
 /* stylelint-enable selector-type-no-unknown */

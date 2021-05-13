@@ -5,44 +5,45 @@
  * @returns response promise
  */
 function getFetchPromise(request: any): Promise<Response> {
-  const headers = request.headers || {};
+    const headers = request.headers || {};
 
-  if (request.dataType === 'json') {
-    headers.accept = 'application/json';
-  }
-
-  const fetchRequest: RequestInit = {
-    headers: headers,
-    method: request.type,
-    credentials: 'same-origin'
-  };
-  let contentType = request.contentType;
-
-  if (request.data) {
-    if (typeof request.data == 'string') {
-      fetchRequest.body = request.data;
-    } else {
-      fetchRequest.body = paramsToString(request.data);
-      contentType =
-        contentType || 'application/x-www-form-urlencoded; charset=UTF-8';
+    if (request.dataType === 'json') {
+        headers.accept = 'application/json';
     }
-  }
 
-  if (contentType) {
-    headers['Content-Type'] = contentType;
-  }
+    const fetchRequest: RequestInit = {
+        headers: headers,
+        method: request.type,
+        credentials: 'same-origin'
+    };
+    let contentType = request.contentType;
 
-  let url = request.url;
+    if (request.data) {
+        if (typeof request.data == 'string') {
+            fetchRequest.body = request.data;
+        } else {
+            fetchRequest.body = paramsToString(request.data);
+            contentType =
+                contentType ||
+                'application/x-www-form-urlencoded; charset=UTF-8';
+        }
+    }
 
-  if (request.query) {
-    const paramString = paramsToString(request.query);
+    if (contentType) {
+        headers['Content-Type'] = contentType;
+    }
 
-    paramString && (url += `?${paramString}`);
-  }
+    let url = request.url;
 
-  return request.timeout
-    ? fetchWithCredentials(url, fetchRequest)
-    : fetch(url, fetchRequest);
+    if (request.query) {
+        const paramString = paramsToString(request.query);
+
+        paramString && (url += `?${paramString}`);
+    }
+
+    return request.timeout
+        ? fetchWithCredentials(url, fetchRequest)
+        : fetch(url, fetchRequest);
 }
 
 /**
@@ -53,25 +54,27 @@ function getFetchPromise(request: any): Promise<Response> {
  * @returns response promise
  */
 async function fetchWithCredentials(
-  url: string,
-  options: RequestInit
+    url: string,
+    options: RequestInit
 ): Promise<Response> {
-  console.log(`fetchWithCredentials: ${url}`);
+    console.log(`fetchWithCredentials: ${url}`);
 
-  try {
-    options = options || {};
-    options.credentials = 'same-origin';
+    try {
+        options = options || {};
+        options.credentials = 'same-origin';
 
-    const response = await fetch(url, options);
+        const response = await fetch(url, options);
 
-    console.log(`fetchWithCredentials: succeeded connecting to url: ${url}`);
+        console.log(
+            `fetchWithCredentials: succeeded connecting to url: ${url}`
+        );
 
-    return response;
-  } catch (e) {
-    throw new Error(
-      `fetchWithCredentials: timed out connecting to url: ${url}`
-    );
-  }
+        return response;
+    } catch (e) {
+        throw new Error(
+            `fetchWithCredentials: timed out connecting to url: ${url}`
+        );
+    }
 }
 
 /**
@@ -81,18 +84,20 @@ async function fetchWithCredentials(
  * @returns string with encoded values
  */
 function paramsToString(params: Record<string, string>): string {
-  const values = [];
+    const values = [];
 
-  for (const key in params) {
-    const value = params[key];
+    for (const key in params) {
+        const value = params[key];
 
-    null !== value &&
-      void 0 !== value &&
-      '' !== value &&
-      values.push(`${encodeURIComponent(key)}=${encodeURIComponent(value)}`);
-  }
+        null !== value &&
+            void 0 !== value &&
+            '' !== value &&
+            values.push(
+                `${encodeURIComponent(key)}=${encodeURIComponent(value)}`
+            );
+    }
 
-  return values.join('&');
+    return values.join('&');
 }
 
 /**
@@ -102,37 +107,37 @@ function paramsToString(params: Record<string, string>): string {
  * @returns response promise, may be automatically unpacked based on request datatype
  */
 export async function ajax(request: any): Promise<Response | string> {
-  if (!request) {
-    throw new Error('Request cannot be null');
-  }
-
-  request.headers = request.headers || {};
-  console.log(`requesting url: ${request.url}`);
-
-  try {
-    const response = await getFetchPromise(request);
-
-    console.log(`response status: ${response.status}, url: ${request.url}`);
-
-    if (response.status >= 400) {
-      return Promise.reject(response);
-    } else if (
-      request.dataType === 'json' ||
-      request.headers?.accept === 'application/json'
-    ) {
-      return response.json();
-    } else if (
-      request.dataType === 'text' ||
-      (response.headers.get('Content-Type') || '')
-        .toLowerCase()
-        .indexOf('text/') === 0
-    ) {
-      return response.text();
-    } else {
-      return response;
+    if (!request) {
+        throw new Error('Request cannot be null');
     }
-  } catch (err) {
-    console.log(`request failed to url: ${request.url}`);
-    throw err;
-  }
+
+    request.headers = request.headers || {};
+    console.log(`requesting url: ${request.url}`);
+
+    try {
+        const response = await getFetchPromise(request);
+
+        console.log(`response status: ${response.status}, url: ${request.url}`);
+
+        if (response.status >= 400) {
+            return Promise.reject(response);
+        } else if (
+            request.dataType === 'json' ||
+            request.headers?.accept === 'application/json'
+        ) {
+            return response.json();
+        } else if (
+            request.dataType === 'text' ||
+            (response.headers.get('Content-Type') || '')
+                .toLowerCase()
+                .indexOf('text/') === 0
+        ) {
+            return response.text();
+        } else {
+            return response;
+        }
+    } catch (err) {
+        console.log(`request failed to url: ${request.url}`);
+        throw err;
+    }
 }

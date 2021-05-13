@@ -1,8 +1,8 @@
 import {
-  getSenderReportingData,
-  resetPlaybackScope,
-  extend,
-  broadcastToMessageBus
+    getSenderReportingData,
+    resetPlaybackScope,
+    extend,
+    broadcastToMessageBus
 } from '../helpers';
 
 import { GlobalScope } from '../types/global';
@@ -16,12 +16,12 @@ import { JellyfinApi } from './jellyfinApi';
 import { DocumentManager } from './documentManager';
 
 interface PlayRequestQuery extends PlayRequest {
-  UserId?: string;
-  StartTimeTicks?: number;
-  MaxStreamingBitrate?: number;
-  LiveStreamId?: string;
-  ItemId?: string;
-  PlaySessionId?: string;
+    UserId?: string;
+    StartTimeTicks?: number;
+    MaxStreamingBitrate?: number;
+    LiveStreamId?: string;
+    ItemId?: string;
+    PlaySessionId?: string;
 }
 
 let pingInterval: number;
@@ -36,16 +36,16 @@ let lastTranscoderPing = 0;
  * @param reportingParams - parameters to report to the server
  */
 function restartPingInterval(
-  $scope: GlobalScope,
-  reportingParams: PlaybackProgressInfo
+    $scope: GlobalScope,
+    reportingParams: PlaybackProgressInfo
 ): void {
-  stopPingInterval();
+    stopPingInterval();
 
-  if (reportingParams.PlayMethod == 'Transcode') {
-    pingInterval = <any>setInterval(() => {
-      pingTranscoder(reportingParams);
-    }, 1000);
-  }
+    if (reportingParams.PlayMethod == 'Transcode') {
+        pingInterval = <any>setInterval(() => {
+            pingTranscoder(reportingParams);
+        }, 1000);
+    }
 }
 
 /**
@@ -54,10 +54,10 @@ function restartPingInterval(
  * Needed to stop the pinging when it's not needed anymore
  */
 export function stopPingInterval(): void {
-  if (pingInterval !== 0) {
-    clearInterval(pingInterval);
-    pingInterval = 0;
-  }
+    if (pingInterval !== 0) {
+        clearInterval(pingInterval);
+        pingInterval = 0;
+    }
 }
 
 /**
@@ -68,28 +68,28 @@ export function stopPingInterval(): void {
  * @returns promise to wait for the request
  */
 export function reportPlaybackStart(
-  $scope: GlobalScope,
-  reportingParams: PlaybackProgressInfo
+    $scope: GlobalScope,
+    reportingParams: PlaybackProgressInfo
 ): Promise<void> {
-  // it's just "reporting" that the playback is starting
-  // but it's also disabling the rotating backdrops
-  // in the line below.
-  // TODO move the responsibility to the caller.
-  DocumentManager.clearBackdropInterval();
+    // it's just "reporting" that the playback is starting
+    // but it's also disabling the rotating backdrops
+    // in the line below.
+    // TODO move the responsibility to the caller.
+    DocumentManager.clearBackdropInterval();
 
-  broadcastToMessageBus({
-    //TODO: convert these to use a defined type in the type field
-    type: 'playbackstart',
-    data: getSenderReportingData($scope, reportingParams)
-  });
+    broadcastToMessageBus({
+        //TODO: convert these to use a defined type in the type field
+        type: 'playbackstart',
+        data: getSenderReportingData($scope, reportingParams)
+    });
 
-  restartPingInterval($scope, reportingParams);
+    restartPingInterval($scope, reportingParams);
 
-  return JellyfinApi.authAjax('Sessions/Playing', {
-    type: 'POST',
-    data: JSON.stringify(reportingParams),
-    contentType: 'application/json'
-  });
+    return JellyfinApi.authAjax('Sessions/Playing', {
+        type: 'POST',
+        data: JSON.stringify(reportingParams),
+        contentType: 'application/json'
+    });
 }
 
 /**
@@ -102,28 +102,28 @@ export function reportPlaybackStart(
  * @returns Promise for the http request
  */
 export function reportPlaybackProgress(
-  $scope: GlobalScope,
-  reportingParams: PlaybackProgressInfo,
-  reportToServer = true,
-  broadcastEventName = 'playbackprogress'
+    $scope: GlobalScope,
+    reportingParams: PlaybackProgressInfo,
+    reportToServer = true,
+    broadcastEventName = 'playbackprogress'
 ): Promise<void> {
-  broadcastToMessageBus({
-    type: broadcastEventName,
-    data: getSenderReportingData($scope, reportingParams)
-  });
+    broadcastToMessageBus({
+        type: broadcastEventName,
+        data: getSenderReportingData($scope, reportingParams)
+    });
 
-  if (reportToServer === false) {
-    return Promise.resolve();
-  }
+    if (reportToServer === false) {
+        return Promise.resolve();
+    }
 
-  restartPingInterval($scope, reportingParams);
-  lastTranscoderPing = new Date().getTime();
+    restartPingInterval($scope, reportingParams);
+    lastTranscoderPing = new Date().getTime();
 
-  return JellyfinApi.authAjax('Sessions/Playing/Progress', {
-    type: 'POST',
-    data: JSON.stringify(reportingParams),
-    contentType: 'application/json'
-  });
+    return JellyfinApi.authAjax('Sessions/Playing/Progress', {
+        type: 'POST',
+        data: JSON.stringify(reportingParams),
+        contentType: 'application/json'
+    });
 }
 
 /**
@@ -134,21 +134,21 @@ export function reportPlaybackProgress(
  * @returns promise for waiting for the request
  */
 export function reportPlaybackStopped(
-  $scope: GlobalScope,
-  reportingParams: PlaybackProgressInfo
+    $scope: GlobalScope,
+    reportingParams: PlaybackProgressInfo
 ): Promise<void> {
-  stopPingInterval();
+    stopPingInterval();
 
-  broadcastToMessageBus({
-    type: 'playbackstop',
-    data: getSenderReportingData($scope, reportingParams)
-  });
+    broadcastToMessageBus({
+        type: 'playbackstop',
+        data: getSenderReportingData($scope, reportingParams)
+    });
 
-  return JellyfinApi.authAjax('Sessions/Playing/Stopped', {
-    type: 'POST',
-    data: JSON.stringify(reportingParams),
-    contentType: 'application/json'
-  });
+    return JellyfinApi.authAjax('Sessions/Playing/Stopped', {
+        type: 'POST',
+        data: JSON.stringify(reportingParams),
+        contentType: 'application/json'
+    });
 }
 
 /**
@@ -161,33 +161,33 @@ export function reportPlaybackStopped(
  * @returns promise for waiting for the request
  */
 export function pingTranscoder(
-  reportingParams: PlaybackProgressInfo
+    reportingParams: PlaybackProgressInfo
 ): Promise<void> {
-  const now = new Date().getTime();
+    const now = new Date().getTime();
 
-  // 10s is the timeout value, so use half that to report often enough
-  if (now - lastTranscoderPing < 5000) {
-    console.debug('Skipping ping due to recent progress check-in');
+    // 10s is the timeout value, so use half that to report often enough
+    if (now - lastTranscoderPing < 5000) {
+        console.debug('Skipping ping due to recent progress check-in');
 
-    return new Promise((resolve) => {
-      resolve(undefined);
-    });
-  }
-
-  lastTranscoderPing = new Date().getTime();
-
-  // 10.7 oddly wants it as a query string parameter. This is a server bug for now.
-  return JellyfinApi.authAjax(
-    `Sessions/Playing/Ping?playSessionId=${reportingParams.PlaySessionId}`,
-    {
-      type: 'POST',
-      data: JSON.stringify({
-        // jellyfin <= 10.6 wants it in the post data.
-        PlaySessionId: reportingParams.PlaySessionId
-      }),
-      contentType: 'application/json'
+        return new Promise((resolve) => {
+            resolve(undefined);
+        });
     }
-  );
+
+    lastTranscoderPing = new Date().getTime();
+
+    // 10.7 oddly wants it as a query string parameter. This is a server bug for now.
+    return JellyfinApi.authAjax(
+        `Sessions/Playing/Ping?playSessionId=${reportingParams.PlaySessionId}`,
+        {
+            type: 'POST',
+            data: JSON.stringify({
+                // jellyfin <= 10.6 wants it in the post data.
+                PlaySessionId: reportingParams.PlaySessionId
+            }),
+            contentType: 'application/json'
+        }
+    );
 }
 
 /**
@@ -198,18 +198,18 @@ export function pingTranscoder(
  * @param serverItem - item that is playing
  */
 export function load(
-  $scope: GlobalScope,
-  customData: PlaybackProgressInfo,
-  serverItem: BaseItemDto
+    $scope: GlobalScope,
+    customData: PlaybackProgressInfo,
+    serverItem: BaseItemDto
 ): void {
-  resetPlaybackScope($scope);
+    resetPlaybackScope($scope);
 
-  extend($scope, customData);
+    extend($scope, customData);
 
-  $scope.item = serverItem;
+    $scope.item = serverItem;
 
-  DocumentManager.setAppStatus('backdrop');
-  $scope.mediaType = serverItem?.MediaType;
+    DocumentManager.setAppStatus('backdrop');
+    $scope.mediaType = serverItem?.MediaType;
 }
 
 /**
@@ -223,31 +223,31 @@ export function load(
  * @param $scope - global scope
  */
 export function play($scope: GlobalScope): void {
-  if (
-    DocumentManager.getAppStatus() == 'backdrop' ||
-    DocumentManager.getAppStatus() == 'playing-with-controls' ||
-    DocumentManager.getAppStatus() == 'playing' ||
-    DocumentManager.getAppStatus() == 'audio'
-  ) {
-    setTimeout(() => {
-      window.mediaManager.play();
+    if (
+        DocumentManager.getAppStatus() == 'backdrop' ||
+        DocumentManager.getAppStatus() == 'playing-with-controls' ||
+        DocumentManager.getAppStatus() == 'playing' ||
+        DocumentManager.getAppStatus() == 'audio'
+    ) {
+        setTimeout(() => {
+            window.mediaManager.play();
 
-      if ($scope.mediaType == 'Audio') {
-        DocumentManager.setAppStatus('audio');
-      } else {
-        DocumentManager.setAppStatus('playing-with-controls');
-      }
-    }, 20);
-  }
+            if ($scope.mediaType == 'Audio') {
+                DocumentManager.setAppStatus('audio');
+            } else {
+                DocumentManager.setAppStatus('playing-with-controls');
+            }
+        }, 20);
+    }
 }
 
 /**
  * Don't actually stop, just show the idle view after 20ms
  */
 export function stop(): void {
-  setTimeout(() => {
-    DocumentManager.setAppStatus('waiting');
-  }, 20);
+    setTimeout(() => {
+        DocumentManager.setAppStatus('waiting');
+    }, 20);
 }
 
 /**
@@ -261,49 +261,49 @@ export function stop(): void {
  * @param liveStreamId
  */
 export function getPlaybackInfo(
-  item: BaseItemDto,
-  maxBitrate: number,
-  deviceProfile: DeviceProfile,
-  startPosition: number,
-  mediaSourceId: string,
-  audioStreamIndex: number,
-  subtitleStreamIndex: number,
-  liveStreamId: string | null = null
+    item: BaseItemDto,
+    maxBitrate: number,
+    deviceProfile: DeviceProfile,
+    startPosition: number,
+    mediaSourceId: string,
+    audioStreamIndex: number,
+    subtitleStreamIndex: number,
+    liveStreamId: string | null = null
 ): Promise<any> {
-  const postData = {
-    DeviceProfile: deviceProfile
-  };
+    const postData = {
+        DeviceProfile: deviceProfile
+    };
 
-  // TODO: PlayRequestQuery might not be the proper type for this
-  const query: PlayRequestQuery = {
-    UserId: JellyfinApi.userId ?? undefined,
-    StartTimeTicks: startPosition || 0,
-    MaxStreamingBitrate: maxBitrate
-  };
+    // TODO: PlayRequestQuery might not be the proper type for this
+    const query: PlayRequestQuery = {
+        UserId: JellyfinApi.userId ?? undefined,
+        StartTimeTicks: startPosition || 0,
+        MaxStreamingBitrate: maxBitrate
+    };
 
-  if (audioStreamIndex != null) {
-    query.AudioStreamIndex = audioStreamIndex;
-  }
+    if (audioStreamIndex != null) {
+        query.AudioStreamIndex = audioStreamIndex;
+    }
 
-  if (subtitleStreamIndex != null) {
-    query.SubtitleStreamIndex = subtitleStreamIndex;
-  }
+    if (subtitleStreamIndex != null) {
+        query.SubtitleStreamIndex = subtitleStreamIndex;
+    }
 
-  if (mediaSourceId) {
-    query.MediaSourceId = mediaSourceId;
-  }
+    if (mediaSourceId) {
+        query.MediaSourceId = mediaSourceId;
+    }
 
-  if (liveStreamId) {
-    query.LiveStreamId = liveStreamId;
-  }
+    if (liveStreamId) {
+        query.LiveStreamId = liveStreamId;
+    }
 
-  return JellyfinApi.authAjax(`Items/${item.Id}/PlaybackInfo`, {
-    query: query,
-    type: 'POST',
-    dataType: 'json',
-    data: JSON.stringify(postData),
-    contentType: 'application/json'
-  });
+    return JellyfinApi.authAjax(`Items/${item.Id}/PlaybackInfo`, {
+        query: query,
+        type: 'POST',
+        dataType: 'json',
+        data: JSON.stringify(postData),
+        contentType: 'application/json'
+    });
 }
 
 /**
@@ -317,43 +317,43 @@ export function getPlaybackInfo(
  * @param subtitleStreamIndex
  */
 export function getLiveStream(
-  item: BaseItemDto,
-  playSessionId: string,
-  maxBitrate: number,
-  deviceProfile: DeviceProfile,
-  startPosition: number,
-  mediaSource: MediaSourceInfo,
-  audioStreamIndex: number | null,
-  subtitleStreamIndex: number | null
+    item: BaseItemDto,
+    playSessionId: string,
+    maxBitrate: number,
+    deviceProfile: DeviceProfile,
+    startPosition: number,
+    mediaSource: MediaSourceInfo,
+    audioStreamIndex: number | null,
+    subtitleStreamIndex: number | null
 ): Promise<LiveStreamResponse> {
-  const postData = {
-    DeviceProfile: deviceProfile,
-    OpenToken: mediaSource.OpenToken
-  };
+    const postData = {
+        DeviceProfile: deviceProfile,
+        OpenToken: mediaSource.OpenToken
+    };
 
-  const query: PlayRequestQuery = {
-    UserId: JellyfinApi.userId ?? undefined,
-    StartTimeTicks: startPosition || 0,
-    ItemId: item.Id,
-    MaxStreamingBitrate: maxBitrate,
-    PlaySessionId: playSessionId
-  };
+    const query: PlayRequestQuery = {
+        UserId: JellyfinApi.userId ?? undefined,
+        StartTimeTicks: startPosition || 0,
+        ItemId: item.Id,
+        MaxStreamingBitrate: maxBitrate,
+        PlaySessionId: playSessionId
+    };
 
-  if (audioStreamIndex != null) {
-    query.AudioStreamIndex = audioStreamIndex;
-  }
+    if (audioStreamIndex != null) {
+        query.AudioStreamIndex = audioStreamIndex;
+    }
 
-  if (subtitleStreamIndex != null) {
-    query.SubtitleStreamIndex = subtitleStreamIndex;
-  }
+    if (subtitleStreamIndex != null) {
+        query.SubtitleStreamIndex = subtitleStreamIndex;
+    }
 
-  return JellyfinApi.authAjax('LiveStreams/Open', {
-    query: query,
-    type: 'POST',
-    dataType: 'json',
-    data: JSON.stringify(postData),
-    contentType: 'application/json'
-  });
+    return JellyfinApi.authAjax('LiveStreams/Open', {
+        query: query,
+        type: 'POST',
+        dataType: 'json',
+        data: JSON.stringify(postData),
+        contentType: 'application/json'
+    });
 }
 
 /**
@@ -365,20 +365,20 @@ export function getLiveStream(
  * @returns the bitrate in bits/s
  */
 export async function getDownloadSpeed(byteSize: number): Promise<number> {
-  const path = `Playback/BitrateTest?size=${byteSize}`;
+    const path = `Playback/BitrateTest?size=${byteSize}`;
 
-  const now = new Date().getTime();
+    const now = new Date().getTime();
 
-  await JellyfinApi.authAjax(path, {
-    type: 'GET',
-    timeout: 5000
-  });
+    await JellyfinApi.authAjax(path, {
+        type: 'GET',
+        timeout: 5000
+    });
 
-  const responseTimeSeconds = (new Date().getTime() - now) / 1000;
-  const bytesPerSecond = byteSize / responseTimeSeconds;
-  const bitrate = Math.round(bytesPerSecond * 8);
+    const responseTimeSeconds = (new Date().getTime() - now) / 1000;
+    const bytesPerSecond = byteSize / responseTimeSeconds;
+    const bitrate = Math.round(bytesPerSecond * 8);
 
-  return bitrate;
+    return bitrate;
 }
 
 /**
@@ -388,17 +388,17 @@ export async function getDownloadSpeed(byteSize: number): Promise<number> {
  * @returns bitrate in bits/s
  */
 export async function detectBitrate(): Promise<number> {
-  // First try a small amount so that we don't hang up their mobile connection
+    // First try a small amount so that we don't hang up their mobile connection
 
-  let bitrate = await getDownloadSpeed(1000000);
+    let bitrate = await getDownloadSpeed(1000000);
 
-  if (bitrate < 1000000) {
+    if (bitrate < 1000000) {
+        return Math.round(bitrate * 0.8);
+    }
+
+    bitrate = await getDownloadSpeed(2400000);
+
     return Math.round(bitrate * 0.8);
-  }
-
-  bitrate = await getDownloadSpeed(2400000);
-
-  return Math.round(bitrate * 0.8);
 }
 
 /**
@@ -408,17 +408,17 @@ export async function detectBitrate(): Promise<number> {
  * @returns Promise for the http request to go through
  */
 export function stopActiveEncodings($scope: GlobalScope): Promise<void> {
-  const options = {
-    deviceId: window.deviceInfo.deviceId,
-    PlaySessionId: undefined
-  };
+    const options = {
+        deviceId: window.deviceInfo.deviceId,
+        PlaySessionId: undefined
+    };
 
-  if ($scope.playSessionId) {
-    options.PlaySessionId = $scope.playSessionId;
-  }
+    if ($scope.playSessionId) {
+        options.PlaySessionId = $scope.playSessionId;
+    }
 
-  return JellyfinApi.authAjax('Videos/ActiveEncodings', {
-    type: 'DELETE',
-    query: options
-  });
+    return JellyfinApi.authAjax('Videos/ActiveEncodings', {
+        type: 'DELETE',
+        query: options
+    });
 }

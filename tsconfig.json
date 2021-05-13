@@ -1,19 +1,19 @@
 {
-  "compilerOptions": {
-    "target": "ES2018",
-    "module": "ESNext",
-    "moduleResolution": "Node",
-    "lib": ["dom", "ESNext"],
-    "resolveJsonModule": true,
-    "allowSyntheticDefaultImports": true,
-    "allowJs": true,
-    "sourceMap": true,
-    "outDir": "./dist/",
-    "strict": true,
-    "baseUrl": "./src",
-    "paths": {
-      "~/*": ["./*"]
-    },
-    "types": ["@types/node", "@types/chromecast-caf-receiver"]
-  }
+    "compilerOptions": {
+        "target": "ES2018",
+        "module": "ESNext",
+        "moduleResolution": "Node",
+        "lib": ["dom", "ESNext"],
+        "resolveJsonModule": true,
+        "allowSyntheticDefaultImports": true,
+        "allowJs": true,
+        "sourceMap": true,
+        "outDir": "./dist/",
+        "strict": true,
+        "baseUrl": "./src",
+        "paths": {
+            "~/*": ["./*"]
+        },
+        "types": ["@types/node", "@types/chromecast-caf-receiver"]
+    }
 }

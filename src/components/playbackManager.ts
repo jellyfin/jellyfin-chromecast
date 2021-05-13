@@ -1,29 +1,29 @@
 import {
-  getNextPlaybackItemInfo,
-  getIntros,
-  broadcastConnectionErrorMessage,
-  getReportingParams,
-  createStreamInfo
+    getNextPlaybackItemInfo,
+    getIntros,
+    broadcastConnectionErrorMessage,
+    getReportingParams,
+    createStreamInfo
 } from '../helpers';
 
 import {
-  getPlaybackInfo,
-  getLiveStream,
-  load,
-  reportPlaybackStart,
-  stop,
-  stopPingInterval,
-  reportPlaybackStopped
+    getPlaybackInfo,
+    getLiveStream,
+    load,
+    reportPlaybackStart,
+    stop,
+    stopPingInterval,
+    reportPlaybackStopped
 } from './jellyfinActions';
 import { getDeviceProfile } from './deviceprofileBuilder';
 
 import {
-  onStopPlayerBeforePlaybackDone,
-  getMaxBitrate,
-  getOptimalMediaSource,
-  showPlaybackInfoErrorMessage,
-  checkDirectPlay,
-  createMediaInformation
+    onStopPlayerBeforePlaybackDone,
+    getMaxBitrate,
+    getOptimalMediaSource,
+    showPlaybackInfoErrorMessage,
+    checkDirectPlay,
+    createMediaInformation
 } from './maincontroller';
 
 import { DocumentManager } from './documentManager';
@@ -31,216 +31,228 @@ import { BaseItemDto } from '~/api/generated/models/base-item-dto';
 import { MediaSourceInfo } from '~/api/generated/models/media-source-info';
 
 export class playbackManager {
-  private playerManager: framework.PlayerManager;
-  // TODO remove any
-  private activePlaylist: Array<BaseItemDto>;
-  private activePlaylistIndex: number;
+    private playerManager: framework.PlayerManager;
+    // TODO remove any
+    private activePlaylist: Array<BaseItemDto>;
+    private activePlaylistIndex: number;
 
-  constructor(playerManager: framework.PlayerManager) {
-    // Parameters
-    this.playerManager = playerManager;
+    constructor(playerManager: framework.PlayerManager) {
+        // Parameters
+        this.playerManager = playerManager;
 
-    // Properties
-    this.activePlaylist = [];
-    this.activePlaylistIndex = 0;
-  }
-
-  /* This is used to check if we can switch to
-   * some other info overlay.
-   *
-   * Returns true when playing or paused.
-   * (before: true only when playing)
-   * */
-  isPlaying(): boolean {
-    return (
-      this.playerManager.getPlayerState() ===
-        cast.framework.messages.PlayerState.PLAYING ||
-      this.playerManager.getPlayerState() ===
-        cast.framework.messages.PlayerState.PAUSED
-    );
-  }
-
-  async playFromOptions(options: any): Promise<boolean> {
-    const firstItem = options.items[0];
-
-    if (options.startPositionTicks || firstItem.MediaType !== 'Video') {
-      return this.playFromOptionsInternal(options);
+        // Properties
+        this.activePlaylist = [];
+        this.activePlaylistIndex = 0;
     }
 
-    const intros = await getIntros(firstItem);
-
-    options.items = intros.Items?.concat(options.items);
-
-    return this.playFromOptionsInternal(options);
-  }
-
-  playFromOptionsInternal(options: any): boolean {
-    const stopPlayer = this.activePlaylist && this.activePlaylist.length > 0;
-
-    this.activePlaylist = options.items;
-    window.currentPlaylistIndex = -1;
-    window.playlist = this.activePlaylist;
-
-    return this.playNextItem(options, stopPlayer);
-  }
-
-  playNextItem(options: any = {}, stopPlayer = false): boolean {
-    const nextItemInfo = getNextPlaybackItemInfo();
-
-    if (nextItemInfo) {
-      this.activePlaylistIndex = nextItemInfo.index;
-
-      const item = nextItemInfo.item;
-
-      this.playItem(item, options, stopPlayer);
-
-      return true;
+    /* This is used to check if we can switch to
+     * some other info overlay.
+     *
+     * Returns true when playing or paused.
+     * (before: true only when playing)
+     * */
+    isPlaying(): boolean {
+        return (
+            this.playerManager.getPlayerState() ===
+                cast.framework.messages.PlayerState.PLAYING ||
+            this.playerManager.getPlayerState() ===
+                cast.framework.messages.PlayerState.PAUSED
+        );
     }
 
-    return false;
-  }
+    async playFromOptions(options: any): Promise<boolean> {
+        const firstItem = options.items[0];
 
-  playPreviousItem(options: any = {}): boolean {
-    if (this.activePlaylist && this.activePlaylistIndex > 0) {
-      this.activePlaylistIndex--;
+        if (options.startPositionTicks || firstItem.MediaType !== 'Video') {
+            return this.playFromOptionsInternal(options);
+        }
 
-      const item = this.activePlaylist[this.activePlaylistIndex];
+        const intros = await getIntros(firstItem);
 
-      this.playItem(item, options, true);
+        options.items = intros.Items?.concat(options.items);
 
-      return true;
+        return this.playFromOptionsInternal(options);
     }
 
-    return false;
-  }
+    playFromOptionsInternal(options: any): boolean {
+        const stopPlayer =
+            this.activePlaylist && this.activePlaylist.length > 0;
 
-  async playItem(
-    item: BaseItemDto,
-    options: any,
-    stopPlayer = false
-  ): Promise<void> {
-    if (stopPlayer) {
-      await this.stop(true);
+        this.activePlaylist = options.items;
+        window.currentPlaylistIndex = -1;
+        window.playlist = this.activePlaylist;
+
+        return this.playNextItem(options, stopPlayer);
     }
 
-    return await onStopPlayerBeforePlaybackDone(item, options);
-  }
+    playNextItem(options: any = {}, stopPlayer = false): boolean {
+        const nextItemInfo = getNextPlaybackItemInfo();
 
-  async playItemInternal(item: BaseItemDto, options: any): Promise<void> {
-    $scope.isChangingStream = false;
-    DocumentManager.setAppStatus('loading');
+        if (nextItemInfo) {
+            this.activePlaylistIndex = nextItemInfo.index;
 
-    const maxBitrate = await getMaxBitrate();
-    const deviceProfile = getDeviceProfile({
-      enableHls: true,
-      bitrateSetting: maxBitrate
-    });
-    const playbackInfo = await getPlaybackInfo(
-      item,
-      maxBitrate,
-      deviceProfile,
-      options.startPositionTicks,
-      options.mediaSourceId,
-      options.audioStreamIndex,
-      options.subtitleStreamIndex
-    ).catch(broadcastConnectionErrorMessage);
+            const item = nextItemInfo.item;
 
-    if (playbackInfo.ErrorCode) {
-      return showPlaybackInfoErrorMessage(playbackInfo.ErrorCode);
+            this.playItem(item, options, stopPlayer);
+
+            return true;
+        }
+
+        return false;
     }
 
-    const mediaSource = await getOptimalMediaSource(playbackInfo.MediaSources);
+    playPreviousItem(options: any = {}): boolean {
+        if (this.activePlaylist && this.activePlaylistIndex > 0) {
+            this.activePlaylistIndex--;
 
-    if (!mediaSource) {
-      return showPlaybackInfoErrorMessage('NoCompatibleStream');
+            const item = this.activePlaylist[this.activePlaylistIndex];
+
+            this.playItem(item, options, true);
+
+            return true;
+        }
+
+        return false;
     }
 
-    let itemToPlay = mediaSource;
+    async playItem(
+        item: BaseItemDto,
+        options: any,
+        stopPlayer = false
+    ): Promise<void> {
+        if (stopPlayer) {
+            await this.stop(true);
+        }
 
-    if (mediaSource.RequiresOpening) {
-      const openLiveStreamResult = await getLiveStream(
-        item,
-        playbackInfo.PlaySessionId,
-        maxBitrate,
-        deviceProfile,
-        options.startPositionTicks,
-        mediaSource,
-        null,
-        null
-      );
-
-      if (openLiveStreamResult.MediaSource) {
-        checkDirectPlay(openLiveStreamResult.MediaSource);
-        itemToPlay = openLiveStreamResult.MediaSource;
-      }
+        return await onStopPlayerBeforePlaybackDone(item, options);
     }
 
-    this.playMediaSource(playbackInfo.PlaySessionId, item, itemToPlay, options);
-  }
+    async playItemInternal(item: BaseItemDto, options: any): Promise<void> {
+        $scope.isChangingStream = false;
+        DocumentManager.setAppStatus('loading');
 
-  // TODO eradicate any
-  playMediaSource(
-    playSessionId: string,
-    item: BaseItemDto,
-    mediaSource: MediaSourceInfo,
-    options: any
-  ): void {
-    DocumentManager.setAppStatus('loading');
+        const maxBitrate = await getMaxBitrate();
+        const deviceProfile = getDeviceProfile({
+            enableHls: true,
+            bitrateSetting: maxBitrate
+        });
+        const playbackInfo = await getPlaybackInfo(
+            item,
+            maxBitrate,
+            deviceProfile,
+            options.startPositionTicks,
+            options.mediaSourceId,
+            options.audioStreamIndex,
+            options.subtitleStreamIndex
+        ).catch(broadcastConnectionErrorMessage);
 
-    const streamInfo = createStreamInfo(
-      item,
-      mediaSource,
-      options.startPositionTicks
-    );
+        if (playbackInfo.ErrorCode) {
+            return showPlaybackInfoErrorMessage(playbackInfo.ErrorCode);
+        }
 
-    const url = streamInfo.url;
+        const mediaSource = await getOptimalMediaSource(
+            playbackInfo.MediaSources
+        );
 
-    const mediaInfo = createMediaInformation(playSessionId, item, streamInfo);
-    const loadRequestData = new cast.framework.messages.LoadRequestData();
+        if (!mediaSource) {
+            return showPlaybackInfoErrorMessage('NoCompatibleStream');
+        }
 
-    loadRequestData.media = mediaInfo;
-    loadRequestData.autoplay = true;
+        let itemToPlay = mediaSource;
 
-    load($scope, mediaInfo.customData, item);
-    this.playerManager.load(loadRequestData);
+        if (mediaSource.RequiresOpening) {
+            const openLiveStreamResult = await getLiveStream(
+                item,
+                playbackInfo.PlaySessionId,
+                maxBitrate,
+                deviceProfile,
+                options.startPositionTicks,
+                mediaSource,
+                null,
+                null
+            );
 
-    $scope.PlaybackMediaSource = mediaSource;
+            if (openLiveStreamResult.MediaSource) {
+                checkDirectPlay(openLiveStreamResult.MediaSource);
+                itemToPlay = openLiveStreamResult.MediaSource;
+            }
+        }
 
-    console.log(`setting src to ${url}`);
-    $scope.mediaSource = mediaSource;
-
-    DocumentManager.setPlayerBackdrop(item);
-
-    reportPlaybackStart($scope, getReportingParams($scope));
-
-    // We use false as we do not want to broadcast the new status yet
-    // we will broadcast manually when the media has been loaded, this
-    // is to be sure the duration has been updated in the media element
-    this.playerManager.setMediaInformation(mediaInfo, false);
-  }
-
-  stop(continuing = false): Promise<any> {
-    $scope.playNextItem = continuing;
-    stop();
-
-    const reportingParams = getReportingParams($scope);
-
-    let promise;
-
-    stopPingInterval();
-
-    if (reportingParams.ItemId) {
-      promise = reportPlaybackStopped($scope, reportingParams);
+        this.playMediaSource(
+            playbackInfo.PlaySessionId,
+            item,
+            itemToPlay,
+            options
+        );
     }
 
-    this.playerManager.stop();
+    // TODO eradicate any
+    playMediaSource(
+        playSessionId: string,
+        item: BaseItemDto,
+        mediaSource: MediaSourceInfo,
+        options: any
+    ): void {
+        DocumentManager.setAppStatus('loading');
 
-    this.activePlaylist = [];
-    this.activePlaylistIndex = -1;
-    DocumentManager.startBackdropInterval();
+        const streamInfo = createStreamInfo(
+            item,
+            mediaSource,
+            options.startPositionTicks
+        );
 
-    promise = promise || Promise.resolve();
+        const url = streamInfo.url;
 
-    return promise;
-  }
+        const mediaInfo = createMediaInformation(
+            playSessionId,
+            item,
+            streamInfo
+        );
+        const loadRequestData = new cast.framework.messages.LoadRequestData();
+
+        loadRequestData.media = mediaInfo;
+        loadRequestData.autoplay = true;
+
+        load($scope, mediaInfo.customData, item);
+        this.playerManager.load(loadRequestData);
+
+        $scope.PlaybackMediaSource = mediaSource;
+
+        console.log(`setting src to ${url}`);
+        $scope.mediaSource = mediaSource;
+
+        DocumentManager.setPlayerBackdrop(item);
+
+        reportPlaybackStart($scope, getReportingParams($scope));
+
+        // We use false as we do not want to broadcast the new status yet
+        // we will broadcast manually when the media has been loaded, this
+        // is to be sure the duration has been updated in the media element
+        this.playerManager.setMediaInformation(mediaInfo, false);
+    }
+
+    stop(continuing = false): Promise<any> {
+        $scope.playNextItem = continuing;
+        stop();
+
+        const reportingParams = getReportingParams($scope);
+
+        let promise;
+
+        stopPingInterval();
+
+        if (reportingParams.ItemId) {
+            promise = reportPlaybackStopped($scope, reportingParams);
+        }
+
+        this.playerManager.stop();
+
+        this.activePlaylist = [];
+        this.activePlaylistIndex = -1;
+        DocumentManager.startBackdropInterval();
+
+        promise = promise || Promise.resolve();
+
+        return promise;
+    }
 }
