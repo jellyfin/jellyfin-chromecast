@@ -10,7 +10,7 @@
     },
     "devDependencies": {
         "@commitlint/cli": "^12.1.4",
-        "@commitlint/config-conventional": "^12.1.1",
+        "@commitlint/config-conventional": "^12.1.4",
         "@types/chromecast-caf-receiver": "^5.0.12",
         "@types/jest": "^26.0.23",
         "@types/node": "^15.0.3",
