@@ -1,5 +1,4 @@
 module.exports = {
-    root: true,
     env: {
         browser: true,
         es6: true,
@@ -18,39 +17,13 @@ module.exports = {
         'plugin:import/typescript'
     ],
     plugins: ['prettier', 'promise', 'import', 'jsdoc'],
+    root: true,
     rules: {
-        'import/newline-after-import': 'error',
-        'import/order': 'error',
-        'jsdoc/require-hyphen-before-param-description': 'error',
-        'jsdoc/require-description': 'warn',
-        'jsdoc/require-param-description': 'warn',
-        'jsdoc/require-jsdoc': 'error',
-        //TypeScript and IntelliSense already provides us information about the function typings while hovering and
-        // eslint-jsdoc doesn't detect a mismatch between what's declared in the function and what's declared in
-        // JSDOC.
-        'jsdoc/require-param-type': 'off',
-        'jsdoc/require-returns-type': 'off',
-        'jsdoc/check-indentation': 'error',
-        'jsdoc/check-syntax': 'error',
-        'jsdoc/check-param-names': 'error',
-        'jsdoc/check-property-names': 'error',
-        'jsdoc/check-tag-names': 'error',
-        'jsdoc/no-types': 'error',
-        'jsdoc/valid-types': 'off',
-        'promise/no-nesting': 'error',
-        'promise/no-return-in-finally': 'error',
-        'promise/prefer-await-to-callbacks': 'error',
-        'promise/prefer-await-to-then': 'error',
-        '@typescript-eslint/explicit-function-return-type': 'error',
-        '@typescript-eslint/prefer-ts-expect-error': 'error',
-        '@typescript-eslint/no-unused-vars': 'error',
-        'prefer-arrow-callback': 'error',
-        'prefer-template': 'error',
         curly: 'error',
         'padding-line-between-statements': [
             'error',
             // Always require blank lines after directives (like 'use-strict'), except between directives
-            { blankLine: 'always', prev: 'directive', next: '*' },
+            { blankLine: 'always', next: '*', prev: 'directive' },
             { blankLine: 'any', prev: 'directive', next: 'directive' },
             // Always require blank lines after import, except between imports
             { blankLine: 'always', prev: 'import', next: '*' },
@@ -84,7 +57,40 @@ module.exports = {
             },
             // Always require blank lines before return statements
             { blankLine: 'always', prev: '*', next: 'return' }
-        ]
+        ],
+        'import/newline-after-import': 'error',
+        'import/order': 'error',
+        'jsdoc/require-hyphen-before-param-description': 'error',
+        'jsdoc/require-description': 'warn',
+        'jsdoc/require-param-description': 'warn',
+        'jsdoc/require-jsdoc': 'error',
+        //TypeScript and IntelliSense already provides us information about the function typings while hovering and
+        // eslint-jsdoc doesn't detect a mismatch between what's declared in the function and what's declared in
+        // JSDOC.
+        'jsdoc/require-param-type': 'off',
+        'jsdoc/require-returns-type': 'off',
+        'jsdoc/check-indentation': 'error',
+        'jsdoc/check-syntax': 'error',
+        'jsdoc/check-param-names': 'error',
+        'jsdoc/check-property-names': 'error',
+        'jsdoc/check-tag-names': 'error',
+        'jsdoc/no-types': 'error',
+        'jsdoc/valid-types': 'off',
+        'promise/no-nesting': 'error',
+        'promise/no-return-in-finally': 'error',
+        'promise/prefer-await-to-callbacks': 'error',
+        'promise/prefer-await-to-then': 'error',
+        '@typescript-eslint/explicit-function-return-type': 'error',
+        '@typescript-eslint/prefer-ts-expect-error': 'error',
+        '@typescript-eslint/no-unused-vars': 'error',
+        'prefer-arrow-callback': 'error',
+        'prefer-template': 'error',
+        'sort-keys': [
+            'error',
+            'asc',
+            { caseSensitive: true, natural: false, minKeys: 2 }
+        ],
+        'sort-vars': 'error'
     },
     overrides: [
         {
