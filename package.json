@@ -36,7 +36,7 @@
         "html-webpack-plugin": "^5.3.1",
         "husky": "^6.0.0",
         "image-minimizer-webpack-plugin": "^2.1.0",
-        "imagemin-svgo": "^8.0.0",
+        "imagemin-svgo": "^9.0.0",
         "jest": "^26.6.3",
         "prettier": "^2.3.1",
         "source-map-loader": "^3.0.0",
