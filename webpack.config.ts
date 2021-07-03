@@ -50,7 +50,8 @@ const common: webpack.Configuration = {
                         {
                             plugins: [
                                 {
-                                    removeComments: false
+                                    active: false,
+                                    name: 'removeComments'
                                 }
                             ]
                         }
