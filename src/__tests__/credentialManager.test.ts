@@ -1,6 +1,6 @@
 import { Configuration } from '../api/generated/configuration';
 
-import { credentialManager, CredentialStore } from '../api/credentialManager';
+import { credentialManager } from '../api/credentialManager';
 
 const serverId1 = 'f4486b851af24255b3305fe614b81f01';
 const serverConfig1: Configuration = {
