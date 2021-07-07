@@ -1,7 +1,6 @@
 import {
     getSenderReportingData,
     resetPlaybackScope,
-    extend,
     broadcastToMessageBus
 } from '../helpers';
 
@@ -199,12 +198,22 @@ export function pingTranscoder(
  */
 export function load(
     $scope: GlobalScope,
-    customData: PlaybackProgressInfo,
+    customData: any,
     serverItem: BaseItemDto
 ): void {
     resetPlaybackScope($scope);
 
-    extend($scope, customData);
+    // These are set up in maincontroller.createMediaInformation
+    $scope.playSessionId = customData.playSessionId;
+    $scope.audioStreamIndex = customData.audioStreamIndex;
+    $scope.subtitleStreamIndex = customData.subtitleStreamIndex;
+    $scope.startPositionTicks = customData.startPositionTicks;
+    $scope.canSeek = customData.canSeek;
+    $scope.itemId = customData.itemId;
+    $scope.liveStreamId = customData.liveStreamId;
+    $scope.mediaSourceId = customData.mediaSourceId;
+    $scope.playMethod = customData.playMethod;
+    $scope.runtimeTicks = customData.runtimeTicks;
 
     $scope.item = serverItem;
 
@@ -230,7 +239,7 @@ export function play($scope: GlobalScope): void {
         DocumentManager.getAppStatus() == 'audio'
     ) {
         setTimeout(() => {
-            window.mediaManager.play();
+            window.playerManager.play();
 
             if ($scope.mediaType == 'Audio') {
                 DocumentManager.setAppStatus('audio');
@@ -239,15 +248,6 @@ export function play($scope: GlobalScope): void {
             }
         }, 20);
     }
-}
-
-/**
- * Don't actually stop, just show the idle view after 20ms
- */
-export function stop(): void {
-    setTimeout(() => {
-        DocumentManager.setAppStatus('waiting');
-    }, 20);
 }
 
 /**
@@ -369,10 +369,13 @@ export async function getDownloadSpeed(byteSize: number): Promise<number> {
 
     const now = new Date().getTime();
 
-    await JellyfinApi.authAjax(path, {
+    const response = await JellyfinApi.authAjax(path, {
         timeout: 5000,
         type: 'GET'
     });
+
+    // Force javascript to download the whole response before calculating bitrate
+    await response.blob();
 
     const responseTimeSeconds = (new Date().getTime() - now) / 1000;
     const bytesPerSecond = byteSize / responseTimeSeconds;
@@ -383,22 +386,29 @@ export async function getDownloadSpeed(byteSize: number): Promise<number> {
 
 /**
  * Function to detect the bitrate.
- * It first tries 1MB and if bitrate is above 1Mbit/s it tries again with 2.4MB.
+ * It starts at 500kB and doubles it every time it takes under 2s, for max 10MB.
+ * This should get an accurate bitrate relatively fast on any connection
  *
+ * @param numBytes - Number of bytes to start with, default 500k
  * @returns bitrate in bits/s
  */
-export async function detectBitrate(): Promise<number> {
-    // First try a small amount so that we don't hang up their mobile connection
+export async function detectBitrate(numBytes = 500000): Promise<number> {
+    // Jellyfin has a 10MB limit on the test size
+    const byteLimit = 10000000;
 
-    let bitrate = await getDownloadSpeed(1000000);
-
-    if (bitrate < 1000000) {
-        return Math.round(bitrate * 0.8);
+    if (numBytes > byteLimit) {
+        numBytes = byteLimit;
     }
 
-    bitrate = await getDownloadSpeed(2400000);
+    const bitrate = await getDownloadSpeed(numBytes);
 
-    return Math.round(bitrate * 0.8);
+    if (bitrate * (2 / 8.0) < numBytes || numBytes >= byteLimit) {
+        // took > 2s, or numBytes hit the limit
+        return Math.round(bitrate * 0.8);
+    } else {
+        // If that produced a fairly high speed, try again with a larger size to get a more accurate result
+        return await detectBitrate(numBytes * 2);
+    }
 }
 
 /**
@@ -409,7 +419,7 @@ export async function detectBitrate(): Promise<number> {
  */
 export function stopActiveEncodings($scope: GlobalScope): Promise<void> {
     const options = {
-        deviceId: window.deviceInfo.deviceId,
+        deviceId: JellyfinApi.deviceId,
         PlaySessionId: undefined
     };
 

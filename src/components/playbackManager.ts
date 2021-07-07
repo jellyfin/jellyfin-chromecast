@@ -1,8 +1,6 @@
 import {
-    getNextPlaybackItemInfo,
     getIntros,
     broadcastConnectionErrorMessage,
-    getReportingParams,
     createStreamInfo
 } from '../helpers';
 
@@ -10,10 +8,7 @@ import {
     getPlaybackInfo,
     getLiveStream,
     load,
-    reportPlaybackStart,
-    stop,
-    stopPingInterval,
-    reportPlaybackStopped
+    stopPingInterval
 } from './jellyfinActions';
 import { getDeviceProfile } from './deviceprofileBuilder';
 
@@ -30,19 +25,18 @@ import { DocumentManager } from './documentManager';
 import { BaseItemDto } from '~/api/generated/models/base-item-dto';
 import { MediaSourceInfo } from '~/api/generated/models/media-source-info';
 
-export class playbackManager {
-    private playerManager: framework.PlayerManager;
-    // TODO remove any
-    private activePlaylist: Array<BaseItemDto>;
-    private activePlaylistIndex: number;
+import { ItemIndex } from '~/types/global';
 
-    constructor(playerManager: framework.PlayerManager) {
+export abstract class PlaybackManager {
+    private static playerManager: framework.PlayerManager;
+    private static activePlaylist: Array<BaseItemDto>;
+    private static activePlaylistIndex: number;
+
+    static setPlayerManager(playerManager: framework.PlayerManager): void {
         // Parameters
         this.playerManager = playerManager;
 
-        // Properties
-        this.activePlaylist = [];
-        this.activePlaylistIndex = 0;
+        this.resetPlaylist();
     }
 
     /* This is used to check if we can switch to
@@ -51,7 +45,7 @@ export class playbackManager {
      * Returns true when playing or paused.
      * (before: true only when playing)
      * */
-    isPlaying(): boolean {
+    static isPlaying(): boolean {
         return (
             this.playerManager.getPlayerState() ===
                 cast.framework.messages.PlayerState.PLAYING ||
@@ -60,7 +54,7 @@ export class playbackManager {
         );
     }
 
-    async playFromOptions(options: any): Promise<boolean> {
+    static async playFromOptions(options: any): Promise<void> {
         const firstItem = options.items[0];
 
         if (options.startPositionTicks || firstItem.MediaType !== 'Video') {
@@ -74,26 +68,47 @@ export class playbackManager {
         return this.playFromOptionsInternal(options);
     }
 
-    playFromOptionsInternal(options: any): boolean {
+    private static playFromOptionsInternal(options: any): Promise<void> {
         const stopPlayer =
             this.activePlaylist && this.activePlaylist.length > 0;
 
         this.activePlaylist = options.items;
-        window.currentPlaylistIndex = -1;
-        window.playlist = this.activePlaylist;
+        this.activePlaylistIndex = options.startIndex || 0;
 
-        return this.playNextItem(options, stopPlayer);
+        console.log('Loaded new playlist:', this.activePlaylist);
+
+        // When starting playback initially, don't use
+        // the next item facility.
+        return this.playItem(options, stopPlayer);
     }
 
-    playNextItem(options: any = {}, stopPlayer = false): boolean {
-        const nextItemInfo = getNextPlaybackItemInfo();
+    // add item to playlist
+    static enqueue(item: BaseItemDto): void {
+        this.activePlaylist.push(item);
+    }
+
+    static resetPlaylist(): void {
+        this.activePlaylistIndex = -1;
+        this.activePlaylist = [];
+    }
+
+    // If there are items in the queue after the current one
+    static hasNextItem(): boolean {
+        return this.activePlaylistIndex < this.activePlaylist.length - 1;
+    }
+
+    // If there are items in the queue before the current one
+    static hasPrevItem(): boolean {
+        return this.activePlaylistIndex > 0;
+    }
+
+    static playNextItem(options: any = {}, stopPlayer = false): boolean {
+        const nextItemInfo = this.getNextPlaybackItemInfo();
 
         if (nextItemInfo) {
             this.activePlaylistIndex = nextItemInfo.index;
 
-            const item = nextItemInfo.item;
-
-            this.playItem(item, options, stopPlayer);
+            this.playItem(options, stopPlayer);
 
             return true;
         }
@@ -101,13 +116,11 @@ export class playbackManager {
         return false;
     }
 
-    playPreviousItem(options: any = {}): boolean {
+    static playPreviousItem(options: any = {}): boolean {
         if (this.activePlaylist && this.activePlaylistIndex > 0) {
             this.activePlaylistIndex--;
 
-            const item = this.activePlaylist[this.activePlaylistIndex];
-
-            this.playItem(item, options, true);
+            this.playItem(options, true);
 
             return true;
         }
@@ -115,19 +128,27 @@ export class playbackManager {
         return false;
     }
 
-    async playItem(
-        item: BaseItemDto,
+    // play item from playlist
+    private static async playItem(
         options: any,
         stopPlayer = false
     ): Promise<void> {
         if (stopPlayer) {
-            await this.stop(true);
+            this.stop();
         }
+
+        const item = this.activePlaylist[this.activePlaylistIndex];
+
+        console.log(`Playing index ${this.activePlaylistIndex}`, item);
 
         return await onStopPlayerBeforePlaybackDone(item, options);
     }
 
-    async playItemInternal(item: BaseItemDto, options: any): Promise<void> {
+    // Would set private, but some refactorings need to happen first.
+    static async playItemInternal(
+        item: BaseItemDto,
+        options: any
+    ): Promise<void> {
         $scope.isChangingStream = false;
         DocumentManager.setAppStatus('loading');
 
@@ -143,7 +164,8 @@ export class playbackManager {
             options.startPositionTicks,
             options.mediaSourceId,
             options.audioStreamIndex,
-            options.subtitleStreamIndex
+            options.subtitleStreamIndex,
+            options.liveStreamId
         ).catch(broadcastConnectionErrorMessage);
 
         if (playbackInfo.ErrorCode) {
@@ -186,8 +208,7 @@ export class playbackManager {
         );
     }
 
-    // TODO eradicate any
-    playMediaSource(
+    private static playMediaSource(
         playSessionId: string,
         item: BaseItemDto,
         mediaSource: MediaSourceInfo,
@@ -201,8 +222,6 @@ export class playbackManager {
             options.startPositionTicks
         );
 
-        const url = streamInfo.url;
-
         const mediaInfo = createMediaInformation(
             playSessionId,
             item,
@@ -213,17 +232,24 @@ export class playbackManager {
         loadRequestData.media = mediaInfo;
         loadRequestData.autoplay = true;
 
+        // If we should seek at the start, translate it
+        // to seconds and give it to loadRequestData :)
+        if (mediaInfo.customData.startPositionTicks > 0) {
+            loadRequestData.currentTime =
+                mediaInfo.customData.startPositionTicks / 10000000;
+        }
+
         load($scope, mediaInfo.customData, item);
         this.playerManager.load(loadRequestData);
 
+        console.log(`setting src to ${streamInfo.url}`);
         $scope.PlaybackMediaSource = mediaSource;
 
-        console.log(`setting src to ${url}`);
         $scope.mediaSource = mediaSource;
+        $scope.audioStreamIndex = streamInfo.audioStreamIndex;
+        $scope.subtitleStreamIndex = streamInfo.subtitleStreamIndex;
 
         DocumentManager.setPlayerBackdrop(item);
-
-        reportPlaybackStart($scope, getReportingParams($scope));
 
         // We use false as we do not want to broadcast the new status yet
         // we will broadcast manually when the media has been loaded, this
@@ -231,28 +257,73 @@ export class playbackManager {
         this.playerManager.setMediaInformation(mediaInfo, false);
     }
 
-    stop(continuing = false): Promise<any> {
-        $scope.playNextItem = continuing;
-        stop();
+    /**
+     * stop playback, as requested by the client
+     */
+    static stop(): void {
+        this.playerManager.stop();
+        // onStopped will be called when playback comes to a halt.
+    }
 
-        const reportingParams = getReportingParams($scope);
+    /**
+     * Called when media stops playing.
+     * TODO avoid doing this between tracks in a playlist
+     */
+    static onStopped(): void {
+        if (this.getNextPlaybackItemInfo()) {
+            $scope.playNextItem = true;
+        } else {
+            $scope.playNextItem = false;
 
-        let promise;
+            DocumentManager.setAppStatus('waiting');
 
-        stopPingInterval();
+            stopPingInterval();
 
-        if (reportingParams.ItemId) {
-            promise = reportPlaybackStopped($scope, reportingParams);
+            DocumentManager.startBackdropInterval();
+        }
+    }
+
+    /**
+     * Get information about the next item to play from window.playlist
+     *
+     * @returns item and index, or null to end playback
+     */
+    static getNextPlaybackItemInfo(): ItemIndex | null {
+        if (this.activePlaylist.length < 1) {
+            return null;
         }
 
-        this.playerManager.stop();
+        let newIndex: number;
 
-        this.activePlaylist = [];
-        this.activePlaylistIndex = -1;
-        DocumentManager.startBackdropInterval();
+        if (this.activePlaylistIndex < 0) {
+            // negative = play the first item
+            newIndex = 0;
+        } else {
+            switch (window.repeatMode) {
+                case 'RepeatOne':
+                    newIndex = this.activePlaylistIndex;
+                    break;
+                case 'RepeatAll':
+                    newIndex = this.activePlaylistIndex + 1;
 
-        promise = promise || Promise.resolve();
+                    if (newIndex >= this.activePlaylist.length) {
+                        newIndex = 0;
+                    }
 
-        return promise;
+                    break;
+                default:
+                    newIndex = this.activePlaylistIndex + 1;
+                    break;
+            }
+        }
+
+        if (newIndex < this.activePlaylist.length) {
+            return {
+                index: newIndex,
+                item: this.activePlaylist[newIndex]
+            };
+        }
+
+        return null;
     }
 }

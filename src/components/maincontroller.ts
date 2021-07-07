@@ -3,44 +3,37 @@ import {
     getReportingParams,
     resetPlaybackScope,
     getMetadata,
-    createStreamInfo,
     getStreamByIndex,
     getShuffleItems,
     getInstantMixItems,
     translateRequestedItems,
-    extend,
     broadcastToMessageBus,
-    broadcastConnectionErrorMessage,
-    cleanName
+    broadcastConnectionErrorMessage
 } from '../helpers';
 import {
+    reportPlaybackStart,
     reportPlaybackProgress,
     reportPlaybackStopped,
     play,
-    getPlaybackInfo,
-    stopActiveEncodings,
     detectBitrate
 } from './jellyfinActions';
 import { getDeviceProfile } from './deviceprofileBuilder';
 import { JellyfinApi } from './jellyfinApi';
-import { playbackManager } from './playbackManager';
+import { PlaybackManager } from './playbackManager';
 import { CommandHandler } from './commandHandler';
 import { getMaxBitrateSupport } from './codecSupportHelper';
-import { DocumentManager } from './documentManager';
 import { BaseItemDto } from '~/api/generated/models/base-item-dto';
 import { MediaSourceInfo } from '~/api/generated/models/media-source-info';
 import { GlobalScope, PlayRequest } from '~/types/global';
 
 window.castReceiverContext = cast.framework.CastReceiverContext.getInstance();
-window.mediaManager = window.castReceiverContext.getPlayerManager();
+window.playerManager = window.castReceiverContext.getPlayerManager();
 
-const playbackMgr = new playbackManager(window.mediaManager);
+PlaybackManager.setPlayerManager(window.playerManager);
 
-CommandHandler.configure(window.mediaManager, playbackMgr);
+CommandHandler.configure(window.playerManager);
 
 resetPlaybackScope($scope);
-
-const mgr = window.mediaManager;
 
 let broadcastToServer = new Date();
 
@@ -106,7 +99,7 @@ function onMediaElementVolumeChange(event: framework.system.Event): void {
  *
  */
 export function enableTimeUpdateListener(): void {
-    window.mediaManager.addEventListener(
+    window.playerManager.addEventListener(
         cast.framework.events.EventType.TIME_UPDATE,
         onMediaElementTimeUpdate
     );
@@ -114,11 +107,11 @@ export function enableTimeUpdateListener(): void {
         cast.framework.system.EventType.SYSTEM_VOLUME_CHANGED,
         onMediaElementVolumeChange
     );
-    window.mediaManager.addEventListener(
+    window.playerManager.addEventListener(
         cast.framework.events.EventType.PAUSE,
         onMediaElementPause
     );
-    window.mediaManager.addEventListener(
+    window.playerManager.addEventListener(
         cast.framework.events.EventType.PLAYING,
         onMediaElementPlaying
     );
@@ -128,7 +121,7 @@ export function enableTimeUpdateListener(): void {
  *
  */
 export function disableTimeUpdateListener(): void {
-    window.mediaManager.removeEventListener(
+    window.playerManager.removeEventListener(
         cast.framework.events.EventType.TIME_UPDATE,
         onMediaElementTimeUpdate
     );
@@ -136,11 +129,11 @@ export function disableTimeUpdateListener(): void {
         cast.framework.system.EventType.SYSTEM_VOLUME_CHANGED,
         onMediaElementVolumeChange
     );
-    window.mediaManager.removeEventListener(
+    window.playerManager.removeEventListener(
         cast.framework.events.EventType.PAUSE,
         onMediaElementPause
     );
-    window.mediaManager.removeEventListener(
+    window.playerManager.removeEventListener(
         cast.framework.events.EventType.PLAYING,
         onMediaElementPlaying
     );
@@ -154,50 +147,75 @@ window.addEventListener('beforeunload', () => {
     reportPlaybackStopped($scope, getReportingParams($scope));
 });
 
-mgr.addEventListener(cast.framework.events.EventType.PLAY, (): void => {
-    play($scope);
-    reportPlaybackProgress($scope, getReportingParams($scope));
-});
+window.playerManager.addEventListener(
+    cast.framework.events.EventType.PLAY,
+    (): void => {
+        play($scope);
+    }
+);
 
-mgr.addEventListener(cast.framework.events.EventType.PAUSE, (): void => {
-    reportPlaybackProgress($scope, getReportingParams($scope));
-});
+window.playerManager.addEventListener(
+    cast.framework.events.EventType.PAUSE,
+    (): void => {
+        reportPlaybackProgress($scope, getReportingParams($scope));
+    }
+);
 
 /**
  *
  */
-function defaultOnStop(): void {
-    playbackMgr.stop();
+function defaultOnStopped(): void {
+    PlaybackManager.onStopped();
 }
 
-mgr.addEventListener(
+window.playerManager.addEventListener(
     cast.framework.events.EventType.MEDIA_FINISHED,
-    defaultOnStop
+    defaultOnStopped
 );
-mgr.addEventListener(cast.framework.events.EventType.ABORT, defaultOnStop);
+window.playerManager.addEventListener(
+    cast.framework.events.EventType.ABORT,
+    defaultOnStopped
+);
 
-mgr.addEventListener(cast.framework.events.EventType.ENDED, () => {
-    // Ignore
-    if ($scope.isChangingStream) {
-        return;
+window.playerManager.addEventListener(
+    cast.framework.events.EventType.ENDED,
+    (): void => {
+        // Ignore
+        if ($scope.isChangingStream) {
+            return;
+        }
+
+        reportPlaybackStopped($scope, getReportingParams($scope));
+        resetPlaybackScope($scope);
+
+        if (!PlaybackManager.playNextItem()) {
+            PlaybackManager.resetPlaylist();
+            PlaybackManager.onStopped();
+        }
     }
+);
 
-    reportPlaybackStopped($scope, getReportingParams($scope));
-    resetPlaybackScope($scope);
-
-    if (!playbackMgr.playNextItem()) {
-        window.playlist = [];
-        window.currentPlaylistIndex = -1;
-        DocumentManager.startBackdropInterval();
+// Notify of playback start as soon as the media is playing. Only then is the tick position good.
+window.playerManager.addEventListener(
+    cast.framework.events.EventType.PLAYING,
+    (): void => {
+        reportPlaybackStart($scope, getReportingParams($scope));
     }
-});
+);
+// Notify of playback end just before stopping it, to get a good tick position
+window.playerManager.addEventListener(
+    cast.framework.events.EventType.REQUEST_STOP,
+    (): void => {
+        reportPlaybackStopped($scope, getReportingParams($scope));
+    }
+);
 
 // Set the active subtitle track once the player has loaded
-window.mediaManager.addEventListener(
+window.playerManager.addEventListener(
     cast.framework.events.EventType.PLAYER_LOAD_COMPLETE,
     () => {
         setTextTrack(
-            window.mediaManager.getMediaInformation().customData
+            window.playerManager.getMediaInformation().customData
                 .subtitleStreamIndex
         );
     }
@@ -251,36 +269,28 @@ export function processMessage(data: any): void {
         return;
     }
 
+    data.options = data.options || {};
+
     // Items will have properties - Id, Name, Type, MediaType, IsFolder
 
     JellyfinApi.setServerInfo(
         data.userId,
         data.accessToken,
-        data.serverAddress
+        data.serverAddress,
+        data.receiverName || ''
     );
 
     if (data.subtitleAppearance) {
         window.subtitleAppearance = data.subtitleAppearance;
     }
 
+    if (data.maxBitrate) {
+        window.MaxBitrate = data.maxBitrate;
+    }
+
     // Report device capabilities
     if (!hasReportedCapabilities) {
         reportDeviceCapabilities();
-    }
-
-    data.options = data.options || {};
-
-    const cleanReceiverName = cleanName(data.receiverName || '');
-
-    window.deviceInfo.deviceName =
-        cleanReceiverName || window.deviceInfo.deviceName;
-    // deviceId just needs to be unique-ish
-    window.deviceInfo.deviceId = cleanReceiverName
-        ? btoa(cleanReceiverName)
-        : window.deviceInfo.deviceId;
-
-    if (data.maxBitrate) {
-        window.MaxBitrate = data.maxBitrate;
     }
 
     CommandHandler.processMessage(data, data.command);
@@ -424,10 +434,10 @@ export async function changeStream(
     params: any = undefined
 ): Promise<void> {
     if (
-        window.mediaManager.getMediaInformation().customData.canClientSeek &&
+        window.playerManager.getMediaInformation().customData.canClientSeek &&
         params == null
     ) {
-        window.mediaManager.seek(ticks / 10000000);
+        window.playerManager.seek(ticks / 10000000);
         reportPlaybackProgress($scope, getReportingParams($scope));
 
         return Promise.resolve();
@@ -435,71 +445,31 @@ export async function changeStream(
 
     params = params || {};
 
-    const playSessionId = $scope.playSessionId;
-    const liveStreamId = $scope.liveStreamId;
+    // TODO Could be useful for garbage collection.
+    //      It needs to predict if the server side transcode needs
+    //      to restart.
+    //      Possibility: Always assume it will. Downside: VTT subs switching doesn't
+    //      need to restart the transcode.
+    //const requiresStoppingTranscoding = false;
+    //
+    //if (requiresStoppingTranscoding) {
+    //    window.playerManager.pause();
+    //    await stopActiveEncodings($scope.playSessionId);
+    //}
 
-    const item = $scope.item;
-    const maxBitrate = await getMaxBitrate();
-
-    const deviceProfile = getDeviceProfile({
-        bitrateSetting: maxBitrate,
-        enableHls: true
+    return await PlaybackManager.playItemInternal($scope.item, {
+        audioStreamIndex:
+            params.AudioStreamIndex == null
+                ? $scope.audioStreamIndex
+                : params.AudioStreamIndex,
+        liveStreamId: $scope.liveStreamId,
+        mediaSourceId: $scope.mediaSourceId,
+        startPositionTicks: ticks,
+        subtitleStreamIndex:
+            params.SubtitleStreamIndex == null
+                ? $scope.subtitleStreamIndex
+                : params.SubtitleStreamIndex
     });
-    const audioStreamIndex =
-        params.AudioStreamIndex == null
-            ? $scope.audioStreamIndex
-            : params.AudioStreamIndex;
-    const subtitleStreamIndex =
-        params.SubtitleStreamIndex == null
-            ? $scope.subtitleStreamIndex
-            : params.SubtitleStreamIndex;
-
-    const playbackInformation = await getPlaybackInfo(
-        item,
-        maxBitrate,
-        deviceProfile,
-        ticks,
-        $scope.mediaSourceId,
-        audioStreamIndex,
-        subtitleStreamIndex,
-        liveStreamId
-    );
-
-    if (!validatePlaybackInfoResult(playbackInformation)) {
-        return;
-    }
-
-    const mediaSource = playbackInformation.MediaSources[0];
-    const streamInfo = createStreamInfo(item, mediaSource, ticks);
-
-    if (!streamInfo.url) {
-        showPlaybackInfoErrorMessage('NoCompatibleStream');
-
-        return;
-    }
-
-    const mediaInformation = createMediaInformation(
-        playSessionId,
-        item,
-        streamInfo
-    );
-    const loadRequest = new cast.framework.messages.LoadRequestData();
-
-    loadRequest.media = mediaInformation;
-    loadRequest.autoplay = true;
-
-    // TODO something to do with HLS?
-    const requiresStoppingTranscoding = false;
-
-    if (requiresStoppingTranscoding) {
-        window.mediaManager.pause();
-        await stopActiveEncodings(playSessionId);
-    }
-
-    window.mediaManager.load(loadRequest);
-    window.mediaManager.play();
-    $scope.subtitleStreamIndex = subtitleStreamIndex;
-    $scope.audioStreamIndex = audioStreamIndex;
 }
 
 // Create a message handler for the custome namespace channel
@@ -550,10 +520,10 @@ export async function translateItems(
 
     if (method == 'PlayNext' || method == 'PlayLast') {
         for (let i = 0, length = options.items.length; i < length; i++) {
-            window.playlist.push(options.items[i]);
+            PlaybackManager.enqueue(options.items[i]);
         }
     } else {
-        playbackMgr.playFromOptions(data.options);
+        PlaybackManager.playFromOptions(data.options);
     }
 }
 
@@ -570,7 +540,7 @@ export async function instantMix(
     const result = await getInstantMixItems(data.userId, item);
 
     options.items = result.Items;
-    playbackMgr.playFromOptions(data.options);
+    PlaybackManager.playFromOptions(data.options);
 }
 
 /**
@@ -586,12 +556,16 @@ export async function shuffle(
     const result = await getShuffleItems(data.userId, item);
 
     options.items = result.Items;
-    playbackMgr.playFromOptions(data.options);
+    PlaybackManager.playFromOptions(data.options);
 }
 
 /**
- * @param item
- * @param options
+ * This function fetches the full information of an item before playing it.
+ * Only item.Id needs to be set.
+ *
+ * @param item - Item to look up
+ * @param options - Extra information about how it should be played back.
+ * @returns Promise waiting for the item to be loaded for playback
  */
 export async function onStopPlayerBeforePlaybackDone(
     item: BaseItemDto,
@@ -602,9 +576,7 @@ export async function onStopPlayerBeforePlaybackDone(
         type: 'GET'
     });
 
-    // Attach the custom properties we created like userId, serverAddress, itemId, etc
-    extend(data, item);
-    playbackMgr.playItemInternal(data, options);
+    PlaybackManager.playItemInternal(data, options);
     broadcastConnectionErrorMessage();
 }
 
@@ -639,26 +611,13 @@ export async function getMaxBitrate(): Promise<number> {
         lastBitrateDetect = new Date().getTime();
         detectedBitrate = bitrate;
 
-        return detectedBitrate;
+        return Math.min(detectedBitrate, getMaxBitrateSupport());
     } catch (e) {
         // The client can set this number
         console.log('Error detecting bitrate, will return device maximum.');
 
         return getMaxBitrateSupport();
     }
-}
-
-/**
- * @param result
- */
-export function validatePlaybackInfoResult(result: any): boolean {
-    if (result.ErrorCode) {
-        showPlaybackInfoErrorMessage(result.ErrorCode);
-
-        return false;
-    }
-
-    return true;
 }
 
 /**
@@ -714,7 +673,7 @@ export function checkDirectPlay(mediaSource: MediaSourceInfo): void {
  */
 export function setTextTrack(index: number | null): void {
     try {
-        const textTracksManager = window.mediaManager.getTextTracksManager();
+        const textTracksManager = window.playerManager.getTextTracksManager();
 
         if (index == null) {
             // docs: null is okay
@@ -806,6 +765,7 @@ export function createMediaInformation(
 
     mediaInfo.contentId = streamInfo.url;
     mediaInfo.contentType = streamInfo.contentType;
+    // TODO make a type for this
     mediaInfo.customData = {
         audioStreamIndex: streamInfo.audioStreamIndex,
         canClientSeek: streamInfo.canClientSeek,
@@ -831,7 +791,9 @@ export function createMediaInformation(
         );
     }
 
-    mediaInfo.customData.startPositionTicks = streamInfo.startPosition || 0;
+    // If the client actually sets startPosition:
+    // if(streamInfo.startPosition)
+    //     mediaInfo.customData.startPositionTicks = streamInfo.startPosition
 
     return mediaInfo;
 }
@@ -870,7 +832,7 @@ if (!PRODUCTION) {
     // quits once the client closes the connection.
     // options.maxInactivity = 3600;
 
-    window.mediaManager.addEventListener(
+    window.playerManager.addEventListener(
         cast.framework.events.category.CORE,
         (event: framework.events.Event) => {
             console.log(`Core event: ${event.type}`);
