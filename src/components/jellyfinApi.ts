@@ -11,17 +11,46 @@ export abstract class JellyfinApi {
     // Address of server
     public static serverAddress: string | null = null;
 
+    // device name
+    public static deviceName = 'Google Cast';
+
+    // unique id
+    public static deviceId = '';
+
+    // version
+    public static versionNumber = RECEIVERVERSION;
+
     public static setServerInfo(
         userId: string,
         accessToken: string,
-        serverAddress: string
+        serverAddress: string,
+        receiverName: string
     ): void {
         console.debug(
-            `JellyfinApi.setServerInfo: user:${userId}, token:${accessToken}, server:${serverAddress}`
+            `JellyfinApi.setServerInfo: user:${userId}, token:${accessToken}, ` +
+                `server:${serverAddress}, name:${receiverName}`
         );
         this.userId = userId;
         this.accessToken = accessToken;
         this.serverAddress = serverAddress;
+
+        // remove special characters from the receiver name
+        receiverName = receiverName.replace(/[^\w\s]/gi, '');
+
+        if (receiverName) {
+            this.deviceName = receiverName;
+            // deviceId just needs to be unique-ish
+            this.deviceId = btoa(receiverName);
+        } else {
+            const senders =
+                cast.framework.CastReceiverContext.getInstance().getSenders();
+
+            this.deviceName = 'Google Cast';
+            this.deviceId =
+                senders.length !== 0 && senders[0].id
+                    ? senders[0].id
+                    : new Date().getTime().toString();
+        }
     }
 
     // create the necessary headers for authentication
@@ -29,10 +58,8 @@ export abstract class JellyfinApi {
         // TODO throw error if this fails
 
         let auth =
-            `Emby Client="Chromecast", ` +
-            `Device="${window.deviceInfo.deviceName}", ` +
-            `DeviceId="${window.deviceInfo.deviceId}", ` +
-            `Version="${window.deviceInfo.versionNumber}"`;
+            `Emby Client="Chromecast", Device="${this.deviceName}", ` +
+            `DeviceId="${this.deviceId}", Version="${this.versionNumber}"`;
 
         if (this.userId) {
             auth += `, UserId="${this.userId}"`;
