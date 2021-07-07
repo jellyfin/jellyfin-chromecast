@@ -8,13 +8,10 @@ const castContext = cast.framework.CastReceiverContext.getInstance();
  * If the device is in auto, EDID information will be used, otherwise it
  * depends on the manual setting.
  *
- * Currently it's disabled because of problems getting it to work with HLS.
- *
- * @returns true if E-AC-3 can be played
+ * @returns {boolean} true if E-AC-3 can be played
  */
 export function hasEAC3Support(): boolean {
-    //return castContext.canDisplayType('audio/mp4', 'ec-3');
-    return false;
+    return castContext.canDisplayType('audio/mp4', 'ec-3');
 }
 
 /**
@@ -23,29 +20,27 @@ export function hasEAC3Support(): boolean {
  * If the device is in auto, EDID information will be used, otherwise it
  * depends on the manual setting.
  *
- * Currently it's disabled because of problems getting it to work with HLS.
- *
- * @returns true if AC-3 can be played
- *
+ * @returns {boolean} true if AC-3 can be played
  */
 export function hasAC3Support(): boolean {
-    //return castContext.canDisplayType('audio/mp4', 'ac-3');
-    return false;
+    return castContext.canDisplayType('audio/mp4', 'ac-3');
 }
 
 /**
- * Checks if the device can play any surround codecs.
+ * Get a list of the supported surround codecs.
  *
- * Potentially, we could guess that systems with E-AC-3 or AC-3
- * will mostly support 6ch pcm, and if any generation of cast devices
- * is actually capable of decoding e.g. aac 6ch, we can return true here
- * and give it a shot.
- *
- * @returns true if surround codecs can be played
+ * @returns {string[]} list of available surround codecs
  */
-export function hasSurroundSupport(): boolean {
-    // This will turn on surround support if passthrough is available.
-    return hasAC3Support();
+export function getSupportedSurroundCodecs(): string[] {
+    // Note: So far, AC-3 and E-AC-3 in HLS in CAF seems to be broken,
+    const codecs = [];
+    if (hasEAC3Support()) {
+        codecs.push('eac3');
+    }
+    if (hasAC3Support()) {
+        codecs.push('ac3');
+    }
+    return codecs;
 }
 
 /**
@@ -53,7 +48,7 @@ export function hasSurroundSupport(): boolean {
  *
  * @returns true if HEVC is supported
  */
-export function hasH265Support(): boolean {
+export function hasHEVCSupport(): boolean {
     return castContext.canDisplayType('video/mp4', 'hev1.1.6.L150.B0');
 }
 
@@ -121,38 +116,62 @@ export function getMaxWidthSupport(deviceId: number): number {
 }
 
 /**
- * Get all H.26x profiles supported by the active Cast device.
+ * Get all H.264 profiles supported by the active Cast device.
  *
- * @param deviceId - Cast device id.
- * @returns All supported H.26x profiles.
+ * @returns {string} All supported H.264 profiles.
  */
-export function getH26xProfileSupport(deviceId: number): string {
+export function getH264ProfileSupport(): string {
     // These are supported by all Cast devices, excluding audio only devices.
-    let h26xProfiles = 'high|main|baseline|constrained baseline';
-
-    if (deviceId === deviceIds.ULTRA || deviceId === deviceIds.CCGTV) {
-        h26xProfiles += '|high 10';
-    }
-
-    return h26xProfiles;
+    return 'high|main|baseline|constrained baseline';
 }
 
 /**
- * Get the highest H.26x level supported by the active Cast device.
+ * Get all HEVC profiles supported by the active Cast device.
+ *
+ * @param {number} deviceId Cast device id.
+ * @returns {string} All supported HEVC profiles.
+ */
+export function getHEVCProfileSupport(deviceId: number): string {
+    if (deviceId === deviceIds.ULTRA || deviceId === deviceIds.CCGTV) {
+        return 'main|main 10';
+    } else {
+        // The rest of the cast devices don't support it
+        return '';
+    }
+}
+
+/**
+ * Get the highest H.264 level supported by the active Cast device.
  *
  * @param deviceId - Cast device id.
- * @returns The highest supported H.26x level.
+ * @returns number - The highest supported H.264 level.
  */
-export function getH26xLevelSupport(deviceId: number): number {
+export function getH264LevelSupport(deviceId: number): number {
     switch (deviceId) {
         case deviceIds.NESTHUBANDMAX:
         case deviceIds.GEN1AND2:
             return 41;
         case deviceIds.GEN3:
             return 42;
+        case deviceIds.ULTRA: // docs say 4.2
+        case deviceIds.CCGTV: // docs say 5.1
+            return 52;
+    }
+
+    return 0;
+}
+
+/**
+ * Get the highest HEVC level supported by the active Cast device.
+ *
+ * @param {number} deviceId Cast device id.
+ * @returns {number} The highest supported HEVC level.
+ */
+export function getHEVCLevelSupport(deviceId: number): number {
+    switch (deviceId) {
         case deviceIds.ULTRA:
         case deviceIds.CCGTV:
-            return 52;
+            return 153; // AKA 5.1
     }
 
     return 0;
@@ -185,12 +204,19 @@ export function getSupportedVPXVideoCodecs(): Array<string> {
 export function getSupportedMP4VideoCodecs(): Array<string> {
     const codecs = ['h264'];
 
-    if (hasH265Support()) {
-        codecs.push('h265');
+    if (hasHEVCSupport()) {
         codecs.push('hevc');
     }
 
     return codecs;
+}
+
+/**
+ * Get supported audio codecs suitable for use in an mkv container.
+ * @returns Supported mkv audio codecs.
+ */
+export function getSupportedmkvAudioCodecs(): Array<string> {
+    return ['flac', 'opus', 'aac', 'vorbis', 'mp3', 'webma', 'wav'];
 }
 
 /**
@@ -199,20 +225,7 @@ export function getSupportedMP4VideoCodecs(): Array<string> {
  * @returns Supported MP4 audio codecs.
  */
 export function getSupportedMP4AudioCodecs(): Array<string> {
-    const codecs = [];
-
-    if (hasEAC3Support()) {
-        codecs.push('eac3');
-    }
-
-    if (hasAC3Support()) {
-        codecs.push('ac3');
-    }
-
-    codecs.push('aac');
-    codecs.push('mp3');
-
-    return codecs;
+    return ['aac', 'mp3'];
 }
 
 /**
@@ -222,7 +235,7 @@ export function getSupportedMP4AudioCodecs(): Array<string> {
  */
 export function getSupportedHLSVideoCodecs(): Array<string> {
     // Currently the server does not support fmp4 which is required
-    // by the HLS spec for streaming H.265 video.
+    // by the HLS spec for streaming HEVC video.
     return ['h264'];
 }
 
@@ -251,5 +264,5 @@ export function getSupportedWebMAudioCodecs(): Array<string> {
  * @returns All supported WebM audio codecs.
  */
 export function getSupportedAudioCodecs(): Array<string> {
-    return ['opus', 'mp3', 'aac', 'flac', 'webma', 'wav'];
+    return ['flac', 'opus', 'aac', 'mp3', 'webma', 'wav'];
 }

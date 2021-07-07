@@ -802,9 +802,17 @@ export function createMediaInformation(
     item: BaseItemDto,
     streamInfo: any
 ): framework.messages.MediaInformation {
+    console.log('streamInfo', streamInfo);
     const mediaInfo = new cast.framework.messages.MediaInformation();
 
-    mediaInfo.contentId = streamInfo.url;
+    if (streamInfo.contentType == 'application/x-mpegURL') {
+        // assume normal TS HLS
+        mediaInfo.hlsSegmentFormat =
+            cast.framework.messages.HlsSegmentFormat.TS;
+    }
+
+    mediaInfo.contentId = item.Id ?? streamInfo.url;
+    mediaInfo.contentUrl = streamInfo.url;
     mediaInfo.contentType = streamInfo.contentType;
     mediaInfo.customData = {
         audioStreamIndex: streamInfo.audioStreamIndex,

@@ -16,18 +16,22 @@ import { ProfileConditionValue } from '../api/generated/models/profile-condition
 import { deviceIds, getActiveDeviceId } from './castDevices';
 
 import {
-    hasSurroundSupport,
     hasTextTrackSupport,
     hasVP8Support,
     hasVP9Support,
+    hasHEVCSupport,
     getMaxWidthSupport,
-    getH26xProfileSupport,
-    getH26xLevelSupport,
+    getH264ProfileSupport,
+    getH264LevelSupport,
+    getHEVCProfileSupport,
+    getHEVCLevelSupport,
     getSupportedVPXVideoCodecs,
     getSupportedMP4VideoCodecs,
     getSupportedMP4AudioCodecs,
+    getSupportedmkvAudioCodecs,
     getSupportedHLSVideoCodecs,
     getSupportedHLSAudioCodecs,
+    getSupportedSurroundCodecs,
     getSupportedWebMAudioCodecs,
     getSupportedAudioCodecs
 } from './codecSupportHelper';
@@ -72,14 +76,7 @@ function getContainerProfiles(): Array<ContainerProfile> {
  * @returns Response profiles.
  */
 function getResponseProfiles(): Array<ResponseProfile> {
-    // This seems related to DLNA, it might not be needed?
-    return [
-        {
-            Container: 'm4v',
-            MimeType: 'video/mp4',
-            Type: DlnaProfileType.Video
-        }
-    ];
+    return [];
 }
 
 /**
@@ -89,8 +86,10 @@ function getDirectPlayProfiles(): Array<DirectPlayProfile> {
     const DirectPlayProfiles: Array<DirectPlayProfile> = [];
 
     if (currentDeviceId !== deviceIds.AUDIO) {
+        // For devices with video
         const mp4VideoCodecs = getSupportedMP4VideoCodecs();
         const mp4AudioCodecs = getSupportedMP4AudioCodecs();
+        const surroundAudioCodecs = getSupportedSurroundCodecs();
         const vpxVideoCodecs = getSupportedVPXVideoCodecs();
         const webmAudioCodecs = getSupportedWebMAudioCodecs();
 
@@ -103,6 +102,17 @@ function getDirectPlayProfiles(): Array<DirectPlayProfile> {
             });
         }
 
+        // mkv profile: surround and normal codecs
+        DirectPlayProfiles.push({
+            AudioCodec: getSupportedmkvAudioCodecs()
+                .concat(surroundAudioCodecs)
+                .join(','),
+            Container: 'mkv',
+            Type: DlnaProfileType.Video,
+            VideoCodec: mp4VideoCodecs.join(',')
+        });
+
+        // HLS+MPEGTS profile
         DirectPlayProfiles.push({
             AudioCodec: mp4AudioCodecs.join(','),
             Container: 'mp4,m4v',
@@ -175,31 +185,30 @@ function getCodecProfiles(): Array<CodecProfile> {
         return CodecProfiles;
     }
 
-    const aacConditions: CodecProfile = {
-        Codec: 'aac',
-        Conditions: [
-            // Not sure what secondary audio means in this context. Multiple audio tracks?
-            createProfileCondition(
-                ProfileConditionValue.IsSecondaryAudio,
-                ProfileConditionType.Equals,
-                'false'
-            ),
-            createProfileCondition(
-                ProfileConditionValue.IsSecondaryAudio,
-                ProfileConditionType.LessThanEqual,
-                '2'
-            )
-        ],
-        Type: CodecType.VideoAudio
-    };
-
-    CodecProfiles.push(aacConditions);
+    for (const acodec in getSupportedmkvAudioCodecs()) {
+        CodecProfiles.push({
+            Codec: acodec,
+            Conditions: [
+                // This condition says that the codec is not supported as an additional audio track,
+                // telling the server to only send one audio track.
+                createProfileCondition(
+                    ProfileConditionValue.IsSecondaryAudio,
+                    ProfileConditionType.Equals,
+                    'false'
+                ),
+                createProfileCondition(
+                    ProfileConditionValue.IsSecondaryAudio,
+                    ProfileConditionType.LessThanEqual,
+                    '2'
+                )
+            ],
+            Type: CodecType.VideoAudio
+        });
+    }
 
     const maxWidth: number = getMaxWidthSupport(currentDeviceId);
-    const h26xLevel: number = getH26xLevelSupport(currentDeviceId);
-    const h26xProfile: string = getH26xProfileSupport(currentDeviceId);
 
-    const h26xConditions: CodecProfile = {
+    CodecProfiles.push({
         Codec: 'h264',
         Conditions: [
             createProfileCondition(
@@ -210,12 +219,12 @@ function getCodecProfiles(): Array<CodecProfile> {
             createProfileCondition(
                 ProfileConditionValue.VideoProfile,
                 ProfileConditionType.EqualsAny,
-                h26xProfile
+                getH264ProfileSupport()
             ),
             createProfileCondition(
                 ProfileConditionValue.VideoLevel,
                 ProfileConditionType.LessThanEqual,
-                h26xLevel.toString()
+                getH264LevelSupport(currentDeviceId).toString()
             ),
             createProfileCondition(
                 ProfileConditionValue.Width,
@@ -225,11 +234,39 @@ function getCodecProfiles(): Array<CodecProfile> {
             )
         ],
         Type: CodecType.Video
-    };
+    });
 
-    CodecProfiles.push(h26xConditions);
+    if (hasHEVCSupport()) {
+        CodecProfiles.push({
+            Codec: 'hevc',
+            Conditions: [
+                createProfileCondition(
+                    ProfileConditionValue.IsAnamorphic,
+                    ProfileConditionType.NotEquals,
+                    'true'
+                ),
+                createProfileCondition(
+                    ProfileConditionValue.VideoProfile,
+                    ProfileConditionType.EqualsAny,
+                    getHEVCProfileSupport(currentDeviceId)
+                ),
+                createProfileCondition(
+                    ProfileConditionValue.VideoLevel,
+                    ProfileConditionType.LessThanEqual,
+                    getHEVCLevelSupport(currentDeviceId).toString()
+                ),
+                createProfileCondition(
+                    ProfileConditionValue.Width,
+                    ProfileConditionType.LessThanEqual,
+                    maxWidth.toString(),
+                    true
+                )
+            ],
+            Type: CodecType.Video
+        });
+    }
 
-    const videoConditions: CodecProfile = {
+    CodecProfiles.push({
         Conditions: [
             createProfileCondition(
                 ProfileConditionValue.Width,
@@ -239,11 +276,9 @@ function getCodecProfiles(): Array<CodecProfile> {
             )
         ],
         Type: CodecType.Video
-    };
+    });
 
-    CodecProfiles.push(videoConditions);
-
-    const videoAudioConditions: CodecProfile = {
+    CodecProfiles.push({
         Conditions: [
             createProfileCondition(
                 ProfileConditionValue.IsSecondaryAudio,
@@ -252,9 +287,7 @@ function getCodecProfiles(): Array<CodecProfile> {
             )
         ],
         Type: CodecType.VideoAudio
-    };
-
-    CodecProfiles.push(videoAudioConditions);
+    });
 
     return CodecProfiles;
 }
@@ -266,15 +299,19 @@ function getTranscodingProfiles(): Array<TranscodingProfile> {
     const TranscodingProfiles: Array<TranscodingProfile> = [];
 
     const hlsAudioCodecs = getSupportedHLSAudioCodecs();
-    const audioChannels: number = hasSurroundSupport() ? 6 : 2;
+
+    // Audio channels:
+    // - Non passthrough: Only 2 channels supported
+    // - Audio: Passthrough not supported (at least with chromecast audio)
 
     if (profileOptions.enableHls !== false) {
+        // HLS for audio only
         TranscodingProfiles.push({
             AudioCodec: hlsAudioCodecs.join(','),
             BreakOnNonKeyFrames: false,
             Container: 'ts',
             Context: EncodingContext.Streaming,
-            MaxAudioChannels: audioChannels.toString(),
+            MaxAudioChannels: '2',
             MinSegments: 1,
             Protocol: 'hls',
             Type: DlnaProfileType.Audio
@@ -282,14 +319,16 @@ function getTranscodingProfiles(): Array<TranscodingProfile> {
     }
 
     const supportedAudio = getSupportedAudioCodecs();
+    const surroundCodecs = getSupportedSurroundCodecs();
 
     // audio only profiles here
     for (const audioFormat of supportedAudio) {
+        // direct download audio
         TranscodingProfiles.push({
             AudioCodec: audioFormat,
             Container: audioFormat,
             Context: EncodingContext.Streaming,
-            MaxAudioChannels: audioChannels.toString(),
+            MaxAudioChannels: '2',
             Protocol: 'http',
             Type: DlnaProfileType.Audio
         });
@@ -302,21 +341,42 @@ function getTranscodingProfiles(): Array<TranscodingProfile> {
 
     const hlsVideoCodecs = getSupportedHLSVideoCodecs();
 
-    if (
-        hlsVideoCodecs.length &&
-        hlsAudioCodecs.length &&
-        profileOptions.enableHls !== false
-    ) {
+    if (surroundCodecs.length) {
+        // Direct streaming for passthrough codecs
         TranscodingProfiles.push({
-            AudioCodec: hlsAudioCodecs.join(','),
-            BreakOnNonKeyFrames: false,
-            Container: 'ts',
-            Context: EncodingContext.Streaming,
-            MaxAudioChannels: audioChannels.toString(),
-            MinSegments: 1,
-            Protocol: 'hls',
+            Container: 'mkv',
             Type: DlnaProfileType.Video,
-            VideoCodec: hlsVideoCodecs.join(',')
+            AudioCodec: surroundCodecs.join(','),
+            VideoCodec: hlsVideoCodecs.join(','),
+            Context: EncodingContext.Streaming,
+            Protocol: 'http',
+            MaxAudioChannels: '8'
+        });
+    }
+
+    // Direct streaming for normal codecs
+    TranscodingProfiles.push({
+        Container: 'mkv',
+        Type: DlnaProfileType.Video,
+        AudioCodec: getSupportedmkvAudioCodecs().join(','),
+        VideoCodec: hlsVideoCodecs.join(','),
+        Context: EncodingContext.Streaming,
+        Protocol: 'http',
+        MaxAudioChannels: '2'
+    });
+
+    if (profileOptions.enableHls !== false) {
+        TranscodingProfiles.push({
+            Container: 'ts',
+            Type: DlnaProfileType.Video,
+            AudioCodec: hlsAudioCodecs.join(','),
+            VideoCodec: hlsVideoCodecs.join(','),
+            Context: EncodingContext.Streaming,
+            Protocol: 'hls',
+            // Only stereo for this mode
+            MaxAudioChannels: '2',
+            MinSegments: 1,
+            BreakOnNonKeyFrames: false
         });
     }
 
@@ -325,9 +385,9 @@ function getTranscodingProfiles(): Array<TranscodingProfile> {
             AudioCodec: 'vorbis',
             Container: 'webm',
             Context: EncodingContext.Streaming,
-            // If audio transcoding is needed, limit channels to number of physical audio channels
-            // Trying to transcode to 5 channels when there are only 2 speakers generally does not sound good
-            MaxAudioChannels: audioChannels.toString(),
+            // TODO: Vorbis 6ch will probably not work, so this should either be passthrough codecs or stereo.
+            //       But we can try this for now and see if it works.
+            MaxAudioChannels: surroundCodecs.length ? '6' : '2',
             Protocol: 'http',
             Type: DlnaProfileType.Video,
             VideoCodec: 'vpx'
@@ -372,10 +432,7 @@ export function getDeviceProfile(options: ProfileOptions): DeviceProfile {
     const profile: DeviceProfile = {
         MaxStaticBitrate: options.bitrateSetting,
         MaxStreamingBitrate: options.bitrateSetting,
-        MusicStreamingTranscodingBitrate: Math.min(
-            options.bitrateSetting,
-            192000
-        )
+        MusicStreamingTranscodingBitrate: options.bitrateSetting
     };
 
     profile.DirectPlayProfiles = getDirectPlayProfiles();
