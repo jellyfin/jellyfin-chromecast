@@ -11,7 +11,7 @@
     "devDependencies": {
         "@commitlint/cli": "^12.1.4",
         "@commitlint/config-conventional": "^12.1.4",
-        "@types/chromecast-caf-receiver": "^5.0.12",
+        "@types/chromecast-caf-receiver": "^5.0.14",
         "@types/jest": "^26.0.24",
         "@types/node": "^16.0.0",
         "@types/webpack": "^5.28.0",
