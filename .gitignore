@@ -1,8 +1,8 @@
 # ide
 .idea
-.vscode
 tags
 
 # npm/yarn
 node_modules
 dist
+yarn-error.log

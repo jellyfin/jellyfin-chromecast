@@ -1,4 +1,9 @@
 import { RepeatMode, BaseItemDto } from '@jellyfin/client-axios';
+import {
+    CastReceiverContext,
+    PlayerManager
+} from 'chromecast-caf-receiver/cast.framework';
+import { SystemVolumeData } from 'chromecast-caf-receiver/cast.framework.system';
 
 export interface DeviceInfo {
     deviceId: string | number;
@@ -18,6 +23,7 @@ export interface Dictionary<T> {
 // Why doesn't the API have a type for this?
 /* Combined item query.
  * Valid for item endpoints */
+// TODO: API has an endpoint for this. Replace on https://github.com/jellyfin/jellyfin-chromecast/pull/109
 export interface ItemQuery {
     UserId?: string;
     Limit?: number;
@@ -97,8 +103,8 @@ declare global {
     export interface Window {
         deviceInfo: DeviceInfo;
         mediaElement: HTMLElement | null;
-        mediaManager: cast.framework.PlayerManager;
-        castReceiverContext: cast.framework.CastReceiverContext;
+        mediaManager: PlayerManager;
+        castReceiverContext: CastReceiverContext;
         playlist: Array<any>;
         currentPlaylistIndex: number;
         repeatMode: RepeatMode;
@@ -106,6 +112,6 @@ declare global {
         subtitleAppearance: any;
         MaxBitrate: number | undefined;
         senderId: string | undefined;
-        volume: cast.framework.system.SystemVolumeData;
+        volume: SystemVolumeData;
     }
 }

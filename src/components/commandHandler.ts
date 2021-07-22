@@ -17,45 +17,43 @@ import {
     seek
 } from './maincontroller';
 
-import {
-    displayItem,
-    reportPlaybackProgress,
-    startBackdropInterval
-} from './jellyfinActions';
+import { reportPlaybackProgress } from './jellyfinActions';
 
 import { playbackManager } from './playbackManager';
 
+import { DocumentManager } from './documentManager';
+
 export abstract class CommandHandler {
-    private static playerManager: cast.framework.PlayerManager;
+    private static playerManager: framework.PlayerManager;
     private static playbackManager: playbackManager;
     private static supportedCommands: SupportedCommands = {
+        DisplayContent: CommandHandler.displayContentHandler,
+        Identify: CommandHandler.IdentifyHandler,
+        InstantMix: CommandHandler.instantMixHandler,
+        Mute: CommandHandler.MuteHandler,
+        NextTrack: CommandHandler.nextTrackHandler,
+        Pause: CommandHandler.PauseHandler,
+        PlayLast: CommandHandler.playLastHandler,
         PlayNext: CommandHandler.playNextHandler,
         PlayNow: CommandHandler.playNowHandler,
-        PlayLast: CommandHandler.playLastHandler,
-        Shuffle: CommandHandler.shuffleHandler,
-        InstantMix: CommandHandler.instantMixHandler,
-        DisplayContent: CommandHandler.displayContentHandler,
-        NextTrack: CommandHandler.nextTrackHandler,
-        PreviousTrack: CommandHandler.previousTrackHandler,
-        SetAudioStreamIndex: CommandHandler.setAudioStreamIndexHandler,
-        SetSubtitleStreamIndex: CommandHandler.setSubtitleStreamIndexHandler,
-        VolumeUp: CommandHandler.VolumeUpHandler,
-        VolumeDown: CommandHandler.VolumeDownHandler,
-        ToggleMute: CommandHandler.ToggleMuteHandler,
-        Identify: CommandHandler.IdentifyHandler,
-        SetVolume: CommandHandler.SetVolumeHandler,
-        Seek: CommandHandler.SeekHandler,
-        Mute: CommandHandler.MuteHandler,
-        Unmute: CommandHandler.MuteHandler,
-        Stop: CommandHandler.StopHandler,
         PlayPause: CommandHandler.PlayPauseHandler,
-        Pause: CommandHandler.PauseHandler,
+        PreviousTrack: CommandHandler.previousTrackHandler,
+        Seek: CommandHandler.SeekHandler,
+        SetAudioStreamIndex: CommandHandler.setAudioStreamIndexHandler,
         SetRepeatMode: CommandHandler.SetRepeatModeHandler,
-        Unpause: CommandHandler.UnpauseHandler
+        SetSubtitleStreamIndex: CommandHandler.setSubtitleStreamIndexHandler,
+        SetVolume: CommandHandler.SetVolumeHandler,
+        Shuffle: CommandHandler.shuffleHandler,
+        Stop: CommandHandler.StopHandler,
+        ToggleMute: CommandHandler.ToggleMuteHandler,
+        Unmute: CommandHandler.MuteHandler,
+        Unpause: CommandHandler.UnpauseHandler,
+        VolumeDown: CommandHandler.VolumeDownHandler,
+        VolumeUp: CommandHandler.VolumeUpHandler
     };
 
     static configure(
-        playerManager: cast.framework.PlayerManager,
+        playerManager: framework.PlayerManager,
         playbackManager: playbackManager
     ): void {
         this.playerManager = playerManager;
@@ -92,7 +90,7 @@ export abstract class CommandHandler {
 
     static displayContentHandler(data: DataMessage): void {
         if (!this.playbackManager.isPlaying()) {
-            displayItem((<DisplayRequest>data.options).ItemId);
+            DocumentManager.showItemId((<DisplayRequest>data.options).ItemId);
         }
     }
 
@@ -141,7 +139,7 @@ export abstract class CommandHandler {
 
     static IdentifyHandler(): void {
         if (!this.playbackManager.isPlaying()) {
-            startBackdropInterval();
+            DocumentManager.startBackdropInterval();
         } else {
             // When a client connects send back the initial device state (volume etc) via a playbackstop message
             reportPlaybackProgress(
@@ -203,6 +201,7 @@ export abstract class CommandHandler {
 
     static processMessage(data: DataMessage, command: string): void {
         const commandHandler = this.supportedCommands[command];
+
         if (typeof commandHandler === 'function') {
             console.debug(
                 `Command "${command}" received. Identified handler, calling identified handler.`

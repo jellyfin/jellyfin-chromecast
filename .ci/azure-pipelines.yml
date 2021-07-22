@@ -34,22 +34,22 @@ jobs:
           - task: Cache@2
             displayName: 'Check Cache'
             inputs:
-                key: 'yarn | yarn.lock'
+                key: 'npm | package-lock.json'
                 path: 'node_modules'
                 cacheHitVar: CACHE_RESTORED
 
-          - script: 'yarn install --frozen-lockfile'
+          - script: 'npm ci --no-audit'
             displayName: 'Install Dependencies'
             condition: ne(variables.CACHE_RESTORED, 'true')
 
           - script: 'sh ./scripts/updateversion.sh'
             displayName: 'Update version in package.json'
 
-          - script: 'yarn build:development'
+          - script: 'npm run build:development'
             displayName: 'Build Development'
             condition: eq(variables['BuildConfiguration'], 'development')
 
-          - script: 'yarn build:production'
+          - script: 'npm run build:production'
             displayName: 'Build Bundle'
             condition: eq(variables['BuildConfiguration'], 'production')
 

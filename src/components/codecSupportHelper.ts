@@ -62,7 +62,7 @@ export function hasH265Support(): boolean {
  * This is not supported on Chromecast Audio,
  * but otherwise is.
  *
- * @param deviceId the device id
+ * @param deviceId - the device id
  * @returns true if text tracks are supported
  */
 export function hasTextTrackSupport(deviceId: number): boolean {
@@ -102,7 +102,7 @@ export function getMaxBitrateSupport(): number {
 /**
  * Get the max supported video width the active Cast device supports.
  *
- * @param deviceId Cast device id.
+ * @param deviceId - Cast device id.
  * @returns Max supported width.
  */
 export function getMaxWidthSupport(deviceId: number): number {
@@ -123,8 +123,8 @@ export function getMaxWidthSupport(deviceId: number): number {
 /**
  * Get all H.26x profiles supported by the active Cast device.
  *
- * @param {number} deviceId Cast device id.
- * @returns {string} All supported H.26x profiles.
+ * @param deviceId - Cast device id.
+ * @returns All supported H.26x profiles.
  */
 export function getH26xProfileSupport(deviceId: number): string {
     // These are supported by all Cast devices, excluding audio only devices.
@@ -140,7 +140,7 @@ export function getH26xProfileSupport(deviceId: number): string {
 /**
  * Get the highest H.26x level supported by the active Cast device.
  *
- * @param deviceId Cast device id.
+ * @param deviceId - Cast device id.
  * @returns The highest supported H.26x level.
  */
 export function getH26xLevelSupport(deviceId: number): number {
@@ -165,6 +165,7 @@ export function getH26xLevelSupport(deviceId: number): number {
  */
 export function getSupportedVPXVideoCodecs(): Array<string> {
     const codecs = [];
+
     if (hasVP8Support()) {
         codecs.push('VP8');
     }
@@ -199,14 +200,18 @@ export function getSupportedMP4VideoCodecs(): Array<string> {
  */
 export function getSupportedMP4AudioCodecs(): Array<string> {
     const codecs = [];
+
     if (hasEAC3Support()) {
         codecs.push('eac3');
     }
+
     if (hasAC3Support()) {
         codecs.push('ac3');
     }
+
     codecs.push('aac');
     codecs.push('mp3');
+
     return codecs;
 }
 

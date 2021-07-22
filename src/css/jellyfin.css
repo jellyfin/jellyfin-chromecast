@@ -27,7 +27,7 @@ body {
     display: none;
 }
 
-.hide {
+.d-none {
     display: none !important;
 }
 
@@ -47,7 +47,9 @@ body {
     background-position: center;
     background-size: cover;
     background-repeat: no-repeat;
-    background-color: rgba(15, 15, 15, 0.82);
+
+    /* Layer on top of the backdrop image: */
+    background-color: rgba(15, 15, 15, 0.6);
     position: absolute;
     top: 0;
     left: 0;
@@ -85,25 +87,24 @@ body {
     background-repeat: no-repeat;
     position: absolute;
     top: 22%;
-    height: 20%;
+    height: 63%;
     left: 8%;
     width: 20%;
 }
 
-#playedIndicator {
+.playedIndicator {
     display: block;
     position: absolute;
     top: 5px;
     right: 5px;
     text-align: center;
-    width: 24px;
-    height: 19px;
-    padding-top: 3px;
+    width: 1.8vw;
+    height: 1.6vw;
+    padding-top: 0.1vw;
     border-radius: 50%;
     color: #fff;
     background: rgba(0, 128, 0, 0.8);
-    font-size: 13px;
-    line-height: 16.9px;
+    font-size: 1.1vw;
 }
 
 .detailImageProgressContainer {
@@ -149,7 +150,7 @@ body {
     top: 22%;
     height: 63%;
     left: 30.5%;
-    font-size: 23px;
+    font-size: 1.2vw;
     width: 60%;
 }
 
@@ -157,7 +158,7 @@ body {
     margin: 10px 0;
 }
 
-#detailRating {
+.detailRating {
     margin: -4px 0 0;
 }
 
@@ -166,24 +167,23 @@ body {
 }
 
 .displayName {
-    font-size: 40px;
+    font-size: 3vw;
 }
 
 #miscInfo {
-    font-size: 17px;
-    margin-left: 25px;
+    font-size: 1.5vw;
+    margin-left: 2vw;
 }
 
 .starRating {
     background-image: url('../img/stars.svg');
     background-position: left center;
     background-repeat: no-repeat;
-    width: 21px;
-    height: 18px;
-    display: inline-block;
     background-size: cover;
-    vertical-align: top;
-    position: relative;
+    width: 1.6vw;
+    height: 1.4vw;
+    display: inline-block;
+    vertical-align: text-bottom;
     top: 6px;
 }
 
@@ -194,13 +194,12 @@ body {
 
 .rottentomatoesicon {
     display: inline-block;
-    width: 18px;
-    height: 18px;
+    width: 1.4vw;
+    height: 1.4vw;
     background-size: cover;
     background-position: left center;
     background-repeat: no-repeat;
-    vertical-align: top;
-    position: relative;
+    vertical-align: text-bottom;
     top: 6px;
 }
 
@@ -244,15 +243,25 @@ body {
     text-overflow: ellipsis;
 }
 
+/* Container for "ready to cast" and the logo */
 .waitingContent {
     position: fixed;
-    top: 50%;
-    right: 0;
-    bottom: auto;
+    bottom: 0;
     left: 0;
-    height: 415px;
-    margin-top: -207px;
     text-align: center;
+    font-size: 3vw;
+    margin-bottom: 3%;
+    margin-left: 5%;
+}
+
+/* Container for backdrop description */
+.waitingDescription {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    margin-right: 5%;
+    margin-bottom: 3%;
+    font-size: 1.5vw;
 }
 
 #waiting-container h1,
@@ -261,7 +270,7 @@ body {
 }
 
 #waiting-container h1 {
-    font-size: 60px;
+    font-size: 45px;
     font-weight: 300;
 }
 
@@ -273,11 +282,11 @@ body {
 }
 /* stylelint-enable no-descending-specificity */
 
+/* jellyfin logo in the waiting container */
 #waiting-container .logo {
-    height: 200px;
-    margin: 0 auto;
-    width: auto;
-    display: block;
+    width: 4vw;
+    display: inline-block;
+    vertical-align: text-bottom;
 }
 
 .waiting > #waiting-container-backdrop,

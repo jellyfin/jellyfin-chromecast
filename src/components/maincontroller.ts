@@ -22,7 +22,6 @@ import {
     reportPlaybackProgress,
     reportPlaybackStopped,
     play,
-    startBackdropInterval,
     getPlaybackInfo,
     stopActiveEncodings,
     detectBitrate
@@ -32,6 +31,7 @@ import { JellyfinApi } from './jellyfinApi';
 import { playbackManager } from './playbackManager';
 import { CommandHandler } from './commandHandler';
 import { getMaxBitrateSupport } from './codecSupportHelper';
+import { DocumentManager } from './documentManager';
 import { GlobalScope, PlayRequest } from '~/types/global';
 
 window.castReceiverContext = cast.framework.CastReceiverContext.getInstance();
@@ -49,6 +49,9 @@ let broadcastToServer = new Date();
 
 let hasReportedCapabilities = false;
 
+/**
+ *
+ */
 export function onMediaElementTimeUpdate(): void {
     if ($scope.isChangingStream) {
         return;
@@ -68,6 +71,9 @@ export function onMediaElementTimeUpdate(): void {
     }
 }
 
+/**
+ *
+ */
 export function onMediaElementPause(): void {
     if ($scope.isChangingStream) {
         return;
@@ -76,21 +82,32 @@ export function onMediaElementPause(): void {
     reportEvent('playstatechange', true);
 }
 
+/**
+ *
+ */
 export function onMediaElementPlaying(): void {
     if ($scope.isChangingStream) {
         return;
     }
+
     reportEvent('playstatechange', true);
 }
 
-function onMediaElementVolumeChange(event: cast.framework.system.Event): void {
-    window.volume = (<cast.framework.system.SystemVolumeChangedEvent>(
-        event
-    )).data;
-    console.log('Received volume update: ' + window.volume.level);
-    if (JellyfinApi.serverAddress !== null) reportEvent('volumechange', true);
+/**
+ * @param event
+ */
+function onMediaElementVolumeChange(event: framework.system.Event): void {
+    window.volume = (<framework.system.SystemVolumeChangedEvent>event).data;
+    console.log(`Received volume update: ${window.volume.level}`);
+
+    if (JellyfinApi.serverAddress !== null) {
+        reportEvent('volumechange', true);
+    }
 }
 
+/**
+ *
+ */
 export function enableTimeUpdateListener(): void {
     window.mediaManager.addEventListener(
         cast.framework.events.EventType.TIME_UPDATE,
@@ -110,6 +127,9 @@ export function enableTimeUpdateListener(): void {
     );
 }
 
+/**
+ *
+ */
 export function disableTimeUpdateListener(): void {
     window.mediaManager.removeEventListener(
         cast.framework.events.EventType.TIME_UPDATE,
@@ -131,7 +151,7 @@ export function disableTimeUpdateListener(): void {
 
 enableTimeUpdateListener();
 
-window.addEventListener('beforeunload', function () {
+window.addEventListener('beforeunload', () => {
     // Try to cleanup after ourselves before the page closes
     disableTimeUpdateListener();
     reportPlaybackStopped($scope, getReportingParams($scope));
@@ -146,6 +166,9 @@ mgr.addEventListener(cast.framework.events.EventType.PAUSE, (): void => {
     reportPlaybackProgress($scope, getReportingParams($scope));
 });
 
+/**
+ *
+ */
 function defaultOnStop(): void {
     playbackMgr.stop();
 }
@@ -156,7 +179,7 @@ mgr.addEventListener(
 );
 mgr.addEventListener(cast.framework.events.EventType.ABORT, defaultOnStop);
 
-mgr.addEventListener(cast.framework.events.EventType.ENDED, function () {
+mgr.addEventListener(cast.framework.events.EventType.ENDED, () => {
     // Ignore
     if ($scope.isChangingStream) {
         return;
@@ -168,7 +191,7 @@ mgr.addEventListener(cast.framework.events.EventType.ENDED, function () {
     if (!playbackMgr.playNextItem()) {
         window.playlist = [];
         window.currentPlaylistIndex = -1;
-        startBackdropInterval();
+        DocumentManager.startBackdropInterval();
     }
 });
 
@@ -183,29 +206,36 @@ window.mediaManager.addEventListener(
     }
 );
 
-export function reportDeviceCapabilities(): Promise<void> {
-    return getMaxBitrate().then((maxBitrate) => {
-        const deviceProfile = getDeviceProfile({
-            enableHls: true,
-            bitrateSetting: maxBitrate
-        });
+/**
+ *
+ */
+export async function reportDeviceCapabilities(): Promise<void> {
+    const maxBitrate = await getMaxBitrate();
 
-        const capabilities = {
-            PlayableMediaTypes: ['Audio', 'Video'],
-            SupportsPersistentIdentifier: false,
-            SupportsMediaControl: true,
-            DeviceProfile: deviceProfile
-        };
-        hasReportedCapabilities = true;
+    const deviceProfile = getDeviceProfile({
+        bitrateSetting: maxBitrate,
+        enableHls: true
+    });
 
-        return JellyfinApi.authAjax('Sessions/Capabilities/Full', {
-            type: 'POST',
-            data: JSON.stringify(capabilities),
-            contentType: 'application/json'
-        });
+    const capabilities = {
+        DeviceProfile: deviceProfile,
+        PlayableMediaTypes: ['Audio', 'Video'],
+        SupportsMediaControl: true,
+        SupportsPersistentIdentifier: false
+    };
+
+    hasReportedCapabilities = true;
+
+    return JellyfinApi.authAjax('Sessions/Capabilities/Full', {
+        contentType: 'application/json',
+        data: JSON.stringify(capabilities),
+        type: 'POST'
     });
 }
 
+/**
+ * @param data
+ */
 export function processMessage(data: any): void {
     if (
         !data.command ||
@@ -216,10 +246,11 @@ export function processMessage(data: any): void {
         console.log('Invalid message sent from sender. Sending error response');
 
         broadcastToMessageBus({
-            type: 'error',
             message:
-                'Missing one or more required params - command,options,userId,accessToken,serverAddress'
+                'Missing one or more required params - command,options,userId,accessToken,serverAddress',
+            type: 'error'
         });
+
         return;
     }
 
@@ -241,7 +272,9 @@ export function processMessage(data: any): void {
     }
 
     data.options = data.options || {};
+
     const cleanReceiverName = cleanName(data.receiverName || '');
+
     window.deviceInfo.deviceName =
         cleanReceiverName || window.deviceInfo.deviceName;
     // deviceId just needs to be unique-ish
@@ -258,6 +291,7 @@ export function processMessage(data: any): void {
     if (window.reportEventType) {
         const report = (): Promise<void> =>
             reportPlaybackProgress($scope, getReportingParams($scope));
+
         reportPlaybackProgress(
             $scope,
             getReportingParams($scope),
@@ -269,6 +303,10 @@ export function processMessage(data: any): void {
     }
 }
 
+/**
+ * @param name
+ * @param reportToServer
+ */
 export function reportEvent(
     name: string,
     reportToServer: boolean
@@ -281,16 +319,20 @@ export function reportEvent(
     );
 }
 
+/**
+ * @param $scope
+ * @param index
+ */
 export function setSubtitleStreamIndex(
     $scope: GlobalScope,
     index: number
 ): void {
-    console.log('setSubtitleStreamIndex. index: ' + index);
+    console.log(`setSubtitleStreamIndex. index: ${index}`);
 
     let positionTicks;
 
     const currentSubtitleStream = $scope.mediaSource.MediaStreams.filter(
-        function (m: any) {
+        (m: any) => {
             return (
                 m.Index == $scope.subtitleStreamIndex && m.Type == 'Subtitle'
             );
@@ -312,6 +354,7 @@ export function setSubtitleStreamIndex(
             $scope.subtitleStreamIndex = -1;
             setTextTrack(null);
         }
+
         return;
     }
 
@@ -323,11 +366,12 @@ export function setSubtitleStreamIndex(
         console.log(
             'setSubtitleStreamIndex error condition - subtitle stream not found.'
         );
+
         return;
     }
 
     console.log(
-        'setSubtitleStreamIndex DeliveryMethod:' + subtitleStream.DeliveryMethod
+        `setSubtitleStreamIndex DeliveryMethod:${subtitleStream.DeliveryMethod}`
     );
 
     if (
@@ -338,9 +382,10 @@ export function setSubtitleStreamIndex(
             ? subtitleStream.DeliveryUrl
             : JellyfinApi.createUrl(subtitleStream.DeliveryUrl);
 
-        console.log('Subtitle url: ' + textStreamUrl);
+        console.log(`Subtitle url: ${textStreamUrl}`);
         setTextTrack(index);
         $scope.subtitleStreamIndex = subtitleStream.Index;
+
         return;
     } else {
         console.log('setSubtitleStreamIndex video url change required');
@@ -351,21 +396,33 @@ export function setSubtitleStreamIndex(
     }
 }
 
+/**
+ * @param $scope
+ * @param index
+ */
 export function setAudioStreamIndex(
     $scope: GlobalScope,
     index: number
 ): Promise<void> {
     const positionTicks = getCurrentPositionTicks($scope);
+
     return changeStream(positionTicks, {
         AudioStreamIndex: index
     });
 }
 
+/**
+ * @param ticks
+ */
 export function seek(ticks: number): Promise<void> {
     return changeStream(ticks);
 }
 
-export function changeStream(
+/**
+ * @param ticks
+ * @param params
+ */
+export async function changeStream(
     ticks: number,
     params: any = undefined
 ): Promise<void> {
@@ -375,6 +432,7 @@ export function changeStream(
     ) {
         window.mediaManager.seek(ticks / 10000000);
         reportPlaybackProgress($scope, getReportingParams($scope));
+
         return Promise.resolve();
     }
 
@@ -384,70 +442,74 @@ export function changeStream(
     const liveStreamId = $scope.liveStreamId;
 
     const item = $scope.item;
+    const maxBitrate = await getMaxBitrate();
 
-    return getMaxBitrate().then(async (maxBitrate) => {
-        const deviceProfile = getDeviceProfile({
-            enableHls: true,
-            bitrateSetting: maxBitrate
-        });
-        const audioStreamIndex =
-            params.AudioStreamIndex == null
-                ? $scope.audioStreamIndex
-                : params.AudioStreamIndex;
-        const subtitleStreamIndex =
-            params.SubtitleStreamIndex == null
-                ? $scope.subtitleStreamIndex
-                : params.SubtitleStreamIndex;
-
-        const playbackInformation = await getPlaybackInfo(
-            item,
-            maxBitrate,
-            deviceProfile,
-            ticks,
-            $scope.mediaSourceId,
-            audioStreamIndex,
-            subtitleStreamIndex,
-            liveStreamId
-        );
-        if (!validatePlaybackInfoResult(playbackInformation)) {
-            return;
-        }
-
-        const mediaSource = playbackInformation.MediaSources[0];
-        const streamInfo = createStreamInfo(item, mediaSource, ticks);
-
-        if (!streamInfo.url) {
-            showPlaybackInfoErrorMessage('NoCompatibleStream');
-            return;
-        }
-
-        const mediaInformation = createMediaInformation(
-            playSessionId,
-            item,
-            streamInfo
-        );
-        const loadRequest = new cast.framework.messages.LoadRequestData();
-        loadRequest.media = mediaInformation;
-        loadRequest.autoplay = true;
-
-        // TODO something to do with HLS?
-        const requiresStoppingTranscoding = false;
-        if (requiresStoppingTranscoding) {
-            window.mediaManager.pause();
-            await stopActiveEncodings(playSessionId);
-        }
-        window.mediaManager.load(loadRequest);
-        window.mediaManager.play();
-        $scope.subtitleStreamIndex = subtitleStreamIndex;
-        $scope.audioStreamIndex = audioStreamIndex;
+    const deviceProfile = getDeviceProfile({
+        bitrateSetting: maxBitrate,
+        enableHls: true
     });
+    const audioStreamIndex =
+        params.AudioStreamIndex == null
+            ? $scope.audioStreamIndex
+            : params.AudioStreamIndex;
+    const subtitleStreamIndex =
+        params.SubtitleStreamIndex == null
+            ? $scope.subtitleStreamIndex
+            : params.SubtitleStreamIndex;
+
+    const playbackInformation = await getPlaybackInfo(
+        item,
+        maxBitrate,
+        deviceProfile,
+        ticks,
+        $scope.mediaSourceId,
+        audioStreamIndex,
+        subtitleStreamIndex,
+        liveStreamId
+    );
+
+    if (!validatePlaybackInfoResult(playbackInformation)) {
+        return;
+    }
+
+    const mediaSource = playbackInformation.MediaSources[0];
+    const streamInfo = createStreamInfo(item, mediaSource, ticks);
+
+    if (!streamInfo.url) {
+        showPlaybackInfoErrorMessage('NoCompatibleStream');
+
+        return;
+    }
+
+    const mediaInformation = createMediaInformation(
+        playSessionId,
+        item,
+        streamInfo
+    );
+    const loadRequest = new cast.framework.messages.LoadRequestData();
+
+    loadRequest.media = mediaInformation;
+    loadRequest.autoplay = true;
+
+    // TODO something to do with HLS?
+    const requiresStoppingTranscoding = false;
+
+    if (requiresStoppingTranscoding) {
+        window.mediaManager.pause();
+        await stopActiveEncodings(playSessionId);
+    }
+
+    window.mediaManager.load(loadRequest);
+    window.mediaManager.play();
+    $scope.subtitleStreamIndex = subtitleStreamIndex;
+    $scope.audioStreamIndex = audioStreamIndex;
 }
 
 // Create a message handler for the custome namespace channel
 // TODO save namespace somewhere global?
 window.castReceiverContext.addCustomMessageListener(
     'urn:x-cast:com.connectsdk',
-    function (evt: any) {
+    (evt: any) => {
         let data: any = evt.data;
 
         // Apparently chromium likes to pass it as json, not as object.
@@ -462,151 +524,181 @@ window.castReceiverContext.addCustomMessageListener(
         // TODO set it somewhere better perhaps
         window.senderId = evt.senderId;
 
-        console.log('Received message: ' + JSON.stringify(data));
+        console.log(`Received message: ${JSON.stringify(data)}`);
         processMessage(data);
     }
 );
 
-export function translateItems(
+/**
+ * @param data
+ * @param options
+ * @param method
+ */
+export async function translateItems(
     data: any,
     options: PlayRequest,
     method: string
 ): Promise<void> {
     const playNow = method != 'PlayNext' && method != 'PlayLast';
-    return translateRequestedItems(data.userId, options.items, playNow).then(
-        function (result: BaseItemDtoQueryResult) {
-            if (result.Items) options.items = result.Items;
 
-            if (method == 'PlayNext' || method == 'PlayLast') {
-                for (
-                    let i = 0, length = options.items.length;
-                    i < length;
-                    i++
-                ) {
-                    window.playlist.push(options.items[i]);
-                }
-            } else {
-                playbackMgr.playFromOptions(data.options);
-            }
-        }
+    const result = await translateRequestedItems(
+        data.userId,
+        options.items,
+        playNow
     );
+
+    if (result.Items) {
+        options.items = result.Items;
+    }
+
+    if (method == 'PlayNext' || method == 'PlayLast') {
+        for (let i = 0, length = options.items.length; i < length; i++) {
+            window.playlist.push(options.items[i]);
+        }
+    } else {
+        playbackMgr.playFromOptions(data.options);
+    }
 }
 
-export function instantMix(
+/**
+ * @param data
+ * @param options
+ * @param item
+ */
+export async function instantMix(
     data: any,
     options: any,
     item: BaseItemDto
 ): Promise<void> {
-    return getInstantMixItems(data.userId, item).then(function (result) {
-        options.items = result.Items;
-        playbackMgr.playFromOptions(data.options);
-    });
+    const result = await getInstantMixItems(data.userId, item);
+
+    options.items = result.Items;
+    playbackMgr.playFromOptions(data.options);
 }
 
-export function shuffle(
+/**
+ * @param data
+ * @param options
+ * @param item
+ */
+export async function shuffle(
     data: any,
     options: any,
     item: BaseItemDto
 ): Promise<void> {
-    return getShuffleItems(data.userId, item).then(function (result) {
-        options.items = result.Items;
-        playbackMgr.playFromOptions(data.options);
-    });
+    const result = await getShuffleItems(data.userId, item);
+
+    options.items = result.Items;
+    playbackMgr.playFromOptions(data.options);
 }
 
-export function onStopPlayerBeforePlaybackDone(
+/**
+ * @param item
+ * @param options
+ */
+export async function onStopPlayerBeforePlaybackDone(
     item: BaseItemDto,
     options: any
 ): Promise<void> {
-    return JellyfinApi.authAjaxUser('Items/' + item.Id, {
+    const data = await JellyfinApi.authAjaxUser(`Items/${item.Id}`, {
         dataType: 'json',
         type: 'GET'
-    }).then(function (data) {
-        // Attach the custom properties we created like userId, serverAddress, itemId, etc
-        extend(data, item);
+    });
 
-        playbackMgr.playItemInternal(data, options);
-    }, broadcastConnectionErrorMessage);
+    // Attach the custom properties we created like userId, serverAddress, itemId, etc
+    extend(data, item);
+    playbackMgr.playItemInternal(data, options);
+    broadcastConnectionErrorMessage();
 }
 
 let lastBitrateDetect = 0;
 let detectedBitrate = 0;
-export function getMaxBitrate(): Promise<number> {
+/**
+ *
+ */
+export async function getMaxBitrate(): Promise<number> {
     console.log('getMaxBitrate');
 
-    return new Promise(function (resolve) {
-        // The client can set this number
-        if (window.MaxBitrate) {
-            console.log('bitrate is set to ' + window.MaxBitrate);
+    if (window.MaxBitrate) {
+        console.log(`bitrate is set to ${window.MaxBitrate}`);
 
-            resolve(window.MaxBitrate);
-            return;
-        }
+        return window.MaxBitrate;
+    }
 
-        if (
-            detectedBitrate &&
-            new Date().getTime() - lastBitrateDetect < 600000
-        ) {
-            console.log(
-                'returning previous detected bitrate of ' + detectedBitrate
-            );
-            resolve(detectedBitrate);
-            return;
-        }
-
-        console.log('detecting bitrate');
-
-        detectBitrate().then(
-            (bitrate) => {
-                console.log('Max bitrate auto detected to ' + bitrate);
-                lastBitrateDetect = new Date().getTime();
-                detectedBitrate = bitrate;
-
-                resolve(detectedBitrate);
-            },
-            () => {
-                console.log(
-                    'Error detecting bitrate, will return device maximum.'
-                );
-                resolve(getMaxBitrateSupport());
-            }
+    if (detectedBitrate && new Date().getTime() - lastBitrateDetect < 600000) {
+        console.log(
+            `returning previous detected bitrate of ${detectedBitrate}`
         );
-    });
+
+        return detectedBitrate;
+    }
+
+    console.log('detecting bitrate');
+
+    const bitrate = await detectBitrate();
+
+    try {
+        console.log(`Max bitrate auto detected to ${bitrate}`);
+        lastBitrateDetect = new Date().getTime();
+        detectedBitrate = bitrate;
+
+        return detectedBitrate;
+    } catch (e) {
+        // The client can set this number
+        console.log('Error detecting bitrate, will return device maximum.');
+
+        return getMaxBitrateSupport();
+    }
 }
 
+/**
+ * @param result
+ */
 export function validatePlaybackInfoResult(result: any): boolean {
     if (result.ErrorCode) {
         showPlaybackInfoErrorMessage(result.ErrorCode);
+
         return false;
     }
+
     return true;
 }
 
+/**
+ * @param error
+ */
 export function showPlaybackInfoErrorMessage(error: string): void {
-    broadcastToMessageBus({ type: 'playbackerror', message: error });
+    broadcastToMessageBus({ message: error, type: 'playbackerror' });
 }
 
+/**
+ * @param versions
+ */
 export function getOptimalMediaSource(versions: Array<any>): any {
-    let optimalVersion = versions.filter(function (v) {
+    let optimalVersion = versions.filter((v) => {
         checkDirectPlay(v);
+
         return v.SupportsDirectPlay;
     })[0];
 
     if (!optimalVersion) {
-        optimalVersion = versions.filter(function (v) {
+        optimalVersion = versions.filter((v) => {
             return v.SupportsDirectStream;
         })[0];
     }
 
     return (
         optimalVersion ||
-        versions.filter(function (s) {
+        versions.filter((s) => {
             return s.SupportsTranscoding;
         })[0]
     );
 }
 
 // Disable direct play on non-http sources
+/**
+ * @param mediaSource
+ */
 export function checkDirectPlay(mediaSource: MediaSourceInfo): void {
     if (
         mediaSource.SupportsDirectPlay &&
@@ -616,32 +708,42 @@ export function checkDirectPlay(mediaSource: MediaSourceInfo): void {
     ) {
         return;
     }
+
     mediaSource.SupportsDirectPlay = false;
 }
 
+/**
+ * @param index
+ */
 export function setTextTrack(index: number | null): void {
     try {
         const textTracksManager = window.mediaManager.getTextTracksManager();
+
         if (index == null) {
             // docs: null is okay
             // typescript definitions: Must be Array<number>
             textTracksManager.setActiveByIds([]);
+
             return;
         }
 
-        const tracks: Array<cast.framework.messages.Track> = textTracksManager.getTracks();
-        const subtitleTrack:
-            | cast.framework.messages.Track
-            | undefined = tracks.find(function (
-            track: cast.framework.messages.Track
-        ) {
-            return track.trackId === index;
-        });
+        const tracks: Array<framework.messages.Track> =
+            textTracksManager.getTracks();
+        const subtitleTrack: framework.messages.Track | undefined = tracks.find(
+            (track: framework.messages.Track) => {
+                return track.trackId === index;
+            }
+        );
+
         if (subtitleTrack && subtitleTrack.trackId !== undefined) {
             textTracksManager.setActiveByIds([subtitleTrack.trackId]);
+
             const subtitleAppearance = window.subtitleAppearance;
+
             if (subtitleAppearance) {
-                const textTrackStyle = new cast.framework.messages.TextTrackStyle();
+                const textTrackStyle =
+                    new cast.framework.messages.TextTrackStyle();
+
                 if (subtitleAppearance.dropShadow != null) {
                     // Empty string is DROP_SHADOW
                     textTrackStyle.edgeType =
@@ -656,8 +758,7 @@ export function setTextTrack(index: number | null): void {
 
                 if (subtitleAppearance.textColor) {
                     // Append the transparency, hardcoded to 100%
-                    textTrackStyle.foregroundColor =
-                        subtitleAppearance.textColor + 'FF';
+                    textTrackStyle.foregroundColor = `${subtitleAppearance.textColor}FF`;
                 }
 
                 if (subtitleAppearance.textBackground === 'transparent') {
@@ -684,35 +785,42 @@ export function setTextTrack(index: number | null): void {
                         textTrackStyle.fontScale = 1.0;
                         break;
                 }
+
                 textTracksManager.setTextTrackStyle(textTrackStyle);
             }
         }
     } catch (e) {
-        console.log('Setting subtitle track failed: ' + e);
+        console.log(`Setting subtitle track failed: ${e}`);
     }
 }
 
 // TODO no any types
+/**
+ * @param playSessionId
+ * @param item
+ * @param streamInfo
+ */
 export function createMediaInformation(
     playSessionId: string,
     item: BaseItemDto,
     streamInfo: any
-): cast.framework.messages.MediaInformation {
+): framework.messages.MediaInformation {
     const mediaInfo = new cast.framework.messages.MediaInformation();
+
     mediaInfo.contentId = streamInfo.url;
     mediaInfo.contentType = streamInfo.contentType;
     mediaInfo.customData = {
-        startPositionTicks: streamInfo.startPositionTicks || 0,
-        itemId: item.Id,
-        mediaSourceId: streamInfo.mediaSource.Id,
         audioStreamIndex: streamInfo.audioStreamIndex,
-        subtitleStreamIndex: streamInfo.subtitleStreamIndex,
-        playMethod: streamInfo.isStatic ? 'DirectStream' : 'Transcode',
-        runtimeTicks: streamInfo.mediaSource.RunTimeTicks,
-        liveStreamId: streamInfo.mediaSource.LiveStreamId,
-        canSeek: streamInfo.canSeek,
         canClientSeek: streamInfo.canClientSeek,
-        playSessionId: playSessionId
+        canSeek: streamInfo.canSeek,
+        itemId: item.Id,
+        liveStreamId: streamInfo.mediaSource.LiveStreamId,
+        mediaSourceId: streamInfo.mediaSource.Id,
+        playMethod: streamInfo.isStatic ? 'DirectStream' : 'Transcode',
+        playSessionId: playSessionId,
+        runtimeTicks: streamInfo.mediaSource.RunTimeTicks,
+        startPositionTicks: streamInfo.startPositionTicks || 0,
+        subtitleStreamIndex: streamInfo.subtitleStreamIndex
     };
 
     mediaInfo.metadata = getMetadata(item);
@@ -733,6 +841,7 @@ export function createMediaInformation(
 
 // Set the available buttons in the UI controls.
 const controls = cast.framework.ui.Controls.getInstance();
+
 controls.clearDefaultSlotAssignments();
 
 /* Disabled for now, dynamically set controls for each media type in the future.
@@ -752,6 +861,7 @@ controls.assignButton(
 );
 
 const options = new cast.framework.CastReceiverOptions();
+
 // Global variable set by Webpack
 if (!PRODUCTION) {
     window.castReceiverContext.setLoggerLevel(cast.framework.LoggerLevel.DEBUG);
@@ -765,8 +875,8 @@ if (!PRODUCTION) {
 
     window.mediaManager.addEventListener(
         cast.framework.events.category.CORE,
-        (event: cast.framework.events.Event) => {
-            console.log('Core event: ' + event.type);
+        (event: framework.events.Event) => {
+            console.log(`Core event: ${event.type}`);
             console.log(event);
         }
     );
