@@ -13,7 +13,7 @@
         "@commitlint/config-conventional": "^12.1.4",
         "@types/chromecast-caf-receiver": "^5.0.14",
         "@types/jest": "^26.0.24",
-        "@types/node": "^16.4.0",
+        "@types/node": "^16.4.1",
         "@types/webpack": "^5.28.0",
         "@types/webpack-dev-server": "^3.11.5",
         "@types/webpack-merge": "^5.0.0",
