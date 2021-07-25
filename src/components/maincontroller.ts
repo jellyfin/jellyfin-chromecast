@@ -184,7 +184,7 @@ window.playerManager.addEventListener(
 window.playerManager.addEventListener(
     cast.framework.events.EventType.ENDED,
     (): void => {
-        // Ignore
+        // If we're changing streams, do not report playback ended.
         if ($scope.isChangingStream) {
             return;
         }
