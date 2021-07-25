@@ -267,7 +267,7 @@ export function processMessage(data: any): void {
         data.userId,
         data.accessToken,
         data.serverAddress,
-        data.receiverName || ''
+        data.receiverName
     );
 
     if (data.subtitleAppearance) {
