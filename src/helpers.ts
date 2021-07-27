@@ -16,8 +16,8 @@ import { GlobalScope, BusMessage, ItemIndex, ItemQuery } from './types/global';
  * @returns position in ticks
  */
 export function getCurrentPositionTicks($scope: GlobalScope): number {
-    let positionTicks = window.mediaManager.getCurrentTimeSec() * 10000000;
-    const mediaInformation = window.mediaManager.getMediaInformation();
+    let positionTicks = window.playerManager.getCurrentTimeSec() * 10000000;
+    const mediaInformation = window.playerManager.getMediaInformation();
 
     if (mediaInformation && !mediaInformation.customData.canClientSeek) {
         positionTicks += $scope.startPositionTicks || 0;
@@ -43,7 +43,7 @@ export function getReportingParams($scope: GlobalScope): PlaybackProgressInfo {
         CanSeek: $scope.canSeek,
         IsMuted: window.volume.muted,
         IsPaused:
-            window.mediaManager.getPlayerState() ===
+            window.playerManager.getPlayerState() ===
             cast.framework.messages.PlayerState.PAUSED,
         ItemId: $scope.itemId,
         LiveStreamId: $scope.liveStreamId,
@@ -228,7 +228,6 @@ export function resetPlaybackScope($scope: GlobalScope): void {
 
     $scope.playMethod = '';
     $scope.canSeek = false;
-    $scope.canClientSeek = false;
     $scope.isChangingStream = false;
     $scope.playNextItem = true;
 
@@ -812,23 +811,6 @@ export async function translateRequestedItems(
 }
 
 /**
- * Take all properties of source and copy them over to target
- *
- * TODO can we remove this crap
- *
- * @param target - object that gets populated with entries
- * @param source - object that the entries are copied from
- * @returns reference to target object
- */
-export function extend(target: any, source: any): any {
-    for (const i in source) {
-        target[i] = source[i];
-    }
-
-    return target;
-}
-
-/**
  * Parse a date.. Just a wrapper around new Date,
  * but could be useful to deal with weird date strings
  * in the future.
@@ -858,14 +840,4 @@ export function broadcastToMessageBus(message: BusMessage): void {
  */
 export function broadcastConnectionErrorMessage(): void {
     broadcastToMessageBus({ message: '', type: 'connectionerror' });
-}
-
-/**
- * Remove all special characters from a string
- *
- * @param name - input string
- * @returns string with non-whitespace non-word characters removed
- */
-export function cleanName(name: string): string {
-    return name.replace(/[^\w\s]/gi, '');
 }
