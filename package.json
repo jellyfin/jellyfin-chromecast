@@ -78,7 +78,7 @@
         "prepare": "npm run build:production",
         "prettier": "prettier --check .",
         "start": "TS_NODE_PROJECT=\"tsconfig-webpack.json\" webpack serve --config webpack.config.ts",
-        "test": "jest",
+        "test": "jest --silent",
         "watch": "TS_NODE_PROJECT=\"tsconfig-webpack.json\" webpack --config webpack.config.ts --watch"
     }
 }
