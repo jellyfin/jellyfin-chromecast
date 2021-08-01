@@ -26,7 +26,7 @@ import { getMaxBitrateSupport } from './codecSupportHelper';
 import { DocumentManager } from './documentManager';
 import { BaseItemDto } from '~/api/generated/models/base-item-dto';
 import { MediaSourceInfo } from '~/api/generated/models/media-source-info';
-import { GlobalScope, PlayRequest } from '~/types/global';
+import { PlayRequest } from '~/types/global';
 
 window.castReceiverContext = cast.framework.CastReceiverContext.getInstance();
 window.playerManager = window.castReceiverContext.getPlayerManager();
