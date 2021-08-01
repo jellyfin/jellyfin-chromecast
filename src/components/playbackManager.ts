@@ -298,4 +298,35 @@ export class playbackManager {
 
         return promise;
     }
+
+    /**
+     * Attempt to clean the receiver state.
+     */
+    resetPlaybackScope(): void {
+        DocumentManager.setAppStatus('waiting');
+
+        this.playbackState.startPositionTicks = 0;
+        DocumentManager.setWaitingBackdrop(null, null);
+        this.playbackState.mediaType = '';
+        this.playbackState.itemId = '';
+
+        this.playbackState.audioStreamIndex = null;
+        this.playbackState.subtitleStreamIndex = null;
+        this.playbackState.mediaSource = null;
+        this.playbackState.mediaSourceId = '';
+        this.playbackState.PlaybackMediaSource = null;
+
+        this.playbackState.playMethod = undefined;
+        this.playbackState.canSeek = false;
+        this.playbackState.isChangingStream = false;
+        this.playbackState.playNextItemBool = true;
+
+        this.playbackState.item = null;
+        this.playbackState.liveStreamId = '';
+        this.playbackState.playSessionId = '';
+
+        // Detail content
+        DocumentManager.setLogo(null);
+        DocumentManager.setDetailImage(null);
+    }
 }

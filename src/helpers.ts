@@ -1,6 +1,4 @@
 import { JellyfinApi } from './components/jellyfinApi';
-import { DocumentManager } from './components/documentManager';
-
 import { BaseItemDtoQueryResult } from './api/generated/models/base-item-dto-query-result';
 import { PlaybackProgressInfo } from './api/generated/models/playback-progress-info';
 import { MediaSourceInfo } from './api/generated/models/media-source-info';
@@ -205,39 +203,6 @@ export function getSenderReportingData(
     }
 
     return state;
-}
-
-/**
- * Attempt to clean the receiver state.
- *
- * @param $scope - global context variable
- */
-export function resetPlaybackScope($scope: GlobalScope): void {
-    DocumentManager.setAppStatus('waiting');
-
-    $scope.startPositionTicks = 0;
-    DocumentManager.setWaitingBackdrop(null, null);
-    $scope.mediaType = '';
-    $scope.itemId = '';
-
-    $scope.audioStreamIndex = null;
-    $scope.subtitleStreamIndex = null;
-    $scope.mediaSource = null;
-    $scope.mediaSourceId = '';
-    $scope.PlaybackMediaSource = null;
-
-    $scope.playMethod = '';
-    $scope.canSeek = false;
-    $scope.isChangingStream = false;
-    $scope.playNextItem = true;
-
-    $scope.item = null;
-    $scope.liveStreamId = '';
-    $scope.playSessionId = '';
-
-    // Detail content
-    DocumentManager.setLogo(null);
-    DocumentManager.setDetailImage(null);
 }
 
 /**
