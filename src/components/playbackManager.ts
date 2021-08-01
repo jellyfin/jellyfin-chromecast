@@ -29,12 +29,55 @@ import {
 import { DocumentManager } from './documentManager';
 import { BaseItemDto } from '~/api/generated/models/base-item-dto';
 import { MediaSourceInfo } from '~/api/generated/models/media-source-info';
+import { PlayMethod } from '~/api/generated';
+
+export interface PlaybackState {
+    startPositionTicks: number;
+    mediaType: string | null | undefined;
+    itemId: string;
+
+    audioStreamIndex: null;
+    subtitleStreamIndex: null;
+    mediaSource: MediaSourceInfo | null;
+    mediaSourceId: string;
+    PlaybackMediaSource: MediaSourceInfo | null;
+
+    playMethod: PlayMethod | undefined;
+    canSeek: boolean;
+    isChangingStream: boolean;
+    playNextItemBool: boolean;
+
+    item: BaseItemDto | null;
+    liveStreamId: string;
+    playSessionId: string;
+
+    runtimeTicks: number;
+}
 
 export class playbackManager {
     private playerManager: framework.PlayerManager;
     // TODO remove any
     private activePlaylist: Array<BaseItemDto>;
     private activePlaylistIndex: number;
+
+    playbackState: PlaybackState = {
+        audioStreamIndex: null,
+        canSeek: false,
+        isChangingStream: false,
+        item: null,
+        itemId: '',
+        liveStreamId: '',
+        mediaSource: null,
+        mediaSourceId: '',
+        mediaType: '',
+        PlaybackMediaSource: null,
+        playMethod: undefined,
+        playNextItemBool: true,
+        playSessionId: '',
+        runtimeTicks: 0,
+        startPositionTicks: 0,
+        subtitleStreamIndex: null
+    };
 
     constructor(playerManager: framework.PlayerManager) {
         // Parameters
@@ -128,7 +171,7 @@ export class playbackManager {
     }
 
     async playItemInternal(item: BaseItemDto, options: any): Promise<void> {
-        $scope.isChangingStream = false;
+        this.playbackState.isChangingStream = false;
         DocumentManager.setAppStatus('loading');
 
         const maxBitrate = await getMaxBitrate();
@@ -216,10 +259,10 @@ export class playbackManager {
         load($scope, mediaInfo.customData, item);
         this.playerManager.load(loadRequestData);
 
-        $scope.PlaybackMediaSource = mediaSource;
+        this.playbackState.PlaybackMediaSource = mediaSource;
 
         console.log(`setting src to ${url}`);
-        $scope.mediaSource = mediaSource;
+        this.playbackState.mediaSource = mediaSource;
 
         DocumentManager.setPlayerBackdrop(item);
 
@@ -232,7 +275,7 @@ export class playbackManager {
     }
 
     stop(continuing = false): Promise<any> {
-        $scope.playNextItem = continuing;
+        this.playbackState.playNextItemBool = continuing;
         stop();
 
         const reportingParams = getReportingParams($scope);
