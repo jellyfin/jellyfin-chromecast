@@ -37,7 +37,7 @@ export interface PlaybackState {
     itemId: string;
 
     audioStreamIndex: null;
-    subtitleStreamIndex: null;
+    subtitleStreamIndex: number | null;
     mediaSource: MediaSourceInfo | null;
     mediaSourceId: string;
     PlaybackMediaSource: MediaSourceInfo | null;
@@ -256,7 +256,7 @@ export class playbackManager {
         loadRequestData.media = mediaInfo;
         loadRequestData.autoplay = true;
 
-        load($scope, mediaInfo.customData, item);
+        load(this, mediaInfo.customData, item);
         this.playerManager.load(loadRequestData);
 
         this.playbackState.PlaybackMediaSource = mediaSource;
@@ -266,7 +266,10 @@ export class playbackManager {
 
         DocumentManager.setPlayerBackdrop(item);
 
-        reportPlaybackStart($scope, getReportingParams($scope));
+        reportPlaybackStart(
+            this.playbackState,
+            getReportingParams(this.playbackState)
+        );
 
         // We use false as we do not want to broadcast the new status yet
         // we will broadcast manually when the media has been loaded, this
@@ -278,14 +281,17 @@ export class playbackManager {
         this.playbackState.playNextItemBool = continuing;
         stop();
 
-        const reportingParams = getReportingParams($scope);
+        const reportingParams = getReportingParams(this.playbackState);
 
         let promise;
 
         stopPingInterval();
 
         if (reportingParams.ItemId) {
-            promise = reportPlaybackStopped($scope, reportingParams);
+            promise = reportPlaybackStopped(
+                this.playbackState,
+                reportingParams
+            );
         }
 
         this.playerManager.stop();
