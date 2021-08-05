@@ -1,14 +1,15 @@
-import { Configuration } from '../api/generated/configuration';
-
-import { credentialManager } from '../api/credentialManager';
+import {
+    credentialManager,
+    ServerCredential
+} from '../components/credentialManager';
 
 const serverId1 = 'f4486b851af24255b3305fe614b81f01';
-const serverConfig1: Configuration = {
+const serverConfig1: ServerCredential = {
     apiKey: 'b49268e51af24255b3305fe614b81f01'
 };
 
 const serverId2 = 'af72hb851af24255b3305fe614b81f01';
-const serverConfig2: Configuration = {
+const serverConfig2: ServerCredential = {
     apiKey: 'd4286b8119f24a55b3305fe614b81f01'
 };
 

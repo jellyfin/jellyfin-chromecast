@@ -1,7 +1,11 @@
-import { Configuration } from './generated/configuration';
+export interface ServerCredential {
+    apiKey?: string;
+    accessToken?: string;
+    serverBasePath?: string;
+}
 
 interface CredentialStore {
-    [id: string]: Configuration;
+    [id: string]: ServerCredential;
 }
 
 export class credentialManager {
@@ -28,7 +32,7 @@ export class credentialManager {
      * @returns Credentials for the provided server ID.
      * or undefined if the store has no server with that ID.
      */
-    get(serverId: string): Configuration | undefined {
+    get(serverId: string): ServerCredential | undefined {
         if (serverId in this.credentialStore) {
             return this.credentialStore[serverId];
         }
@@ -38,12 +42,12 @@ export class credentialManager {
      * Update credentials for the provided server ID.
      *
      * @param serverId - ID of the server to update.
-     * @param newConfig - Updated Credentials.
+     * @param newCredentials - Updated Credentials.
      * @returns True if the value was updated, false if it wasn't.
      */
-    update(serverId: string, newConfig: Configuration): boolean {
+    update(serverId: string, newCredentials: ServerCredential): boolean {
         if (serverId in this.credentialStore) {
-            this.credentialStore[serverId] = newConfig;
+            this.credentialStore[serverId] = newCredentials;
 
             return true;
         }
@@ -55,15 +59,15 @@ export class credentialManager {
      * Add a new credential to store. Only accepts new entries.
      *
      * @param serverId - ID of the server the credentials belong to.
-     * @param configuration - Credentials of the server.
+     * @param credentials - Credentials of the server.
      * @returns True if server was added, false if it wasn't.
      */
-    add(serverId: string, configuration: Configuration): boolean {
+    add(serverId: string, credentials: ServerCredential): boolean {
         if (serverId in this.credentialStore) {
             return false;
         }
 
-        this.credentialStore[serverId] = configuration;
+        this.credentialStore[serverId] = credentials;
 
         return true;
     }
