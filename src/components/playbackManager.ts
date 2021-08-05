@@ -1,6 +1,5 @@
 import {
     getNextPlaybackItemInfo,
-    getIntros,
     broadcastConnectionErrorMessage,
     getReportingParams,
     createStreamInfo
@@ -66,10 +65,6 @@ export class playbackManager {
         if (options.startPositionTicks || firstItem.MediaType !== 'Video') {
             return this.playFromOptionsInternal(options);
         }
-
-        const intros = await getIntros(firstItem);
-
-        options.items = intros.Items?.concat(options.items);
 
         return this.playFromOptionsInternal(options);
     }
