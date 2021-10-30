@@ -17,11 +17,11 @@ const common: webpack.Configuration = {
             { loader: 'html-loader', test: /\.html$/ },
             {
                 test: /\.(png|svg|jpg|gif)$/,
-                use: 'file-loader'
+                type: 'asset/resource'
             },
             {
-                loader: 'file-loader',
-                test: /\.(ttf|eot|woff(2)?)(\?[a-z0-9=&.]+)?$/
+                test: /\.(ttf|eot|woff(2)?)(\?[a-z0-9=&.]+)?$/,
+                type: 'asset/resource'
             },
             { test: /\.css$/i, use: ['style-loader', 'css-loader'] },
             { loader: 'ts-loader', test: /\.tsx?$/ },
