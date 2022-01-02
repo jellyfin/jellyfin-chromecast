@@ -8,8 +8,7 @@ import {
     getShuffleItems,
     getInstantMixItems,
     translateRequestedItems,
-    broadcastToMessageBus,
-    broadcastConnectionErrorMessage
+    broadcastToMessageBus
 } from '../helpers';
 import {
     reportPlaybackProgress,
@@ -607,7 +606,6 @@ export async function onStopPlayerBeforePlaybackDone(
     });
 
     playbackMgr.playItemInternal(data, options);
-    broadcastConnectionErrorMessage();
 }
 
 let lastBitrateDetect = 0;

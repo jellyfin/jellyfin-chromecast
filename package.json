@@ -70,15 +70,15 @@
         "url": "git+https://github.com/jellyfin/jellyfin-chromecast.git"
     },
     "scripts": {
-        "build:development": "TS_NODE_PROJECT=\"tsconfig-webpack.json\" webpack --config webpack.config.ts --mode=development",
-        "build:production": "TS_NODE_PROJECT=\"tsconfig-webpack.json\" webpack --config webpack.config.ts --mode=production",
+        "build:development": "cross-env TS_NODE_PROJECT=\"tsconfig-webpack.json\" webpack --config webpack.config.ts --mode=development",
+        "build:production": "cross-env TS_NODE_PROJECT=\"tsconfig-webpack.json\" webpack --config webpack.config.ts --mode=production",
         "lint": "npm run lint:code && npm run lint:css && npm run prettier",
         "lint:code": "eslint --ext .ts,.js,.json .",
         "lint:css": "stylelint **/*.css",
         "prepare": "npm run build:production",
         "prettier": "prettier --check .",
-        "start": "TS_NODE_PROJECT=\"tsconfig-webpack.json\" webpack serve --config webpack.config.ts",
+        "start": "cross-env TS_NODE_PROJECT=\"tsconfig-webpack.json\" webpack serve --config webpack.config.ts",
         "test": "jest",
-        "watch": "TS_NODE_PROJECT=\"tsconfig-webpack.json\" webpack --config webpack.config.ts --watch"
+        "watch": "cross-env TS_NODE_PROJECT=\"tsconfig-webpack.json\" webpack --config webpack.config.ts --watch"
     }
 }
