@@ -1,5 +1,6 @@
 import { getReportingParams } from '../helpers';
 import {
+    AppStatus,
     DataMessage,
     DisplayRequest,
     PlayRequest,
@@ -131,7 +132,7 @@ export abstract class CommandHandler {
 
     static IdentifyHandler(): void {
         if (!PlaybackManager.isPlaying()) {
-            DocumentManager.setAppStatus('waiting');
+            DocumentManager.setAppStatus(AppStatus.Waiting);
             DocumentManager.startBackdropInterval();
         } else {
             // When a client connects send back the initial device state (volume etc) via a playbackstop message

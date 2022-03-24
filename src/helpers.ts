@@ -8,7 +8,7 @@ import { MediaSourceInfo } from './api/generated/models/media-source-info';
 import { BaseItemDto } from './api/generated/models/base-item-dto';
 import { BaseItemPerson } from './api/generated/models/base-item-person';
 import { UserDto } from './api/generated/models/user-dto';
-import { GlobalScope, BusMessage, ItemQuery } from './types/global';
+import { GlobalScope, BusMessage, ItemQuery, AppStatus } from './types/global';
 
 /**
  * Get current playback position in ticks, adjusted for server seeking
@@ -167,7 +167,7 @@ export function getSenderReportingData(
  * @param $scope - global context variable
  */
 export function resetPlaybackScope($scope: GlobalScope): void {
-    DocumentManager.setAppStatus('waiting');
+    DocumentManager.setAppStatus(AppStatus.Waiting);
 
     $scope.startPositionTicks = 0;
     DocumentManager.setWaitingBackdrop(null, null);

@@ -4,7 +4,7 @@ import {
     broadcastToMessageBus
 } from '../helpers';
 
-import { GlobalScope } from '../types/global';
+import { AppStatus, GlobalScope } from '../types/global';
 import { PlaybackProgressInfo } from '../api/generated/models/playback-progress-info';
 import { BaseItemDto } from '../api/generated/models/base-item-dto';
 import { DeviceProfile } from '../api/generated/models/device-profile';
@@ -217,7 +217,7 @@ export function load(
 
     $scope.item = serverItem;
 
-    DocumentManager.setAppStatus('backdrop');
+    DocumentManager.setAppStatus(AppStatus.Backdrop);
     $scope.mediaType = serverItem?.MediaType;
 }
 
@@ -233,18 +233,18 @@ export function load(
  */
 export function play($scope: GlobalScope): void {
     if (
-        DocumentManager.getAppStatus() == 'backdrop' ||
-        DocumentManager.getAppStatus() == 'playing-with-controls' ||
-        DocumentManager.getAppStatus() == 'playing' ||
-        DocumentManager.getAppStatus() == 'audio'
+        DocumentManager.getAppStatus() == AppStatus.Backdrop ||
+        DocumentManager.getAppStatus() == AppStatus.PlayingWithControls ||
+        DocumentManager.getAppStatus() == AppStatus.Playing ||
+        DocumentManager.getAppStatus() == AppStatus.Audio
     ) {
         setTimeout(() => {
             window.playerManager.play();
 
             if ($scope.mediaType == 'Audio') {
-                DocumentManager.setAppStatus('audio');
+                DocumentManager.setAppStatus(AppStatus.Audio);
             } else {
-                DocumentManager.setAppStatus('playing-with-controls');
+                DocumentManager.setAppStatus(AppStatus.PlayingWithControls);
             }
         }, 20);
     }

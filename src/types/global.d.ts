@@ -14,6 +14,17 @@ export interface Dictionary<T> {
     [Key: string]: T;
 }
 
+export enum AppStatus {
+    Audio = 'AUDIO',
+    Backdrop = 'BACKDROP',
+    Details = 'DETAILS',
+    Loading = 'LOADING',
+    PlayingWithControls = 'PLAYING-WITH-CONTROLS',
+    Playing = 'PLAYING',
+    Unset = '',
+    Waiting = 'WAITING',
+}
+
 // Jellyfin Server
 // Why doesn't the API have a type for this?
 /* Combined item query.
@@ -78,11 +89,11 @@ export interface SeekRequest {
 
 export interface DataMessage {
     options:
-        | PlayRequest
-        | DisplayRequest
-        | SetIndexRequest
-        | SetRepeatModeRequest
-        | SeekRequest;
+    | PlayRequest
+    | DisplayRequest
+    | SetIndexRequest
+    | SetRepeatModeRequest
+    | SeekRequest;
     command: string;
 }
 

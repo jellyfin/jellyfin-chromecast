@@ -2,6 +2,7 @@ import { parseISO8601Date } from '../helpers';
 import { JellyfinApi } from './jellyfinApi';
 import { deviceIds, getActiveDeviceId } from './castDevices';
 import { BaseItemDto } from '~/api/generated/models/base-item-dto';
+import { AppStatus } from '~/types/global';
 
 export abstract class DocumentManager {
     // Duration between each backdrop switch in ms
@@ -10,7 +11,7 @@ export abstract class DocumentManager {
     private static backdropTimer = 0;
 
     // TODO make enum
-    private static status = '';
+    private static status = AppStatus.Unset;
 
     /**
      * Hide the document body on chromecast audio to save resources
@@ -185,7 +186,7 @@ export abstract class DocumentManager {
             }
 
             // Switch visible view!
-            this.setAppStatus('details');
+            this.setAppStatus(AppStatus.Details);
         });
     }
 
@@ -285,7 +286,7 @@ export abstract class DocumentManager {
      *
      * @param status - to set
      */
-    public static setAppStatus(status: string): void {
+    public static setAppStatus(status: AppStatus): void {
         this.status = status;
         document.body.className = status;
     }
@@ -295,7 +296,7 @@ export abstract class DocumentManager {
      *
      * @returns app status
      */
-    public static getAppStatus(): string {
+    public static getAppStatus(): AppStatus {
         return this.status;
     }
 

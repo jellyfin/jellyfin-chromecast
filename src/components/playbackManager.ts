@@ -24,7 +24,7 @@ import { DocumentManager } from './documentManager';
 import { BaseItemDto } from '~/api/generated/models/base-item-dto';
 import { MediaSourceInfo } from '~/api/generated/models/media-source-info';
 
-import { ItemIndex } from '~/types/global';
+import { AppStatus, ItemIndex } from '~/types/global';
 
 export abstract class PlaybackManager {
     private static playerManager: framework.PlayerManager;
@@ -145,7 +145,7 @@ export abstract class PlaybackManager {
         options: any
     ): Promise<void> {
         $scope.isChangingStream = false;
-        DocumentManager.setAppStatus('loading');
+        DocumentManager.setAppStatus(AppStatus.Loading);
 
         const maxBitrate = await getMaxBitrate();
         const deviceProfile = getDeviceProfile({
@@ -209,7 +209,7 @@ export abstract class PlaybackManager {
         mediaSource: MediaSourceInfo,
         options: any
     ): void {
-        DocumentManager.setAppStatus('loading');
+        DocumentManager.setAppStatus(AppStatus.Loading);
 
         const streamInfo = createStreamInfo(
             item,
@@ -270,7 +270,7 @@ export abstract class PlaybackManager {
         } else {
             $scope.playNextItem = false;
 
-            DocumentManager.setAppStatus('waiting');
+            DocumentManager.setAppStatus(AppStatus.Waiting);
 
             stopPingInterval();
 
