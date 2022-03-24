@@ -15,14 +15,14 @@ export interface Dictionary<T> {
 }
 
 export enum AppStatus {
-    Audio = 'AUDIO',
-    Backdrop = 'BACKDROP',
-    Details = 'DETAILS',
-    Loading = 'LOADING',
-    PlayingWithControls = 'PLAYING-WITH-CONTROLS',
-    Playing = 'PLAYING',
+    Audio = 'Audio',
+    Backdrop = 'Backdrop',
+    Details = 'Details',
+    Loading = 'Loading',
+    PlayingWithControls = 'PlayingWithControls',
+    Playing = 'Playing',
     Unset = '',
-    Waiting = 'WAITING',
+    Waiting = 'Waiting',
 }
 
 // Jellyfin Server
