@@ -26,6 +26,7 @@ import { BaseItemDto } from '~/api/generated/models/base-item-dto';
 import { MediaSourceInfo } from '~/api/generated/models/media-source-info';
 
 import { AppStatus, ItemIndex } from '~/types/global';
+import { RepeatMode } from '~/api/generated';
 
 export abstract class PlaybackManager {
     private static playerManager: framework.PlayerManager;
@@ -300,10 +301,10 @@ export abstract class PlaybackManager {
             newIndex = 0;
         } else {
             switch (window.repeatMode) {
-                case 'RepeatOne':
+                case RepeatMode.RepeatOne:
                     newIndex = this.activePlaylistIndex;
                     break;
-                case 'RepeatAll':
+                case RepeatMode.RepeatAll:
                     newIndex = this.activePlaylistIndex + 1;
 
                     if (newIndex >= this.activePlaylist.length) {
