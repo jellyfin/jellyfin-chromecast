@@ -1,4 +1,4 @@
-import { getReportingParams } from '../helpers';
+import { getReportingParams, TicksPerSecond } from '../helpers';
 import {
     AppStatus,
     DataMessage,
@@ -148,7 +148,7 @@ export abstract class CommandHandler {
     }
 
     static SeekHandler(data: DataMessage): void {
-        seek((<SeekRequest>data.options).position * 10000000);
+        seek((<SeekRequest>data.options).position * TicksPerSecond);
     }
 
     static MuteHandler(): void {

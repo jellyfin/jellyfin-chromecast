@@ -8,7 +8,8 @@ import {
     getInstantMixItems,
     translateRequestedItems,
     broadcastToMessageBus,
-    broadcastConnectionErrorMessage
+    broadcastConnectionErrorMessage,
+    ticksToSeconds
 } from '../helpers';
 import {
     reportPlaybackStart,
@@ -437,7 +438,7 @@ export async function changeStream(
         window.playerManager.getMediaInformation().customData.canClientSeek &&
         params == null
     ) {
-        window.playerManager.seek(ticks / 10000000);
+        window.playerManager.seek(ticksToSeconds(ticks));
         reportPlaybackProgress($scope, getReportingParams($scope));
 
         return Promise.resolve();
@@ -787,7 +788,7 @@ export function createMediaInformation(
 
     if (streamInfo.mediaSource.RunTimeTicks) {
         mediaInfo.duration = Math.floor(
-            streamInfo.mediaSource.RunTimeTicks / 10000000
+            ticksToSeconds(streamInfo.mediaSource.RunTimeTicks)
         );
     }
 

@@ -1,4 +1,4 @@
-import { parseISO8601Date } from '../helpers';
+import { parseISO8601Date, TicksPerSecond, ticksToSeconds } from '../helpers';
 import { JellyfinApi } from './jellyfinApi';
 import { deviceIds, getActiveDeviceId } from './castDevices';
 import { BaseItemDto } from '~/api/generated/models/base-item-dto';
@@ -628,9 +628,8 @@ export abstract class DocumentManager {
      * @returns human readable position
      */
     private static formatRunningTime(ticks: number): string {
-        const ticksPerHour = 36000000000;
-        const ticksPerMinute = 600000000;
-        const ticksPerSecond = 10000000;
+        const ticksPerMinute = TicksPerSecond * 60;
+        const ticksPerHour = ticksPerMinute * 60;
 
         const parts: string[] = [];
 
@@ -652,7 +651,7 @@ export abstract class DocumentManager {
             parts.push(minutes.toString());
         }
 
-        const seconds: number = Math.floor(ticks / ticksPerSecond);
+        const seconds: number = Math.floor(ticksToSeconds(ticks));
 
         if (seconds < 10) {
             parts.push(`0${seconds.toString()}`);

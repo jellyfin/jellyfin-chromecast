@@ -1,6 +1,7 @@
 import {
     broadcastConnectionErrorMessage,
-    createStreamInfo
+    createStreamInfo,
+    ticksToSeconds
 } from '../helpers';
 
 import {
@@ -235,7 +236,7 @@ export abstract class PlaybackManager {
         // to seconds and give it to loadRequestData :)
         if (mediaInfo.customData.startPositionTicks > 0) {
             loadRequestData.currentTime =
-                mediaInfo.customData.startPositionTicks / 10000000;
+                ticksToSeconds(mediaInfo.customData.startPositionTicks);
         }
 
         load($scope, mediaInfo.customData, item);

@@ -10,6 +10,8 @@ import { BaseItemPerson } from './api/generated/models/base-item-person';
 import { UserDto } from './api/generated/models/user-dto';
 import { GlobalScope, BusMessage, ItemQuery, AppStatus } from './types/global';
 
+export const TicksPerSecond = 10000000
+
 /**
  * Get current playback position in ticks, adjusted for server seeking
  *
@@ -17,7 +19,7 @@ import { GlobalScope, BusMessage, ItemQuery, AppStatus } from './types/global';
  * @returns position in ticks
  */
 export function getCurrentPositionTicks($scope: GlobalScope): number {
-    let positionTicks = window.playerManager.getCurrentTimeSec() * 10000000;
+    let positionTicks = window.playerManager.getCurrentTimeSec() * TicksPerSecond;
     const mediaInformation = window.playerManager.getMediaInformation();
 
     if (mediaInformation && !mediaInformation.customData.canClientSeek) {
@@ -321,7 +323,7 @@ export function createStreamInfo(
 
     // server seeking
     const startPositionInSeekParam = startPosition
-        ? startPosition / 10000000
+        ? ticksToSeconds(startPosition)
         : 0;
     const seekParam = startPositionInSeekParam
         ? `#t=${startPositionInSeekParam}`
@@ -774,6 +776,15 @@ export async function translateRequestedItems(
  */
 export function parseISO8601Date(date: string): Date {
     return new Date(date);
+}
+
+/**
+ * Convert ticks to seconds
+ * @param ticks - number of ticks to convert
+ * @returns number of seconds
+ */
+export function ticksToSeconds(ticks: number): number {
+    return ticks / TicksPerSecond
 }
 
 /**
