@@ -26,7 +26,6 @@ export function hasEAC3Support(): boolean {
  * Currently it's disabled because of problems getting it to work with HLS.
  *
  * @returns true if AC-3 can be played
- *
  */
 export function hasAC3Support(): boolean {
     //return castContext.canDisplayType('audio/mp4', 'ac-3');
