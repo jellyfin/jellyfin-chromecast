@@ -132,7 +132,9 @@ export abstract class CommandHandler {
 
     static IdentifyHandler(): void {
         if (!PlaybackManager.isPlaying()) {
-            DocumentManager.setAppStatus(AppStatus.Waiting);
+            if (!PlaybackManager.isBuffering()) {
+                DocumentManager.setAppStatus(AppStatus.Waiting);
+            }
             DocumentManager.startBackdropInterval();
         } else {
             // When a client connects send back the initial device state (volume etc) via a playbackstop message
