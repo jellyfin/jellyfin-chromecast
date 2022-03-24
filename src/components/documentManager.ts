@@ -10,7 +10,6 @@ export abstract class DocumentManager {
     // Timer state - so that we don't start the interval more than necessary
     private static backdropTimer = 0;
 
-    // TODO make enum
     private static status = AppStatus.Unset;
 
     /**
