@@ -180,7 +180,7 @@ window.playerManager.addEventListener(
 window.playerManager.addEventListener(
     cast.framework.events.EventType.ENDED,
     (): void => {
-        // Ignore
+        // If we're changing streams, do not report playback ended.
         if ($scope.isChangingStream) {
             return;
         }
@@ -277,7 +277,7 @@ export function processMessage(data: any): void {
         data.userId,
         data.accessToken,
         data.serverAddress,
-        data.receiverName || ''
+        data.receiverName
     );
 
     if (data.subtitleAppearance) {

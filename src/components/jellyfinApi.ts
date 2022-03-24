@@ -24,7 +24,7 @@ export abstract class JellyfinApi {
         userId: string,
         accessToken: string,
         serverAddress: string,
-        receiverName: string
+        receiverName = ''
     ): void {
         console.debug(
             `JellyfinApi.setServerInfo: user:${userId}, token:${accessToken}, ` +
@@ -58,7 +58,7 @@ export abstract class JellyfinApi {
         // TODO throw error if this fails
 
         let auth =
-            `Emby Client="Chromecast", Device="${this.deviceName}", ` +
+            `Jellyfin Client="Chromecast", Device="${this.deviceName}", ` +
             `DeviceId="${this.deviceId}", Version="${this.versionNumber}"`;
 
         if (this.userId) {

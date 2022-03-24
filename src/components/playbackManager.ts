@@ -1,5 +1,6 @@
 import {
     getIntros,
+    getNextPlaybackItemInfo,
     broadcastConnectionErrorMessage,
     createStreamInfo
 } from '../helpers';
@@ -48,9 +49,9 @@ export abstract class PlaybackManager {
     static isPlaying(): boolean {
         return (
             this.playerManager.getPlayerState() ===
-                cast.framework.messages.PlayerState.PLAYING ||
+            cast.framework.messages.PlayerState.PLAYING ||
             this.playerManager.getPlayerState() ===
-                cast.framework.messages.PlayerState.PAUSED
+            cast.framework.messages.PlayerState.PAUSED
         );
     }
 
@@ -60,10 +61,6 @@ export abstract class PlaybackManager {
         if (options.startPositionTicks || firstItem.MediaType !== 'Video') {
             return this.playFromOptionsInternal(options);
         }
-
-        const intros = await getIntros(firstItem);
-
-        options.items = intros.Items?.concat(options.items);
 
         return this.playFromOptionsInternal(options);
     }
