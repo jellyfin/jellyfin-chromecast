@@ -262,14 +262,14 @@ export abstract class PlaybackManager {
      */
     static stop(): void {
         this.playerManager.stop();
-        // onStopped will be called when playback comes to a halt.
+        // onStop will be called when playback comes to a halt.
     }
 
     /**
      * Called when media stops playing.
      * TODO avoid doing this between tracks in a playlist
      */
-    static onStopped(): void {
+    static onStop(): void {
         if (this.getNextPlaybackItemInfo()) {
             $scope.playNextItem = true;
         } else {
