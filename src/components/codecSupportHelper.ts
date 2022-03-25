@@ -103,26 +103,28 @@ export function getMaxBitrateSupport(): number {
  *
  * @returns Max supported width.
  */
-export function getMaxWidthSupport(): number {
-    // with HLS, it will produce a manifest error if we
-    // send any stream larger than the screen size...
-    return window.innerWidth;
+export function getMaxWidthSupport(deviceId: number, codec?: string): number {
+    if (codec === 'h264') {
+        // with HLS, it will produce a manifest error if we
+        // send any stream larger than the screen size...
+        return window.innerWidth;
+    }
 
     // mkv playback can use the device limitations.
     // The devices are capable of decoding and downscaling,
     // they just refuse to do it with HLS. This increases
     // the rate of direct playback.
-    //switch (deviceId) {
-    //    case deviceIds.ULTRA:
-    //    case deviceIds.CCGTV:
-    //        return 3840;
-    //    case deviceIds.GEN1AND2:
-    //    case deviceIds.GEN3:
-    //        return 1920;
-    //    case deviceIds.NESTHUBANDMAX:
-    //        return 1280;
-    //}
-    //return 0;
+    switch (deviceId) {
+        case deviceIds.ULTRA:
+        case deviceIds.CCGTV:
+            return 3840;
+        case deviceIds.GEN1AND2:
+        case deviceIds.GEN3:
+            return 1920;
+        case deviceIds.NESTHUBANDMAX:
+            return 1280;
+    }
+    return 0;
 }
 
 /**

@@ -304,6 +304,12 @@ export function getMetadata(item: BaseItemDto): any {
     return metadata;
 }
 
+/**
+ * Check if a media source is an HLS stream
+ *
+ * @param mediaSource
+ * @returns 
+ */
 export function isHlsStream(mediaSource: MediaSourceInfo) {
     return mediaSource.TranscodingSubProtocol == 'hls'
 }
