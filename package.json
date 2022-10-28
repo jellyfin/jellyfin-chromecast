@@ -6,7 +6,7 @@
         "url": "https://github.com/jellyfin/jellyfin-chromecast/issues"
     },
     "dependencies": {
-        "axios": "^0.21.1"
+        "axios": "^0.21.2"
     },
     "devDependencies": {
         "@commitlint/cli": "^13.1.0",
