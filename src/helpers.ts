@@ -1,26 +1,25 @@
 import { JellyfinApi } from './components/jellyfinApi';
-import { DocumentManager } from './components/documentManager';
-
 import { BaseItemDtoQueryResult } from './api/generated/models/base-item-dto-query-result';
 import { PlaybackProgressInfo } from './api/generated/models/playback-progress-info';
 import { MediaSourceInfo } from './api/generated/models/media-source-info';
 import { BaseItemDto } from './api/generated/models/base-item-dto';
 import { BaseItemPerson } from './api/generated/models/base-item-person';
 import { UserDto } from './api/generated/models/user-dto';
-import { GlobalScope, BusMessage, ItemIndex, ItemQuery } from './types/global';
+import { BusMessage, ItemIndex, ItemQuery } from './types/global';
+import { PlaybackState } from './components/playbackManager';
 
 /**
  * Get current playback position in ticks, adjusted for server seeking
  *
- * @param $scope - global context variable
+ * @param state - playback state.
  * @returns position in ticks
  */
-export function getCurrentPositionTicks($scope: GlobalScope): number {
+export function getCurrentPositionTicks(state: PlaybackState): number {
     let positionTicks = window.playerManager.getCurrentTimeSec() * 10000000;
     const mediaInformation = window.playerManager.getMediaInformation();
 
     if (mediaInformation && !mediaInformation.customData.canClientSeek) {
-        positionTicks += $scope.startPositionTicks || 0;
+        positionTicks += state.startPositionTicks || 0;
     }
 
     return positionTicks;
@@ -29,30 +28,30 @@ export function getCurrentPositionTicks($scope: GlobalScope): number {
 /**
  * Get parameters used for playback reporting
  *
- * @param $scope - global context variable
+ * @param state - playback state.
  * @returns progress information for use with the reporting APIs
  */
-export function getReportingParams($scope: GlobalScope): PlaybackProgressInfo {
+export function getReportingParams(state: PlaybackState): PlaybackProgressInfo {
     /* Math.round() calls:
      * on 10.7, any floating point will give an API error,
      * so it's actually really important to make sure that
      * those fields are always rounded.
      */
     return {
-        AudioStreamIndex: $scope.audioStreamIndex,
-        CanSeek: $scope.canSeek,
+        AudioStreamIndex: state.audioStreamIndex,
+        CanSeek: state.canSeek,
         IsMuted: window.volume.muted,
         IsPaused:
             window.playerManager.getPlayerState() ===
             cast.framework.messages.PlayerState.PAUSED,
-        ItemId: $scope.itemId,
-        LiveStreamId: $scope.liveStreamId,
-        MediaSourceId: $scope.mediaSourceId,
-        PlayMethod: $scope.playMethod,
-        PlaySessionId: $scope.playSessionId,
-        PositionTicks: Math.round(getCurrentPositionTicks($scope)),
+        ItemId: state.itemId,
+        LiveStreamId: state.liveStreamId,
+        MediaSourceId: state.mediaSourceId,
+        PlayMethod: state.playMethod,
+        PlaySessionId: state.playSessionId,
+        PositionTicks: Math.round(getCurrentPositionTicks(state)),
         RepeatMode: window.repeatMode,
-        SubtitleStreamIndex: $scope.subtitleStreamIndex,
+        SubtitleStreamIndex: state.subtitleStreamIndex,
         VolumeLevel: Math.round(window.volume.level * 100)
     };
 }
@@ -109,12 +108,12 @@ export function getNextPlaybackItemInfo(): ItemIndex | null {
  * about the item that is currently playing. This is sent over the cast protocol over to
  * the connected client (or clients?).
  *
- * @param $scope - global context
+ * @param playbackState - playback state.
  * @param reportingData - object full of random information
  * @returns lots of data for the connected client
  */
 export function getSenderReportingData(
-    $scope: GlobalScope,
+    playbackState: PlaybackState,
     reportingData: PlaybackProgressInfo
 ): any {
     const state: any = {
@@ -125,10 +124,10 @@ export function getSenderReportingData(
 
     state.NowPlayingItem = {
         Id: reportingData.ItemId,
-        RunTimeTicks: $scope.runtimeTicks
+        RunTimeTicks: playbackState.runtimeTicks
     };
 
-    const item = $scope.item;
+    const item = playbackState.item;
 
     if (item) {
         const nowPlayingItem = state.NowPlayingItem;
@@ -137,7 +136,7 @@ export function getSenderReportingData(
         nowPlayingItem.Chapters = item.Chapters || [];
 
         // TODO: Fill these
-        const mediaSource = item.MediaSources.filter((m: any) => {
+        const mediaSource = item.MediaSources?.filter((m: any) => {
             return m.Id == reportingData.MediaSourceId;
         })[0];
 
@@ -195,7 +194,7 @@ export function getSenderReportingData(
             nowPlayingItem.LogoImageTag = item.ParentLogoImageTag;
         }
 
-        if ($scope.playNextItem) {
+        if (playbackState.playNextItemBool) {
             const nextItemInfo = getNextPlaybackItemInfo();
 
             if (nextItemInfo) {
@@ -205,39 +204,6 @@ export function getSenderReportingData(
     }
 
     return state;
-}
-
-/**
- * Attempt to clean the receiver state.
- *
- * @param $scope - global context variable
- */
-export function resetPlaybackScope($scope: GlobalScope): void {
-    DocumentManager.setAppStatus('waiting');
-
-    $scope.startPositionTicks = 0;
-    DocumentManager.setWaitingBackdrop(null, null);
-    $scope.mediaType = '';
-    $scope.itemId = '';
-
-    $scope.audioStreamIndex = null;
-    $scope.subtitleStreamIndex = null;
-    $scope.mediaSource = null;
-    $scope.mediaSourceId = '';
-    $scope.PlaybackMediaSource = null;
-
-    $scope.playMethod = '';
-    $scope.canSeek = false;
-    $scope.isChangingStream = false;
-    $scope.playNextItem = true;
-
-    $scope.item = null;
-    $scope.liveStreamId = '';
-    $scope.playSessionId = '';
-
-    // Detail content
-    DocumentManager.setLogo(null);
-    DocumentManager.setDetailImage(null);
 }
 
 /**
