@@ -222,14 +222,19 @@ window.playerManager.addEventListener(
 window.playerManager.addEventListener(
     cast.framework.events.EventType.PLAYING,
     (): void => {
-        reportPlaybackStart($scope, getReportingParams($scope));
+        reportPlaybackStart(
+            PlaybackManager.playbackState,
+            getReportingParams(PlaybackManager.playbackState)
+        );
     }
 );
 // Notify of playback end just before stopping it, to get a good tick position
 window.playerManager.addEventListener(
     cast.framework.events.EventType.REQUEST_STOP,
     (): void => {
-        reportPlaybackStopped($scope, getReportingParams($scope));
+        reportPlaybackStopped(
+            PlaybackManager.playbackState,
+            getReportingParams(PlaybackManager.playbackState));
     }
 );
 
