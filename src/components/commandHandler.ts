@@ -104,14 +104,14 @@ export abstract class CommandHandler {
 
     static setAudioStreamIndexHandler(data: DataMessage): void {
         setAudioStreamIndex(
-            this.playbackManager.playbackState,
+            PlaybackManager.playbackState,
             (<SetIndexRequest>data.options).index
         );
     }
 
     static setSubtitleStreamIndexHandler(data: DataMessage): void {
         setSubtitleStreamIndex(
-            this.playbackManager.playbackState,
+            PlaybackManager.playbackState,
             (<SetIndexRequest>data.options).index
         );
     }
@@ -145,8 +145,8 @@ export abstract class CommandHandler {
         } else {
             // When a client connects send back the initial device state (volume etc) via a playbackstop message
             reportPlaybackProgress(
-                this.playbackManager.playbackState,
-                getReportingParams(this.playbackManager.playbackState),
+                PlaybackManager.playbackState,
+                getReportingParams(PlaybackManager.playbackState),
                 true,
                 'playbackstop'
             );
@@ -155,7 +155,7 @@ export abstract class CommandHandler {
 
     static SeekHandler(data: DataMessage): void {
         seek(
-            this.playbackManager.playbackState,
+            PlaybackManager.playbackState,
             (<SeekRequest>data.options).position * TicksPerSecond
         );
     }

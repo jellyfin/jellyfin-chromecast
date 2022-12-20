@@ -283,7 +283,7 @@ export abstract class PlaybackManager {
                 ticksToSeconds(mediaInfo.customData.startPositionTicks);
         }
 
-        load(this, mediaInfo.customData, item);
+        load(mediaInfo.customData, item);
         this.playerManager.load(loadRequestData);
 
         this.playbackState.PlaybackMediaSource = mediaSource;

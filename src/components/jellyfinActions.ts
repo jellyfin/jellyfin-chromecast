@@ -12,7 +12,7 @@ import { PlayRequest } from '../api/generated/models/play-request';
 import { LiveStreamResponse } from '../api/generated/models/live-stream-response';
 import { JellyfinApi } from './jellyfinApi';
 import { DocumentManager } from './documentManager';
-import { PlaybackState } from './playbackManager';
+import { PlaybackManager, PlaybackState } from './playbackManager';
 
 interface PlayRequestQuery extends PlayRequest {
     UserId?: string;
@@ -193,13 +193,12 @@ export function pingTranscoder(
  * @param serverItem - item that is playing
  */
 export function load(
-    playbackMgr: playbackManager,
     customData: any,
     serverItem: BaseItemDto
 ): void {
-    playbackMgr.resetPlaybackScope();
+    PlaybackManager.resetPlaybackScope();
 
-    const state = playbackMgr.playbackState;
+    const state = PlaybackManager.playbackState;
 
     // These are set up in maincontroller.createMediaInformation
     state.playSessionId = customData.playSessionId;

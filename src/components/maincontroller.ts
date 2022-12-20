@@ -33,7 +33,7 @@ PlaybackManager.setPlayerManager(window.playerManager);
 
 CommandHandler.configure(window.playerManager);
 
-playbackMgr.resetPlaybackScope();
+PlaybackManager.resetPlaybackScope();
 
 let broadcastToServer = new Date();
 
@@ -43,14 +43,14 @@ let hasReportedCapabilities = false;
  *
  */
 export function onMediaElementTimeUpdate(): void {
-    if (playbackMgr.playbackState.isChangingStream) {
+    if (PlaybackManager.playbackState.isChangingStream) {
         return;
     }
 
     const now = new Date();
 
     const elapsed = now.valueOf() - broadcastToServer.valueOf();
-    const playbackState = playbackMgr.playbackState;
+    const playbackState = PlaybackManager.playbackState;
 
     if (elapsed > 5000) {
         // TODO use status as input
@@ -73,7 +73,7 @@ export function onMediaElementTimeUpdate(): void {
  *
  */
 export function onMediaElementPause(): void {
-    if (playbackMgr.playbackState.isChangingStream) {
+    if (PlaybackManager.playbackState.isChangingStream) {
         return;
     }
 
@@ -84,7 +84,7 @@ export function onMediaElementPause(): void {
  *
  */
 export function onMediaElementPlaying(): void {
-    if (playbackMgr.playbackState.isChangingStream) {
+    if (PlaybackManager.playbackState.isChangingStream) {
         return;
     }
 
@@ -151,7 +151,7 @@ enableTimeUpdateListener();
 
 window.addEventListener('beforeunload', () => {
     // Try to cleanup after ourselves before the page closes
-    const playbackState = playbackMgr.playbackState;
+    const playbackState = PlaybackManager.playbackState;
 
     disableTimeUpdateListener();
     reportPlaybackStopped(playbackState, getReportingParams(playbackState));
@@ -160,7 +160,7 @@ window.addEventListener('beforeunload', () => {
 window.playerManager.addEventListener(
     cast.framework.events.EventType.PLAY,
     (): void => {
-        const playbackState = playbackMgr.playbackState;
+        const playbackState = PlaybackManager.playbackState;
 
         play(playbackState);
         reportPlaybackProgress(
@@ -173,7 +173,7 @@ window.playerManager.addEventListener(
 window.playerManager.addEventListener(
     cast.framework.events.EventType.PAUSE,
     (): void => {
-        const playbackState = playbackMgr.playbackState;
+        const playbackState = PlaybackManager.playbackState;
 
         reportPlaybackProgress(
             playbackState,
@@ -201,7 +201,7 @@ window.playerManager.addEventListener(
 window.playerManager.addEventListener(
     cast.framework.events.EventType.ENDED,
     (): void => {
-        const playbackState = playbackMgr.playbackState;
+        const playbackState = PlaybackManager.playbackState;
 
         // If we're changing streams, do not report playback ended.
         if (playbackState.isChangingStream) {
@@ -209,7 +209,7 @@ window.playerManager.addEventListener(
         }
 
         reportPlaybackStopped(playbackState, getReportingParams(playbackState));
-        playbackMgr.resetPlaybackScope();
+        PlaybackManager.resetPlaybackScope();
 
         if (!PlaybackManager.playNextItem()) {
             PlaybackManager.resetPlaylist();
@@ -319,7 +319,7 @@ export function processMessage(data: any): void {
     CommandHandler.processMessage(data, data.command);
 
     if (window.reportEventType) {
-        const playbackState = playbackMgr.playbackState;
+        const playbackState = PlaybackManager.playbackState;
 
         const report = (): void => {
             reportPlaybackProgress(
@@ -348,7 +348,7 @@ export function reportEvent(
     name: string,
     reportToServer: boolean
 ): Promise<void> {
-    const playbackState = playbackMgr.playbackState;
+    const playbackState = PlaybackManager.playbackState;
 
     return reportPlaybackProgress(
         playbackState,
