@@ -2,7 +2,7 @@ import { parseISO8601Date, TicksPerSecond, ticksToSeconds } from '../helpers';
 import { JellyfinApi } from './jellyfinApi';
 import { deviceIds, getActiveDeviceId } from './castDevices';
 import { BaseItemDto } from '~/api/generated/models/base-item-dto';
-import { AppStatus } from '~/types/global';
+import { AppStatus } from '../types/appStatus';
 
 export abstract class DocumentManager {
     // Duration between each backdrop switch in ms

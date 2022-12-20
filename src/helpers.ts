@@ -7,7 +7,7 @@ import { MediaSourceInfo } from './api/generated/models/media-source-info';
 import { BaseItemDto } from './api/generated/models/base-item-dto';
 import { BaseItemPerson } from './api/generated/models/base-item-person';
 import { UserDto } from './api/generated/models/user-dto';
-import { BusMessage, AppStatus, ItemQuery } from './types/global';
+import { BusMessage, ItemQuery } from './types/global';
 
 export const TicksPerSecond = 10000000
 /**

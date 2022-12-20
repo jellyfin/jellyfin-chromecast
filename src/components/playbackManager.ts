@@ -22,9 +22,9 @@ import {
 } from './maincontroller';
 
 import { DocumentManager } from './documentManager';
-import { BaseItemDto } from '~/api/generated/models/base-item-dto';
-import { MediaSourceInfo } from '~/api/generated/models/media-source-info';
-import { PlayMethod } from '~/api/generated';
+import type { BaseItemDto } from '../api/generated/models/base-item-dto';
+import type { MediaSourceInfo } from '../api/generated/models/media-source-info';
+import type { PlayMethod } from '../api/generated';
 
 export interface PlaybackState {
     startPositionTicks: number;
@@ -49,8 +49,9 @@ export interface PlaybackState {
     runtimeTicks: number;
 }
 
-import { AppStatus, ItemIndex } from '~/types/global';
-import { RepeatMode } from '~/api/generated';
+import { ItemIndex } from '~/types/global';
+import { AppStatus } from '../types/appStatus';
+import { RepeatMode } from '../api/generated';
 
 export abstract class PlaybackManager {
     private static playerManager: framework.PlayerManager;

@@ -3,7 +3,7 @@ import {
     broadcastToMessageBus
 } from '../helpers';
 
-import { AppStatus } from '../types/global';
+import { AppStatus } from '../types/appStatus';
 import { PlaybackProgressInfo } from '../api/generated/models/playback-progress-info';
 import { BaseItemDto } from '../api/generated/models/base-item-dto';
 import { DeviceProfile } from '../api/generated/models/device-profile';

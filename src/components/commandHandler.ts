@@ -1,6 +1,5 @@
 import { getReportingParams, TicksPerSecond } from '../helpers';
-import {
-    AppStatus,
+import type {
     DataMessage,
     DisplayRequest,
     PlayRequest,
@@ -9,6 +8,7 @@ import {
     SetRepeatModeRequest,
     SupportedCommands
 } from '../types/global';
+
 import {
     translateItems,
     shuffle,
@@ -19,9 +19,8 @@ import {
 } from './maincontroller';
 
 import { reportPlaybackProgress } from './jellyfinActions';
-
+import { AppStatus } from '../types/appStatus';
 import { PlaybackManager } from './playbackManager';
-
 import { DocumentManager } from './documentManager';
 
 export abstract class CommandHandler {
