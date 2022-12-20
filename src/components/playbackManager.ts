@@ -24,6 +24,30 @@ import {
 import { DocumentManager } from './documentManager';
 import { BaseItemDto } from '~/api/generated/models/base-item-dto';
 import { MediaSourceInfo } from '~/api/generated/models/media-source-info';
+import { PlayMethod } from '~/api/generated';
+
+export interface PlaybackState {
+    startPositionTicks: number;
+    mediaType: string | null | undefined;
+    itemId: string;
+
+    audioStreamIndex: null;
+    subtitleStreamIndex: number | null;
+    mediaSource: MediaSourceInfo | null;
+    mediaSourceId: string;
+    PlaybackMediaSource: MediaSourceInfo | null;
+
+    playMethod: PlayMethod | undefined;
+    canSeek: boolean;
+    isChangingStream: boolean;
+    playNextItemBool: boolean;
+
+    item: BaseItemDto | null;
+    liveStreamId: string;
+    playSessionId: string;
+
+    runtimeTicks: number;
+}
 
 import { AppStatus, ItemIndex } from '~/types/global';
 import { RepeatMode } from '~/api/generated';
@@ -32,6 +56,25 @@ export abstract class PlaybackManager {
     private static playerManager: framework.PlayerManager;
     private static activePlaylist: Array<BaseItemDto>;
     private static activePlaylistIndex: number;
+
+    static playbackState: PlaybackState = {
+        audioStreamIndex: null,
+        canSeek: false,
+        isChangingStream: false,
+        item: null,
+        itemId: '',
+        liveStreamId: '',
+        mediaSource: null,
+        mediaSourceId: '',
+        mediaType: '',
+        PlaybackMediaSource: null,
+        playMethod: undefined,
+        playNextItemBool: true,
+        playSessionId: '',
+        runtimeTicks: 0,
+        startPositionTicks: 0,
+        subtitleStreamIndex: null
+    };
 
     static setPlayerManager(playerManager: framework.PlayerManager): void {
         // Parameters
@@ -150,7 +193,7 @@ export abstract class PlaybackManager {
         item: BaseItemDto,
         options: any
     ): Promise<void> {
-        $scope.isChangingStream = false;
+        this.playbackState.isChangingStream = false;
         DocumentManager.setAppStatus(AppStatus.Loading);
 
         const maxBitrate = await getMaxBitrate();
@@ -240,17 +283,18 @@ export abstract class PlaybackManager {
                 ticksToSeconds(mediaInfo.customData.startPositionTicks);
         }
 
-        load($scope, mediaInfo.customData, item);
+        load(this, mediaInfo.customData, item);
         this.playerManager.load(loadRequestData);
 
-        console.log(`setting src to ${streamInfo.url}`);
-        $scope.PlaybackMediaSource = mediaSource;
+        this.playbackState.PlaybackMediaSource = mediaSource;
 
-        $scope.mediaSource = mediaSource;
-        $scope.audioStreamIndex = streamInfo.audioStreamIndex;
-        $scope.subtitleStreamIndex = streamInfo.subtitleStreamIndex;
+        console.log(`setting src to ${streamInfo.url}`);
+        this.playbackState.mediaSource = mediaSource;
 
         DocumentManager.setPlayerBackdrop(item);
+
+        this.playbackState.audioStreamIndex = streamInfo.audioStreamIndex;
+        this.playbackState.subtitleStreamIndex = streamInfo.subtitleStreamIndex;
 
         // We use false as we do not want to broadcast the new status yet
         // we will broadcast manually when the media has been loaded, this
@@ -272,9 +316,9 @@ export abstract class PlaybackManager {
      */
     static onStop(): void {
         if (this.getNextPlaybackItemInfo()) {
-            $scope.playNextItem = true;
+            this.playbackState.playNextItemBool = true;
         } else {
-            $scope.playNextItem = false;
+            this.playbackState.playNextItemBool = false;
 
             DocumentManager.setAppStatus(AppStatus.Waiting);
 
@@ -326,5 +370,36 @@ export abstract class PlaybackManager {
         }
 
         return null;
+    }
+
+    /**
+     * Attempt to clean the receiver state.
+     */
+    static resetPlaybackScope(): void {
+        DocumentManager.setAppStatus(AppStatus.Waiting);
+
+        this.playbackState.startPositionTicks = 0;
+        DocumentManager.setWaitingBackdrop(null, null);
+        this.playbackState.mediaType = '';
+        this.playbackState.itemId = '';
+
+        this.playbackState.audioStreamIndex = null;
+        this.playbackState.subtitleStreamIndex = null;
+        this.playbackState.mediaSource = null;
+        this.playbackState.mediaSourceId = '';
+        this.playbackState.PlaybackMediaSource = null;
+
+        this.playbackState.playMethod = undefined;
+        this.playbackState.canSeek = false;
+        this.playbackState.isChangingStream = false;
+        this.playbackState.playNextItemBool = true;
+
+        this.playbackState.item = null;
+        this.playbackState.liveStreamId = '';
+        this.playbackState.playSessionId = '';
+
+        // Detail content
+        DocumentManager.setLogo(null);
+        DocumentManager.setDetailImage(null);
     }
 }

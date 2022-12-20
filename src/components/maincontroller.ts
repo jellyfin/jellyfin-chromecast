@@ -1,7 +1,6 @@
 import {
     getCurrentPositionTicks,
     getReportingParams,
-    resetPlaybackScope,
     getMetadata,
     getStreamByIndex,
     getShuffleItems,
@@ -20,12 +19,12 @@ import {
 } from './jellyfinActions';
 import { getDeviceProfile } from './deviceprofileBuilder';
 import { JellyfinApi } from './jellyfinApi';
-import { PlaybackManager } from './playbackManager';
+import { PlaybackManager, PlaybackState } from './playbackManager';
 import { CommandHandler } from './commandHandler';
 import { getMaxBitrateSupport } from './codecSupportHelper';
 import { BaseItemDto } from '~/api/generated/models/base-item-dto';
 import { MediaSourceInfo } from '~/api/generated/models/media-source-info';
-import { GlobalScope, PlayRequest } from '~/types/global';
+import { PlayRequest } from '~/types/global';
 
 window.castReceiverContext = cast.framework.CastReceiverContext.getInstance();
 window.playerManager = window.castReceiverContext.getPlayerManager();
@@ -34,7 +33,7 @@ PlaybackManager.setPlayerManager(window.playerManager);
 
 CommandHandler.configure(window.playerManager);
 
-resetPlaybackScope($scope);
+playbackMgr.resetPlaybackScope();
 
 let broadcastToServer = new Date();
 
@@ -44,21 +43,29 @@ let hasReportedCapabilities = false;
  *
  */
 export function onMediaElementTimeUpdate(): void {
-    if ($scope.isChangingStream) {
+    if (playbackMgr.playbackState.isChangingStream) {
         return;
     }
 
     const now = new Date();
 
     const elapsed = now.valueOf() - broadcastToServer.valueOf();
+    const playbackState = playbackMgr.playbackState;
 
     if (elapsed > 5000) {
         // TODO use status as input
-        reportPlaybackProgress($scope, getReportingParams($scope));
+        reportPlaybackProgress(
+            playbackState,
+            getReportingParams(playbackState)
+        );
         broadcastToServer = now;
     } else if (elapsed > 1500) {
         // TODO use status as input
-        reportPlaybackProgress($scope, getReportingParams($scope), false);
+        reportPlaybackProgress(
+            playbackState,
+            getReportingParams(playbackState),
+            false
+        );
     }
 }
 
@@ -66,7 +73,7 @@ export function onMediaElementTimeUpdate(): void {
  *
  */
 export function onMediaElementPause(): void {
-    if ($scope.isChangingStream) {
+    if (playbackMgr.playbackState.isChangingStream) {
         return;
     }
 
@@ -77,7 +84,7 @@ export function onMediaElementPause(): void {
  *
  */
 export function onMediaElementPlaying(): void {
-    if ($scope.isChangingStream) {
+    if (playbackMgr.playbackState.isChangingStream) {
         return;
     }
 
@@ -144,21 +151,34 @@ enableTimeUpdateListener();
 
 window.addEventListener('beforeunload', () => {
     // Try to cleanup after ourselves before the page closes
+    const playbackState = playbackMgr.playbackState;
+
     disableTimeUpdateListener();
-    reportPlaybackStopped($scope, getReportingParams($scope));
+    reportPlaybackStopped(playbackState, getReportingParams(playbackState));
 });
 
 window.playerManager.addEventListener(
     cast.framework.events.EventType.PLAY,
     (): void => {
-        play($scope);
+        const playbackState = playbackMgr.playbackState;
+
+        play(playbackState);
+        reportPlaybackProgress(
+            playbackState,
+            getReportingParams(playbackState)
+        );
     }
 );
 
 window.playerManager.addEventListener(
     cast.framework.events.EventType.PAUSE,
     (): void => {
-        reportPlaybackProgress($scope, getReportingParams($scope));
+        const playbackState = playbackMgr.playbackState;
+
+        reportPlaybackProgress(
+            playbackState,
+            getReportingParams(playbackState)
+        );
     }
 );
 
@@ -181,13 +201,15 @@ window.playerManager.addEventListener(
 window.playerManager.addEventListener(
     cast.framework.events.EventType.ENDED,
     (): void => {
+        const playbackState = playbackMgr.playbackState;
+
         // If we're changing streams, do not report playback ended.
-        if ($scope.isChangingStream) {
+        if (playbackState.isChangingStream) {
             return;
         }
 
-        reportPlaybackStopped($scope, getReportingParams($scope));
-        resetPlaybackScope($scope);
+        reportPlaybackStopped(playbackState, getReportingParams(playbackState));
+        playbackMgr.resetPlaybackScope();
 
         if (!PlaybackManager.playNextItem()) {
             PlaybackManager.resetPlaylist();
@@ -297,15 +319,22 @@ export function processMessage(data: any): void {
     CommandHandler.processMessage(data, data.command);
 
     if (window.reportEventType) {
-        const report = (): Promise<void> =>
-            reportPlaybackProgress($scope, getReportingParams($scope));
+        const playbackState = playbackMgr.playbackState;
+
+        const report = (): void => {
+            reportPlaybackProgress(
+                playbackState,
+                getReportingParams(playbackState)
+            );
+        };
 
         reportPlaybackProgress(
-            $scope,
-            getReportingParams($scope),
+            playbackState,
+            getReportingParams(playbackState),
             true,
             window.reportEventType
         );
+
         setTimeout(report, 100);
         setTimeout(report, 500);
     }
@@ -319,33 +348,35 @@ export function reportEvent(
     name: string,
     reportToServer: boolean
 ): Promise<void> {
+    const playbackState = playbackMgr.playbackState;
+
     return reportPlaybackProgress(
-        $scope,
-        getReportingParams($scope),
+        playbackState,
+        getReportingParams(playbackState),
         reportToServer,
         name
     );
 }
 
 /**
- * @param $scope
+ * @param state - playback state.
  * @param index
  */
 export function setSubtitleStreamIndex(
-    $scope: GlobalScope,
+    state: PlaybackState,
     index: number
 ): void {
     console.log(`setSubtitleStreamIndex. index: ${index}`);
 
     let positionTicks;
 
-    const currentSubtitleStream = $scope.mediaSource.MediaStreams.filter(
+    // FIXME: Possible index error when MediaStreams is undefined.
+    const currentSubtitleStream = state.mediaSource?.MediaStreams?.filter(
         (m: any) => {
-            return (
-                m.Index == $scope.subtitleStreamIndex && m.Type == 'Subtitle'
-            );
+            return m.Index == state.subtitleStreamIndex && m.Type == 'Subtitle';
         }
     )[0];
+
     const currentDeliveryMethod = currentSubtitleStream
         ? currentSubtitleStream.DeliveryMethod
         : null;
@@ -354,21 +385,25 @@ export function setSubtitleStreamIndex(
         // Need to change the stream to turn off the subs
         if (currentDeliveryMethod == 'Encode') {
             console.log('setSubtitleStreamIndex video url change required');
-            positionTicks = getCurrentPositionTicks($scope);
-            changeStream(positionTicks, {
+            positionTicks = getCurrentPositionTicks(state);
+            changeStream(state, positionTicks, {
                 SubtitleStreamIndex: -1
             });
         } else {
-            $scope.subtitleStreamIndex = -1;
+            state.subtitleStreamIndex = -1;
             setTextTrack(null);
         }
 
         return;
     }
 
-    const mediaStreams = $scope.PlaybackMediaSource.MediaStreams;
+    const mediaStreams = state.PlaybackMediaSource?.MediaStreams;
 
-    const subtitleStream = getStreamByIndex(mediaStreams, 'Subtitle', index);
+    const subtitleStream = getStreamByIndex(
+        <any>mediaStreams,
+        'Subtitle',
+        index
+    );
 
     if (!subtitleStream) {
         console.log(
@@ -392,45 +427,48 @@ export function setSubtitleStreamIndex(
 
         console.log(`Subtitle url: ${textStreamUrl}`);
         setTextTrack(index);
-        $scope.subtitleStreamIndex = subtitleStream.Index;
+        state.subtitleStreamIndex = subtitleStream.Index;
 
         return;
     } else {
         console.log('setSubtitleStreamIndex video url change required');
-        positionTicks = getCurrentPositionTicks($scope);
-        changeStream(positionTicks, {
+        positionTicks = getCurrentPositionTicks(state);
+        changeStream(state, positionTicks, {
             SubtitleStreamIndex: index
         });
     }
 }
 
 /**
- * @param $scope
+ * @param state - playback state.
  * @param index
  */
 export function setAudioStreamIndex(
-    $scope: GlobalScope,
+    state: PlaybackState,
     index: number
 ): Promise<void> {
-    const positionTicks = getCurrentPositionTicks($scope);
+    const positionTicks = getCurrentPositionTicks(state);
 
-    return changeStream(positionTicks, {
+    return changeStream(state, positionTicks, {
         AudioStreamIndex: index
     });
 }
 
 /**
+ * @param state - playback state.
  * @param ticks
  */
-export function seek(ticks: number): Promise<void> {
-    return changeStream(ticks);
+export function seek(state: PlaybackState, ticks: number): Promise<void> {
+    return changeStream(state, ticks);
 }
 
 /**
+ * @param state - playback state.
  * @param ticks
  * @param params
  */
 export async function changeStream(
+    state: PlaybackState,
     ticks: number,
     params: any = undefined
 ): Promise<void> {
@@ -439,7 +477,7 @@ export async function changeStream(
         params == null
     ) {
         window.playerManager.seek(ticksToSeconds(ticks));
-        reportPlaybackProgress($scope, getReportingParams($scope));
+        reportPlaybackProgress(state, getReportingParams(state));
 
         return Promise.resolve();
     }
@@ -458,17 +496,18 @@ export async function changeStream(
     //    await stopActiveEncodings($scope.playSessionId);
     //}
 
-    return await PlaybackManager.playItemInternal($scope.item, {
+    // @ts-expect-error
+    return await PlaybackManager.playItemInternal(state.item, {
         audioStreamIndex:
             params.AudioStreamIndex == null
-                ? $scope.audioStreamIndex
+                ? state.audioStreamIndex
                 : params.AudioStreamIndex,
-        liveStreamId: $scope.liveStreamId,
-        mediaSourceId: $scope.mediaSourceId,
+        liveStreamId: state.liveStreamId,
+        mediaSourceId: state.mediaSourceId,
         startPositionTicks: ticks,
         subtitleStreamIndex:
             params.SubtitleStreamIndex == null
-                ? $scope.subtitleStreamIndex
+                ? state.subtitleStreamIndex
                 : params.SubtitleStreamIndex
     });
 }

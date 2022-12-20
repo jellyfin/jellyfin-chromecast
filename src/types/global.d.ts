@@ -6,10 +6,6 @@ import { SystemVolumeData } from 'chromecast-caf-receiver/cast.framework.system'
 import { RepeatMode } from '../api/generated/models/repeat-mode';
 import { BaseItemDto } from '../api/generated/models/base-item-dto';
 
-export interface GlobalScope {
-    [key: string]: any;
-}
-
 export interface Dictionary<T> {
     [Key: string]: T;
 }
@@ -105,7 +101,6 @@ interface SupportedCommands {
 declare global {
     export const PRODUCTION: boolean;
     export const RECEIVERVERSION: string;
-    export const $scope: GlobalScope;
     export interface Window {
         mediaElement: HTMLElement | null;
         playerManager: PlayerManager;

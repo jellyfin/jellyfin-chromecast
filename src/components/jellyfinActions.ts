@@ -1,10 +1,9 @@
 import {
     getSenderReportingData,
-    resetPlaybackScope,
     broadcastToMessageBus
 } from '../helpers';
 
-import { AppStatus, GlobalScope } from '../types/global';
+import { AppStatus } from '../types/global';
 import { PlaybackProgressInfo } from '../api/generated/models/playback-progress-info';
 import { BaseItemDto } from '../api/generated/models/base-item-dto';
 import { DeviceProfile } from '../api/generated/models/device-profile';
@@ -13,6 +12,7 @@ import { PlayRequest } from '../api/generated/models/play-request';
 import { LiveStreamResponse } from '../api/generated/models/live-stream-response';
 import { JellyfinApi } from './jellyfinApi';
 import { DocumentManager } from './documentManager';
+import { PlaybackState } from './playbackManager';
 
 interface PlayRequestQuery extends PlayRequest {
     UserId?: string;
@@ -31,13 +31,9 @@ let lastTranscoderPing = 0;
  *
  * This is used to keep the transcode available during pauses
  *
- * @param $scope - global context
  * @param reportingParams - parameters to report to the server
  */
-function restartPingInterval(
-    $scope: GlobalScope,
-    reportingParams: PlaybackProgressInfo
-): void {
+function restartPingInterval(reportingParams: PlaybackProgressInfo): void {
     stopPingInterval();
 
     if (reportingParams.PlayMethod == 'Transcode') {
@@ -62,12 +58,12 @@ export function stopPingInterval(): void {
 /**
  * Report to the server that playback has started.
  *
- * @param $scope - global scope
+ * @param state - playback state.
  * @param reportingParams - parameters to send to the server
  * @returns promise to wait for the request
  */
 export function reportPlaybackStart(
-    $scope: GlobalScope,
+    state: PlaybackState,
     reportingParams: PlaybackProgressInfo
 ): Promise<void> {
     // it's just "reporting" that the playback is starting
@@ -78,11 +74,11 @@ export function reportPlaybackStart(
 
     broadcastToMessageBus({
         //TODO: convert these to use a defined type in the type field
-        data: getSenderReportingData($scope, reportingParams),
+        data: getSenderReportingData(state, reportingParams),
         type: 'playbackstart'
     });
 
-    restartPingInterval($scope, reportingParams);
+    restartPingInterval(reportingParams);
 
     return JellyfinApi.authAjax('Sessions/Playing', {
         contentType: 'application/json',
@@ -94,20 +90,20 @@ export function reportPlaybackStart(
 /**
  * Report to the server the progress of the playback.
  *
- * @param $scope - global scope
+ * @param state - playback state.
  * @param reportingParams - parameters for jellyfin
  * @param reportToServer - if jellyfin should be informed
  * @param broadcastEventName - name of event to send to the cast sender
  * @returns Promise for the http request
  */
 export function reportPlaybackProgress(
-    $scope: GlobalScope,
+    state: PlaybackState,
     reportingParams: PlaybackProgressInfo,
     reportToServer = true,
     broadcastEventName = 'playbackprogress'
 ): Promise<void> {
     broadcastToMessageBus({
-        data: getSenderReportingData($scope, reportingParams),
+        data: getSenderReportingData(state, reportingParams),
         type: broadcastEventName
     });
 
@@ -115,7 +111,7 @@ export function reportPlaybackProgress(
         return Promise.resolve();
     }
 
-    restartPingInterval($scope, reportingParams);
+    restartPingInterval(reportingParams);
     lastTranscoderPing = new Date().getTime();
 
     return JellyfinApi.authAjax('Sessions/Playing/Progress', {
@@ -128,18 +124,18 @@ export function reportPlaybackProgress(
 /**
  * Report to the server that playback has stopped.
  *
- * @param $scope - global scope
+ * @param state - playback state.
  * @param reportingParams - parameters to send to the server
  * @returns promise for waiting for the request
  */
 export function reportPlaybackStopped(
-    $scope: GlobalScope,
+    state: PlaybackState,
     reportingParams: PlaybackProgressInfo
 ): Promise<void> {
     stopPingInterval();
 
     broadcastToMessageBus({
-        data: getSenderReportingData($scope, reportingParams),
+        data: getSenderReportingData(state, reportingParams),
         type: 'playbackstop'
     });
 
@@ -192,33 +188,35 @@ export function pingTranscoder(
 /**
  * Update the context about the item we are playing.
  *
- * @param $scope - global context
- * @param customData - data to set on $scope
+ * @param playbackMgr - playback manager.
+ * @param customData - data to set on playback state.
  * @param serverItem - item that is playing
  */
 export function load(
-    $scope: GlobalScope,
+    playbackMgr: playbackManager,
     customData: any,
     serverItem: BaseItemDto
 ): void {
-    resetPlaybackScope($scope);
+    playbackMgr.resetPlaybackScope();
+
+    const state = playbackMgr.playbackState;
 
     // These are set up in maincontroller.createMediaInformation
-    $scope.playSessionId = customData.playSessionId;
-    $scope.audioStreamIndex = customData.audioStreamIndex;
-    $scope.subtitleStreamIndex = customData.subtitleStreamIndex;
-    $scope.startPositionTicks = customData.startPositionTicks;
-    $scope.canSeek = customData.canSeek;
-    $scope.itemId = customData.itemId;
-    $scope.liveStreamId = customData.liveStreamId;
-    $scope.mediaSourceId = customData.mediaSourceId;
-    $scope.playMethod = customData.playMethod;
-    $scope.runtimeTicks = customData.runtimeTicks;
+    state.playSessionId = customData.playSessionId;
+    state.audioStreamIndex = customData.audioStreamIndex;
+    state.subtitleStreamIndex = customData.subtitleStreamIndex;
+    state.startPositionTicks = customData.startPositionTicks;
+    state.canSeek = customData.canSeek;
+    state.itemId = customData.itemId;
+    state.liveStreamId = customData.liveStreamId;
+    state.mediaSourceId = customData.mediaSourceId;
+    state.playMethod = customData.playMethod;
+    state.runtimeTicks = customData.runtimeTicks;
 
-    $scope.item = serverItem;
+    state.item = serverItem;
 
     DocumentManager.setAppStatus(AppStatus.Backdrop);
-    $scope.mediaType = serverItem?.MediaType;
+    state.mediaType = serverItem?.MediaType;
 }
 
 /**
@@ -229,9 +227,9 @@ export function load(
  *
  * TODO: rename these
  *
- * @param $scope - global scope
+ * @param state - playback state.
  */
-export function play($scope: GlobalScope): void {
+export function play(state: PlaybackState): void {
     if (
         DocumentManager.getAppStatus() == AppStatus.Backdrop ||
         DocumentManager.getAppStatus() == AppStatus.PlayingWithControls ||
@@ -241,7 +239,7 @@ export function play($scope: GlobalScope): void {
         setTimeout(() => {
             window.playerManager.play();
 
-            if ($scope.mediaType == 'Audio') {
+            if (state.mediaType == 'Audio') {
                 DocumentManager.setAppStatus(AppStatus.Audio);
             } else {
                 DocumentManager.setAppStatus(AppStatus.PlayingWithControls);
@@ -414,17 +412,17 @@ export async function detectBitrate(numBytes = 500000): Promise<number> {
 /**
  * Tell Jellyfin to kill off our active transcoding session
  *
- * @param $scope - Global scope variable
+ * @param state - playback state.
  * @returns Promise for the http request to go through
  */
-export function stopActiveEncodings($scope: GlobalScope): Promise<void> {
+export function stopActiveEncodings(state: PlaybackState): Promise<void> {
     const options = {
         deviceId: JellyfinApi.deviceId,
-        PlaySessionId: undefined
+        PlaySessionId: ''
     };
 
-    if ($scope.playSessionId) {
-        options.PlaySessionId = $scope.playSessionId;
+    if (state.playSessionId) {
+        options.PlaySessionId = state.playSessionId;
     }
 
     return JellyfinApi.authAjax('Videos/ActiveEncodings', {
