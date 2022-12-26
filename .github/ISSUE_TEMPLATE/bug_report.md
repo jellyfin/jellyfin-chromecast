@@ -35,7 +35,8 @@ assignees: ''
 
 -   OS: [e.g. Docker, Debian, Windows]
 -   Browser: [e.g. Firefox, Chrome, Safari]
--   Jellyfin Version: [e.g. 10.0.1]
+-   Jellyfin version: [e.g. 10.0.1]
+-   Cast Receiver version: [e.g. Stable, Unstable]
 -   Cast client: [e.g Ultra]
 
 **Additional context**
