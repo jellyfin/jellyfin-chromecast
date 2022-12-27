@@ -1,4 +1,7 @@
 module.exports = {
+    globals: {
+        RECEIVERVERSION: 'thisIsVersionNumber'
+    },
     preset: 'ts-jest',
-    testEnvironment: 'node'
+    testEnvironment: 'jsdom'
 };

@@ -28,12 +28,55 @@ import {
 import { DocumentManager } from './documentManager';
 import { BaseItemDto } from '~/api/generated/models/base-item-dto';
 import { MediaSourceInfo } from '~/api/generated/models/media-source-info';
+import { PlayMethod } from '~/api/generated';
+
+export interface PlaybackState {
+    startPositionTicks: number;
+    mediaType: string | null | undefined;
+    itemId: string;
+
+    audioStreamIndex: null;
+    subtitleStreamIndex: number | null;
+    mediaSource: MediaSourceInfo | null;
+    mediaSourceId: string;
+    PlaybackMediaSource: MediaSourceInfo | null;
+
+    playMethod: PlayMethod | undefined;
+    canSeek: boolean;
+    isChangingStream: boolean;
+    playNextItemBool: boolean;
+
+    item: BaseItemDto | null;
+    liveStreamId: string;
+    playSessionId: string;
+
+    runtimeTicks: number;
+}
 
 export class playbackManager {
     private playerManager: framework.PlayerManager;
     // TODO remove any
     private activePlaylist: Array<BaseItemDto>;
     private activePlaylistIndex: number;
+
+    playbackState: PlaybackState = {
+        audioStreamIndex: null,
+        canSeek: false,
+        isChangingStream: false,
+        item: null,
+        itemId: '',
+        liveStreamId: '',
+        mediaSource: null,
+        mediaSourceId: '',
+        mediaType: '',
+        PlaybackMediaSource: null,
+        playMethod: undefined,
+        playNextItemBool: true,
+        playSessionId: '',
+        runtimeTicks: 0,
+        startPositionTicks: 0,
+        subtitleStreamIndex: null
+    };
 
     constructor(playerManager: framework.PlayerManager) {
         // Parameters
@@ -123,7 +166,7 @@ export class playbackManager {
     }
 
     async playItemInternal(item: BaseItemDto, options: any): Promise<void> {
-        $scope.isChangingStream = false;
+        this.playbackState.isChangingStream = false;
         DocumentManager.setAppStatus('loading');
 
         const maxBitrate = await getMaxBitrate();
@@ -208,17 +251,20 @@ export class playbackManager {
         loadRequestData.media = mediaInfo;
         loadRequestData.autoplay = true;
 
-        load($scope, mediaInfo.customData, item);
+        load(this, mediaInfo.customData, item);
         this.playerManager.load(loadRequestData);
 
-        $scope.PlaybackMediaSource = mediaSource;
+        this.playbackState.PlaybackMediaSource = mediaSource;
 
         console.log(`setting src to ${url}`);
-        $scope.mediaSource = mediaSource;
+        this.playbackState.mediaSource = mediaSource;
 
         DocumentManager.setPlayerBackdrop(item);
 
-        reportPlaybackStart($scope, getReportingParams($scope));
+        reportPlaybackStart(
+            this.playbackState,
+            getReportingParams(this.playbackState)
+        );
 
         // We use false as we do not want to broadcast the new status yet
         // we will broadcast manually when the media has been loaded, this
@@ -227,17 +273,20 @@ export class playbackManager {
     }
 
     stop(continuing = false): Promise<any> {
-        $scope.playNextItem = continuing;
+        this.playbackState.playNextItemBool = continuing;
         stop();
 
-        const reportingParams = getReportingParams($scope);
+        const reportingParams = getReportingParams(this.playbackState);
 
         let promise;
 
         stopPingInterval();
 
         if (reportingParams.ItemId) {
-            promise = reportPlaybackStopped($scope, reportingParams);
+            promise = reportPlaybackStopped(
+                this.playbackState,
+                reportingParams
+            );
         }
 
         this.playerManager.stop();
@@ -249,5 +298,36 @@ export class playbackManager {
         promise = promise || Promise.resolve();
 
         return promise;
+    }
+
+    /**
+     * Attempt to clean the receiver state.
+     */
+    resetPlaybackScope(): void {
+        DocumentManager.setAppStatus('waiting');
+
+        this.playbackState.startPositionTicks = 0;
+        DocumentManager.setWaitingBackdrop(null, null);
+        this.playbackState.mediaType = '';
+        this.playbackState.itemId = '';
+
+        this.playbackState.audioStreamIndex = null;
+        this.playbackState.subtitleStreamIndex = null;
+        this.playbackState.mediaSource = null;
+        this.playbackState.mediaSourceId = '';
+        this.playbackState.PlaybackMediaSource = null;
+
+        this.playbackState.playMethod = undefined;
+        this.playbackState.canSeek = false;
+        this.playbackState.isChangingStream = false;
+        this.playbackState.playNextItemBool = true;
+
+        this.playbackState.item = null;
+        this.playbackState.liveStreamId = '';
+        this.playbackState.playSessionId = '';
+
+        // Detail content
+        DocumentManager.setLogo(null);
+        DocumentManager.setDetailImage(null);
     }
 }

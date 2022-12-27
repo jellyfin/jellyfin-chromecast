@@ -3,13 +3,13 @@ import { Dictionary } from '~/types/global';
 
 export abstract class JellyfinApi {
     // userId that we are connecting as currently
-    public static userId: string | null = null;
+    public static userId: string | undefined;
 
     // Security token to prove authentication
-    public static accessToken: string | null = null;
+    public static accessToken: string | undefined;
 
     // Address of server
-    public static serverAddress: string | null = null;
+    public static serverAddress: string | undefined;
 
     // device name
     public static deviceName = 'Google Cast';
@@ -21,9 +21,9 @@ export abstract class JellyfinApi {
     public static versionNumber = RECEIVERVERSION;
 
     public static setServerInfo(
-        userId: string,
-        accessToken: string,
-        serverAddress: string,
+        userId?: string,
+        accessToken?: string,
+        serverAddress?: string,
         receiverName = ''
     ): void {
         console.debug(
@@ -69,7 +69,7 @@ export abstract class JellyfinApi {
             Authorization: auth
         };
 
-        if (this.accessToken != null) {
+        if (this.accessToken != undefined) {
             headers['X-MediaBrowser-Token'] = this.accessToken;
         }
 
@@ -79,7 +79,7 @@ export abstract class JellyfinApi {
     // Create a basic url.
     // Cannot start with /.
     public static createUrl(path: string): string {
-        if (this.serverAddress === null) {
+        if (this.serverAddress === undefined) {
             console.error('JellyfinApi.createUrl: no server address present');
 
             return '';
@@ -96,6 +96,11 @@ export abstract class JellyfinApi {
     // create a path in /Users/userId/ <path>
     public static createUserUrl(path: string | null = null): string {
         if (path) {
+            // Remove leading slashes
+            while (path.charAt(0) === '/') {
+                path = path.substring(1);
+            }
+
             return this.createUrl(`Users/${this.userId}/${path}`);
         } else {
             return this.createUrl(`Users/${this.userId}`);
@@ -125,9 +130,9 @@ export abstract class JellyfinApi {
     // Authenticated ajax
     public static authAjax(path: string, args: any): Promise<any> {
         if (
-            this.userId === null ||
-            this.accessToken === null ||
-            this.serverAddress === null
+            this.userId === undefined ||
+            this.accessToken === undefined ||
+            this.serverAddress === undefined
         ) {
             console.error(
                 'JellyfinApi.authAjax: No userid/accesstoken/serverAddress present. Skipping request'
@@ -147,9 +152,9 @@ export abstract class JellyfinApi {
     // Authenticated ajax
     public static authAjaxUser(path: string, args: any): Promise<any> {
         if (
-            this.userId === null ||
-            this.accessToken === null ||
-            this.serverAddress === null
+            this.userId === undefined ||
+            this.accessToken === undefined ||
+            this.serverAddress === undefined
         ) {
             console.error(
                 'JellyfinApi.authAjaxUser: No userid/accesstoken/serverAddress present. Skipping request'

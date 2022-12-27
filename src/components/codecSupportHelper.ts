@@ -121,38 +121,67 @@ export function getMaxWidthSupport(deviceId: number): number {
 }
 
 /**
- * Get all H.26x profiles supported by the active Cast device.
+ * Get all H.264 profiles supported by the active Cast device.
  *
  * @param deviceId - Cast device id.
- * @returns All supported H.26x profiles.
+ * @returns All supported H.264 profiles.
  */
-export function getH26xProfileSupport(deviceId: number): string {
+export function getH264ProfileSupport(deviceId: number): string {
     // These are supported by all Cast devices, excluding audio only devices.
-    let h26xProfiles = 'high|main|baseline|constrained baseline';
+    let h264Profiles = 'high|main|baseline|constrained baseline';
 
     if (deviceId === deviceIds.ULTRA || deviceId === deviceIds.CCGTV) {
-        h26xProfiles += '|high 10';
+        h264Profiles += '|high 10';
     }
 
-    return h26xProfiles;
+    return h264Profiles;
 }
 
 /**
- * Get the highest H.26x level supported by the active Cast device.
+ * Get the highest H.264 level supported by the active Cast device.
  *
  * @param deviceId - Cast device id.
- * @returns The highest supported H.26x level.
+ * @returns The highest supported H.264 level.
  */
-export function getH26xLevelSupport(deviceId: number): number {
+export function getH264LevelSupport(deviceId: number): number {
     switch (deviceId) {
         case deviceIds.NESTHUBANDMAX:
         case deviceIds.GEN1AND2:
             return 41;
         case deviceIds.GEN3:
-            return 42;
         case deviceIds.ULTRA:
+            return 42;
         case deviceIds.CCGTV:
-            return 52;
+            return 51;
+    }
+
+    return 0;
+}
+
+/**
+ * Get all H.265 profiles supported by the active Cast device.
+ *
+ * @param deviceId - Cast device id.
+ * @returns All supported H.265 profiles.
+ */
+export function getH265ProfileSupport(deviceId: number): string {
+    // These are supported by all Cast devices, excluding audio only devices.
+    if (deviceId === deviceIds.ULTRA || deviceId === deviceIds.CCGTV) {
+        return 'high|main|baseline|constrained baseline|high 10';
+    }
+
+    return '';
+}
+
+/**
+ * Get the highest H.265 level supported by the active Cast device.
+ *
+ * @param deviceId - Cast device id.
+ * @returns The highest supported H.265 level.
+ */
+export function getH265LevelSupport(deviceId: number): number {
+    if (deviceId == deviceIds.ULTRA || deviceId == deviceIds.CCGTV) {
+        return 52;
     }
 
     return 0;

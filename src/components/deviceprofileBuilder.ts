@@ -21,8 +21,10 @@ import {
     hasVP8Support,
     hasVP9Support,
     getMaxWidthSupport,
-    getH26xProfileSupport,
-    getH26xLevelSupport,
+    getH264ProfileSupport,
+    getH264LevelSupport,
+    getH265ProfileSupport,
+    getH265LevelSupport,
     getSupportedVPXVideoCodecs,
     getSupportedMP4VideoCodecs,
     getSupportedMP4AudioCodecs,
@@ -196,10 +198,10 @@ function getCodecProfiles(): Array<CodecProfile> {
     CodecProfiles.push(aacConditions);
 
     const maxWidth: number = getMaxWidthSupport(currentDeviceId);
-    const h26xLevel: number = getH26xLevelSupport(currentDeviceId);
-    const h26xProfile: string = getH26xProfileSupport(currentDeviceId);
+    const h264Level: number = getH264LevelSupport(currentDeviceId);
+    const h264Profile: string = getH264ProfileSupport(currentDeviceId);
 
-    const h26xConditions: CodecProfile = {
+    const h264Conditions: CodecProfile = {
         Codec: 'h264',
         Conditions: [
             createProfileCondition(
@@ -210,12 +212,12 @@ function getCodecProfiles(): Array<CodecProfile> {
             createProfileCondition(
                 ProfileConditionValue.VideoProfile,
                 ProfileConditionType.EqualsAny,
-                h26xProfile
+                h264Profile
             ),
             createProfileCondition(
                 ProfileConditionValue.VideoLevel,
                 ProfileConditionType.LessThanEqual,
-                h26xLevel.toString()
+                h264Level.toString()
             ),
             createProfileCondition(
                 ProfileConditionValue.Width,
@@ -227,7 +229,40 @@ function getCodecProfiles(): Array<CodecProfile> {
         Type: CodecType.Video
     };
 
-    CodecProfiles.push(h26xConditions);
+    CodecProfiles.push(h264Conditions);
+
+    const h265Level: number = getH265LevelSupport(currentDeviceId);
+    const h265Profile: string = getH265ProfileSupport(currentDeviceId);
+
+    const h265Conditions: CodecProfile = {
+        Codec: 'h265',
+        Conditions: [
+            createProfileCondition(
+                ProfileConditionValue.IsAnamorphic,
+                ProfileConditionType.NotEquals,
+                'true'
+            ),
+            createProfileCondition(
+                ProfileConditionValue.VideoProfile,
+                ProfileConditionType.EqualsAny,
+                h265Profile
+            ),
+            createProfileCondition(
+                ProfileConditionValue.VideoLevel,
+                ProfileConditionType.LessThanEqual,
+                h265Level.toString()
+            ),
+            createProfileCondition(
+                ProfileConditionValue.Width,
+                ProfileConditionType.LessThanEqual,
+                maxWidth.toString(),
+                true
+            )
+        ],
+        Type: CodecType.Video
+    };
+
+    CodecProfiles.push(h265Conditions);
 
     const videoConditions: CodecProfile = {
         Conditions: [

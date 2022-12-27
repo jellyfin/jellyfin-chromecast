@@ -110,11 +110,17 @@ export abstract class CommandHandler {
     }
 
     static setAudioStreamIndexHandler(data: DataMessage): void {
-        setAudioStreamIndex($scope, (<SetIndexRequest>data.options).index);
+        setAudioStreamIndex(
+            this.playbackManager.playbackState,
+            (<SetIndexRequest>data.options).index
+        );
     }
 
     static setSubtitleStreamIndexHandler(data: DataMessage): void {
-        setSubtitleStreamIndex($scope, (<SetIndexRequest>data.options).index);
+        setSubtitleStreamIndex(
+            this.playbackManager.playbackState,
+            (<SetIndexRequest>data.options).index
+        );
     }
 
     // VolumeUp, VolumeDown and ToggleMute commands seem to be handled on the sender in the current implementation.
@@ -143,8 +149,8 @@ export abstract class CommandHandler {
         } else {
             // When a client connects send back the initial device state (volume etc) via a playbackstop message
             reportPlaybackProgress(
-                $scope,
-                getReportingParams($scope),
+                this.playbackManager.playbackState,
+                getReportingParams(this.playbackManager.playbackState),
                 true,
                 'playbackstop'
             );
@@ -152,7 +158,10 @@ export abstract class CommandHandler {
     }
 
     static SeekHandler(data: DataMessage): void {
-        seek((<SeekRequest>data.options).position * 10000000);
+        seek(
+            this.playbackManager.playbackState,
+            (<SeekRequest>data.options).position * 10000000
+        );
     }
 
     static MuteHandler(): void {
