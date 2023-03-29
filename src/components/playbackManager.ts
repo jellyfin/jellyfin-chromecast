@@ -1,3 +1,9 @@
+import type {
+    BaseItemDto,
+    MediaSourceInfo,
+    PlayMethod
+} from '@jellyfin/sdk/lib/generated-client';
+
 import {
     getNextPlaybackItemInfo,
     broadcastConnectionErrorMessage,
@@ -26,9 +32,6 @@ import {
 } from './maincontroller';
 
 import { DocumentManager } from './documentManager';
-import { BaseItemDto } from '~/api/generated/models/base-item-dto';
-import { MediaSourceInfo } from '~/api/generated/models/media-source-info';
-import { PlayMethod } from '~/api/generated';
 
 export interface PlaybackState {
     startPositionTicks: number;

@@ -1,3 +1,8 @@
+import type {
+    BaseItemDto,
+    MediaSourceInfo
+} from '@jellyfin/sdk/lib/generated-client';
+
 import {
     getCurrentPositionTicks,
     getReportingParams,
@@ -23,8 +28,6 @@ import { playbackManager, PlaybackState } from './playbackManager';
 import { CommandHandler } from './commandHandler';
 import { getMaxBitrateSupport } from './codecSupportHelper';
 import { DocumentManager } from './documentManager';
-import { BaseItemDto } from '~/api/generated/models/base-item-dto';
-import { MediaSourceInfo } from '~/api/generated/models/media-source-info';
 import { PlayRequest } from '~/types/global';
 
 window.castReceiverContext = cast.framework.CastReceiverContext.getInstance();

@@ -1,17 +1,19 @@
-import { CodecProfile } from '../api/generated/models/codec-profile';
-import { ContainerProfile } from '../api/generated/models/container-profile';
-import { DeviceProfile } from '../api/generated/models/device-profile';
-import { DirectPlayProfile } from '../api/generated/models/direct-play-profile';
-import { DlnaProfileType } from '../api/generated/models/dlna-profile-type';
-import { EncodingContext } from '../api/generated/models/encoding-context';
-import { ProfileCondition } from '../api/generated/models/profile-condition';
-import { ProfileConditionType } from '../api/generated/models/profile-condition-type';
-import { ResponseProfile } from '../api/generated/models/response-profile';
-import { SubtitleDeliveryMethod } from '../api/generated/models/subtitle-delivery-method';
-import { SubtitleProfile } from '../api/generated/models/subtitle-profile';
-import { TranscodingProfile } from '../api/generated/models/transcoding-profile';
-import { CodecType } from '../api/generated/models/codec-type';
-import { ProfileConditionValue } from '../api/generated/models/profile-condition-value';
+import type {
+    CodecProfile,
+    ContainerProfile,
+    DeviceProfile,
+    DirectPlayProfile,
+    ProfileCondition,
+    ResponseProfile,
+    SubtitleProfile,
+    TranscodingProfile
+} from '@jellyfin/sdk/lib/generated-client';
+import { CodecType } from '@jellyfin/sdk/lib/generated-client/models/codec-type';
+import { DlnaProfileType } from '@jellyfin/sdk/lib/generated-client/models/dlna-profile-type';
+import { EncodingContext } from '@jellyfin/sdk/lib/generated-client/models/encoding-context';
+import { ProfileConditionType } from '@jellyfin/sdk/lib/generated-client/models/profile-condition-type';
+import { ProfileConditionValue } from '@jellyfin/sdk/lib/generated-client/models/profile-condition-value';
+import { SubtitleDeliveryMethod } from '@jellyfin/sdk/lib/generated-client/models/subtitle-delivery-method';
 
 import { deviceIds, getActiveDeviceId } from './castDevices';
 

@@ -1,10 +1,13 @@
+import type {
+    BaseItemDto,
+    DeviceProfile,
+    LiveStreamResponse,
+    MediaSourceInfo,
+    PlaybackProgressInfo,
+    PlayRequest
+} from '@jellyfin/sdk/lib/generated-client';
+
 import { getSenderReportingData, broadcastToMessageBus } from '../helpers';
-import { PlaybackProgressInfo } from '../api/generated/models/playback-progress-info';
-import { BaseItemDto } from '../api/generated/models/base-item-dto';
-import { DeviceProfile } from '../api/generated/models/device-profile';
-import { MediaSourceInfo } from '../api/generated/models/media-source-info';
-import { PlayRequest } from '../api/generated/models/play-request';
-import { LiveStreamResponse } from '../api/generated/models/live-stream-response';
 import { JellyfinApi } from './jellyfinApi';
 import { DocumentManager } from './documentManager';
 import { playbackManager, PlaybackState } from './playbackManager';

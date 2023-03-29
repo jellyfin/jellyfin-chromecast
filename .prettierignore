@@ -1,6 +1,5 @@
 dist/
 node_modules/
-src/api/generated/
 package-lock.json
 
 LICENSE.md

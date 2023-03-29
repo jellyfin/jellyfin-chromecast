@@ -34,5 +34,4 @@ LICENSE         text
 .gitignore      export-ignore
 
 *.gitattributes linguist-language=gitattributes
-src/api/generated/* linguist-generated=true
 locales/*.json merge=union

@@ -3,8 +3,10 @@ import {
     PlayerManager
 } from 'chromecast-caf-receiver/cast.framework';
 import { SystemVolumeData } from 'chromecast-caf-receiver/cast.framework.system';
-import { RepeatMode } from '../api/generated/models/repeat-mode';
-import { BaseItemDto } from '../api/generated/models/base-item-dto';
+import type {
+    BaseItemDto,
+    RepeatMode
+} from '@jellyfin/sdk/lib/generated-client';
 
 export interface Dictionary<T> {
     [Key: string]: T;
