@@ -31,7 +31,7 @@ const common: webpack.Configuration = {
     output: {
         filename: '[name].[fullhash].js',
         path: path.resolve(__dirname, 'dist'),
-        publicPath: './'
+        publicPath: ''
     },
     plugins: [
         // @ts-expect-error - Typings mismatch between versions
@@ -69,11 +69,9 @@ const development: webpack.Configuration = {
     // @ts-expect-error - Typings mismatch between versions
     devServer: {
         compress: true,
-        contentBase: path.join(__dirname, 'dist'),
         port: process.env.RECEIVER_PORT
             ? Number.parseInt(process.env.RECEIVER_PORT, 10)
-            : 9000,
-        publicPath: '/'
+            : 9000
     },
     devtool: 'inline-source-map',
     mode: 'development',
