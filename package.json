@@ -6,6 +6,7 @@
         "url": "https://github.com/jellyfin/jellyfin-chromecast/issues"
     },
     "dependencies": {
+        "@jellyfin/sdk": "^0.7.0",
         "axios": "^0.21.2"
     },
     "devDependencies": {

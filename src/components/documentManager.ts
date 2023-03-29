@@ -1,7 +1,8 @@
+import type { BaseItemDto } from '@jellyfin/sdk/lib/generated-client';
+
 import { parseISO8601Date } from '../helpers';
 import { JellyfinApi } from './jellyfinApi';
 import { deviceIds, getActiveDeviceId } from './castDevices';
-import { BaseItemDto } from '~/api/generated/models/base-item-dto';
 
 export abstract class DocumentManager {
     // Duration between each backdrop switch in ms
