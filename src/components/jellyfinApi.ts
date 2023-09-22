@@ -109,7 +109,6 @@ export abstract class JellyfinApi {
 
     /**
      * Create url to image
-     *
      * @param itemId - Item id
      * @param imgType - Image type: Primary, Logo, Backdrop
      * @param imgTag - Image tag

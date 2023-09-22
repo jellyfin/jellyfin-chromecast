@@ -11,14 +11,12 @@ interface CredentialStore {
 export class credentialManager {
     /**
      * Store for credentials
-     *
      * @private
      */
     private credentialStore: CredentialStore;
 
     /**
      * Default constructor for credentialManager.
-     *
      * @param initialStore - Existing CredentialStore to initialize private store with.
      */
     constructor(initialStore: CredentialStore = {}) {
@@ -27,7 +25,6 @@ export class credentialManager {
 
     /**
      * Get credentials for the provided server ID.
-     *
      * @param serverId - ID of the server the credentials belong to.
      * @returns Credentials for the provided server ID.
      * or undefined if the store has no server with that ID.
@@ -40,7 +37,6 @@ export class credentialManager {
 
     /**
      * Update credentials for the provided server ID.
-     *
      * @param serverId - ID of the server to update.
      * @param newCredentials - Updated Credentials.
      * @returns True if the value was updated, false if it wasn't.
@@ -57,7 +53,6 @@ export class credentialManager {
 
     /**
      * Add a new credential to store. Only accepts new entries.
-     *
      * @param serverId - ID of the server the credentials belong to.
      * @param credentials - Credentials of the server.
      * @returns True if server was added, false if it wasn't.
@@ -74,7 +69,6 @@ export class credentialManager {
 
     /**
      * Remove a credential from store.
-     *
      * @param serverId - ID of the server the credentials belong to.
      * @returns True if server was removed, false if it wasn't.
      */

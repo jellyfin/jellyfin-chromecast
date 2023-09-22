@@ -9,7 +9,6 @@ const castContext = cast.framework.CastReceiverContext.getInstance();
  * depends on the manual setting.
  *
  * Currently it's disabled because of problems getting it to work with HLS.
- *
  * @returns true if E-AC-3 can be played
  */
 export function hasEAC3Support(): boolean {
@@ -24,9 +23,7 @@ export function hasEAC3Support(): boolean {
  * depends on the manual setting.
  *
  * Currently it's disabled because of problems getting it to work with HLS.
- *
  * @returns true if AC-3 can be played
- *
  */
 export function hasAC3Support(): boolean {
     //return castContext.canDisplayType('audio/mp4', 'ac-3');
@@ -40,7 +37,6 @@ export function hasAC3Support(): boolean {
  * will mostly support 6ch pcm, and if any generation of cast devices
  * is actually capable of decoding e.g. aac 6ch, we can return true here
  * and give it a shot.
- *
  * @returns true if surround codecs can be played
  */
 export function hasSurroundSupport(): boolean {
@@ -50,7 +46,6 @@ export function hasSurroundSupport(): boolean {
 
 /**
  * Check if this device can play HEVC content.
- *
  * @returns true if HEVC is supported
  */
 export function hasH265Support(): boolean {
@@ -61,7 +56,6 @@ export function hasH265Support(): boolean {
  * Check if this device can play text tracks.
  * This is not supported on Chromecast Audio,
  * but otherwise is.
- *
  * @param deviceId - the device id
  * @returns true if text tracks are supported
  */
@@ -71,7 +65,6 @@ export function hasTextTrackSupport(deviceId: number): boolean {
 
 /**
  * Check if this device can play VP-8 content.
- *
  * @returns true if VP-8 is supported
  */
 export function hasVP8Support(): boolean {
@@ -80,7 +73,6 @@ export function hasVP8Support(): boolean {
 
 /**
  * Check if this device can play VP-9 content.
- *
  * @returns true if VP-9 is supported
  */
 export function hasVP9Support(): boolean {
@@ -89,7 +81,6 @@ export function hasVP9Support(): boolean {
 
 /**
  * Get the max supported media bitrate for the active Cast device.
- *
  * @returns Max supported bitrate.
  */
 export function getMaxBitrateSupport(): number {
@@ -101,7 +92,6 @@ export function getMaxBitrateSupport(): number {
 
 /**
  * Get the max supported video width the active Cast device supports.
- *
  * @param deviceId - Cast device id.
  * @returns Max supported width.
  */
@@ -122,7 +112,6 @@ export function getMaxWidthSupport(deviceId: number): number {
 
 /**
  * Get all H.264 profiles supported by the active Cast device.
- *
  * @param deviceId - Cast device id.
  * @returns All supported H.264 profiles.
  */
@@ -139,7 +128,6 @@ export function getH264ProfileSupport(deviceId: number): string {
 
 /**
  * Get the highest H.264 level supported by the active Cast device.
- *
  * @param deviceId - Cast device id.
  * @returns The highest supported H.264 level.
  */
@@ -160,7 +148,6 @@ export function getH264LevelSupport(deviceId: number): number {
 
 /**
  * Get all H.265 profiles supported by the active Cast device.
- *
  * @param deviceId - Cast device id.
  * @returns All supported H.265 profiles.
  */
@@ -175,7 +162,6 @@ export function getH265ProfileSupport(deviceId: number): string {
 
 /**
  * Get the highest H.265 level supported by the active Cast device.
- *
  * @param deviceId - Cast device id.
  * @returns The highest supported H.265 level.
  */
@@ -189,7 +175,6 @@ export function getH265LevelSupport(deviceId: number): number {
 
 /**
  * Get VPX (VP8, VP9) codecs supported by the active Cast device.
- *
  * @returns Supported VPX codecs.
  */
 export function getSupportedVPXVideoCodecs(): Array<string> {
@@ -208,7 +193,6 @@ export function getSupportedVPXVideoCodecs(): Array<string> {
 
 /**
  * Get supported video codecs suitable for use in an MP4 container.
- *
  * @returns Supported MP4 video codecs.
  */
 export function getSupportedMP4VideoCodecs(): Array<string> {
@@ -224,7 +208,6 @@ export function getSupportedMP4VideoCodecs(): Array<string> {
 
 /**
  * Get supported audio codecs suitable for use in an MP4 container.
- *
  * @returns Supported MP4 audio codecs.
  */
 export function getSupportedMP4AudioCodecs(): Array<string> {
@@ -246,7 +229,6 @@ export function getSupportedMP4AudioCodecs(): Array<string> {
 
 /**
  * Get supported video codecs suitable for use with HLS.
- *
  * @returns Supported HLS video codecs.
  */
 export function getSupportedHLSVideoCodecs(): Array<string> {
@@ -257,7 +239,6 @@ export function getSupportedHLSVideoCodecs(): Array<string> {
 
 /**
  * Get supported audio codecs suitable for use with HLS.
- *
  * @returns All supported HLS audio codecs.
  */
 export function getSupportedHLSAudioCodecs(): Array<string> {
@@ -267,7 +248,6 @@ export function getSupportedHLSAudioCodecs(): Array<string> {
 
 /**
  * Get supported audio codecs suitable for use in a WebM container.
- *
  * @returns All supported WebM audio codecs.
  */
 export function getSupportedWebMAudioCodecs(): Array<string> {
@@ -276,7 +256,6 @@ export function getSupportedWebMAudioCodecs(): Array<string> {
 
 /**
  * Get supported audio codecs suitable for use in a WebM container.
- *
  * @returns All supported WebM audio codecs.
  */
 export function getSupportedAudioCodecs(): Array<string> {

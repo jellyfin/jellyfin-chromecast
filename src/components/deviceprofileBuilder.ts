@@ -48,7 +48,7 @@ let currentDeviceId: number;
  * @param Property - What property the condition should test.
  * @param Condition - The condition to test the values for.
  * @param Value - The value to compare against.
- * @param [IsRequired=false] - Don't permit unknown values
+ * @param [IsRequired] - Don't permit unknown values
  * @returns A profile condition created from the parameters.
  */
 function createProfileCondition(
@@ -397,7 +397,6 @@ function getSubtitleProfiles(): Array<SubtitleProfile> {
 
 /**
  * Creates a device profile containing supported codecs for the active Cast device.
- *
  * @param options - Profile options
  * @returns Device profile.
  */

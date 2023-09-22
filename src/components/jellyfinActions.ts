@@ -28,7 +28,6 @@ let lastTranscoderPing = 0;
  * Start the transcoder pinging.
  *
  * This is used to keep the transcode available during pauses
- *
  * @param reportingParams - parameters to report to the server
  */
 function restartPingInterval(reportingParams: PlaybackProgressInfo): void {
@@ -55,7 +54,6 @@ export function stopPingInterval(): void {
 
 /**
  * Report to the server that playback has started.
- *
  * @param state - playback state.
  * @param reportingParams - parameters to send to the server
  * @returns promise to wait for the request
@@ -87,7 +85,6 @@ export function reportPlaybackStart(
 
 /**
  * Report to the server the progress of the playback.
- *
  * @param state - playback state.
  * @param reportingParams - parameters for jellyfin
  * @param reportToServer - if jellyfin should be informed
@@ -121,7 +118,6 @@ export function reportPlaybackProgress(
 
 /**
  * Report to the server that playback has stopped.
- *
  * @param state - playback state.
  * @param reportingParams - parameters to send to the server
  * @returns promise for waiting for the request
@@ -149,7 +145,6 @@ export function reportPlaybackStopped(
  * /Sessions/Playing/Progress does work but may not be called during pause.
  * The web client calls that during pause, but this endpoint gets the job done
  * as well.
- *
  * @param reportingParams - progress information to carry
  * @returns promise for waiting for the request
  */
@@ -185,7 +180,6 @@ export function pingTranscoder(
 
 /**
  * Update the context about the item we are playing.
- *
  * @param playbackMgr - playback manager.
  * @param customData - data to set on playback state.
  * @param serverItem - item that is playing
@@ -224,7 +218,6 @@ export function load(
  * I also don't get doing nothing based on the currently visible app status
  *
  * TODO: rename these
- *
  * @param state - playback state.
  */
 export function play(state: PlaybackState): void {
@@ -365,7 +358,6 @@ export function getLiveStream(
  * Get download speed based on the jellyfin bitratetest api.
  *
  * The API has a 10MB limit.
- *
  * @param byteSize - number of bytes to request
  * @returns the bitrate in bits/s
  */
@@ -389,7 +381,6 @@ export async function getDownloadSpeed(byteSize: number): Promise<number> {
 /**
  * Function to detect the bitrate.
  * It first tries 1MB and if bitrate is above 1Mbit/s it tries again with 2.4MB.
- *
  * @returns bitrate in bits/s
  */
 export async function detectBitrate(): Promise<number> {
@@ -408,7 +399,6 @@ export async function detectBitrate(): Promise<number> {
 
 /**
  * Tell Jellyfin to kill off our active transcoding session
- *
  * @param state - playback state.
  * @returns Promise for the http request to go through
  */

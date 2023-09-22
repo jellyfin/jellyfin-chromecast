@@ -13,7 +13,6 @@ import { PlaybackState } from './components/playbackManager';
 
 /**
  * Get current playback position in ticks, adjusted for server seeking
- *
  * @param state - playback state.
  * @returns position in ticks
  */
@@ -30,7 +29,6 @@ export function getCurrentPositionTicks(state: PlaybackState): number {
 
 /**
  * Get parameters used for playback reporting
- *
  * @param state - playback state.
  * @returns progress information for use with the reporting APIs
  */
@@ -61,7 +59,6 @@ export function getReportingParams(state: PlaybackState): PlaybackProgressInfo {
 
 /**
  * Get information about the next item to play from window.playlist
- *
  * @returns ItemIndex including item and index, or null to end playback
  */
 export function getNextPlaybackItemInfo(): ItemIndex | null {
@@ -110,7 +107,6 @@ export function getNextPlaybackItemInfo(): ItemIndex | null {
  * This is used in playback reporting to find out information
  * about the item that is currently playing. This is sent over the cast protocol over to
  * the connected client (or clients?).
- *
  * @param playbackState - playback state.
  * @param reportingData - object full of random information
  * @returns lots of data for the connected client
@@ -211,7 +207,6 @@ export function getSenderReportingData(
 
 /**
  * Create CAF-native metadata for a given item
- *
  * @param item - item to look up
  * @returns one of the metadata classes in cast.framework.messages.*Metadata
  */
@@ -320,7 +315,6 @@ export function getMetadata(item: BaseItemDto): any {
 /**
  * Create the necessary information about an item
  * needed for playback
- *
  * @param item - Item to play
  * @param mediaSource - MediaSourceInfo for the item
  * @param startPosition - Where to seek to (possibly server seeking)
@@ -476,7 +470,6 @@ export function createStreamInfo(
 
 /**
  * Get stream by its index while making a type assertion
- *
  * @param streams - array streams to consider
  * @param type - type of stream
  * @param index - index of stream
@@ -504,7 +497,6 @@ const requiredItemFields = 'MediaSources,Chapters';
  * It's used only in maincomponents.shuffle.
  *
  * TODO: JellyfinApi.userId should be fine for this.
- *
  * @param userId - User ID to look up items with
  * @param item - Parent item of shuffle search
  * @returns items for the queue
@@ -540,7 +532,6 @@ export function getShuffleItems(
  * music artist, genre, album, playlist
  *
  * TODO: JellyfinApi.userId should be fine for this.
- *
  * @param userId - User ID to look up items with
  * @param item - Parent item of the search
  * @returns items for the queue
@@ -584,7 +575,6 @@ export async function getInstantMixItems(
 
 /**
  * Get items to be played back
- *
  * @param userId - user for the search
  * @param query - specification on what to search for
  * @returns items to be played back
@@ -622,7 +612,6 @@ export async function getItemsForPlayback(
 
 /**
  * Get episodes for a show given by seriesId
- *
  * @param userId - userid to use
  * @param seriesId - series to look up
  * @param query - query parameters to build on
@@ -647,7 +636,6 @@ export function getEpisodesForPlayback(
 /**
  * Get intros for a given item. This item should be a video
  * type for this to make sense
- *
  * @param firstItem - item to get intros for
  * @returns intro items
  */
@@ -662,7 +650,6 @@ export function getIntros(
 
 /**
  * Get user object for the current user
- *
  * @returns user object
  */
 export function getUser(): Promise<UserDto> {
@@ -675,8 +662,6 @@ export function getUser(): Promise<UserDto> {
 /**
  * Process a list of items for playback
  * by resolving things like folders to playable items.
- *
- *
  * @param userId - userId to use
  * @param items - items to resolve
  * @param smart - If enabled it will try to find the next episode given the current one,
@@ -783,7 +768,6 @@ export async function translateRequestedItems(
  * Parse a date.. Just a wrapper around new Date,
  * but could be useful to deal with weird date strings
  * in the future.
- *
  * @param date - string date to parse
  * @returns date object
  */
@@ -793,7 +777,6 @@ export function parseISO8601Date(date: string): Date {
 
 /**
  * Send a message over the custom message transport
- *
  * @param message - to send
  */
 export function broadcastToMessageBus(message: BusMessage): void {

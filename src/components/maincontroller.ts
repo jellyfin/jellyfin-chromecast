@@ -631,7 +631,6 @@ export async function shuffle(
 /**
  * This function fetches the full information of an item before playing it.
  * Only item.Id needs to be set.
- *
  * @param item - Item to look up
  * @param options - Extra information about how it should be played back.
  * @returns Promise waiting for the item to be loaded for playback
