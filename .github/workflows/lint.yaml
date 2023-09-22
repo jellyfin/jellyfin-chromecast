@@ -22,19 +22,6 @@ jobs:
               with:
                   node-version: 20
 
-            - name: Get npm cache directory path
-              id: npm-cache-dir-path
-              run: echo "::set-output name=dir::$(npm config get cache)"
-
-            - name: Cache node_modules
-              uses: actions/cache@704facf57e6136b1bc63b828d79edcd491f0ee84 # v3.3.2
-              id: npm-cache
-              with:
-                  path: ${{ steps.npm-cache-dir-path.outputs.dir }}
-                  key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
-                  restore-keys: |
-                      ${{ runner.os }}-npm-
-
             - name: Install dependencies
               run: npm ci --no-audit
 
