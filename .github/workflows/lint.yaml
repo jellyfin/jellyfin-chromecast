@@ -15,10 +15,10 @@ jobs:
 
         steps:
             - name: Checkout
-              uses: actions/checkout@v2.3.4
+              uses: actions/checkout@ee0669bd1cc54295c223e0bb666b733df41de1c5 # v2.7.0
 
             - name: Setup node env
-              uses: actions/setup-node@v2.3.0
+              uses: actions/setup-node@7c12f8017d5436eb855f1ed4399f037a36fbd9e8 # v2.5.2
               with:
                   node-version: 14
 
@@ -27,7 +27,7 @@ jobs:
               run: echo "::set-output name=dir::$(npm config get cache)"
 
             - name: Cache node_modules
-              uses: actions/cache@v2.1.6
+              uses: actions/cache@2b250bc32ad02700b996b496c14ac8c2840a2991 # v2.1.8
               id: npm-cache
               with:
                   path: ${{ steps.npm-cache-dir-path.outputs.dir }}
