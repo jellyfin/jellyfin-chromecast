@@ -25,7 +25,6 @@ export abstract class DocumentManager {
     /**
      * Set the background image for a html element, without preload.
      * You should do the preloading first with preloadImage.
-     *
      * @param element - HTML Element
      * @param src - URL to the image or null to remove the active one
      */
@@ -42,7 +41,6 @@ export abstract class DocumentManager {
 
     /**
      * Preload an image
-     *
      * @param src - URL to the image or null
      * @returns wait for the preload and return the url to use. Might be nulled after loading error.
      */
@@ -67,7 +65,6 @@ export abstract class DocumentManager {
 
     /**
      * Get url for primary image for a given item
-     *
      * @param item - to look up
      * @returns url to image after preload
      */
@@ -104,7 +101,6 @@ export abstract class DocumentManager {
 
     /**
      * Get url for logo image for a given item
-     *
      * @param item - to look up
      * @returns url to logo image after preload
      */
@@ -132,7 +128,6 @@ export abstract class DocumentManager {
      * This fucntion takes an item and shows details about it
      * on the details page. This happens when no media is playing,
      * and the connected client is browsing the library.
-     *
      * @param item - to show information about
      * @returns for the page to load
      */
@@ -192,7 +187,6 @@ export abstract class DocumentManager {
 
     /**
      * Set value of played indicator
-     *
      * @param value - True = played, false = not visible, number = number of unplayed items
      */
     private static setPlayedIndicator(value: boolean | number): void {
@@ -220,7 +214,6 @@ export abstract class DocumentManager {
     /**
      * Show item, but from just the id number, not an actual item.
      * Looks up the item and then calls showItem
-     *
      * @param itemId - id of item to look up
      * @returns promise that resolves when the item is shown
      */
@@ -243,7 +236,6 @@ export abstract class DocumentManager {
 
     /**
      * Update item rating elements
-     *
      * @param item - to look up
      */
     private static setRating(item: BaseItemDto): void {
@@ -283,7 +275,6 @@ export abstract class DocumentManager {
     /**
      * Set the status of the app, and switch the visible view
      * to the corresponding one.
-     *
      * @param status - to set
      */
     public static setAppStatus(status: string): void {
@@ -293,7 +284,6 @@ export abstract class DocumentManager {
 
     /**
      * Get the status of the app
-     *
      * @returns app status
      */
     public static getAppStatus(): string {
@@ -304,7 +294,6 @@ export abstract class DocumentManager {
 
     /**
      * Get url to the backdrop image, and return a preload promise.
-     *
      * @param item - Item to use for waiting backdrop, null to remove it.
      * @returns promise for the preload to complete
      */
@@ -347,7 +336,6 @@ export abstract class DocumentManager {
      * Backdrops are set on the waiting container.
      * They are switched around every 30 seconds by default
      * (governed by startBackdropInterval)
-     *
      * @param src - Url to image
      * @param item - Item to use for waiting backdrop, null to remove it.
      */
@@ -367,7 +355,6 @@ export abstract class DocumentManager {
 
     /**
      * Set a random backdrop on the waiting container
-     *
      * @returns promise waiting for the backdrop to be set
      */
     private static async setRandomUserBackdrop(): Promise<void> {
@@ -411,7 +398,6 @@ export abstract class DocumentManager {
 
     /**
      * Start the backdrop rotation, restart if running, stop if disabled
-     *
      * @returns promise for the first backdrop to be set
      */
     public static async startBackdropInterval(): Promise<void> {
@@ -442,7 +428,6 @@ export abstract class DocumentManager {
 
     /**
      * Set interval between backdrop changes, null to disable
-     *
      * @param period - in milliseconds or null
      */
     public static setBackdropPeriodMs(period: number | null): void {
@@ -466,7 +451,6 @@ export abstract class DocumentManager {
     /**
      * Set background behind the media player,
      * this is shown while the media is loading.
-     *
      * @param item - to get backdrop from
      */
     public static setPlayerBackdrop(item: BaseItemDto): void {
@@ -512,7 +496,6 @@ export abstract class DocumentManager {
 
     /**
      * Set the URL to the item logo, or null to remove it
-     *
      * @param src - Source url or null
      */
     public static setLogo(src: string | null): void {
@@ -524,7 +507,6 @@ export abstract class DocumentManager {
     /**
      * Set the URL to the item banner image (I think?),
      * or null to remove it
-     *
      * @param src - Source url or null
      */
     public static setDetailImage(src: string | null): void {
@@ -538,7 +520,6 @@ export abstract class DocumentManager {
      *
      * This combines the old statement setDisplayName(getDisplayName(item))
      * into setDisplayName(item).
-     *
      * @param item - source for the displayed name
      */
     private static setDisplayName(item: BaseItemDto): void {
@@ -571,7 +552,6 @@ export abstract class DocumentManager {
 
     /**
      * Set the html of the genres container
-     *
      * @param name - String/html for genres box, null to empty
      */
     private static setGenres(name: string | null): void {
@@ -582,7 +562,6 @@ export abstract class DocumentManager {
 
     /**
      * Set the html of the overview container
-     *
      * @param name - string or html to insert
      */
     private static setOverview(name: string | null): void {
@@ -594,7 +573,6 @@ export abstract class DocumentManager {
     /**
      * Set the progress of the progress bar in the
      * item details page. (Not the same as the playback ui)
-     *
      * @param value - Percentage to set
      */
     private static setPlayedPercentage(value = 0): void {
@@ -608,7 +586,6 @@ export abstract class DocumentManager {
     /**
      * Set the visibility of the item progress bar in the
      * item details page
-     *
      * @param value - If true, show progress on details page
      */
     private static setHasPlayedPercentage(value: boolean): void {
@@ -624,7 +601,6 @@ export abstract class DocumentManager {
     /**
      * Get a human readable representation of the current position
      * in ticks
-     *
      * @param ticks - tick position
      * @returns human readable position
      */
@@ -667,7 +643,6 @@ export abstract class DocumentManager {
     /**
      * Set information about mostly episodes or series
      * on the item details page
-     *
      * @param item - to look up
      */
     private static setMiscInfo(item: BaseItemDto): void {
@@ -769,7 +744,6 @@ export abstract class DocumentManager {
     // Generic / Helper functions
     /**
      * Set the visibility of an element
-     *
      * @param element - Element to set visibility on
      * @param visible - True if the element should be visible.
      */
@@ -783,7 +757,6 @@ export abstract class DocumentManager {
 
     /**
      * Get a HTMLElement from id or throw an error
-     *
      * @param id - ID to look up
      * @returns HTML Element
      */
@@ -799,7 +772,6 @@ export abstract class DocumentManager {
 
     /**
      * Get a HTMLElement by class
-     *
      * @param cls - Class to look up
      * @returns HTML Element
      */

@@ -1,6 +1,5 @@
 /**
  * Function to send a request, with or without the timeout option
- *
  * @param request - Custom request object, mostly modeled after RequestInit.
  * @returns response promise
  */
@@ -48,7 +47,6 @@ function getFetchPromise(request: any): Promise<Response> {
 
 /**
  * Timeout wrapper for fetch()
- *
  * @param url - url to get
  * @param options - RequestInit with additional options
  * @returns response promise
@@ -79,7 +77,6 @@ async function fetchWithCredentials(
 
 /**
  * Urlencode a dictionary of strings for use in POST form or GET requests
- *
  * @param params - Dictionary to encode
  * @returns string with encoded values
  */
@@ -102,7 +99,6 @@ function paramsToString(params: Record<string, string>): string {
 
 /**
  * Make an ajax request
- *
  * @param request - RequestInit-like structure but with url/type/timeout parameters as well
  * @returns response promise, may be automatically unpacked based on request datatype
  */
