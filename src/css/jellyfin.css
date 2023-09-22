@@ -5,7 +5,7 @@ body {
 }
 
 body {
-    font-family: 'Quicksand', sans-serif;
+    font-family: Quicksand, sans-serif;
     font-weight: 300;
     color: #ddd;
     background-color: #000;
@@ -33,10 +33,7 @@ body {
 
 #waiting-container-backdrop {
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    inset: 0;
     background-color: #000;
     background-position: center;
     background-size: cover;
@@ -49,12 +46,9 @@ body {
     background-repeat: no-repeat;
 
     /* Layer on top of the backdrop image: */
-    background-color: rgba(15, 15, 15, 0.6);
+    background-color: rgb(15 15 15 / 60%);
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    inset: 0;
     padding: 18px 32px;
 }
 
@@ -63,11 +57,8 @@ body {
     background-size: cover;
     background-repeat: no-repeat;
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(15, 15, 15, 0.82);
+    inset: 0;
+    background-color: rgb(15 15 15 / 82%);
 }
 
 .detailLogo {
@@ -103,7 +94,7 @@ body {
     padding-top: 0.1vw;
     border-radius: 50%;
     color: #fff;
-    background: rgba(0, 128, 0, 0.8);
+    background: rgb(0 128 0 / 80%);
     font-size: 1.1vw;
 }
 
@@ -138,8 +129,6 @@ body {
 .itemProgressBar {
     background: #000 !important;
     appearance: none;
-    -moz-appearance: none;
-    -webkit-appearance: none;
     border: 0;
     border: 0 solid #222;
     border-radius: 0;
@@ -216,15 +205,15 @@ body {
 }
 
 .metascorehigh {
-    background-color: rgba(102, 204, 51, 0.7);
+    background-color: rgb(102 204 51 / 70%);
 }
 
 .metascoremid {
-    background-color: rgba(255, 204, 51, 0.7);
+    background-color: rgb(255 204 51 / 70%);
 }
 
 .metascorelow {
-    background-color: rgba(240, 0, 0, 0.7);
+    background-color: rgb(240 0 0 / 70%);
 }
 
 .criticRating + .metascore,

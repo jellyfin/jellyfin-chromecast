@@ -1,4 +1,7 @@
 {
     "extends": ["stylelint-config-standard"],
-    "rules": {}
+    "rules": {
+        "selector-class-pattern": null,
+        "selector-id-pattern": null
+    }
 }
