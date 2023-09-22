@@ -11,7 +11,7 @@
     },
     "devDependencies": {
         "@types/chromecast-caf-receiver": "5.0.15",
-        "@types/jest": "29.5.4",
+        "@types/jest": "29.5.5",
         "@types/node": "16.18.51",
         "@types/webpack": "5.28.0",
         "@types/webpack-dev-server": "3.11.6",
