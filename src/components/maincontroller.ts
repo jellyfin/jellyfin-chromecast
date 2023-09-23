@@ -228,7 +228,7 @@ window.playerManager.addEventListener(
     cast.framework.events.EventType.PLAYER_LOAD_COMPLETE,
     () => {
         setTextTrack(
-            window.playerManager.getMediaInformation().customData
+            window.playerManager.getMediaInformation()?.customData
                 .subtitleStreamIndex
         );
     }
@@ -463,7 +463,7 @@ export async function changeStream(
     params: any = undefined
 ): Promise<void> {
     if (
-        window.playerManager.getMediaInformation().customData.canClientSeek &&
+        window.playerManager.getMediaInformation()?.customData.canClientSeek &&
         params == null
     ) {
         window.playerManager.seek(ticks / 10000000);
