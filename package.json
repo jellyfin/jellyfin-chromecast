@@ -31,8 +31,6 @@
         "eslint-plugin-promise": "6.1.1",
         "html-loader": "2.1.2",
         "html-webpack-plugin": "5.5.3",
-        "image-minimizer-webpack-plugin": "2.2.0",
-        "imagemin-svgo": "10.0.1",
         "jest": "29.7.0",
         "jest-environment-jsdom": "29.7.0",
         "prettier": "3.0.3",
