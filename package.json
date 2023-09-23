@@ -13,7 +13,7 @@
         "@types/chromecast-caf-receiver": "5.0.15",
         "@types/jest": "29.5.5",
         "@types/node": "18.17.17",
-        "@types/webpack": "5.28.0",
+        "@types/webpack": "5.28.2",
         "@types/webpack-dev-server": "4.7.1",
         "@types/webpack-merge": "5.0.0",
         "@typescript-eslint/eslint-plugin": "6.7.2",
