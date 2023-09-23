@@ -15,7 +15,6 @@
         "@types/node": "18.17.17",
         "@types/webpack": "5.28.2",
         "@types/webpack-dev-server": "4.7.1",
-        "@types/webpack-merge": "5.0.0",
         "@typescript-eslint/eslint-plugin": "6.7.2",
         "@typescript-eslint/parser": "6.7.2",
         "clean-webpack-plugin": "3.0.0",
