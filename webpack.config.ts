@@ -6,7 +6,6 @@ import { DefinePlugin } from 'webpack';
 import { merge } from 'webpack-merge';
 import { CleanWebpackPlugin } from 'clean-webpack-plugin';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
-import ImageMinimizerPlugin from 'image-minimizer-webpack-plugin';
 import { version } from './package.json';
 
 const common: webpack.Configuration = {
@@ -41,23 +40,6 @@ const common: webpack.Configuration = {
             filename: 'index.html',
             hash: false,
             template: 'index.html'
-        }),
-        new ImageMinimizerPlugin({
-            minimizerOptions: {
-                plugins: [
-                    [
-                        'svgo',
-                        {
-                            plugins: [
-                                {
-                                    active: false,
-                                    name: 'removeComments'
-                                }
-                            ]
-                        }
-                    ]
-                ]
-            }
         })
     ],
     resolve: {
