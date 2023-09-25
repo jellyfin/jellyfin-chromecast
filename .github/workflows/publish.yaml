@@ -1,0 +1,142 @@
+name: Publish
+
+on:
+    push:
+        branches:
+            - master
+        tags:
+            - '*'
+    pull_request:
+        branches:
+            - master
+
+jobs:
+    build:
+        name: Build
+        runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                flavor: [development, production]
+
+        steps:
+            - name: Checkout
+              uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4.1.0
+
+            - name: Setup node env
+              uses: actions/setup-node@5e21ff4d9bc1a8cf6de233a3057d20ec6b3fb69d # v3.8.1
+              with:
+                  node-version: 20
+
+            - name: Install dependencies
+              run: npm ci --no-audit
+
+            - name: Update version in package.json
+              run: |
+                  PACKAGE_JSON=$(jq --indent 4 ".version += \"-$GITHUB_SHA\"" package.json)
+                  echo $PACKAGE_JSON > package.json
+
+            - name: Build development
+              if: ${{ matrix.flavor == 'development' }}
+              run: npm run build:development
+
+            - name: Build production
+              if: ${{ matrix.flavor == 'production' }}
+              run: npm run build:production
+
+            - name: Prepare artifacts
+              run: |
+                  test -d dist
+                  mv dist jellyfin-chromecast
+                  zip -r "jellyfin-chromecast-${{ matrix.flavor }}.zip" "jellyfin-chromecast"
+
+            - name: Upload artifacts
+              uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32 # v3.1.3
+              with:
+                  name: jellyfin-chromecast-${{ matrix.flavor }}
+                  path: jellyfin-chromecast-${{ matrix.flavor }}.zip
+                  if-no-files-found: error
+
+    publish:
+        name: Publish
+        runs-on: ubuntu-latest
+        if: ${{ contains(github.repository_owner, 'jellyfin') && (github.ref == 'refs/head/master' || startsWith(github.ref, 'refs/tags')) }}
+        needs: [build]
+        strategy:
+            matrix:
+                flavor: [development, production]
+
+        steps:
+            - name: Set JELLYFIN_VERSION
+              run: echo "JELLYFIN_VERSION=$(echo ${GITHUB_REF#refs/tags/v} | tr / -)" >> $GITHUB_ENV
+
+            - name: Download Artifact
+              uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
+              with:
+                  name: jellyfin-chromecast-${{ matrix.flavor }}
+
+            - name: Upload release archive to GitHub release
+              if: ${{ startsWith(github.ref, 'refs/tags') }}
+              uses: alexellis/upload-assets@259de5111cb56966d046ced998941e93f91d2c93 # tag=0.4.0
+              env:
+                  GITHUB_TOKEN: ${{ secrets.JF_BOT_TOKEN }}
+              with:
+                  asset_paths: '["jellyfin-chromecast-${{ matrix.flavor }}.zip"]'
+
+            - name: Upload release archive to repo.jellyfin.org
+              uses: burnett01/rsync-deployments@45d84ad5f6c174f3e0ffc50e9060a9666d09c16e # 6.0.0
+              with:
+                  switches: -vrptz
+                  path: jellyfin-chromecast-${{ matrix.flavor }}.zip
+                  remote_path: /srv/repository/releases/client/chromecast/versions/$({{ env.JELLYFIN_VERSION }})
+                  remote_host: ${{ secrets.DEPLOY_HOST }}
+                  remote_user: ${{ secrets.DEPLOY_USER }}
+                  remote_key: ${{ secrets.DEPLOY_KEY }}
+
+            - name: Update repo.jellyfin.org symlinks
+              uses: appleboy/ssh-action@55dabf81b49d4120609345970c91507e2d734799 # v1.0.0
+              with:
+                  host: ${{ secrets.DEPLOY_HOST }}
+                  username: ${{ secrets.DEPLOY_USER }}
+                  key: ${{ secrets.DEPLOY_KEY }}
+                  envs: JELLYFIN_VERSION
+                  script_stop: true
+                  script: |
+                      cd /srv/repository/releases/client/chromecast;
+                      rm -rf *.zip;
+                      ln -s versions/${JELLYFIN_VERSION}/jellyfin-chromecast-${{ matrix.flavor }}-${JELLYFIN_VERSION}.zip .;
+
+    deploy:
+        name: Deploy
+        runs-on: ubuntu-latest
+        if: ${{ contains(github.repository_owner, 'jellyfin') && (github.ref == 'refs/head/master' || startsWith(github.ref, 'refs/tags')) }}
+        needs: [build]
+
+        steps:
+            - name: Download Artifact
+              uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
+              with:
+                  name: jellyfin-chromecast-production
+
+            - name: Unzip artifact
+              run: unzip jellyfin-chromecast-production.zip -d jellyfin-chromecast
+
+            - name: Deploy to apps1.jellyfin.org/chromecast/nightly
+              uses: burnett01/rsync-deployments@45d84ad5f6c174f3e0ffc50e9060a9666d09c16e # 6.0.0
+              with:
+                  switches: -vrptz
+                  path: jellyfin-chromecast
+                  remote_path: /srv/chromecast/nightly
+                  remote_host: ${{ secrets.DEPLOY_CC_HOST }}
+                  remote_user: ${{ secrets.DEPLOY_CC_USER }}
+                  remote_key: ${{ secrets.DEPLOY_CC_KEY }}
+
+            - name: Deploy to apps1.jellyfin.org/chromecast/stable
+              if: ${{ startsWith(github.ref, 'refs/tags') }}
+              uses: burnett01/rsync-deployments@45d84ad5f6c174f3e0ffc50e9060a9666d09c16e # 6.0.0
+              with:
+                  switches: -vrptz
+                  path: jellyfin-chromecast
+                  remote_path: /srv/chromecast/stable
+                  remote_host: ${{ secrets.DEPLOY_CC_HOST }}
+                  remote_user: ${{ secrets.DEPLOY_CC_USER }}
+                  remote_key: ${{ secrets.DEPLOY_CC_KEY }}
