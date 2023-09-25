@@ -6,6 +6,5 @@ export enum AppStatus {
     PlayingWithControls = 'PlayingWithControls',
     Playing = 'Playing',
     Unset = '',
-    Waiting = 'Waiting',
+    Waiting = 'Waiting'
 }
-

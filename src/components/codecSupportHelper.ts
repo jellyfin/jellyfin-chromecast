@@ -117,6 +117,7 @@ export function getMaxWidthSupport(deviceId: number, codec?: string): number {
         case deviceIds.NESTHUBANDMAX:
             return 1280;
     }
+
     return 0;
 }
 

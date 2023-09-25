@@ -1,8 +1,8 @@
 import type { BaseItemDto } from '@jellyfin/sdk/lib/generated-client';
+import { AppStatus } from '../types/appStatus';
 import { parseISO8601Date, TicksPerSecond, ticksToSeconds } from '../helpers';
 import { JellyfinApi } from './jellyfinApi';
 import { deviceIds, getActiveDeviceId } from './castDevices';
-import { AppStatus } from '../types/appStatus';
 
 export abstract class DocumentManager {
     // Duration between each backdrop switch in ms

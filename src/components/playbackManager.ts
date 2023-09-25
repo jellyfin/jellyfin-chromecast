@@ -3,6 +3,9 @@ import type {
     MediaSourceInfo,
     PlayMethod
 } from '@jellyfin/sdk/lib/generated-client';
+import { RepeatMode } from '@jellyfin/sdk/lib/generated-client';
+import { AppStatus } from '../types/appStatus';
+import { ItemIndex } from '~/types/global';
 import {
     broadcastConnectionErrorMessage,
     createStreamInfo,
@@ -48,9 +51,6 @@ export interface PlaybackState {
     runtimeTicks: number;
 }
 
-import { ItemIndex } from '~/types/global';
-import { AppStatus } from '../types/appStatus';
-import { RepeatMode } from '@jellyfin/sdk/lib/generated-client';
 
 export abstract class PlaybackManager {
     private static playerManager: framework.PlayerManager;
@@ -79,7 +79,6 @@ export abstract class PlaybackManager {
     static setPlayerManager(playerManager: framework.PlayerManager): void {
         // Parameters
         this.playerManager = playerManager;
-
         this.resetPlaylist();
     }
 
@@ -88,13 +87,11 @@ export abstract class PlaybackManager {
      *
      * Returns true when playing or paused.
      * (before: true only when playing)
-     * */
+     */
     static isPlaying(): boolean {
         return (
-            this.playerManager.getPlayerState() ===
-            cast.framework.messages.PlayerState.PLAYING ||
-            this.playerManager.getPlayerState() ===
-            cast.framework.messages.PlayerState.PAUSED
+            this.playerManager.getPlayerState() === cast.framework.messages.PlayerState.PLAYING ||
+            this.playerManager.getPlayerState() === cast.framework.messages.PlayerState.PAUSED
         );
     }
 
@@ -102,7 +99,7 @@ export abstract class PlaybackManager {
         return this.playerManager.getPlayerState() === cast.framework.messages.PlayerState.BUFFERING;
     }
 
-    static async playFromOptions(options: any): Promise<void> {
+    static async playFromOptions(options: any): Promise<void> {  // eslint-disable-line no-explicit-any
         const firstItem = options.items[0];
 
         if (options.startPositionTicks || firstItem.MediaType !== 'Video') {
@@ -112,7 +109,7 @@ export abstract class PlaybackManager {
         return this.playFromOptionsInternal(options);
     }
 
-    private static playFromOptionsInternal(options: any): Promise<void> {
+    private static playFromOptionsInternal(options: any): Promise<void> {  // eslint-disable-line no-explicit-any
         const stopPlayer =
             this.activePlaylist && this.activePlaylist.length > 0;
 
@@ -146,26 +143,22 @@ export abstract class PlaybackManager {
         return this.activePlaylistIndex > 0;
     }
 
-    static playNextItem(options: any = {}, stopPlayer = false): boolean {
+    static playNextItem(options: any = {}, stopPlayer = false): boolean {  // eslint-disable-line no-explicit-any
         const nextItemInfo = this.getNextPlaybackItemInfo();
 
         if (nextItemInfo) {
             this.activePlaylistIndex = nextItemInfo.index;
-
             this.playItem(options, stopPlayer);
-
             return true;
         }
 
         return false;
     }
 
-    static playPreviousItem(options: any = {}): boolean {
+    static playPreviousItem(options: any = {}): boolean { // eslint-disable-line no-explicit-any
         if (this.activePlaylist && this.activePlaylistIndex > 0) {
             this.activePlaylistIndex--;
-
             this.playItem(options, true);
-
             return true;
         }
 
@@ -174,7 +167,7 @@ export abstract class PlaybackManager {
 
     // play item from playlist
     private static async playItem(
-        options: any,
+        options: any, // eslint-disable-line no-explicit-any
         stopPlayer = false
     ): Promise<void> {
         if (stopPlayer) {
@@ -182,16 +175,14 @@ export abstract class PlaybackManager {
         }
 
         const item = this.activePlaylist[this.activePlaylistIndex];
-
         console.log(`Playing index ${this.activePlaylistIndex}`, item);
-
         return await onStopPlayerBeforePlaybackDone(item, options);
     }
 
     // Would set private, but some refactorings need to happen first.
     static async playItemInternal(
         item: BaseItemDto,
-        options: any
+        options: any // eslint-disable-line no-explicit-any
     ): Promise<void> {
         this.playbackState.isChangingStream = false;
         DocumentManager.setAppStatus(AppStatus.Loading);
@@ -256,7 +247,7 @@ export abstract class PlaybackManager {
         playSessionId: string,
         item: BaseItemDto,
         mediaSource: MediaSourceInfo,
-        options: any
+        options: any // eslint-disable-line no-explicit-any
     ): void {
         DocumentManager.setAppStatus(AppStatus.Loading);
 
@@ -279,8 +270,7 @@ export abstract class PlaybackManager {
         // If we should seek at the start, translate it
         // to seconds and give it to loadRequestData :)
         if (mediaInfo.customData.startPositionTicks > 0) {
-            loadRequestData.currentTime =
-                ticksToSeconds(mediaInfo.customData.startPositionTicks);
+            loadRequestData.currentTime = ticksToSeconds(mediaInfo.customData.startPositionTicks);
         }
 
         load(mediaInfo.customData, item);
@@ -330,7 +320,6 @@ export abstract class PlaybackManager {
 
     /**
      * Get information about the next item to play from window.playlist
-     *
      * @returns item and index, or null to end playback
      */
     static getNextPlaybackItemInfo(): ItemIndex | null {

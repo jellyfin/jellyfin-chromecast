@@ -76,12 +76,12 @@ export interface SeekRequest {
 
 export interface DataMessage {
     options:
-    | PlayRequest
-    | DisplayRequest
-    | SetIndexRequest
-    | SetRepeatModeRequest
-    | SeekRequest;
-    command: string;
+        | PlayRequest
+        | DisplayRequest
+        | SetIndexRequest
+        | SetRepeatModeRequest
+        | SeekRequest;
+        command: string;
 }
 
 interface SupportedCommands {
@@ -98,7 +98,7 @@ declare global {
         castReceiverContext: CastReceiverContext;
         repeatMode: RepeatMode;
         reportEventType: 'repeatmodechange';
-        subtitleAppearance: any;
+        subtitleAppearance: any;  // eslint-disable-line no-explicit-any
         MaxBitrate: number | undefined;
         senderId: string | undefined;
         volume: SystemVolumeData;

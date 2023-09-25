@@ -8,7 +8,7 @@ import type {
     SetRepeatModeRequest,
     SupportedCommands
 } from '../types/global';
-
+import { AppStatus } from '../types/appStatus';
 import {
     translateItems,
     shuffle,
@@ -17,9 +17,7 @@ import {
     setSubtitleStreamIndex,
     seek
 } from './maincontroller';
-
 import { reportPlaybackProgress } from './jellyfinActions';
-import { AppStatus } from '../types/appStatus';
 import { PlaybackManager } from './playbackManager';
 import { DocumentManager } from './documentManager';
 
@@ -140,6 +138,7 @@ export abstract class CommandHandler {
             if (!PlaybackManager.isBuffering()) {
                 DocumentManager.setAppStatus(AppStatus.Waiting);
             }
+
             DocumentManager.startBackdropInterval();
         } else {
             // When a client connects send back the initial device state (volume etc) via a playbackstop message
@@ -194,7 +193,6 @@ export abstract class CommandHandler {
     }
 
     static UnpauseHandler(): void {
-
         this.playerManager.play();
     }
 

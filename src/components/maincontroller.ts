@@ -11,7 +11,6 @@ import {
     getInstantMixItems,
     translateRequestedItems,
     broadcastToMessageBus,
-    broadcastConnectionErrorMessage,
     ticksToSeconds
 } from '../helpers';
 import {
@@ -26,7 +25,6 @@ import { JellyfinApi } from './jellyfinApi';
 import { PlaybackManager, PlaybackState } from './playbackManager';
 import { CommandHandler } from './commandHandler';
 import { getMaxBitrateSupport } from './codecSupportHelper';
-import { DocumentManager } from './documentManager';
 import { PlayRequest } from '~/types/global';
 
 window.castReceiverContext = cast.framework.CastReceiverContext.getInstance();
@@ -43,7 +41,7 @@ let broadcastToServer = new Date();
 let hasReportedCapabilities = false;
 
 /**
- *
+ * onMediaElementTimeUpdate
  */
 export function onMediaElementTimeUpdate(): void {
     if (PlaybackManager.playbackState.isChangingStream) {
@@ -73,7 +71,7 @@ export function onMediaElementTimeUpdate(): void {
 }
 
 /**
- *
+ * onMediaElementPause
  */
 export function onMediaElementPause(): void {
     if (PlaybackManager.playbackState.isChangingStream) {
@@ -84,7 +82,7 @@ export function onMediaElementPause(): void {
 }
 
 /**
- *
+ * onMediaElementPlaying
  */
 export function onMediaElementPlaying(): void {
     if (PlaybackManager.playbackState.isChangingStream) {
@@ -95,7 +93,8 @@ export function onMediaElementPlaying(): void {
 }
 
 /**
- * @param event
+ * onMediaElementVolumeChange
+ * @param event - event
  */
 function onMediaElementVolumeChange(event: framework.system.Event): void {
     window.volume = (<framework.system.SystemVolumeChangedEvent>event).data;
@@ -107,7 +106,7 @@ function onMediaElementVolumeChange(event: framework.system.Event): void {
 }
 
 /**
- *
+ * enableTimeUpdateListener
  */
 export function enableTimeUpdateListener(): void {
     window.playerManager.addEventListener(
@@ -129,7 +128,7 @@ export function enableTimeUpdateListener(): void {
 }
 
 /**
- *
+ * disableTimeUpdateListener
  */
 export function disableTimeUpdateListener(): void {
     window.playerManager.removeEventListener(
@@ -186,7 +185,7 @@ window.playerManager.addEventListener(
 );
 
 /**
- *
+ * defaultOnStop
  */
 function defaultOnStop(): void {
     PlaybackManager.onStop();
@@ -237,7 +236,8 @@ window.playerManager.addEventListener(
     (): void => {
         reportPlaybackStopped(
             PlaybackManager.playbackState,
-            getReportingParams(PlaybackManager.playbackState));
+            getReportingParams(PlaybackManager.playbackState)
+	);
     }
 );
 
@@ -253,7 +253,8 @@ window.playerManager.addEventListener(
 );
 
 /**
- *
+ * reportDeviceCapabilities
+ * @returns Promise
  */
 export async function reportDeviceCapabilities(): Promise<void> {
     const maxBitrate = await getMaxBitrate();
@@ -280,9 +281,10 @@ export async function reportDeviceCapabilities(): Promise<void> {
 }
 
 /**
- * @param data
+ * processMessage
+ * @param data - data
  */
-export function processMessage(data: any): void {
+export function processMessage(data: any): void { // eslint-disable-line no-explicit-any
     if (
         !data.command ||
         !data.serverAddress ||
@@ -349,8 +351,10 @@ export function processMessage(data: any): void {
 }
 
 /**
- * @param name
- * @param reportToServer
+ * reportEvent
+ * @param name - name
+ * @param reportToServer - reportToServer
+ * @returns Promise
  */
 export function reportEvent(
     name: string,
@@ -367,8 +371,9 @@ export function reportEvent(
 }
 
 /**
+ * setSubtitleStreamIndex
  * @param state - playback state.
- * @param index
+ * @param index - index
  */
 export function setSubtitleStreamIndex(
     state: PlaybackState,
@@ -380,7 +385,7 @@ export function setSubtitleStreamIndex(
 
     // FIXME: Possible index error when MediaStreams is undefined.
     const currentSubtitleStream = state.mediaSource?.MediaStreams?.filter(
-        (m: any) => {
+        (m: any) => { // eslint-disable-line no-explicit-any
             return m.Index == state.subtitleStreamIndex && m.Type == 'Subtitle';
         }
     )[0];
@@ -408,7 +413,7 @@ export function setSubtitleStreamIndex(
     const mediaStreams = state.PlaybackMediaSource?.MediaStreams;
 
     const subtitleStream = getStreamByIndex(
-        <any>mediaStreams,
+        <any>mediaStreams, // eslint-disable-line no-explicit-any
         'Subtitle',
         index
     );
@@ -448,8 +453,9 @@ export function setSubtitleStreamIndex(
 }
 
 /**
+ * setAudioStreamIndex
  * @param state - playback state.
- * @param index
+ * @param index - index
  */
 export function setAudioStreamIndex(
     state: PlaybackState,
@@ -463,22 +469,26 @@ export function setAudioStreamIndex(
 }
 
 /**
+ * seek
  * @param state - playback state.
- * @param ticks
+ * @param ticks - ticks
+ * @returns promise
  */
 export function seek(state: PlaybackState, ticks: number): Promise<void> {
     return changeStream(state, ticks);
 }
 
 /**
+ * changeStream
  * @param state - playback state.
- * @param ticks
- * @param params
+ * @param ticks - ticks
+ * @param params - params
+ * @returns promise
  */
 export async function changeStream(
     state: PlaybackState,
     ticks: number,
-    params: any = undefined
+    params: any = undefined // eslint-disable-line no-explicit-any
 ): Promise<void> {
     if (
         window.playerManager.getMediaInformation()?.customData.canClientSeek &&
@@ -504,7 +514,7 @@ export async function changeStream(
     //    await stopActiveEncodings($scope.playSessionId);
     //}
 
-    // @ts-expect-error
+    // @ts-expect-error is possible here
     return await PlaybackManager.playItemInternal(state.item, {
         audioStreamIndex:
             params.AudioStreamIndex == null
@@ -524,8 +534,8 @@ export async function changeStream(
 // TODO save namespace somewhere global?
 window.castReceiverContext.addCustomMessageListener(
     'urn:x-cast:com.connectsdk',
-    (evt: any) => {
-        let data: any = evt.data;
+    (evt: any) => { // eslint-disable-line no-explicit-any
+        let data: any = evt.data; // eslint-disable-line no-explicit-any
 
         // Apparently chromium likes to pass it as json, not as object.
         // chrome on android works fine
@@ -545,12 +555,14 @@ window.castReceiverContext.addCustomMessageListener(
 );
 
 /**
- * @param data
- * @param options
- * @param method
+ * translateItems
+ * @param data - data
+ * @param options - options
+ * @param method - method
+ * @returns promise
  */
 export async function translateItems(
-    data: any,
+    data: any, // eslint-disable-line no-explicit-any
     options: PlayRequest,
     method: string
 ): Promise<void> {
@@ -576,13 +588,15 @@ export async function translateItems(
 }
 
 /**
- * @param data
- * @param options
- * @param item
+ * instantMix
+ * @param data - data
+ * @param options - options
+ * @param item - item
+ * @returns promise
  */
 export async function instantMix(
-    data: any,
-    options: any,
+    data: any,  // eslint-disable-line no-explicit-any
+    options: any,  // eslint-disable-line no-explicit-any
     item: BaseItemDto
 ): Promise<void> {
     const result = await getInstantMixItems(data.userId, item);
@@ -592,13 +606,15 @@ export async function instantMix(
 }
 
 /**
- * @param data
- * @param options
- * @param item
+ * shuffle
+ * @param data - data
+ * @param options - options
+ * @param item - item
+ * @returns promise
  */
 export async function shuffle(
-    data: any,
-    options: any,
+    data: any,  // eslint-disable-line no-explicit-any
+    options: any, // eslint-disable-line no-explicit-any
     item: BaseItemDto
 ): Promise<void> {
     const result = await getShuffleItems(data.userId, item);
@@ -608,6 +624,7 @@ export async function shuffle(
 }
 
 /**
+ * onStopPlayerBeforePlaybackDone
  * This function fetches the full information of an item before playing it.
  * Only item.Id needs to be set.
  * @param item - Item to look up
@@ -616,7 +633,7 @@ export async function shuffle(
  */
 export async function onStopPlayerBeforePlaybackDone(
     item: BaseItemDto,
-    options: any
+    options: any  // eslint-disable-line no-explicit-any
 ): Promise<void> {
     const data = await JellyfinApi.authAjaxUser(`Items/${item.Id}`, {
         dataType: 'json',
@@ -629,7 +646,8 @@ export async function onStopPlayerBeforePlaybackDone(
 let lastBitrateDetect = 0;
 let detectedBitrate = 0;
 /**
- *
+ * getMaxBitrate
+ * @returns promise
  */
 export async function getMaxBitrate(): Promise<number> {
     console.log('getMaxBitrate');
@@ -667,16 +685,19 @@ export async function getMaxBitrate(): Promise<number> {
 }
 
 /**
- * @param error
+ * showPlaybackInfoErrorMessage
+ * @param error - error
  */
 export function showPlaybackInfoErrorMessage(error: string): void {
     broadcastToMessageBus({ message: error, type: 'playbackerror' });
 }
 
 /**
- * @param versions
+ * getOptimalMediaSource
+ * @param versions - versions
+ * @returns stream
  */
-export function getOptimalMediaSource(versions: Array<any>): any {
+export function getOptimalMediaSource(versions: Array<any>): any { // eslint-disable-line no-explicit-any
     let optimalVersion = versions.filter((v) => {
         checkDirectPlay(v);
 
@@ -699,6 +720,7 @@ export function getOptimalMediaSource(versions: Array<any>): any {
 
 // Disable direct play on non-http sources
 /**
+ * checkDirectPlay
  * @param mediaSource
  */
 export function checkDirectPlay(mediaSource: MediaSourceInfo): void {
@@ -715,6 +737,7 @@ export function checkDirectPlay(mediaSource: MediaSourceInfo): void {
 }
 
 /**
+ * setTextTrack
  * @param index
  */
 export function setTextTrack(index: number | null): void {
@@ -798,14 +821,16 @@ export function setTextTrack(index: number | null): void {
 
 // TODO no any types
 /**
- * @param playSessionId
- * @param item
- * @param streamInfo
+ * createMediaInformation
+ * @param playSessionId - playSessionId
+ * @param item - item
+ * @param streamInfo - streamInfo
+ * @returns media information
  */
 export function createMediaInformation(
     playSessionId: string,
     item: BaseItemDto,
-    streamInfo: any
+    streamInfo: any  // eslint-disable-line no-explicit-any
 ): framework.messages.MediaInformation {
     const mediaInfo = new cast.framework.messages.MediaInformation();
 

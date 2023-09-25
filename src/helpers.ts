@@ -59,7 +59,7 @@ export function getReportingParams(state: PlaybackState): PlaybackProgressInfo {
 }
 
 /**
-
+ * getSenderReportingData
  * This is used in playback reporting to find out information
  * about the item that is currently playing. This is sent over the cast protocol over to
  * the connected client (or clients?).
@@ -70,8 +70,8 @@ export function getReportingParams(state: PlaybackState): PlaybackProgressInfo {
 export function getSenderReportingData(
     playbackState: PlaybackState,
     reportingData: PlaybackProgressInfo
-): any {
-    const state: any = {
+): any {  // eslint-disable-line no-explicit-any
+    const state: any = { // eslint-disable-line no-explicit-any
         ItemId: reportingData.ItemId,
         PlayState: reportingData,
         QueueableMediaTypes: ['Audio', 'Video']
@@ -166,8 +166,8 @@ export function getSenderReportingData(
  * @param item - item to look up
  * @returns one of the metadata classes in cast.framework.messages.*Metadata
  */
-export function getMetadata(item: BaseItemDto): any {
-    let metadata: any;
+export function getMetadata(item: BaseItemDto): any {  // eslint-disable-line no-explicit-any
+    let metadata: any;  // eslint-disable-line no-explicit-any
     let posterUrl = '';
 
     if (item.SeriesPrimaryImageTag) {
@@ -270,12 +270,11 @@ export function getMetadata(item: BaseItemDto): any {
 
 /**
  * Check if a media source is an HLS stream
- *
  * @param mediaSource
- * @returns
+ * @returns boolean
  */
-export function isHlsStream(mediaSource: MediaSourceInfo) {
-    return mediaSource.TranscodingSubProtocol == 'hls'
+export function isHlsStream(mediaSource: MediaSourceInfo): boolean {
+    return mediaSource.TranscodingSubProtocol == 'hls';
 }
 
 /**
@@ -290,7 +289,7 @@ export function createStreamInfo(
     item: BaseItemDto,
     mediaSource: MediaSourceInfo,
     startPosition: number | null
-): any {
+): any {  // eslint-disable-line no-explicit-any
     let mediaUrl;
     let contentType;
 
@@ -301,7 +300,6 @@ export function createStreamInfo(
     const seekParam = startPositionInSeekParam
         ? `#t=${startPositionInSeekParam}`
         : '';
-
 
     let isStatic = false;
     let streamContainer = mediaSource.Container;
@@ -379,7 +377,7 @@ export function createStreamInfo(
     // It is a pain and will require unbinding all event handlers during the operation
     const canSeek = (mediaSource.RunTimeTicks || 0) > 0;
 
-    const info: any = {
+    const info: any = {  // eslint-disable-line no-explicit-any
         audioStreamIndex: mediaSource.DefaultAudioStreamIndex,
         canClientSeek: isStatic || (canSeek && streamContainer == 'm3u8'),
         canSeek: canSeek,
@@ -394,12 +392,12 @@ export function createStreamInfo(
     };
 
     const subtitleStreams =
-        mediaSource.MediaStreams?.filter((stream: any) => {
+        mediaSource.MediaStreams?.filter((stream: any) => { // eslint-disable-line no-explicit-any
         return stream.Type === 'Subtitle';
     }) ?? [];
     const subtitleTracks: Array<framework.messages.Track> = [];
 
-    subtitleStreams.forEach((subtitleStream: any) => {
+    subtitleStreams.forEach((subtitleStream: any) => { // eslint-disable-line no-explicit-any
         if (subtitleStream.DeliveryUrl === undefined) {
             /* The CAF v3 player only supports vtt currently,
              * SRT subs can be "transcoded" to vtt by jellyfin.
@@ -443,10 +441,10 @@ export function createStreamInfo(
  * @returns first first matching stream
  */
 export function getStreamByIndex(
-    streams: Array<any>,
+    streams: Array<any>, // eslint-disable-line no-explicit-any
     type: string,
     index: number
-): any {
+): any { // eslint-disable-line no-explicit-any
     return streams.filter((s) => {
         return s.Type == type && s.Index == index;
     })[0];
@@ -507,7 +505,7 @@ export async function getInstantMixItems(
     userId: string,
     item: BaseItemDto
 ): Promise<BaseItemDtoQueryResult> {
-    const query: any = {
+    const query: any = { // eslint-disable-line no-explicit-any
         Fields: requiredItemFields,
         Limit: 50,
         UserId: userId
@@ -748,7 +746,7 @@ export function parseISO8601Date(date: string): Date {
  * @returns number of seconds
  */
 export function ticksToSeconds(ticks: number): number {
-    return ticks / TicksPerSecond
+    return ticks / TicksPerSecond;
 }
 
 /**

@@ -6,10 +6,7 @@ import type {
     PlaybackProgressInfo,
     PlayRequest
 } from '@jellyfin/sdk/lib/generated-client';
-import {
-    getSenderReportingData,
-    broadcastToMessageBus
-} from '../helpers';
+import { getSenderReportingData, broadcastToMessageBus } from '../helpers';
 import { AppStatus } from '../types/appStatus';
 import { JellyfinApi } from './jellyfinApi';
 import { DocumentManager } from './documentManager';
@@ -37,7 +34,7 @@ function restartPingInterval(reportingParams: PlaybackProgressInfo): void {
     stopPingInterval();
 
     if (reportingParams.PlayMethod == 'Transcode') {
-        pingInterval = <any>setInterval(() => {
+        pingInterval = <any>setInterval(() => { // eslint-disable-line no-explicit-any
             pingTranscoder(reportingParams);
         }, 1000);
     }
@@ -183,14 +180,10 @@ export function pingTranscoder(
 
 /**
  * Update the context about the item we are playing.
- * @param playbackMgr - playback manager.
  * @param customData - data to set on playback state.
  * @param serverItem - item that is playing
  */
-export function load(
-    customData: any,
-    serverItem: BaseItemDto
-): void {
+export function load(customData: any, serverItem: BaseItemDto): void { // eslint-disable-line no-explicit-any
     PlaybackManager.resetPlaybackScope();
 
     const state = PlaybackManager.playbackState;
@@ -242,14 +235,16 @@ export function play(state: PlaybackState): void {
 }
 
 /**
- * @param item
- * @param maxBitrate
- * @param deviceProfile
- * @param startPosition
- * @param mediaSourceId
- * @param audioStreamIndex
- * @param subtitleStreamIndex
- * @param liveStreamId
+ * get PlaybackInfo
+ * @param item - item
+ * @param maxBitrate - maxBitrate
+ * @param deviceProfile - deviceProfile
+ * @param startPosition - startPosition
+ * @param mediaSourceId - mediaSourceId
+ * @param audioStreamIndex - audioStreamIndex
+ * @param subtitleStreamIndex - subtitleStreamIndex
+ * @param liveStreamId - liveStreamId
+ * @returns promise
  */
 export function getPlaybackInfo(
     item: BaseItemDto,
@@ -260,7 +255,7 @@ export function getPlaybackInfo(
     audioStreamIndex: number,
     subtitleStreamIndex: number,
     liveStreamId: string | null = null
-): Promise<any> {
+): Promise<any> { // eslint-disable-line no-explicit-any
     const postData = {
         DeviceProfile: deviceProfile
     };
@@ -298,14 +293,16 @@ export function getPlaybackInfo(
 }
 
 /**
- * @param item
- * @param playSessionId
- * @param maxBitrate
- * @param deviceProfile
- * @param startPosition
- * @param mediaSource
- * @param audioStreamIndex
- * @param subtitleStreamIndex
+ * get LiveStream
+ * @param item - item
+ * @param playSessionId - playSessionId
+ * @param maxBitrate - maxBitrate
+ * @param deviceProfile - deviceProfile
+ * @param startPosition - startPosition
+ * @param mediaSource - mediaSource
+ * @param audioStreamIndex - audioStreamIndex
+ * @param subtitleStreamIndex - subtitleStreamIndex
+ * @returns promise
  */
 export function getLiveStream(
     item: BaseItemDto,
@@ -349,7 +346,6 @@ export function getLiveStream(
 
 /**
  * Get download speed based on the jellyfin bitratetest api.
- *
  * The API has a 10MB limit.
  * @param byteSize - number of bytes to request
  * @returns the bitrate in bits/s
@@ -378,7 +374,6 @@ export async function getDownloadSpeed(byteSize: number): Promise<number> {
  * Function to detect the bitrate.
  * It starts at 500kB and doubles it every time it takes under 2s, for max 10MB.
  * This should get an accurate bitrate relatively fast on any connection
- *
  * @param numBytes - Number of bytes to start with, default 500k
  * @returns bitrate in bits/s
  */
