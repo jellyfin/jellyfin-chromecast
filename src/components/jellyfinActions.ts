@@ -34,7 +34,8 @@ function restartPingInterval(reportingParams: PlaybackProgressInfo): void {
     stopPingInterval();
 
     if (reportingParams.PlayMethod == 'Transcode') {
-        pingInterval = <any>setInterval(() => { // eslint-disable-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        pingInterval = <any>setInterval(() => {
             pingTranscoder(reportingParams);
         }, 1000);
     }
@@ -183,7 +184,8 @@ export function pingTranscoder(
  * @param customData - data to set on playback state.
  * @param serverItem - item that is playing
  */
-export function load(customData: any, serverItem: BaseItemDto): void { // eslint-disable-line @typescript-eslint/no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function load(customData: any, serverItem: BaseItemDto): void {
     PlaybackManager.resetPlaybackScope();
 
     const state = PlaybackManager.playbackState;
@@ -255,7 +257,8 @@ export function getPlaybackInfo(
     audioStreamIndex: number,
     subtitleStreamIndex: number,
     liveStreamId: string | null = null
-): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+): Promise<any> {
     const postData = {
         DeviceProfile: deviceProfile
     };

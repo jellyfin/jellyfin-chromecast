@@ -237,7 +237,7 @@ window.playerManager.addEventListener(
         reportPlaybackStopped(
             PlaybackManager.playbackState,
             getReportingParams(PlaybackManager.playbackState)
-	);
+        );
     }
 );
 
@@ -284,7 +284,8 @@ export async function reportDeviceCapabilities(): Promise<void> {
  * processMessage
  * @param data - data
  */
-export function processMessage(data: any): void { // eslint-disable-line @typescript-eslint/no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function processMessage(data: any): void {
     if (
         !data.command ||
         !data.serverAddress ||
@@ -385,7 +386,8 @@ export function setSubtitleStreamIndex(
 
     // FIXME: Possible index error when MediaStreams is undefined.
     const currentSubtitleStream = state.mediaSource?.MediaStreams?.filter(
-        (m: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (m: any) => {
             return m.Index == state.subtitleStreamIndex && m.Type == 'Subtitle';
         }
     )[0];
@@ -456,6 +458,7 @@ export function setSubtitleStreamIndex(
  * setAudioStreamIndex
  * @param state - playback state.
  * @param index - index
+ * @returns promise
  */
 export function setAudioStreamIndex(
     state: PlaybackState,
@@ -534,7 +537,8 @@ export async function changeStream(
 // TODO save namespace somewhere global?
 window.castReceiverContext.addCustomMessageListener(
     'urn:x-cast:com.connectsdk',
-    (evt: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (evt: any) => {
         let data: any = evt.data; // eslint-disable-line @typescript-eslint/no-explicit-any
 
         // Apparently chromium likes to pass it as json, not as object.
@@ -595,8 +599,10 @@ export async function translateItems(
  * @returns promise
  */
 export async function instantMix(
-    data: any,  // eslint-disable-line @typescript-eslint/no-explicit-any
-    options: any,  // eslint-disable-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    data: any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    options: any,
     item: BaseItemDto
 ): Promise<void> {
     const result = await getInstantMixItems(data.userId, item);
@@ -613,8 +619,10 @@ export async function instantMix(
  * @returns promise
  */
 export async function shuffle(
-    data: any,  // eslint-disable-line @typescript-eslint/no-explicit-any
-    options: any, // eslint-disable-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    data: any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    options: any,
     item: BaseItemDto
 ): Promise<void> {
     const result = await getShuffleItems(data.userId, item);
@@ -633,7 +641,8 @@ export async function shuffle(
  */
 export async function onStopPlayerBeforePlaybackDone(
     item: BaseItemDto,
-    options: any  // eslint-disable-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    options: any
 ): Promise<void> {
     const data = await JellyfinApi.authAjaxUser(`Items/${item.Id}`, {
         dataType: 'json',
@@ -697,7 +706,8 @@ export function showPlaybackInfoErrorMessage(error: string): void {
  * @param versions - versions
  * @returns stream
  */
-export function getOptimalMediaSource(versions: Array<any>): any { // eslint-disable-line @typescript-eslint/no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function getOptimalMediaSource(versions: Array<any>): any {
     let optimalVersion = versions.filter((v) => {
         checkDirectPlay(v);
 
@@ -721,7 +731,7 @@ export function getOptimalMediaSource(versions: Array<any>): any { // eslint-dis
 // Disable direct play on non-http sources
 /**
  * checkDirectPlay
- * @param mediaSource
+ * @param mediaSource - mediaSource
  */
 export function checkDirectPlay(mediaSource: MediaSourceInfo): void {
     if (
@@ -738,7 +748,7 @@ export function checkDirectPlay(mediaSource: MediaSourceInfo): void {
 
 /**
  * setTextTrack
- * @param index
+ * @param index - index
  */
 export function setTextTrack(index: number | null): void {
     try {
@@ -830,7 +840,8 @@ export function setTextTrack(index: number | null): void {
 export function createMediaInformation(
     playSessionId: string,
     item: BaseItemDto,
-    streamInfo: any  // eslint-disable-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    streamInfo: any
 ): framework.messages.MediaInformation {
     const mediaInfo = new cast.framework.messages.MediaInformation();
 

@@ -26,7 +26,9 @@ export abstract class JellyfinApi {
         serverAddress?: string,
         receiverName = ''
     ): void {
-        console.debug(`JellyfinApi.setServerInfo: user:${userId}, token:${accessToken}, server:${serverAddress}, name:${receiverName}`);
+        console.debug(
+            `JellyfinApi.setServerInfo: user:${userId}, token:${accessToken}, server:${serverAddress}, name:${receiverName}`
+        );
         this.userId = userId;
         this.accessToken = accessToken;
         this.serverAddress = serverAddress;
@@ -124,7 +126,8 @@ export abstract class JellyfinApi {
     }
 
     // Authenticated ajax
-    public static authAjax(path: string, args: any): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    public static authAjax(path: string, args: any): Promise<any> {
         if (
             this.userId === undefined ||
             this.accessToken === undefined ||
@@ -146,7 +149,8 @@ export abstract class JellyfinApi {
     }
 
     // Authenticated ajax
-    public static authAjaxUser(path: string, args: any): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    public static authAjaxUser(path: string, args: any): Promise<any> {
         if (
             this.userId === undefined ||
             this.accessToken === undefined ||

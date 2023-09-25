@@ -5,19 +5,19 @@ import type {
 } from '@jellyfin/sdk/lib/generated-client';
 import { RepeatMode } from '@jellyfin/sdk/lib/generated-client';
 import { AppStatus } from '../types/appStatus';
-import { ItemIndex } from '~/types/global';
 import {
     broadcastConnectionErrorMessage,
     createStreamInfo,
     ticksToSeconds
 } from '../helpers';
+import { DocumentManager } from './documentManager';
+import { getDeviceProfile } from './deviceprofileBuilder';
 import {
     getPlaybackInfo,
     getLiveStream,
     load,
     stopPingInterval
 } from './jellyfinActions';
-import { getDeviceProfile } from './deviceprofileBuilder';
 import {
     onStopPlayerBeforePlaybackDone,
     getMaxBitrate,
@@ -26,7 +26,7 @@ import {
     checkDirectPlay,
     createMediaInformation
 } from './maincontroller';
-import { DocumentManager } from './documentManager';
+import { ItemIndex } from '~/types/global';
 
 export interface PlaybackState {
     startPositionTicks: number;
@@ -50,7 +50,6 @@ export interface PlaybackState {
 
     runtimeTicks: number;
 }
-
 
 export abstract class PlaybackManager {
     private static playerManager: framework.PlayerManager;
@@ -90,16 +89,22 @@ export abstract class PlaybackManager {
      */
     static isPlaying(): boolean {
         return (
-            this.playerManager.getPlayerState() === cast.framework.messages.PlayerState.PLAYING ||
-            this.playerManager.getPlayerState() === cast.framework.messages.PlayerState.PAUSED
+            this.playerManager.getPlayerState() ===
+                cast.framework.messages.PlayerState.PLAYING ||
+            this.playerManager.getPlayerState() ===
+                cast.framework.messages.PlayerState.PAUSED
         );
     }
 
     static isBuffering(): boolean {
-        return this.playerManager.getPlayerState() === cast.framework.messages.PlayerState.BUFFERING;
+        return (
+            this.playerManager.getPlayerState() ===
+            cast.framework.messages.PlayerState.BUFFERING
+        );
     }
 
-    static async playFromOptions(options: any): Promise<void> {  // eslint-disable-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    static async playFromOptions(options: any): Promise<void> {
         const firstItem = options.items[0];
 
         if (options.startPositionTicks || firstItem.MediaType !== 'Video') {
@@ -109,7 +114,8 @@ export abstract class PlaybackManager {
         return this.playFromOptionsInternal(options);
     }
 
-    private static playFromOptionsInternal(options: any): Promise<void> {  // eslint-disable-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    private static playFromOptionsInternal(options: any): Promise<void> {
         const stopPlayer =
             this.activePlaylist && this.activePlaylist.length > 0;
 
@@ -143,22 +149,26 @@ export abstract class PlaybackManager {
         return this.activePlaylistIndex > 0;
     }
 
-    static playNextItem(options: any = {}, stopPlayer = false): boolean {  // eslint-disable-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    static playNextItem(options: any = {}, stopPlayer = false): boolean {
         const nextItemInfo = this.getNextPlaybackItemInfo();
 
         if (nextItemInfo) {
             this.activePlaylistIndex = nextItemInfo.index;
             this.playItem(options, stopPlayer);
+
             return true;
         }
 
         return false;
     }
 
-    static playPreviousItem(options: any = {}): boolean { // eslint-disable-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    static playPreviousItem(options: any = {}): boolean {
         if (this.activePlaylist && this.activePlaylistIndex > 0) {
             this.activePlaylistIndex--;
             this.playItem(options, true);
+
             return true;
         }
 
@@ -175,7 +185,9 @@ export abstract class PlaybackManager {
         }
 
         const item = this.activePlaylist[this.activePlaylistIndex];
+
         console.log(`Playing index ${this.activePlaylistIndex}`, item);
+
         return await onStopPlayerBeforePlaybackDone(item, options);
     }
 
@@ -270,7 +282,9 @@ export abstract class PlaybackManager {
         // If we should seek at the start, translate it
         // to seconds and give it to loadRequestData :)
         if (mediaInfo.customData.startPositionTicks > 0) {
-            loadRequestData.currentTime = ticksToSeconds(mediaInfo.customData.startPositionTicks);
+            loadRequestData.currentTime = ticksToSeconds(
+                mediaInfo.customData.startPositionTicks
+            );
         }
 
         load(mediaInfo.customData, item);

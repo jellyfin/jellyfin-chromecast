@@ -81,7 +81,7 @@ export interface DataMessage {
         | SetIndexRequest
         | SetRepeatModeRequest
         | SeekRequest;
-        command: string;
+    command: string;
 }
 
 interface SupportedCommands {
@@ -98,7 +98,8 @@ declare global {
         castReceiverContext: CastReceiverContext;
         repeatMode: RepeatMode;
         reportEventType: 'repeatmodechange';
-        subtitleAppearance: any;  // eslint-disable-line no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        subtitleAppearance: any;
         MaxBitrate: number | undefined;
         senderId: string | undefined;
         volume: SystemVolumeData;
