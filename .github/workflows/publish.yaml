@@ -59,7 +59,7 @@ jobs:
     publish:
         name: Publish
         runs-on: ubuntu-latest
-        if: ${{ contains(github.repository_owner, 'jellyfin') && (github.ref == 'refs/head/master' || startsWith(github.ref, 'refs/tags')) }}
+        if: ${{ contains(github.repository_owner, 'jellyfin') && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags')) }}
         needs: [build]
         strategy:
             matrix:
@@ -108,7 +108,7 @@ jobs:
     deploy:
         name: Deploy
         runs-on: ubuntu-latest
-        if: ${{ contains(github.repository_owner, 'jellyfin') && (github.ref == 'refs/head/master' || startsWith(github.ref, 'refs/tags')) }}
+        if: ${{ contains(github.repository_owner, 'jellyfin') && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags')) }}
         needs: [build]
 
         steps:
