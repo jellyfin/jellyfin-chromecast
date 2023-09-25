@@ -99,6 +99,7 @@ jobs:
 
             - name: Update repo.jellyfin.org symlinks
               uses: appleboy/ssh-action@55dabf81b49d4120609345970c91507e2d734799 # v1.0.0
+              if: ${{ matrix.flavor == 'production' }}
               with:
                   host: ${{ secrets.DEPLOY_HOST }}
                   username: ${{ secrets.DEPLOY_USER }}
