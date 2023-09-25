@@ -28,16 +28,16 @@ export abstract class JellyfinApi {
     ): void {
         console.debug(
             `JellyfinApi.setServerInfo: user:${userId}, token:${accessToken}, ` +
-                `server:${serverAddress}, name:${receiverName}`
+            `server:${serverAddress}, name:${receiverName}`
         );
         this.userId = userId;
         this.accessToken = accessToken;
         this.serverAddress = serverAddress;
 
-        // remove special characters from the receiver name
-        receiverName = receiverName.replace(/[^\w\s]/gi, '');
-
         if (receiverName) {
+            // remove special characters from the receiver name
+            receiverName = receiverName.replace(/[^\w\s]/gi, '');
+
             this.deviceName = receiverName;
             // deviceId just needs to be unique-ish
             this.deviceId = btoa(receiverName);

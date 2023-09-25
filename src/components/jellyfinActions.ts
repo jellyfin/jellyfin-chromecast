@@ -6,11 +6,14 @@ import type {
     PlaybackProgressInfo,
     PlayRequest
 } from '@jellyfin/sdk/lib/generated-client';
-
-import { getSenderReportingData, broadcastToMessageBus } from '../helpers';
+import {
+    getSenderReportingData,
+    broadcastToMessageBus
+} from '../helpers';
+import { AppStatus } from '../types/appStatus';
 import { JellyfinApi } from './jellyfinApi';
 import { DocumentManager } from './documentManager';
-import { playbackManager, PlaybackState } from './playbackManager';
+import { PlaybackManager, PlaybackState } from './playbackManager';
 
 interface PlayRequestQuery extends PlayRequest {
     UserId?: string;
@@ -185,13 +188,12 @@ export function pingTranscoder(
  * @param serverItem - item that is playing
  */
 export function load(
-    playbackMgr: playbackManager,
     customData: any,
     serverItem: BaseItemDto
 ): void {
-    playbackMgr.resetPlaybackScope();
+    PlaybackManager.resetPlaybackScope();
 
-    const state = playbackMgr.playbackState;
+    const state = PlaybackManager.playbackState;
 
     // These are set up in maincontroller.createMediaInformation
     state.playSessionId = customData.playSessionId;
@@ -207,7 +209,7 @@ export function load(
 
     state.item = serverItem;
 
-    DocumentManager.setAppStatus('backdrop');
+    DocumentManager.setAppStatus(AppStatus.Backdrop);
     state.mediaType = serverItem?.MediaType;
 }
 
@@ -222,30 +224,21 @@ export function load(
  */
 export function play(state: PlaybackState): void {
     if (
-        DocumentManager.getAppStatus() == 'backdrop' ||
-        DocumentManager.getAppStatus() == 'playing-with-controls' ||
-        DocumentManager.getAppStatus() == 'playing' ||
-        DocumentManager.getAppStatus() == 'audio'
+        DocumentManager.getAppStatus() == AppStatus.Backdrop ||
+        DocumentManager.getAppStatus() == AppStatus.PlayingWithControls ||
+        DocumentManager.getAppStatus() == AppStatus.Playing ||
+        DocumentManager.getAppStatus() == AppStatus.Audio
     ) {
         setTimeout(() => {
             window.playerManager.play();
 
             if (state.mediaType == 'Audio') {
-                DocumentManager.setAppStatus('audio');
+                DocumentManager.setAppStatus(AppStatus.Audio);
             } else {
-                DocumentManager.setAppStatus('playing-with-controls');
+                DocumentManager.setAppStatus(AppStatus.PlayingWithControls);
             }
         }, 20);
     }
-}
-
-/**
- * Don't actually stop, just show the idle view after 20ms
- */
-export function stop(): void {
-    setTimeout(() => {
-        DocumentManager.setAppStatus('waiting');
-    }, 20);
 }
 
 /**
@@ -366,10 +359,13 @@ export async function getDownloadSpeed(byteSize: number): Promise<number> {
 
     const now = new Date().getTime();
 
-    await JellyfinApi.authAjax(path, {
+    const response = await JellyfinApi.authAjax(path, {
         timeout: 5000,
         type: 'GET'
     });
+
+    // Force javascript to download the whole response before calculating bitrate
+    await response.blob();
 
     const responseTimeSeconds = (new Date().getTime() - now) / 1000;
     const bytesPerSecond = byteSize / responseTimeSeconds;
@@ -380,21 +376,29 @@ export async function getDownloadSpeed(byteSize: number): Promise<number> {
 
 /**
  * Function to detect the bitrate.
- * It first tries 1MB and if bitrate is above 1Mbit/s it tries again with 2.4MB.
+ * It starts at 500kB and doubles it every time it takes under 2s, for max 10MB.
+ * This should get an accurate bitrate relatively fast on any connection
+ *
+ * @param numBytes - Number of bytes to start with, default 500k
  * @returns bitrate in bits/s
  */
-export async function detectBitrate(): Promise<number> {
-    // First try a small amount so that we don't hang up their mobile connection
+export async function detectBitrate(numBytes = 500000): Promise<number> {
+    // Jellyfin has a 10MB limit on the test size
+    const byteLimit = 10000000;
 
-    let bitrate = await getDownloadSpeed(1000000);
-
-    if (bitrate < 1000000) {
-        return Math.round(bitrate * 0.8);
+    if (numBytes > byteLimit) {
+        numBytes = byteLimit;
     }
 
-    bitrate = await getDownloadSpeed(2400000);
+    const bitrate = await getDownloadSpeed(numBytes);
 
-    return Math.round(bitrate * 0.8);
+    if (bitrate * (2 / 8.0) < numBytes || numBytes >= byteLimit) {
+        // took > 2s, or numBytes hit the limit
+        return Math.round(bitrate * 0.8);
+    } else {
+        // If that produced a fairly high speed, try again with a larger size to get a more accurate result
+        return await detectBitrate(numBytes * 2);
+    }
 }
 
 /**

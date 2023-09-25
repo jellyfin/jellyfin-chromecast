@@ -6,18 +6,19 @@ import type {
     BaseItemPerson,
     UserDto
 } from '@jellyfin/sdk/lib/generated-client';
-
 import { JellyfinApi } from './components/jellyfinApi';
-import { BusMessage, ItemIndex, ItemQuery } from './types/global';
-import { PlaybackState } from './components/playbackManager';
+import { DocumentManager } from './components/documentManager';
+import { PlaybackManager, PlaybackState } from './components/playbackManager';
+import { BusMessage, ItemQuery } from './types/global';
 
+export const TicksPerSecond = 10000000
 /**
  * Get current playback position in ticks, adjusted for server seeking
  * @param state - playback state.
  * @returns position in ticks
  */
 export function getCurrentPositionTicks(state: PlaybackState): number {
-    let positionTicks = window.playerManager.getCurrentTimeSec() * 10000000;
+    let positionTicks = window.playerManager.getCurrentTimeSec() * TicksPerSecond;
     const mediaInformation = window.playerManager.getMediaInformation();
 
     if (mediaInformation && !mediaInformation.customData.canClientSeek) {
@@ -58,52 +59,7 @@ export function getReportingParams(state: PlaybackState): PlaybackProgressInfo {
 }
 
 /**
- * Get information about the next item to play from window.playlist
- * @returns ItemIndex including item and index, or null to end playback
- */
-export function getNextPlaybackItemInfo(): ItemIndex | null {
-    const playlist = window.playlist;
 
-    if (!playlist) {
-        return null;
-    }
-
-    let newIndex: number;
-
-    if (window.currentPlaylistIndex == -1) {
-        newIndex = 0;
-    } else {
-        switch (window.repeatMode) {
-            case 'RepeatOne':
-                newIndex = window.currentPlaylistIndex;
-                break;
-            case 'RepeatAll':
-                newIndex = window.currentPlaylistIndex + 1;
-
-                if (newIndex >= window.playlist.length) {
-                    newIndex = 0;
-                }
-
-                break;
-            default:
-                newIndex = window.currentPlaylistIndex + 1;
-                break;
-        }
-    }
-
-    if (newIndex < playlist.length) {
-        const item = playlist[newIndex];
-
-        return {
-            index: newIndex,
-            item: item
-        };
-    }
-
-    return null;
-}
-
-/**
  * This is used in playback reporting to find out information
  * about the item that is currently playing. This is sent over the cast protocol over to
  * the connected client (or clients?).
@@ -194,7 +150,7 @@ export function getSenderReportingData(
         }
 
         if (playbackState.playNextItemBool) {
-            const nextItemInfo = getNextPlaybackItemInfo();
+            const nextItemInfo = PlaybackManager.getNextPlaybackItemInfo();
 
             if (nextItemInfo) {
                 state.NextMediaType = nextItemInfo.item.MediaType;
@@ -313,6 +269,16 @@ export function getMetadata(item: BaseItemDto): any {
 }
 
 /**
+ * Check if a media source is an HLS stream
+ *
+ * @param mediaSource
+ * @returns
+ */
+export function isHlsStream(mediaSource: MediaSourceInfo) {
+    return mediaSource.TranscodingSubProtocol == 'hls'
+}
+
+/**
  * Create the necessary information about an item
  * needed for playback
  * @param item - Item to play
@@ -330,11 +296,12 @@ export function createStreamInfo(
 
     // server seeking
     const startPositionInSeekParam = startPosition
-        ? startPosition / 10000000
+        ? ticksToSeconds(startPosition)
         : 0;
     const seekParam = startPositionInSeekParam
         ? `#t=${startPositionInSeekParam}`
         : '';
+
 
     let isStatic = false;
     let streamContainer = mediaSource.Container;
@@ -361,7 +328,7 @@ export function createStreamInfo(
                 <string>mediaSource.TranscodingUrl
             );
 
-            if (mediaSource.TranscodingSubProtocol == 'hls') {
+            if (isHlsStream(mediaSource)) {
                 mediaUrl += seekParam;
                 playerStartPositionTicks = startPosition || 0;
                 contentType = 'application/x-mpegURL';
@@ -428,8 +395,8 @@ export function createStreamInfo(
 
     const subtitleStreams =
         mediaSource.MediaStreams?.filter((stream: any) => {
-            return stream.Type === 'Subtitle';
-        }) ?? [];
+        return stream.Type === 'Subtitle';
+    }) ?? [];
     const subtitleTracks: Array<framework.messages.Track> = [];
 
     subtitleStreams.forEach((subtitleStream: any) => {
@@ -439,7 +406,7 @@ export function createStreamInfo(
              * The server will do that in accordance with the device profiles and
              * give us a DeliveryUrl if that is the case.
              * Support for more could be added with a custom implementation
-             **/
+             */
             return;
         }
 
@@ -773,6 +740,15 @@ export async function translateRequestedItems(
  */
 export function parseISO8601Date(date: string): Date {
     return new Date(date);
+}
+
+/**
+ * Convert ticks to seconds
+ * @param ticks - number of ticks to convert
+ * @returns number of seconds
+ */
+export function ticksToSeconds(ticks: number): number {
+    return ticks / TicksPerSecond
 }
 
 /**

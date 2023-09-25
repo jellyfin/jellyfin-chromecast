@@ -6,6 +6,4 @@ import './css/jellyfin.css';
 
 window.mediaElement = document.getElementById('video-player');
 
-window.playlist = [];
-window.currentPlaylistIndex = -1;
 window.repeatMode = RepeatMode.RepeatNone;
