@@ -124,7 +124,7 @@ export abstract class JellyfinApi {
     }
 
     // Authenticated ajax
-    public static authAjax(path: string, args: any): Promise<any> { // eslint-disable-line no-explicit-any
+    public static authAjax(path: string, args: any): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
         if (
             this.userId === undefined ||
             this.accessToken === undefined ||
@@ -146,7 +146,7 @@ export abstract class JellyfinApi {
     }
 
     // Authenticated ajax
-    public static authAjaxUser(path: string, args: any): Promise<any> { // eslint-disable-line no-explicit-any
+    public static authAjaxUser(path: string, args: any): Promise<any> { // eslint-disable-line @typescript-eslint/no-explicit-any
         if (
             this.userId === undefined ||
             this.accessToken === undefined ||

@@ -99,7 +99,7 @@ export abstract class PlaybackManager {
         return this.playerManager.getPlayerState() === cast.framework.messages.PlayerState.BUFFERING;
     }
 
-    static async playFromOptions(options: any): Promise<void> {  // eslint-disable-line no-explicit-any
+    static async playFromOptions(options: any): Promise<void> {  // eslint-disable-line @typescript-eslint/no-explicit-any
         const firstItem = options.items[0];
 
         if (options.startPositionTicks || firstItem.MediaType !== 'Video') {
@@ -109,7 +109,7 @@ export abstract class PlaybackManager {
         return this.playFromOptionsInternal(options);
     }
 
-    private static playFromOptionsInternal(options: any): Promise<void> {  // eslint-disable-line no-explicit-any
+    private static playFromOptionsInternal(options: any): Promise<void> {  // eslint-disable-line @typescript-eslint/no-explicit-any
         const stopPlayer =
             this.activePlaylist && this.activePlaylist.length > 0;
 
@@ -143,7 +143,7 @@ export abstract class PlaybackManager {
         return this.activePlaylistIndex > 0;
     }
 
-    static playNextItem(options: any = {}, stopPlayer = false): boolean {  // eslint-disable-line no-explicit-any
+    static playNextItem(options: any = {}, stopPlayer = false): boolean {  // eslint-disable-line @typescript-eslint/no-explicit-any
         const nextItemInfo = this.getNextPlaybackItemInfo();
 
         if (nextItemInfo) {
@@ -155,7 +155,7 @@ export abstract class PlaybackManager {
         return false;
     }
 
-    static playPreviousItem(options: any = {}): boolean { // eslint-disable-line no-explicit-any
+    static playPreviousItem(options: any = {}): boolean { // eslint-disable-line @typescript-eslint/no-explicit-any
         if (this.activePlaylist && this.activePlaylistIndex > 0) {
             this.activePlaylistIndex--;
             this.playItem(options, true);
@@ -167,7 +167,7 @@ export abstract class PlaybackManager {
 
     // play item from playlist
     private static async playItem(
-        options: any, // eslint-disable-line no-explicit-any
+        options: any, // eslint-disable-line @typescript-eslint/no-explicit-any
         stopPlayer = false
     ): Promise<void> {
         if (stopPlayer) {
@@ -182,7 +182,7 @@ export abstract class PlaybackManager {
     // Would set private, but some refactorings need to happen first.
     static async playItemInternal(
         item: BaseItemDto,
-        options: any // eslint-disable-line no-explicit-any
+        options: any // eslint-disable-line @typescript-eslint/no-explicit-any
     ): Promise<void> {
         this.playbackState.isChangingStream = false;
         DocumentManager.setAppStatus(AppStatus.Loading);
@@ -247,7 +247,7 @@ export abstract class PlaybackManager {
         playSessionId: string,
         item: BaseItemDto,
         mediaSource: MediaSourceInfo,
-        options: any // eslint-disable-line no-explicit-any
+        options: any // eslint-disable-line @typescript-eslint/no-explicit-any
     ): void {
         DocumentManager.setAppStatus(AppStatus.Loading);
 
