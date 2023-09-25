@@ -92,7 +92,7 @@ jobs:
               with:
                   switches: -vrptz
                   path: jellyfin-chromecast-${{ matrix.flavor }}.zip
-                  remote_path: /srv/repository/releases/client/chromecast/versions/${{ env.JELLYFIN_VERSION }}/jellyfin-chromecast-${{ matrix.flavor }}.zip
+                  remote_path: /srv/repository/releases/client/chromecast/versions/${{ env.JELLYFIN_VERSION }}/
                   remote_host: ${{ secrets.DEPLOY_HOST }}
                   remote_user: ${{ secrets.DEPLOY_USER }}
                   remote_key: ${{ secrets.DEPLOY_KEY }}
