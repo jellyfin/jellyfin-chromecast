@@ -1,5 +1,4 @@
 import { ajax } from './fetchhelper';
-import { Dictionary } from '~/types/global';
 
 export abstract class JellyfinApi {
     // userId that we are connecting as currently
@@ -53,26 +52,39 @@ export abstract class JellyfinApi {
     }
 
     // create the necessary headers for authentication
-    private static getSecurityHeaders(): Dictionary<string> {
-        // TODO throw error if this fails
-
-        let auth =
-            `Jellyfin Client="Chromecast", Device="${this.deviceName}", ` +
-            `DeviceId="${this.deviceId}", Version="${this.versionNumber}"`;
-
-        if (this.userId) {
-            auth += `, UserId="${this.userId}"`;
-        }
-
-        const headers: Dictionary<string> = {
-            Authorization: auth
+    private static getSecurityHeaders(): { Authorization?: string } {
+        const parameters: Record<string, string> = {
+            Client: 'Chromecast'
         };
 
-        if (this.accessToken != undefined) {
-            headers['X-MediaBrowser-Token'] = this.accessToken;
+        if (this.accessToken) {
+            parameters['Token'] = this.accessToken;
         }
 
-        return headers;
+        if (this.versionNumber) {
+            parameters['Version'] = this.versionNumber;
+        }
+
+        if (this.deviceId) {
+            parameters['DeviceId'] = this.deviceId;
+        }
+
+        if (this.deviceName) {
+            parameters['Device'] = this.deviceName;
+        }
+
+        let header = 'MediaBrowser';
+
+        for (const [key, value] of Object.entries(parameters)) {
+            header += ` ${key}="${encodeURIComponent(value)}", `;
+        }
+
+        // Remove last comma
+        header = header.substring(0, header.length - 2);
+
+        return {
+            Authorization: header
+        };
     }
 
     // Create a basic url.
