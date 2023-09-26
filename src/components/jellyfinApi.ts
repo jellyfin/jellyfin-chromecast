@@ -1,5 +1,4 @@
 import { ajax } from './fetchhelper';
-import { Dictionary } from '~/types/global';
 
 export abstract class JellyfinApi {
     // userId that we are connecting as currently
@@ -33,9 +32,6 @@ export abstract class JellyfinApi {
         this.userId = userId;
         this.accessToken = accessToken;
         this.serverAddress = serverAddress;
-
-        // remove special characters from the receiver name
-        receiverName = receiverName.replace(/[^\w\s]/gi, '');
 
         if (receiverName) {
             this.deviceName = receiverName;
