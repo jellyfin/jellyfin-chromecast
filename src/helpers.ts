@@ -6,10 +6,11 @@ import type {
     BaseItemPerson,
     UserDto
 } from '@jellyfin/sdk/lib/generated-client';
-
 import { JellyfinApi } from './components/jellyfinApi';
-import { BusMessage, ItemIndex, ItemQuery } from './types/global';
-import { PlaybackState } from './components/playbackManager';
+import { PlaybackManager, PlaybackState } from './components/playbackManager';
+import { BusMessage, ItemQuery } from './types/global';
+
+export const TicksPerSecond = 10000000;
 
 /**
  * Get current playback position in ticks, adjusted for server seeking
@@ -17,7 +18,8 @@ import { PlaybackState } from './components/playbackManager';
  * @returns position in ticks
  */
 export function getCurrentPositionTicks(state: PlaybackState): number {
-    let positionTicks = window.playerManager.getCurrentTimeSec() * 10000000;
+    let positionTicks =
+        window.playerManager.getCurrentTimeSec() * TicksPerSecond;
     const mediaInformation = window.playerManager.getMediaInformation();
 
     if (mediaInformation && !mediaInformation.customData.canClientSeek) {
@@ -58,52 +60,7 @@ export function getReportingParams(state: PlaybackState): PlaybackProgressInfo {
 }
 
 /**
- * Get information about the next item to play from window.playlist
- * @returns ItemIndex including item and index, or null to end playback
- */
-export function getNextPlaybackItemInfo(): ItemIndex | null {
-    const playlist = window.playlist;
-
-    if (!playlist) {
-        return null;
-    }
-
-    let newIndex: number;
-
-    if (window.currentPlaylistIndex == -1) {
-        newIndex = 0;
-    } else {
-        switch (window.repeatMode) {
-            case 'RepeatOne':
-                newIndex = window.currentPlaylistIndex;
-                break;
-            case 'RepeatAll':
-                newIndex = window.currentPlaylistIndex + 1;
-
-                if (newIndex >= window.playlist.length) {
-                    newIndex = 0;
-                }
-
-                break;
-            default:
-                newIndex = window.currentPlaylistIndex + 1;
-                break;
-        }
-    }
-
-    if (newIndex < playlist.length) {
-        const item = playlist[newIndex];
-
-        return {
-            index: newIndex,
-            item: item
-        };
-    }
-
-    return null;
-}
-
-/**
+ * getSenderReportingData
  * This is used in playback reporting to find out information
  * about the item that is currently playing. This is sent over the cast protocol over to
  * the connected client (or clients?).
@@ -114,7 +71,9 @@ export function getNextPlaybackItemInfo(): ItemIndex | null {
 export function getSenderReportingData(
     playbackState: PlaybackState,
     reportingData: PlaybackProgressInfo
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): any {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const state: any = {
         ItemId: reportingData.ItemId,
         PlayState: reportingData,
@@ -135,6 +94,7 @@ export function getSenderReportingData(
         nowPlayingItem.Chapters = item.Chapters || [];
 
         // TODO: Fill these
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const mediaSource = item.MediaSources?.filter((m: any) => {
             return m.Id == reportingData.MediaSourceId;
         })[0];
@@ -194,7 +154,7 @@ export function getSenderReportingData(
         }
 
         if (playbackState.playNextItemBool) {
-            const nextItemInfo = getNextPlaybackItemInfo();
+            const nextItemInfo = PlaybackManager.getNextPlaybackItemInfo();
 
             if (nextItemInfo) {
                 state.NextMediaType = nextItemInfo.item.MediaType;
@@ -210,7 +170,9 @@ export function getSenderReportingData(
  * @param item - item to look up
  * @returns one of the metadata classes in cast.framework.messages.*Metadata
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function getMetadata(item: BaseItemDto): any {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let metadata: any;
     let posterUrl = '';
 
@@ -313,6 +275,15 @@ export function getMetadata(item: BaseItemDto): any {
 }
 
 /**
+ * Check if a media source is an HLS stream
+ * @param mediaSource - mediaSource
+ * @returns boolean
+ */
+export function isHlsStream(mediaSource: MediaSourceInfo): boolean {
+    return mediaSource.TranscodingSubProtocol == 'hls';
+}
+
+/**
  * Create the necessary information about an item
  * needed for playback
  * @param item - Item to play
@@ -324,13 +295,14 @@ export function createStreamInfo(
     item: BaseItemDto,
     mediaSource: MediaSourceInfo,
     startPosition: number | null
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): any {
     let mediaUrl;
     let contentType;
 
     // server seeking
     const startPositionInSeekParam = startPosition
-        ? startPosition / 10000000
+        ? ticksToSeconds(startPosition)
         : 0;
     const seekParam = startPositionInSeekParam
         ? `#t=${startPositionInSeekParam}`
@@ -361,7 +333,7 @@ export function createStreamInfo(
                 <string>mediaSource.TranscodingUrl
             );
 
-            if (mediaSource.TranscodingSubProtocol == 'hls') {
+            if (isHlsStream(mediaSource)) {
                 mediaUrl += seekParam;
                 playerStartPositionTicks = startPosition || 0;
                 contentType = 'application/x-mpegURL';
@@ -412,6 +384,7 @@ export function createStreamInfo(
     // It is a pain and will require unbinding all event handlers during the operation
     const canSeek = (mediaSource.RunTimeTicks || 0) > 0;
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const info: any = {
         audioStreamIndex: mediaSource.DefaultAudioStreamIndex,
         canClientSeek: isStatic || (canSeek && streamContainer == 'm3u8'),
@@ -427,11 +400,13 @@ export function createStreamInfo(
     };
 
     const subtitleStreams =
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         mediaSource.MediaStreams?.filter((stream: any) => {
             return stream.Type === 'Subtitle';
         }) ?? [];
     const subtitleTracks: Array<framework.messages.Track> = [];
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     subtitleStreams.forEach((subtitleStream: any) => {
         if (subtitleStream.DeliveryUrl === undefined) {
             /* The CAF v3 player only supports vtt currently,
@@ -439,7 +414,7 @@ export function createStreamInfo(
              * The server will do that in accordance with the device profiles and
              * give us a DeliveryUrl if that is the case.
              * Support for more could be added with a custom implementation
-             **/
+             */
             return;
         }
 
@@ -476,9 +451,11 @@ export function createStreamInfo(
  * @returns first first matching stream
  */
 export function getStreamByIndex(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     streams: Array<any>,
     type: string,
     index: number
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): any {
     return streams.filter((s) => {
         return s.Type == type && s.Index == index;
@@ -540,6 +517,7 @@ export async function getInstantMixItems(
     userId: string,
     item: BaseItemDto
 ): Promise<BaseItemDtoQueryResult> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const query: any = {
         Fields: requiredItemFields,
         Limit: 50,
@@ -773,6 +751,15 @@ export async function translateRequestedItems(
  */
 export function parseISO8601Date(date: string): Date {
     return new Date(date);
+}
+
+/**
+ * Convert ticks to seconds
+ * @param ticks - number of ticks to convert
+ * @returns number of seconds
+ */
+export function ticksToSeconds(ticks: number): number {
+    return ticks / TicksPerSecond;
 }
 
 /**

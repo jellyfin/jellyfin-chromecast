@@ -3,6 +3,7 @@
  * @param request - Custom request object, mostly modeled after RequestInit.
  * @returns response promise
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function getFetchPromise(request: any): Promise<Response> {
     const headers = request.headers || {};
 
@@ -102,6 +103,7 @@ function paramsToString(params: Record<string, string>): string {
  * @param request - RequestInit-like structure but with url/type/timeout parameters as well
  * @returns response promise, may be automatically unpacked based on request datatype
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function ajax(request: any): Promise<Response | string> {
     if (!request) {
         throw new Error('Request cannot be null');

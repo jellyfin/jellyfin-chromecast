@@ -96,10 +96,9 @@ declare global {
         mediaElement: HTMLElement | null;
         playerManager: PlayerManager;
         castReceiverContext: CastReceiverContext;
-        playlist: Array<any>;
-        currentPlaylistIndex: number;
         repeatMode: RepeatMode;
         reportEventType: 'repeatmodechange';
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         subtitleAppearance: any;
         MaxBitrate: number | undefined;
         senderId: string | undefined;

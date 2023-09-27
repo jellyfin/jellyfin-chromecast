@@ -45,6 +45,7 @@ let profileOptions: ProfileOptions;
 let currentDeviceId: number;
 
 /**
+ * Create and return a new ProfileCondition
  * @param Property - What property the condition should test.
  * @param Condition - The condition to test the values for.
  * @param Value - The value to compare against.
@@ -66,6 +67,8 @@ function createProfileCondition(
 }
 
 /**
+ * Get container profiles
+ * @todo Why does this always return an empty array?
  * @returns Container profiles.
  */
 function getContainerProfiles(): Array<ContainerProfile> {
@@ -73,6 +76,7 @@ function getContainerProfiles(): Array<ContainerProfile> {
 }
 
 /**
+ * Get response profiles
  * @returns Response profiles.
  */
 function getResponseProfiles(): Array<ResponseProfile> {
@@ -87,6 +91,7 @@ function getResponseProfiles(): Array<ResponseProfile> {
 }
 
 /**
+ * Get direct play profiles
  * @returns Direct play profiles.
  */
 function getDirectPlayProfiles(): Array<DirectPlayProfile> {
@@ -150,6 +155,7 @@ function getDirectPlayProfiles(): Array<DirectPlayProfile> {
 }
 
 /**
+ * Get codec profiles
  * @returns Codec profiles.
  */
 function getCodecProfiles(): Array<CodecProfile> {
@@ -224,7 +230,7 @@ function getCodecProfiles(): Array<CodecProfile> {
             createProfileCondition(
                 ProfileConditionValue.Width,
                 ProfileConditionType.LessThanEqual,
-                maxWidth.toString(),
+                getMaxWidthSupport(currentDeviceId, 'h264').toString(),
                 true
             )
         ],
@@ -271,7 +277,7 @@ function getCodecProfiles(): Array<CodecProfile> {
             createProfileCondition(
                 ProfileConditionValue.Width,
                 ProfileConditionType.LessThanEqual,
-                maxWidth.toString(),
+                getMaxWidthSupport(currentDeviceId).toString(),
                 true
             )
         ],
@@ -297,6 +303,7 @@ function getCodecProfiles(): Array<CodecProfile> {
 }
 
 /**
+ * Get transcoding profiles
  * @returns Transcoding profiles.
  */
 function getTranscodingProfiles(): Array<TranscodingProfile> {
@@ -375,6 +382,7 @@ function getTranscodingProfiles(): Array<TranscodingProfile> {
 }
 
 /**
+ * Get subtitle profiles
  * @returns Subtitle profiles.
  */
 function getSubtitleProfiles(): Array<SubtitleProfile> {

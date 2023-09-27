@@ -1,5 +1,5 @@
-import { getReportingParams } from '../helpers';
-import {
+import { getReportingParams, TicksPerSecond } from '../helpers';
+import type {
     DataMessage,
     DisplayRequest,
     PlayRequest,
@@ -8,6 +8,7 @@ import {
     SetRepeatModeRequest,
     SupportedCommands
 } from '../types/global';
+import { AppStatus } from '../types/appStatus';
 import {
     translateItems,
     shuffle,
@@ -16,16 +17,12 @@ import {
     setSubtitleStreamIndex,
     seek
 } from './maincontroller';
-
 import { reportPlaybackProgress } from './jellyfinActions';
-
-import { playbackManager } from './playbackManager';
-
+import { PlaybackManager } from './playbackManager';
 import { DocumentManager } from './documentManager';
 
 export abstract class CommandHandler {
     private static playerManager: framework.PlayerManager;
-    private static playbackManager: playbackManager;
     private static supportedCommands: SupportedCommands = {
         DisplayContent: CommandHandler.displayContentHandler,
         Identify: CommandHandler.IdentifyHandler,
@@ -52,12 +49,8 @@ export abstract class CommandHandler {
         VolumeUp: CommandHandler.VolumeUpHandler
     };
 
-    static configure(
-        playerManager: framework.PlayerManager,
-        playbackManager: playbackManager
-    ): void {
+    static configure(playerManager: framework.PlayerManager): void {
         this.playerManager = playerManager;
-        this.playbackManager = playbackManager;
     }
 
     static playNextHandler(data: DataMessage): void {
@@ -89,36 +82,33 @@ export abstract class CommandHandler {
     }
 
     static displayContentHandler(data: DataMessage): void {
-        if (!this.playbackManager.isPlaying()) {
+        if (!PlaybackManager.isPlaying()) {
             DocumentManager.showItemId((<DisplayRequest>data.options).ItemId);
         }
     }
 
     static nextTrackHandler(): void {
-        if (
-            window.playlist &&
-            window.currentPlaylistIndex < window.playlist.length - 1
-        ) {
-            this.playbackManager.playNextItem({}, true);
+        if (PlaybackManager.hasNextItem()) {
+            PlaybackManager.playNextItem({}, true);
         }
     }
 
     static previousTrackHandler(): void {
-        if (window.playlist && window.currentPlaylistIndex > 0) {
-            this.playbackManager.playPreviousItem({});
+        if (PlaybackManager.hasPrevItem()) {
+            PlaybackManager.playPreviousItem({});
         }
     }
 
     static setAudioStreamIndexHandler(data: DataMessage): void {
         setAudioStreamIndex(
-            this.playbackManager.playbackState,
+            PlaybackManager.playbackState,
             (<SetIndexRequest>data.options).index
         );
     }
 
     static setSubtitleStreamIndexHandler(data: DataMessage): void {
         setSubtitleStreamIndex(
-            this.playbackManager.playbackState,
+            PlaybackManager.playbackState,
             (<SetIndexRequest>data.options).index
         );
     }
@@ -144,13 +134,17 @@ export abstract class CommandHandler {
     }
 
     static IdentifyHandler(): void {
-        if (!this.playbackManager.isPlaying()) {
+        if (!PlaybackManager.isPlaying()) {
+            if (!PlaybackManager.isBuffering()) {
+                DocumentManager.setAppStatus(AppStatus.Waiting);
+            }
+
             DocumentManager.startBackdropInterval();
         } else {
             // When a client connects send back the initial device state (volume etc) via a playbackstop message
             reportPlaybackProgress(
-                this.playbackManager.playbackState,
-                getReportingParams(this.playbackManager.playbackState),
+                PlaybackManager.playbackState,
+                getReportingParams(PlaybackManager.playbackState),
                 true,
                 'playbackstop'
             );
@@ -159,8 +153,8 @@ export abstract class CommandHandler {
 
     static SeekHandler(data: DataMessage): void {
         seek(
-            this.playbackManager.playbackState,
-            (<SeekRequest>data.options).position * 10000000
+            PlaybackManager.playbackState,
+            (<SeekRequest>data.options).position * TicksPerSecond
         );
     }
 

@@ -26,14 +26,16 @@ export abstract class JellyfinApi {
         receiverName = ''
     ): void {
         console.debug(
-            `JellyfinApi.setServerInfo: user:${userId}, token:${accessToken}, ` +
-                `server:${serverAddress}, name:${receiverName}`
+            `JellyfinApi.setServerInfo: user:${userId}, token:${accessToken}, server:${serverAddress}, name:${receiverName}`
         );
         this.userId = userId;
         this.accessToken = accessToken;
         this.serverAddress = serverAddress;
 
         if (receiverName) {
+            // remove special characters from the receiver name
+            receiverName = receiverName.replace(/[^\w\s]/gi, '');
+
             this.deviceName = receiverName;
             // deviceId just needs to be unique-ish
             this.deviceId = btoa(receiverName);
@@ -136,6 +138,7 @@ export abstract class JellyfinApi {
     }
 
     // Authenticated ajax
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public static authAjax(path: string, args: any): Promise<any> {
         if (
             this.userId === undefined ||
@@ -158,6 +161,7 @@ export abstract class JellyfinApi {
     }
 
     // Authenticated ajax
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public static authAjaxUser(path: string, args: any): Promise<any> {
         if (
             this.userId === undefined ||

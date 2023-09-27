@@ -3,25 +3,21 @@ import type {
     MediaSourceInfo,
     PlayMethod
 } from '@jellyfin/sdk/lib/generated-client';
-
+import { RepeatMode } from '@jellyfin/sdk/lib/generated-client';
+import { AppStatus } from '../types/appStatus';
 import {
-    getNextPlaybackItemInfo,
     broadcastConnectionErrorMessage,
-    getReportingParams,
-    createStreamInfo
+    createStreamInfo,
+    ticksToSeconds
 } from '../helpers';
-
+import { DocumentManager } from './documentManager';
+import { getDeviceProfile } from './deviceprofileBuilder';
 import {
     getPlaybackInfo,
     getLiveStream,
     load,
-    reportPlaybackStart,
-    stop,
-    stopPingInterval,
-    reportPlaybackStopped
+    stopPingInterval
 } from './jellyfinActions';
-import { getDeviceProfile } from './deviceprofileBuilder';
-
 import {
     onStopPlayerBeforePlaybackDone,
     getMaxBitrate,
@@ -30,8 +26,7 @@ import {
     checkDirectPlay,
     createMediaInformation
 } from './maincontroller';
-
-import { DocumentManager } from './documentManager';
+import { ItemIndex } from '~/types/global';
 
 export interface PlaybackState {
     startPositionTicks: number;
@@ -56,13 +51,12 @@ export interface PlaybackState {
     runtimeTicks: number;
 }
 
-export class playbackManager {
-    private playerManager: framework.PlayerManager;
-    // TODO remove any
-    private activePlaylist: Array<BaseItemDto>;
-    private activePlaylistIndex: number;
+export abstract class PlaybackManager {
+    private static playerManager: framework.PlayerManager;
+    private static activePlaylist: Array<BaseItemDto>;
+    private static activePlaylistIndex: number;
 
-    playbackState: PlaybackState = {
+    static playbackState: PlaybackState = {
         audioStreamIndex: null,
         canSeek: false,
         isChangingStream: false,
@@ -81,13 +75,10 @@ export class playbackManager {
         subtitleStreamIndex: null
     };
 
-    constructor(playerManager: framework.PlayerManager) {
+    static setPlayerManager(playerManager: framework.PlayerManager): void {
         // Parameters
         this.playerManager = playerManager;
-
-        // Properties
-        this.activePlaylist = [];
-        this.activePlaylistIndex = 0;
+        this.resetPlaylist();
     }
 
     /* This is used to check if we can switch to
@@ -95,8 +86,8 @@ export class playbackManager {
      *
      * Returns true when playing or paused.
      * (before: true only when playing)
-     * */
-    isPlaying(): boolean {
+     */
+    static isPlaying(): boolean {
         return (
             this.playerManager.getPlayerState() ===
                 cast.framework.messages.PlayerState.PLAYING ||
@@ -105,7 +96,15 @@ export class playbackManager {
         );
     }
 
-    async playFromOptions(options: any): Promise<boolean> {
+    static isBuffering(): boolean {
+        return (
+            this.playerManager.getPlayerState() ===
+            cast.framework.messages.PlayerState.BUFFERING
+        );
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    static async playFromOptions(options: any): Promise<void> {
         const firstItem = options.items[0];
 
         if (options.startPositionTicks || firstItem.MediaType !== 'Video') {
@@ -115,26 +114,48 @@ export class playbackManager {
         return this.playFromOptionsInternal(options);
     }
 
-    playFromOptionsInternal(options: any): boolean {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    private static playFromOptionsInternal(options: any): Promise<void> {
         const stopPlayer =
             this.activePlaylist && this.activePlaylist.length > 0;
 
         this.activePlaylist = options.items;
-        window.currentPlaylistIndex = -1;
-        window.playlist = this.activePlaylist;
+        this.activePlaylistIndex = options.startIndex || 0;
 
-        return this.playNextItem(options, stopPlayer);
+        console.log('Loaded new playlist:', this.activePlaylist);
+
+        // When starting playback initially, don't use
+        // the next item facility.
+        return this.playItem(options, stopPlayer);
     }
 
-    playNextItem(options: any = {}, stopPlayer = false): boolean {
-        const nextItemInfo = getNextPlaybackItemInfo();
+    // add item to playlist
+    static enqueue(item: BaseItemDto): void {
+        this.activePlaylist.push(item);
+    }
+
+    static resetPlaylist(): void {
+        this.activePlaylistIndex = -1;
+        this.activePlaylist = [];
+    }
+
+    // If there are items in the queue after the current one
+    static hasNextItem(): boolean {
+        return this.activePlaylistIndex < this.activePlaylist.length - 1;
+    }
+
+    // If there are items in the queue before the current one
+    static hasPrevItem(): boolean {
+        return this.activePlaylistIndex > 0;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    static playNextItem(options: any = {}, stopPlayer = false): boolean {
+        const nextItemInfo = this.getNextPlaybackItemInfo();
 
         if (nextItemInfo) {
             this.activePlaylistIndex = nextItemInfo.index;
-
-            const item = nextItemInfo.item;
-
-            this.playItem(item, options, stopPlayer);
+            this.playItem(options, stopPlayer);
 
             return true;
         }
@@ -142,13 +163,11 @@ export class playbackManager {
         return false;
     }
 
-    playPreviousItem(options: any = {}): boolean {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    static playPreviousItem(options: any = {}): boolean {
         if (this.activePlaylist && this.activePlaylistIndex > 0) {
             this.activePlaylistIndex--;
-
-            const item = this.activePlaylist[this.activePlaylistIndex];
-
-            this.playItem(item, options, true);
+            this.playItem(options, true);
 
             return true;
         }
@@ -156,21 +175,29 @@ export class playbackManager {
         return false;
     }
 
-    async playItem(
-        item: BaseItemDto,
-        options: any,
+    // play item from playlist
+    private static async playItem(
+        options: any, // eslint-disable-line @typescript-eslint/no-explicit-any
         stopPlayer = false
     ): Promise<void> {
         if (stopPlayer) {
-            await this.stop(true);
+            this.stop();
         }
+
+        const item = this.activePlaylist[this.activePlaylistIndex];
+
+        console.log(`Playing index ${this.activePlaylistIndex}`, item);
 
         return await onStopPlayerBeforePlaybackDone(item, options);
     }
 
-    async playItemInternal(item: BaseItemDto, options: any): Promise<void> {
+    // Would set private, but some refactorings need to happen first.
+    static async playItemInternal(
+        item: BaseItemDto,
+        options: any // eslint-disable-line @typescript-eslint/no-explicit-any
+    ): Promise<void> {
         this.playbackState.isChangingStream = false;
-        DocumentManager.setAppStatus('loading');
+        DocumentManager.setAppStatus(AppStatus.Loading);
 
         const maxBitrate = await getMaxBitrate();
         const deviceProfile = getDeviceProfile({
@@ -184,7 +211,8 @@ export class playbackManager {
             options.startPositionTicks,
             options.mediaSourceId,
             options.audioStreamIndex,
-            options.subtitleStreamIndex
+            options.subtitleStreamIndex,
+            options.liveStreamId
         ).catch(broadcastConnectionErrorMessage);
 
         if (playbackInfo.ErrorCode) {
@@ -227,22 +255,19 @@ export class playbackManager {
         );
     }
 
-    // TODO eradicate any
-    playMediaSource(
+    private static playMediaSource(
         playSessionId: string,
         item: BaseItemDto,
         mediaSource: MediaSourceInfo,
-        options: any
+        options: any // eslint-disable-line @typescript-eslint/no-explicit-any
     ): void {
-        DocumentManager.setAppStatus('loading');
+        DocumentManager.setAppStatus(AppStatus.Loading);
 
         const streamInfo = createStreamInfo(
             item,
             mediaSource,
             options.startPositionTicks
         );
-
-        const url = streamInfo.url;
 
         const mediaInfo = createMediaInformation(
             playSessionId,
@@ -254,20 +279,26 @@ export class playbackManager {
         loadRequestData.media = mediaInfo;
         loadRequestData.autoplay = true;
 
-        load(this, mediaInfo.customData, item);
+        // If we should seek at the start, translate it
+        // to seconds and give it to loadRequestData :)
+        if (mediaInfo.customData.startPositionTicks > 0) {
+            loadRequestData.currentTime = ticksToSeconds(
+                mediaInfo.customData.startPositionTicks
+            );
+        }
+
+        load(mediaInfo.customData, item);
         this.playerManager.load(loadRequestData);
 
         this.playbackState.PlaybackMediaSource = mediaSource;
 
-        console.log(`setting src to ${url}`);
+        console.log(`setting src to ${streamInfo.url}`);
         this.playbackState.mediaSource = mediaSource;
 
         DocumentManager.setPlayerBackdrop(item);
 
-        reportPlaybackStart(
-            this.playbackState,
-            getReportingParams(this.playbackState)
-        );
+        this.playbackState.audioStreamIndex = streamInfo.audioStreamIndex;
+        this.playbackState.subtitleStreamIndex = streamInfo.subtitleStreamIndex;
 
         // We use false as we do not want to broadcast the new status yet
         // we will broadcast manually when the media has been loaded, this
@@ -275,39 +306,80 @@ export class playbackManager {
         this.playerManager.setMediaInformation(mediaInfo, false);
     }
 
-    stop(continuing = false): Promise<any> {
-        this.playbackState.playNextItemBool = continuing;
-        stop();
+    /**
+     * stop playback, as requested by the client
+     */
+    static stop(): void {
+        this.playerManager.stop();
+        // onStop will be called when playback comes to a halt.
+    }
 
-        const reportingParams = getReportingParams(this.playbackState);
+    /**
+     * Called when media stops playing.
+     * TODO avoid doing this between tracks in a playlist
+     */
+    static onStop(): void {
+        if (this.getNextPlaybackItemInfo()) {
+            this.playbackState.playNextItemBool = true;
+        } else {
+            this.playbackState.playNextItemBool = false;
 
-        let promise;
+            DocumentManager.setAppStatus(AppStatus.Waiting);
 
-        stopPingInterval();
+            stopPingInterval();
 
-        if (reportingParams.ItemId) {
-            promise = reportPlaybackStopped(
-                this.playbackState,
-                reportingParams
-            );
+            DocumentManager.startBackdropInterval();
+        }
+    }
+
+    /**
+     * Get information about the next item to play from window.playlist
+     * @returns item and index, or null to end playback
+     */
+    static getNextPlaybackItemInfo(): ItemIndex | null {
+        if (this.activePlaylist.length < 1) {
+            return null;
         }
 
-        this.playerManager.stop();
+        let newIndex: number;
 
-        this.activePlaylist = [];
-        this.activePlaylistIndex = -1;
-        DocumentManager.startBackdropInterval();
+        if (this.activePlaylistIndex < 0) {
+            // negative = play the first item
+            newIndex = 0;
+        } else {
+            switch (window.repeatMode) {
+                case RepeatMode.RepeatOne:
+                    newIndex = this.activePlaylistIndex;
+                    break;
+                case RepeatMode.RepeatAll:
+                    newIndex = this.activePlaylistIndex + 1;
 
-        promise = promise || Promise.resolve();
+                    if (newIndex >= this.activePlaylist.length) {
+                        newIndex = 0;
+                    }
 
-        return promise;
+                    break;
+                default:
+                    newIndex = this.activePlaylistIndex + 1;
+                    break;
+            }
+        }
+
+        if (newIndex < this.activePlaylist.length) {
+            return {
+                index: newIndex,
+                item: this.activePlaylist[newIndex]
+            };
+        }
+
+        return null;
     }
 
     /**
      * Attempt to clean the receiver state.
      */
-    resetPlaybackScope(): void {
-        DocumentManager.setAppStatus('waiting');
+    static resetPlaybackScope(): void {
+        DocumentManager.setAppStatus(AppStatus.Waiting);
 
         this.playbackState.startPositionTicks = 0;
         DocumentManager.setWaitingBackdrop(null, null);
