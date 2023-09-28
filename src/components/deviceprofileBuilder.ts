@@ -14,9 +14,7 @@ import { EncodingContext } from '@jellyfin/sdk/lib/generated-client/models/encod
 import { ProfileConditionType } from '@jellyfin/sdk/lib/generated-client/models/profile-condition-type';
 import { ProfileConditionValue } from '@jellyfin/sdk/lib/generated-client/models/profile-condition-value';
 import { SubtitleDeliveryMethod } from '@jellyfin/sdk/lib/generated-client/models/subtitle-delivery-method';
-
 import { deviceIds, getActiveDeviceId } from './castDevices';
-
 import {
     hasSurroundSupport,
     hasTextTrackSupport,
@@ -188,14 +186,8 @@ function getCodecProfiles(): Array<CodecProfile> {
     const aacConditions: CodecProfile = {
         Codec: 'aac',
         Conditions: [
-            // Not sure what secondary audio means in this context. Multiple audio tracks?
             createProfileCondition(
-                ProfileConditionValue.IsSecondaryAudio,
-                ProfileConditionType.Equals,
-                'false'
-            ),
-            createProfileCondition(
-                ProfileConditionValue.IsSecondaryAudio,
+                ProfileConditionValue.AudioChannels,
                 ProfileConditionType.LessThanEqual,
                 '2'
             )
@@ -272,6 +264,7 @@ function getCodecProfiles(): Array<CodecProfile> {
 
     CodecProfiles.push(h265Conditions);
 
+    // the following are codec independent conditions so hold for all codecs
     const videoConditions: CodecProfile = {
         Conditions: [
             createProfileCondition(
@@ -288,6 +281,8 @@ function getCodecProfiles(): Array<CodecProfile> {
 
     const videoAudioConditions: CodecProfile = {
         Conditions: [
+            // Apparently something like an audiotrack from a second source, not in the current mediasource.
+            // Input from multiple sources is not supported, so this feature is not allowed.
             createProfileCondition(
                 ProfileConditionValue.IsSecondaryAudio,
                 ProfileConditionType.Equals,
