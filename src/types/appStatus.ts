@@ -1,10 +1,10 @@
 export enum AppStatus {
-    Audio = 'Audio',
-    Backdrop = 'Backdrop',
-    Details = 'Details',
-    Loading = 'Loading',
-    PlayingWithControls = 'PlayingWithControls',
-    Playing = 'Playing',
+    Audio = 'audio',
+    Backdrop = 'backdrop',
+    Details = 'details',
+    Loading = 'loading',
+    PlayingWithControls = 'playing-with-controls',
+    Playing = 'playing',
     Unset = '',
-    Waiting = 'Waiting'
+    Waiting = 'waiting'
 }
