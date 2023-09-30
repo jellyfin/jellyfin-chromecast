@@ -50,6 +50,7 @@ const common: webpack.Configuration = {
 const development: webpack.Configuration = {
     // @ts-expect-error - Typings mismatch between versions
     devServer: {
+        allowedHosts: ['all'],
         compress: true,
         port: process.env.RECEIVER_PORT
             ? Number.parseInt(process.env.RECEIVER_PORT, 10)
