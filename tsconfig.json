@@ -14,6 +14,6 @@
         "paths": {
             "~/*": ["./*"]
         },
-        "types": ["@types/node", "@types/chromecast-caf-receiver", "jest"]
+        "types": ["@types/chromecast-caf-receiver", "jest", "vite/client"]
     }
 }
