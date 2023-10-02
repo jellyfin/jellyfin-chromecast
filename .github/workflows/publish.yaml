@@ -109,10 +109,10 @@ jobs:
             - name: Download Artifact
               uses: actions/download-artifact@9bc31d5ccc31df68ecc42ccf4149144866c47d8a # v3.0.2
               with:
-                  name: jellyfin-chromecast-production
+                  name: jellyfin-chromecast
 
             - name: Unzip artifact
-              run: unzip jellyfin-chromecast-production.zip -d .
+              run: unzip jellyfin-chromecast.zip -d .
 
             - name: Deploy to apps1.jellyfin.org/chromecast/nightly
               uses: burnett01/rsync-deployments@45d84ad5f6c174f3e0ffc50e9060a9666d09c16e # 6.0.0
