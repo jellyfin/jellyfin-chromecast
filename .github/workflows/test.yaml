@@ -26,7 +26,7 @@ jobs:
               run: npm ci --no-audit
 
             - name: Build for production
-              run: npm run build:production
+              run: npm run build
 
             - name: Run tests
               run: npm run test
