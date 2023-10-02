@@ -18,11 +18,9 @@ The development environment is setup with editorconfig. Code style is enforced b
 
 ### Building/Using
 
-`npm run build:development` - Build a development version
-
 `npm start` - Build a development version and start a dev server
 
-`npm run build:production` - Build a production version
+`npm run build` - Build a production version
 
 `npm run test` - Run tests
 
@@ -33,7 +31,7 @@ The development environment is setup with editorconfig. Code style is enforced b
 3. Change `applicationStable` and `applicationUnstable` in `jellyfin-web/src/plugins/chromecastPlayer/plugin.js` to your own application ID.
 4. Run the local copy of jellyfin-web using the provided instructions in the repo.
 5. Clone this repo and run `npm install`. This will install all dependencies, run tests and build a production build by default.
-6. Make changes and build with `npm run build:development`. `build:development` includes sourcemaps that'll make it easier to debug.
+6. Make changes and build with `npm run build`.
 7. Before pushing your changes, make sure to run `npm run test` and `npm run lint`.
 
 > NOTE: It is recommended to symlink the `dist` folder pointing to a location on your web server hosting the files. That way you can refresh the cast receiver via the Chrome Remote Debugger and see your changes without having to manually copy after each build.
