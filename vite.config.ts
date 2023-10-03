@@ -5,6 +5,7 @@ import { version } from './package.json';
 
 export default defineConfig({
     root: 'src',
+    base: './',
     build: {
         outDir: '../dist',
         emptyOutDir: true,
