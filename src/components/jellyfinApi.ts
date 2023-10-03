@@ -1,3 +1,4 @@
+import { version as packageVersion } from '../../package.json';
 import { ajax } from './fetchhelper';
 
 export abstract class JellyfinApi {
@@ -15,9 +16,6 @@ export abstract class JellyfinApi {
 
     // unique id
     public static deviceId = '';
-
-    // version
-    public static versionNumber = RECEIVERVERSION;
 
     public static setServerInfo(
         userId?: string,
@@ -54,15 +52,12 @@ export abstract class JellyfinApi {
     // create the necessary headers for authentication
     private static getSecurityHeaders(): { Authorization?: string } {
         const parameters: Record<string, string> = {
-            Client: 'Chromecast'
+            Client: 'Chromecast',
+            Version: packageVersion
         };
 
         if (this.accessToken) {
             parameters['Token'] = this.accessToken;
-        }
-
-        if (this.versionNumber) {
-            parameters['Version'] = this.versionNumber;
         }
 
         if (this.deviceId) {
