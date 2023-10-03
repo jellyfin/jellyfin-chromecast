@@ -11,7 +11,6 @@
     },
     "devDependencies": {
         "@types/chromecast-caf-receiver": "6.0.10",
-        "@types/jest": "29.5.5",
         "@typescript-eslint/eslint-plugin": "6.7.3",
         "@typescript-eslint/parser": "6.7.3",
         "eslint": "8.50.0",
@@ -22,14 +21,12 @@
         "eslint-plugin-json": "3.1.0",
         "eslint-plugin-prettier": "5.0.0",
         "eslint-plugin-promise": "6.1.1",
-        "jest": "29.7.0",
-        "jest-environment-jsdom": "29.7.0",
         "prettier": "3.0.3",
         "stylelint": "15.10.3",
         "stylelint-config-standard": "34.0.0",
-        "ts-jest": "29.1.1",
         "typescript": "5.2.2",
-        "vite": "4.4.9"
+        "vite": "4.4.9",
+        "vitest": "0.34.6"
     },
     "homepage": "https://jellyfin.org/",
     "license": "GPL-2.0-or-later",
@@ -40,7 +37,7 @@
     "scripts": {
         "start": "vite",
         "build": "vite build",
-        "test": "jest --silent",
+        "test": "vitest",
         "lint": "npm run lint:code && npm run lint:css && npm run prettier",
         "lint:code": "eslint --ext .ts,.js,.json .",
         "lint:css": "stylelint src/**/*.css",
