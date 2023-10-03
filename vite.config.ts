@@ -1,7 +1,6 @@
 /* eslint-disable sort-keys */
 
 import { defineConfig } from 'vite';
-import { version } from './package.json';
 
 export default defineConfig({
     root: 'src',
@@ -14,8 +13,5 @@ export default defineConfig({
     },
     server: {
         port: 9000
-    },
-    define: {
-        RECEIVERVERSION: JSON.stringify(version)
     }
 });

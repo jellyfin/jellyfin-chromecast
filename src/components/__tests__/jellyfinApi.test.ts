@@ -215,7 +215,7 @@ describe('getting security headers', () => {
 
         // @ts-expect-error Since the method is private.
         const result = JellyfinApi.getSecurityHeaders();
-        const correctAuth = `MediaBrowser Client="Chromecast",  Token="thisIsAccessToken",  Version="${version}",  DeviceId="${btoa(
+        const correctAuth = `MediaBrowser Client="Chromecast",  Version="${version}",  Token="thisIsAccessToken",  DeviceId="${btoa(
             'thisIsReceiverName'
         )}",  Device="thisIsReceiverName"`;
 
@@ -233,7 +233,7 @@ describe('getting security headers', () => {
         // @ts-expect-error Since the method is private.
         const result = JellyfinApi.getSecurityHeaders();
         const correct = {
-            Authorization: `MediaBrowser Client="Chromecast",  Token="thisIsAccessToken",  Version="${version}",  DeviceId="thisIsSenderId",  Device="Google%20Cast"`
+            Authorization: `MediaBrowser Client="Chromecast",  Version="${version}",  Token="thisIsAccessToken",  DeviceId="thisIsSenderId",  Device="Google%20Cast"`
         };
 
         expect(result).toMatchObject(correct);
