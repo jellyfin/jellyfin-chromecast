@@ -1,4 +1,6 @@
+import { describe, beforeAll, beforeEach, test, expect } from 'vitest';
 import { JellyfinApi } from '../jellyfinApi';
+import { version } from '../../../package.json';
 
 const setupMockCastSenders = (): void => {
     const getSenders = (): Array<any> => [{ id: 'thisIsSenderId' }]; // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -213,7 +215,7 @@ describe('getting security headers', () => {
 
         // @ts-expect-error Since the method is private.
         const result = JellyfinApi.getSecurityHeaders();
-        const correctAuth = `MediaBrowser Client="Chromecast",  Token="thisIsAccessToken",  Version="thisIsVersionNumber",  DeviceId="${btoa(
+        const correctAuth = `MediaBrowser Client="Chromecast",  Token="thisIsAccessToken",  Version="${version}",  DeviceId="${btoa(
             'thisIsReceiverName'
         )}",  Device="thisIsReceiverName"`;
 
@@ -231,8 +233,7 @@ describe('getting security headers', () => {
         // @ts-expect-error Since the method is private.
         const result = JellyfinApi.getSecurityHeaders();
         const correct = {
-            Authorization:
-                'MediaBrowser Client="Chromecast",  Token="thisIsAccessToken",  Version="thisIsVersionNumber",  DeviceId="thisIsSenderId",  Device="Google%20Cast"'
+            Authorization: `MediaBrowser Client="Chromecast",  Token="thisIsAccessToken",  Version="${version}",  DeviceId="thisIsSenderId",  Device="Google%20Cast"`
         };
 
         expect(result).toMatchObject(correct);

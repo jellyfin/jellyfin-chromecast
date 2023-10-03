@@ -1,3 +1,5 @@
+import { describe, beforeEach, test, expect } from 'vitest';
+
 import {
     credentialManager,
     ServerCredential
