@@ -904,7 +904,7 @@ controls.assignButton(
 const options = new cast.framework.CastReceiverOptions();
 
 // Global variable set by Webpack
-if (!PRODUCTION) {
+if (!import.meta.env.PROD) {
     window.castReceiverContext.setLoggerLevel(cast.framework.LoggerLevel.DEBUG);
     // Don't time out on me :(
     // This is only normally allowed for non media apps, but in this case

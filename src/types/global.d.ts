@@ -90,7 +90,6 @@ interface SupportedCommands {
 // /From commandHandler
 
 declare global {
-    export const PRODUCTION: boolean;
     export const RECEIVERVERSION: string;
     export interface Window {
         mediaElement: HTMLElement | null;

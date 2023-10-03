@@ -26,8 +26,7 @@ module.exports = {
             files: ['.js', '.ts'],
             globals: {
                 $scope: 'writable',
-                cast: 'readonly',
-                PRODUCTION: 'readonly'
+                cast: 'readonly'
             }
         }
     ],
