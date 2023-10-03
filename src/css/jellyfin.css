@@ -98,6 +98,12 @@ body {
     font-size: 1.1vw;
 }
 
+.playedIndicator img {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
 .detailImageProgressContainer {
     position: absolute;
     bottom: 10px;
