@@ -9,7 +9,6 @@ module.exports = {
         'plugin:jsdoc/recommended',
         'plugin:json/recommended',
         'plugin:@typescript-eslint/recommended',
-        'prettier',
         'plugin:prettier/recommended',
         'plugin:promise/recommended',
         'plugin:import/errors',
@@ -30,7 +29,7 @@ module.exports = {
             }
         }
     ],
-    plugins: ['prettier', 'promise', 'import', 'jsdoc'],
+    plugins: ['promise', 'import', 'jsdoc'],
     root: true,
     rules: {
         '@typescript-eslint/explicit-function-return-type': 'error',

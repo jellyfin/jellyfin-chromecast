@@ -38,9 +38,8 @@
         "start": "vite",
         "build": "vite build",
         "test": "vitest",
-        "lint": "npm run lint:code && npm run lint:css && npm run prettier",
+        "lint": "npm run lint:code && npm run lint:css",
         "lint:code": "eslint --ext .ts,.js,.json .",
-        "lint:css": "stylelint src/**/*.css",
-        "prettier": "prettier --check ."
+        "lint:css": "stylelint src/**/*.css"
     }
 }
