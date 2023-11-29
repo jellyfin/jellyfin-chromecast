@@ -55,7 +55,7 @@ export function getReportingParams(state: PlaybackState): PlaybackProgressInfo {
         PositionTicks: Math.round(getCurrentPositionTicks(state)),
         RepeatMode: window.repeatMode,
         SubtitleStreamIndex: state.subtitleStreamIndex,
-        VolumeLevel: Math.round(window.volume?.level ?? 0 * 100)
+        VolumeLevel: Math.round((window.volume?.level ?? 0) * 100)
     };
 }
 
