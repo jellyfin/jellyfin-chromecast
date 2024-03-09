@@ -95,7 +95,7 @@ jobs:
                   envs: JELLYFIN_VERSION
                   script_stop: true
                   script: |
-                      if [ {{ env.JELLYFIN_VERSION }} = "unstable" ]; then
+                      if [ -d "/srv/repository/main/client/chromecast/versions/${{ env.JELLYFIN_VERSION }}" ] && [ -n "${{ env.JELLYFIN_VERSION }}" ]; then
                         sudo rm -r /srv/repository/main/client/chromecast/versions/${{ env.JELLYFIN_VERSION }};
                       fi
                       sudo mv /srv/incoming/chromecast/${{ env.JELLYFIN_VERSION }} /srv/repository/main/client/chromecast/versions/${{ env.JELLYFIN_VERSION }};
