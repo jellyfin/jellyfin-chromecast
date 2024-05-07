@@ -26,7 +26,7 @@
         "stylelint-config-standard": "36.0.0",
         "typescript": "5.4.5",
         "vite": "5.2.10",
-        "vitest": "1.5.2"
+        "vitest": "1.5.3"
     },
     "homepage": "https://jellyfin.org/",
     "license": "GPL-2.0-or-later",
