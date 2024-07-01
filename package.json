@@ -10,7 +10,7 @@
         "axios": "1.7.2"
     },
     "devDependencies": {
-        "@types/chromecast-caf-receiver": "6.0.14",
+        "@types/chromecast-caf-receiver": "6.0.16",
         "@typescript-eslint/eslint-plugin": "7.13.1",
         "@typescript-eslint/parser": "7.13.1",
         "eslint": "8.57.0",
