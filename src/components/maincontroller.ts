@@ -925,6 +925,7 @@ if (!import.meta.env.PROD) {
     window.castReceiverContext.setLoggerLevel(cast.framework.LoggerLevel.NONE);
 }
 
+options.useShakaForHls = true;
 options.playbackConfig = new cast.framework.PlaybackConfig();
 // Set the player to start playback as soon as there are five seconds of
 // media content buffered. Default is 10.
