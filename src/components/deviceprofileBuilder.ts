@@ -4,7 +4,6 @@ import type {
     DeviceProfile,
     DirectPlayProfile,
     ProfileCondition,
-    ResponseProfile,
     SubtitleProfile,
     TranscodingProfile
 } from '@jellyfin/sdk/lib/generated-client';
@@ -71,21 +70,6 @@ function createProfileCondition(
  */
 function getContainerProfiles(): Array<ContainerProfile> {
     return [];
-}
-
-/**
- * Get response profiles
- * @returns Response profiles.
- */
-function getResponseProfiles(): Array<ResponseProfile> {
-    // This seems related to DLNA, it might not be needed?
-    return [
-        {
-            Container: 'm4v',
-            MimeType: 'video/mp4',
-            Type: DlnaProfileType.Video
-        }
-    ];
 }
 
 /**
@@ -422,7 +406,6 @@ export function getDeviceProfile(options: ProfileOptions): DeviceProfile {
     profile.ContainerProfiles = getContainerProfiles();
     profile.CodecProfiles = getCodecProfiles();
     profile.SubtitleProfiles = getSubtitleProfiles();
-    profile.ResponseProfiles = getResponseProfiles();
 
     return profile;
 }
