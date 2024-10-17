@@ -19,6 +19,8 @@ The Jellyfin Cast Web Receiver is the frontend used when casting to a Google Cas
 
 A `stable` and `unstable` version of this app are already included in the Jellyfin server. There is no need to separately install this project. To host your own version (for developing) see `CONTRIBUTING.md`.
 
+The `stable` version is the latest released version. `unstable` is updated automatically from the `master` branch.
+
 ### What does it do?
 
 This is a `web receiver` as defined in the [Google Cast architecture](https://developers.google.com/cast/docs/overview).
