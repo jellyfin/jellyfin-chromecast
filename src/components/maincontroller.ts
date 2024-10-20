@@ -247,7 +247,7 @@ window.playerManager.addEventListener(
     () => {
         setTextTrack(
             window.playerManager.getMediaInformation()?.customData
-                .subtitleStreamIndex
+                ?.subtitleStreamIndex ?? null
         );
     }
 );
@@ -494,7 +494,7 @@ export async function changeStream(
     params: any = undefined // eslint-disable-line @typescript-eslint/no-explicit-any
 ): Promise<void> {
     if (
-        window.playerManager.getMediaInformation()?.customData.canClientSeek &&
+        window.playerManager.getMediaInformation()?.customData?.canClientSeek &&
         params == null
     ) {
         window.playerManager.seek(ticksToSeconds(ticks));
@@ -847,7 +847,6 @@ export function createMediaInformation(
 
     mediaInfo.contentId = streamInfo.url;
     mediaInfo.contentType = streamInfo.contentType;
-    // TODO make a type for this
     mediaInfo.customData = {
         audioStreamIndex: streamInfo.audioStreamIndex,
         canClientSeek: streamInfo.canClientSeek,

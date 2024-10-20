@@ -103,3 +103,19 @@ declare global {
         volume: SystemVolumeData;
     }
 }
+
+declare module 'chromecast-caf-receiver/cast.framework.messages' {
+    interface MediaInformationCustomData {
+        audioStreamIndex: string;
+        canClientSeek: boolean;
+        canSeek: boolean;
+        itemId: string | undefined;
+        liveStreamId: number;
+        mediaSourceId: number;
+        playMethod: 'DirectStream' | 'Transcode';
+        playSessionId: string;
+        runtimeTicks: number;
+        startPositionTicks: number;
+        subtitleStreamIndex: number;
+    }
+}
