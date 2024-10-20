@@ -38,7 +38,7 @@
         "build": "vite build",
         "test": "vitest",
         "lint": "npm run lint:code && npm run lint:css",
-        "lint:code": "eslint --ext .ts,.js,.json .",
+        "lint:code": "eslint",
         "lint:css": "stylelint src/**/*.css"
     }
 }
