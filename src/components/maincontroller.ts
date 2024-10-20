@@ -685,7 +685,7 @@ export async function getMaxBitrate(): Promise<number> {
         detectedBitrate = bitrate;
 
         return Math.min(detectedBitrate, getMaxBitrateSupport());
-    } catch (e) {
+    } catch {
         // The client can set this number
         console.log('Error detecting bitrate, will return device maximum.');
 

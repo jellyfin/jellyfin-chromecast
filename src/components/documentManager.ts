@@ -650,7 +650,7 @@ export abstract class DocumentManager {
                     info.push(
                         parseISO8601Date(item.PremiereDate).toLocaleDateString()
                     );
-                } catch (e) {
+                } catch {
                     console.log(`Error parsing date: ${item.PremiereDate}`);
                 }
             }
@@ -661,7 +661,7 @@ export abstract class DocumentManager {
                 info.push(
                     parseISO8601Date(item.StartDate).toLocaleDateString()
                 );
-            } catch (e) {
+            } catch {
                 console.log(`Error parsing date: ${item.PremiereDate}`);
             }
         }
@@ -683,7 +683,7 @@ export abstract class DocumentManager {
                                 item.EndDate
                             ).getFullYear()}`;
                         }
-                    } catch (e) {
+                    } catch {
                         console.log(`Error parsing date: ${item.EndDate}`);
                     }
                 }
@@ -702,7 +702,7 @@ export abstract class DocumentManager {
                             .getFullYear()
                             .toString()
                     );
-                } catch (e) {
+                } catch {
                     console.log(`Error parsing date: ${item.PremiereDate}`);
                 }
             }

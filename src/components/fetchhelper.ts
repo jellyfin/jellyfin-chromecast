@@ -69,7 +69,7 @@ async function fetchWithCredentials(
         );
 
         return response;
-    } catch (e) {
+    } catch {
         throw new Error(
             `fetchWithCredentials: timed out connecting to url: ${url}`
         );
