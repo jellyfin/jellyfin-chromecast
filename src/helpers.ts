@@ -22,7 +22,7 @@ export function getCurrentPositionTicks(state: PlaybackState): number {
         window.playerManager.getCurrentTimeSec() * TicksPerSecond;
     const mediaInformation = window.playerManager.getMediaInformation();
 
-    if (mediaInformation && !mediaInformation.customData.canClientSeek) {
+    if (mediaInformation && !mediaInformation.customData?.canClientSeek) {
         positionTicks += state.startPositionTicks || 0;
     }
 
