@@ -2,7 +2,7 @@
     "compilerOptions": {
         "target": "ES2015",
         "module": "ESNext",
-        "moduleResolution": "Node",
+        "moduleResolution": "bundler",
         "lib": ["dom", "ES2015"],
         "resolveJsonModule": true,
         "allowSyntheticDefaultImports": true,
