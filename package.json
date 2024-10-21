@@ -2,6 +2,7 @@
     "name": "jellyfin-chromecast",
     "description": "Cast receiver for Jellyfin",
     "version": "3.0.0",
+    "type": "module",
     "bugs": {
         "url": "https://github.com/jellyfin/jellyfin-chromecast/issues"
     },
