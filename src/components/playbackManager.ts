@@ -279,12 +279,13 @@ export abstract class PlaybackManager {
         loadRequestData.media = mediaInfo;
         loadRequestData.autoplay = true;
 
+        const startPositionTicks =
+            mediaInfo.customData?.startPositionTicks ?? -1;
+
         // If we should seek at the start, translate it
         // to seconds and give it to loadRequestData :)
-        if (mediaInfo.customData.startPositionTicks > 0) {
-            loadRequestData.currentTime = ticksToSeconds(
-                mediaInfo.customData.startPositionTicks
-            );
+        if (startPositionTicks > 0) {
+            loadRequestData.currentTime = ticksToSeconds(startPositionTicks);
         }
 
         load(mediaInfo.customData, item);
