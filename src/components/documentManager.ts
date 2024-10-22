@@ -8,7 +8,7 @@ export abstract class DocumentManager {
     // Duration between each backdrop switch in ms
     private static backdropPeriodMs: number | null = 30000;
     // Timer state - so that we don't start the interval more than necessary
-    private static backdropTimer: NodeJS.Timer | null = null;
+    private static backdropTimer: number | null = null;
 
     private static status = AppStatus.Unset;
 
@@ -415,7 +415,7 @@ export abstract class DocumentManager {
             return;
         }
 
-        this.backdropTimer = setInterval(
+        this.backdropTimer = window.setInterval(
             () => DocumentManager.setRandomUserBackdrop(),
             this.backdropPeriodMs
         );
