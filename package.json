@@ -39,8 +39,9 @@
         "start": "vite",
         "build": "vite build",
         "test": "vitest",
-        "lint": "npm run lint:code && npm run lint:css",
+        "lint": "npm run lint:code && npm run lint:ts && npm run lint:css",
         "lint:code": "eslint",
+        "lint:ts": "tsc --noEmit",
         "lint:css": "stylelint src/**/*.css"
     }
 }
