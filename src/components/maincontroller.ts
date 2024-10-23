@@ -782,7 +782,7 @@ export function setTextTrack(index: number | null): void {
                 if (subtitleAppearance.dropShadow != null) {
                     // Empty string is DROP_SHADOW
                     textTrackStyle.edgeType =
-                        subtitleAppearance.dropShadow.toUpperCase() ||
+                        subtitleAppearance.dropShadow ||
                         cast.framework.messages.TextTrackEdgeType.DROP_SHADOW;
                     textTrackStyle.edgeColor = '#000000FF';
                 }

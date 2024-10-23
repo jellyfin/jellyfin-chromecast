@@ -7,6 +7,7 @@ import type {
     BaseItemDto,
     RepeatMode
 } from '@jellyfin/sdk/lib/generated-client';
+import { TextTrackEdgeType } from 'chromecast-caf-receiver/cast.framework.messages';
 
 export interface Dictionary<T> {
     [Key: string]: T;
@@ -89,6 +90,14 @@ interface SupportedCommands {
 }
 // /From commandHandler
 
+interface SubtitleAppearance {
+    dropShadow: TextTrackEdgeType;
+    font: string;
+    textColor: string;
+    textBackground: string;
+    textSize: 'smaller' | 'small' | 'large' | 'larger' | 'extralarge';
+}
+
 declare global {
     export interface Window {
         mediaElement: HTMLElement | null;
@@ -96,8 +105,7 @@ declare global {
         castReceiverContext: CastReceiverContext;
         repeatMode: RepeatMode;
         reportEventType: 'repeatmodechange';
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        subtitleAppearance: any;
+        subtitleAppearance: SubtitleAppearance;
         MaxBitrate: number | undefined;
         senderId: string | undefined;
         volume: SystemVolumeData;
