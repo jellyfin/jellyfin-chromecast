@@ -4,6 +4,7 @@ import { parseISO8601Date, TicksPerSecond, ticksToSeconds } from '../helpers';
 import { JellyfinApi } from './jellyfinApi';
 import { deviceIds, getActiveDeviceId } from './castDevices';
 
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export abstract class DocumentManager {
     // Duration between each backdrop switch in ms
     private static backdropPeriodMs: number | null = 30000;

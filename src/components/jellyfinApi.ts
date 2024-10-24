@@ -1,6 +1,7 @@
 import { version as packageVersion } from '../../package.json';
 import { ajax } from './fetchhelper';
 
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export abstract class JellyfinApi {
     // userId that we are connecting as currently
     public static userId: string | undefined;
