@@ -11,7 +11,7 @@ export default [
     eslint.configs.recommended,
     jsdoc.configs['flat/recommended'],
     eslintPluginPrettierRecommended,
-    ...tseslint.configs.recommended,
+    ...tseslint.configs.strict,
     promise.configs['flat/recommended'],
     importPlugin.flatConfigs.errors,
     importPlugin.flatConfigs.warnings,
