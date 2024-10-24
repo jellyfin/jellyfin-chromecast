@@ -51,6 +51,7 @@ export interface PlaybackState {
     runtimeTicks: number;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export abstract class PlaybackManager {
     private static playerManager: framework.PlayerManager;
     private static activePlaylist: Array<BaseItemDto>;

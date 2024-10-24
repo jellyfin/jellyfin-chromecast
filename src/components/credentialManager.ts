@@ -74,6 +74,7 @@ export class credentialManager {
      */
     remove(serverId: string): boolean {
         if (serverId in this.credentialStore) {
+            // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
             delete this.credentialStore[serverId];
 
             return true;

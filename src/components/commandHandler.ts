@@ -21,6 +21,7 @@ import { reportPlaybackProgress } from './jellyfinActions';
 import { PlaybackManager } from './playbackManager';
 import { DocumentManager } from './documentManager';
 
+// eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export abstract class CommandHandler {
     private static playerManager: framework.PlayerManager;
     private static supportedCommands: SupportedCommands = {
