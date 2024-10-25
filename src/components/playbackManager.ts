@@ -150,13 +150,12 @@ export abstract class PlaybackManager {
         return this.activePlaylistIndex > 0;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    static playNextItem(options: any = {}, stopPlayer = false): boolean {
+    static playNextItem(stopPlayer = false): boolean {
         const nextItemInfo = this.getNextPlaybackItemInfo();
 
         if (nextItemInfo) {
             this.activePlaylistIndex = nextItemInfo.index;
-            this.playItem(options, stopPlayer);
+            this.playItem({}, stopPlayer);
 
             return true;
         }
@@ -164,11 +163,10 @@ export abstract class PlaybackManager {
         return false;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    static playPreviousItem(options: any = {}): boolean {
+    static playPreviousItem(): boolean {
         if (this.activePlaylist && this.activePlaylistIndex > 0) {
             this.activePlaylistIndex--;
-            this.playItem(options, true);
+            this.playItem({}, true);
 
             return true;
         }

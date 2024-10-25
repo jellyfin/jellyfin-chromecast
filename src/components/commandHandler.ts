@@ -90,13 +90,13 @@ export abstract class CommandHandler {
 
     static nextTrackHandler(): void {
         if (PlaybackManager.hasNextItem()) {
-            PlaybackManager.playNextItem({}, true);
+            PlaybackManager.playNextItem(true);
         }
     }
 
     static previousTrackHandler(): void {
         if (PlaybackManager.hasPrevItem()) {
-            PlaybackManager.playPreviousItem({});
+            PlaybackManager.playPreviousItem();
         }
     }
 
