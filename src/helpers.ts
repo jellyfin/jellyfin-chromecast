@@ -590,17 +590,14 @@ export async function getItemsForPlayback(
 
 /**
  * Get episodes for a show given by seriesId
- * @param userId - userid to use
  * @param seriesId - series to look up
  * @param query - query parameters to build on
  * @returns episode items
  */
 export function getEpisodesForPlayback(
-    userId: string,
     seriesId: string,
     query: ItemQuery
 ): Promise<BaseItemDtoQueryResult> {
-    query.UserId = userId;
     query.Fields = requiredItemFields;
     query.ExcludeLocationTypes = 'Virtual';
 
@@ -705,7 +702,6 @@ export async function translateRequestedItems(
         }
 
         const episodesResult = await getEpisodesForPlayback(
-            userId,
             episode.SeriesId,
             {
                 IsMissing: false,
