@@ -34,8 +34,7 @@ function restartPingInterval(reportingParams: PlaybackProgressInfo): void {
     stopPingInterval();
 
     if (reportingParams.PlayMethod == 'Transcode') {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        pingInterval = <any>setInterval(() => {
+        pingInterval = window.setInterval(() => {
             pingTranscoder(reportingParams);
         }, 1000);
     }

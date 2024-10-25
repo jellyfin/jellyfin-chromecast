@@ -1,5 +1,6 @@
 import type {
     BaseItemDto,
+    MediaStream,
     MediaSourceInfo
 } from '@jellyfin/sdk/lib/generated-client';
 import {
@@ -386,8 +387,7 @@ export function setSubtitleStreamIndex(
 
     // FIXME: Possible index error when MediaStreams is undefined.
     const currentSubtitleStream = state.mediaSource?.MediaStreams?.filter(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (m: any) => {
+        (m: MediaStream) => {
             return m.Index == state.subtitleStreamIndex && m.Type == 'Subtitle';
         }
     )[0];
@@ -415,7 +415,7 @@ export function setSubtitleStreamIndex(
     const mediaStreams = state.PlaybackMediaSource?.MediaStreams;
 
     const subtitleStream = getStreamByIndex(
-        <any>mediaStreams, // eslint-disable-line @typescript-eslint/no-explicit-any
+        <MediaStream[]>mediaStreams,
         'Subtitle',
         index
     );
@@ -706,8 +706,9 @@ export function showPlaybackInfoErrorMessage(error: string): void {
  * @param versions - versions
  * @returns stream
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function getOptimalMediaSource(versions: Array<any>): any {
+export function getOptimalMediaSource(
+    versions: Array<MediaSourceInfo>
+): MediaSourceInfo {
     let optimalVersion = versions.filter((v) => {
         checkDirectPlay(v);
 
