@@ -2,7 +2,7 @@ import type { BaseItemDto } from '@jellyfin/sdk/lib/generated-client';
 import { AppStatus } from '../types/appStatus';
 import { parseISO8601Date, TicksPerSecond, ticksToSeconds } from '../helpers';
 import { JellyfinApi } from './jellyfinApi';
-import { deviceIds, getActiveDeviceId } from './castDevices';
+import { DeviceIds, getActiveDeviceId } from './castDevices';
 
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export abstract class DocumentManager {
@@ -17,7 +17,7 @@ export abstract class DocumentManager {
      * Hide the document body on chromecast audio to save resources
      */
     public static initialize(): void {
-        if (getActiveDeviceId() === deviceIds.AUDIO) {
+        if (getActiveDeviceId() === DeviceIds.AUDIO) {
             document.body.style.display = 'none';
         }
     }
@@ -133,7 +133,7 @@ export abstract class DocumentManager {
      */
     public static async showItem(item: BaseItemDto): Promise<void> {
         // no showItem for cc audio
-        if (getActiveDeviceId() === deviceIds.AUDIO) {
+        if (getActiveDeviceId() === DeviceIds.AUDIO) {
             return;
         }
 
@@ -219,7 +219,7 @@ export abstract class DocumentManager {
      */
     public static async showItemId(itemId: string): Promise<void> {
         // no showItemId for cc audio
-        if (getActiveDeviceId() === deviceIds.AUDIO) {
+        if (getActiveDeviceId() === DeviceIds.AUDIO) {
             return;
         }
 
@@ -402,7 +402,7 @@ export abstract class DocumentManager {
      */
     public static async startBackdropInterval(): Promise<void> {
         // no backdrop rotation for cc audio
-        if (getActiveDeviceId() === deviceIds.AUDIO) {
+        if (getActiveDeviceId() === DeviceIds.AUDIO) {
             return;
         }
 
@@ -453,7 +453,7 @@ export abstract class DocumentManager {
      */
     public static setPlayerBackdrop(item: BaseItemDto): void {
         // no backdrop rotation for cc audio
-        if (getActiveDeviceId() === deviceIds.AUDIO) {
+        if (getActiveDeviceId() === DeviceIds.AUDIO) {
             return;
         }
 

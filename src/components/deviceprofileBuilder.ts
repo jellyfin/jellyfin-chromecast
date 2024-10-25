@@ -13,7 +13,7 @@ import { EncodingContext } from '@jellyfin/sdk/lib/generated-client/models/encod
 import { ProfileConditionType } from '@jellyfin/sdk/lib/generated-client/models/profile-condition-type';
 import { ProfileConditionValue } from '@jellyfin/sdk/lib/generated-client/models/profile-condition-value';
 import { SubtitleDeliveryMethod } from '@jellyfin/sdk/lib/generated-client/models/subtitle-delivery-method';
-import { deviceIds, getActiveDeviceId } from './castDevices';
+import { DeviceIds, getActiveDeviceId } from './castDevices';
 import {
     hasSurroundSupport,
     hasTextTrackSupport,
@@ -39,7 +39,7 @@ interface ProfileOptions {
 }
 
 let profileOptions: ProfileOptions;
-let currentDeviceId: deviceIds;
+let currentDeviceId: DeviceIds;
 
 /**
  * Create and return a new ProfileCondition
@@ -79,7 +79,7 @@ function getContainerProfiles(): Array<ContainerProfile> {
 function getDirectPlayProfiles(): Array<DirectPlayProfile> {
     const DirectPlayProfiles: Array<DirectPlayProfile> = [];
 
-    if (currentDeviceId !== deviceIds.AUDIO) {
+    if (currentDeviceId !== DeviceIds.AUDIO) {
         const mp4VideoCodecs = getSupportedMP4VideoCodecs();
         const mp4AudioCodecs = getSupportedMP4AudioCodecs();
         const vpxVideoCodecs = getSupportedVPXVideoCodecs();
@@ -163,7 +163,7 @@ function getCodecProfiles(): Array<CodecProfile> {
     CodecProfiles.push(audioConditions);
 
     // If device is audio only, don't add all the video related stuff
-    if (currentDeviceId == deviceIds.AUDIO) {
+    if (currentDeviceId == DeviceIds.AUDIO) {
         return CodecProfiles;
     }
 
@@ -319,7 +319,7 @@ function getTranscodingProfiles(): Array<TranscodingProfile> {
     }
 
     // If device is audio only, don't add all the video related stuff
-    if (currentDeviceId == deviceIds.AUDIO) {
+    if (currentDeviceId == DeviceIds.AUDIO) {
         return TranscodingProfiles;
     }
 

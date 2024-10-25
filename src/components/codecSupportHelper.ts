@@ -1,4 +1,4 @@
-import { deviceIds } from './castDevices';
+import { DeviceIds } from './castDevices';
 
 const castContext = cast.framework.CastReceiverContext.getInstance();
 
@@ -59,8 +59,8 @@ export function hasH265Support(): boolean {
  * @param deviceId - the device id
  * @returns true if text tracks are supported
  */
-export function hasTextTrackSupport(deviceId: deviceIds): boolean {
-    return deviceId !== deviceIds.AUDIO;
+export function hasTextTrackSupport(deviceId: DeviceIds): boolean {
+    return deviceId !== DeviceIds.AUDIO;
 }
 
 /**
@@ -97,7 +97,7 @@ export function getMaxBitrateSupport(): number {
  * @returns Max supported width.
  */
 export function getMaxWidthSupport(
-    deviceId: deviceIds,
+    deviceId: DeviceIds,
     codec?: string
 ): number {
     if (codec === 'h264') {
@@ -111,13 +111,13 @@ export function getMaxWidthSupport(
     // they just refuse to do it with HLS. This increases
     // the rate of direct playback.
     switch (deviceId) {
-        case deviceIds.ULTRA:
-        case deviceIds.CCGTV:
+        case DeviceIds.ULTRA:
+        case DeviceIds.CCGTV:
             return 3840;
-        case deviceIds.GEN1AND2:
-        case deviceIds.GEN3:
+        case DeviceIds.GEN1AND2:
+        case DeviceIds.GEN3:
             return 1920;
-        case deviceIds.NESTHUBANDMAX:
+        case DeviceIds.NESTHUBANDMAX:
             return 1280;
     }
 
@@ -129,11 +129,11 @@ export function getMaxWidthSupport(
  * @param deviceId - Cast device id.
  * @returns All supported H.264 profiles.
  */
-export function getH264ProfileSupport(deviceId: deviceIds): string {
+export function getH264ProfileSupport(deviceId: DeviceIds): string {
     // These are supported by all Cast devices, excluding audio only devices.
     let h264Profiles = 'high|main|baseline|constrained baseline';
 
-    if (deviceId === deviceIds.ULTRA || deviceId === deviceIds.CCGTV) {
+    if (deviceId === DeviceIds.ULTRA || deviceId === DeviceIds.CCGTV) {
         h264Profiles += '|high 10';
     }
 
@@ -145,15 +145,15 @@ export function getH264ProfileSupport(deviceId: deviceIds): string {
  * @param deviceId - Cast device id.
  * @returns The highest supported H.264 level.
  */
-export function getH264LevelSupport(deviceId: deviceIds): number {
+export function getH264LevelSupport(deviceId: DeviceIds): number {
     switch (deviceId) {
-        case deviceIds.NESTHUBANDMAX:
-        case deviceIds.GEN1AND2:
+        case DeviceIds.NESTHUBANDMAX:
+        case DeviceIds.GEN1AND2:
             return 41;
-        case deviceIds.GEN3:
-        case deviceIds.ULTRA:
+        case DeviceIds.GEN3:
+        case DeviceIds.ULTRA:
             return 42;
-        case deviceIds.CCGTV:
+        case DeviceIds.CCGTV:
             return 51;
     }
 
@@ -165,9 +165,9 @@ export function getH264LevelSupport(deviceId: deviceIds): number {
  * @param deviceId - Cast device id.
  * @returns All supported H.265 profiles.
  */
-export function getH265ProfileSupport(deviceId: deviceIds): string {
+export function getH265ProfileSupport(deviceId: DeviceIds): string {
     // These are supported by all Cast devices, excluding audio only devices.
-    if (deviceId === deviceIds.ULTRA || deviceId === deviceIds.CCGTV) {
+    if (deviceId === DeviceIds.ULTRA || deviceId === DeviceIds.CCGTV) {
         return 'high|main|baseline|constrained baseline|high 10';
     }
 
@@ -179,8 +179,8 @@ export function getH265ProfileSupport(deviceId: deviceIds): string {
  * @param deviceId - Cast device id.
  * @returns The highest supported H.265 level.
  */
-export function getH265LevelSupport(deviceId: deviceIds): number {
-    if (deviceId == deviceIds.ULTRA || deviceId == deviceIds.CCGTV) {
+export function getH265LevelSupport(deviceId: DeviceIds): number {
+    if (deviceId == DeviceIds.ULTRA || deviceId == DeviceIds.CCGTV) {
         return 52;
     }
 
