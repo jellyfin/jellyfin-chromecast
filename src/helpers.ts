@@ -4,6 +4,7 @@ import type {
     MediaSourceInfo,
     BaseItemDto,
     BaseItemPerson,
+    TvShowsApiGetEpisodesRequest,
     UserDto
 } from '@jellyfin/sdk/lib/generated-client';
 import { JellyfinApi } from './components/jellyfinApi';
@@ -596,13 +597,11 @@ export async function getItemsForPlayback(
  */
 export function getEpisodesForPlayback(
     seriesId: string,
-    query: ItemQuery
+    query: TvShowsApiGetEpisodesRequest
 ): Promise<BaseItemDtoQueryResult> {
-    query.Fields = requiredItemFields;
-
     return JellyfinApi.authAjax(`Shows/${seriesId}/Episodes`, {
         dataType: 'json',
-        query: query,
+        query: { ...query, fields: requiredItemFields },
         type: 'GET'
     });
 }
@@ -700,13 +699,11 @@ export async function translateRequestedItems(
             return result;
         }
 
-        const episodesResult = await getEpisodesForPlayback(
-            episode.SeriesId,
-            {
-                IsMissing: false,
-                UserId: userId
-            }
-        );
+        const episodesResult = await getEpisodesForPlayback(episode.SeriesId, {
+            isMissing: false,
+            seriesId: episode.SeriesId,
+            userId: userId
+        });
 
         let foundItem = false;
 
