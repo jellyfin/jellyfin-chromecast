@@ -18,7 +18,7 @@ let deviceId: number | null = null;
  * Tries to identify the active Cast device by testing support for different codecs.
  * @returns Active Cast device Id.
  */
-export function getActiveDeviceId(): number {
+export function getActiveDeviceId(): deviceIds {
     if (deviceId !== null) {
         return deviceId;
     }

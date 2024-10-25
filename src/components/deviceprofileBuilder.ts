@@ -39,7 +39,7 @@ interface ProfileOptions {
 }
 
 let profileOptions: ProfileOptions;
-let currentDeviceId: number;
+let currentDeviceId: deviceIds;
 
 /**
  * Create and return a new ProfileCondition
