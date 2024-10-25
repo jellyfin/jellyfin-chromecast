@@ -1,7 +1,7 @@
 const castContext = cast.framework.CastReceiverContext.getInstance();
 
 // Device Ids
-export enum deviceIds {
+export enum DeviceIds {
     GEN1AND2,
     AUDIO,
     GEN3,
@@ -18,7 +18,7 @@ let deviceId: number | null = null;
  * Tries to identify the active Cast device by testing support for different codecs.
  * @returns Active Cast device Id.
  */
-export function getActiveDeviceId(): number {
+export function getActiveDeviceId(): DeviceIds {
     if (deviceId !== null) {
         return deviceId;
     }
@@ -27,15 +27,15 @@ export function getActiveDeviceId(): number {
         castContext.canDisplayType('video/mp4', 'hev1.1.6.L153.B0') &&
         castContext.canDisplayType('video/webm', 'vp9')
     ) {
-        deviceId = deviceIds.ULTRA;
+        deviceId = DeviceIds.ULTRA;
     } else if (castContext.canDisplayType('video/webm', 'vp9')) {
-        deviceId = deviceIds.NESTHUBANDMAX;
+        deviceId = DeviceIds.NESTHUBANDMAX;
     } else if (castContext.canDisplayType('video/mp4', 'avc1.64002A')) {
-        deviceId = deviceIds.GEN3;
+        deviceId = DeviceIds.GEN3;
     } else if (castContext.canDisplayType('video/mp4', 'avc1.640029')) {
-        deviceId = deviceIds.GEN1AND2;
+        deviceId = DeviceIds.GEN1AND2;
     } else {
-        deviceId = deviceIds.AUDIO;
+        deviceId = DeviceIds.AUDIO;
     }
 
     return deviceId;
