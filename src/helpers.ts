@@ -598,7 +598,7 @@ export async function getItemsForPlayback(
 export function getEpisodesForPlayback(
     userId: string,
     seriesId: string,
-    query: ItemQuery = {}
+    query: ItemQuery
 ): Promise<BaseItemDtoQueryResult> {
     query.UserId = userId;
     query.Fields = requiredItemFields;
