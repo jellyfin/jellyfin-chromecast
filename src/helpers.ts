@@ -704,7 +704,6 @@ export async function translateRequestedItems(
             episode.SeriesId,
             {
                 IsMissing: false,
-                IsVirtualUnaired: false,
                 UserId: userId
             }
         );
