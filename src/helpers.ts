@@ -599,7 +599,6 @@ export function getEpisodesForPlayback(
     query: ItemQuery
 ): Promise<BaseItemDtoQueryResult> {
     query.Fields = requiredItemFields;
-    query.ExcludeLocationTypes = 'Virtual';
 
     return JellyfinApi.authAjax(`Shows/${seriesId}/Episodes`, {
         dataType: 'json',
