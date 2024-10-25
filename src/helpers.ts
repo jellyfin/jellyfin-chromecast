@@ -2,6 +2,7 @@ import type {
     BaseItemDtoQueryResult,
     PlaybackProgressInfo,
     MediaSourceInfo,
+    MediaStream,
     BaseItemDto,
     BaseItemPerson,
     UserDto
@@ -93,9 +94,7 @@ export function getSenderReportingData(
         nowPlayingItem.ServerId = item.ServerId;
         nowPlayingItem.Chapters = item.Chapters || [];
 
-        // TODO: Fill these
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const mediaSource = item.MediaSources?.filter((m: any) => {
+        const mediaSource = item.MediaSources?.filter((m: MediaSourceInfo) => {
             return m.Id == reportingData.MediaSourceId;
         })[0];
 
@@ -400,8 +399,7 @@ export function createStreamInfo(
     };
 
     const subtitleStreams =
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        mediaSource.MediaStreams?.filter((stream: any) => {
+        mediaSource.MediaStreams?.filter((stream: MediaStream) => {
             return stream.Type === 'Subtitle';
         }) ?? [];
     const subtitleTracks: Array<framework.messages.Track> = [];
@@ -451,8 +449,7 @@ export function createStreamInfo(
  * @returns first first matching stream
  */
 export function getStreamByIndex(
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    streams: Array<any>,
+    streams: Array<MediaStream>,
     type: string,
     index: number
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
