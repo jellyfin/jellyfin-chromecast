@@ -28,7 +28,6 @@ export abstract class CommandHandler {
         DisplayContent: CommandHandler.displayContentHandler,
         Identify: CommandHandler.IdentifyHandler,
         InstantMix: CommandHandler.instantMixHandler,
-        Mute: CommandHandler.MuteHandler,
         NextTrack: CommandHandler.nextTrackHandler,
         Pause: CommandHandler.PauseHandler,
         PlayLast: CommandHandler.playLastHandler,
@@ -40,14 +39,9 @@ export abstract class CommandHandler {
         SetAudioStreamIndex: CommandHandler.setAudioStreamIndexHandler,
         SetRepeatMode: CommandHandler.SetRepeatModeHandler,
         SetSubtitleStreamIndex: CommandHandler.setSubtitleStreamIndexHandler,
-        SetVolume: CommandHandler.SetVolumeHandler,
         Shuffle: CommandHandler.shuffleHandler,
         Stop: CommandHandler.StopHandler,
-        ToggleMute: CommandHandler.ToggleMuteHandler,
-        Unmute: CommandHandler.MuteHandler,
-        Unpause: CommandHandler.UnpauseHandler,
-        VolumeDown: CommandHandler.VolumeDownHandler,
-        VolumeUp: CommandHandler.VolumeUpHandler
+        Unpause: CommandHandler.UnpauseHandler
     };
 
     static configure(playerManager: framework.PlayerManager): void {
@@ -114,26 +108,6 @@ export abstract class CommandHandler {
         );
     }
 
-    // VolumeUp, VolumeDown and ToggleMute commands seem to be handled on the sender in the current implementation.
-    // From what I can tell there's no convenient way for the receiver to get its own volume.
-    // We should probably remove these commands in the future.
-    static VolumeUpHandler(): void {
-        console.log('VolumeUp handler not implemented');
-    }
-
-    static VolumeDownHandler(): void {
-        console.log('VolumeDown handler not implemented');
-    }
-
-    static ToggleMuteHandler(): void {
-        console.log('ToggleMute handler not implemented');
-    }
-
-    static SetVolumeHandler(): void {
-        // This is now implemented on the sender
-        console.log('SetVolume handler not implemented');
-    }
-
     static IdentifyHandler(): void {
         if (!PlaybackManager.isPlaying()) {
             if (!PlaybackManager.isBuffering()) {
@@ -157,16 +131,6 @@ export abstract class CommandHandler {
             PlaybackManager.playbackState,
             (<SeekRequest>data.options).position * TicksPerSecond
         );
-    }
-
-    static MuteHandler(): void {
-        // CommandHandler is now implemented on the sender
-        console.log('Mute handler not implemented');
-    }
-
-    static UnmuteHandler(): void {
-        // CommandHandler is now implemented on the sender
-        console.log('Unmute handler not implemented');
     }
 
     static StopHandler(): void {
