@@ -6,6 +6,7 @@ import type {
     PlaybackProgressInfo,
     PlayRequest
 } from '@jellyfin/sdk/lib/generated-client';
+import { getPlaystateApi } from '@jellyfin/sdk/lib/utils/api';
 import { getSenderReportingData, broadcastToMessageBus } from '../helpers';
 import { AppStatus } from '../types/appStatus';
 import { JellyfinApi } from './jellyfinApi';
@@ -91,7 +92,7 @@ export function reportPlaybackStart(
  * @param broadcastEventName - name of event to send to the cast sender
  * @returns Promise for the http request
  */
-export function reportPlaybackProgress(
+export async function reportPlaybackProgress(
     state: PlaybackState,
     reportingParams: PlaybackProgressInfo,
     reportToServer = true,
@@ -109,10 +110,8 @@ export function reportPlaybackProgress(
     restartPingInterval(reportingParams);
     lastTranscoderPing = new Date().getTime();
 
-    return JellyfinApi.authAjax('Sessions/Playing/Progress', {
-        contentType: 'application/json',
-        data: JSON.stringify(reportingParams),
-        type: 'POST'
+    await getPlaystateApi(JellyfinApi.jellyfinApi).reportPlaybackProgress({
+        playbackProgressInfo: reportingParams
     });
 }
 
