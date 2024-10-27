@@ -206,7 +206,6 @@ export abstract class PlaybackManager {
         const playbackInfo = await getPlaybackInfo(
             item,
             maxBitrate,
-            deviceProfile,
             options.startPositionTicks,
             options.mediaSourceId,
             options.audioStreamIndex,

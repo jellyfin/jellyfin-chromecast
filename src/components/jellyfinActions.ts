@@ -2,11 +2,12 @@ import type {
     BaseItemDto,
     DeviceProfile,
     LiveStreamResponse,
+    MediaInfoApiGetPostedPlaybackInfoRequest,
     MediaSourceInfo,
     PlaybackProgressInfo,
     PlayRequest
 } from '@jellyfin/sdk/lib/generated-client';
-import { getPlaystateApi } from '@jellyfin/sdk/lib/utils/api';
+import { getMediaInfoApi, getPlaystateApi } from '@jellyfin/sdk/lib/utils/api';
 import { getSenderReportingData, broadcastToMessageBus } from '../helpers';
 import { AppStatus } from '../types/appStatus';
 import { JellyfinApi } from './jellyfinApi';
@@ -236,7 +237,6 @@ export function play(state: PlaybackState): void {
  * get PlaybackInfo
  * @param item - item
  * @param maxBitrate - maxBitrate
- * @param deviceProfile - deviceProfile
  * @param startPosition - startPosition
  * @param mediaSourceId - mediaSourceId
  * @param audioStreamIndex - audioStreamIndex
@@ -244,10 +244,9 @@ export function play(state: PlaybackState): void {
  * @param liveStreamId - liveStreamId
  * @returns promise
  */
-export function getPlaybackInfo(
+export async function getPlaybackInfo(
     item: BaseItemDto,
     maxBitrate: number,
-    deviceProfile: DeviceProfile,
     startPosition: number,
     mediaSourceId: string,
     audioStreamIndex: number,
@@ -255,40 +254,28 @@ export function getPlaybackInfo(
     liveStreamId: string | null = null
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<any> {
-    const postData = {
-        DeviceProfile: deviceProfile
+    if (!item.Id) {
+        console.error('getPlaybackInfo: Item ID not provided');
+
+        return Promise.reject('Item ID not available.');
+    }
+
+    const query: MediaInfoApiGetPostedPlaybackInfoRequest = {
+        audioStreamIndex: audioStreamIndex ?? undefined,
+        itemId: item.Id,
+        liveStreamId: liveStreamId ?? undefined,
+        maxStreamingBitrate: maxBitrate,
+        mediaSourceId: mediaSourceId ?? undefined,
+        startTimeTicks: startPosition || 0,
+        subtitleStreamIndex: subtitleStreamIndex ?? undefined,
+        userId: JellyfinApi.userId ?? undefined
     };
 
-    // TODO: PlayRequestQuery might not be the proper type for this
-    const query: PlayRequestQuery = {
-        MaxStreamingBitrate: maxBitrate,
-        StartTimeTicks: startPosition || 0,
-        UserId: JellyfinApi.userId ?? undefined
-    };
+    const response = await getMediaInfoApi(
+        JellyfinApi.jellyfinApi
+    ).getPostedPlaybackInfo(query);
 
-    if (audioStreamIndex != null) {
-        query.AudioStreamIndex = audioStreamIndex;
-    }
-
-    if (subtitleStreamIndex != null) {
-        query.SubtitleStreamIndex = subtitleStreamIndex;
-    }
-
-    if (mediaSourceId) {
-        query.MediaSourceId = mediaSourceId;
-    }
-
-    if (liveStreamId) {
-        query.LiveStreamId = liveStreamId;
-    }
-
-    return JellyfinApi.authAjax(`Items/${item.Id}/PlaybackInfo`, {
-        contentType: 'application/json',
-        data: JSON.stringify(postData),
-        dataType: 'json',
-        query: query,
-        type: 'POST'
-    });
+    return response.data;
 }
 
 /**
