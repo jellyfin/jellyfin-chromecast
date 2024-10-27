@@ -59,7 +59,7 @@ export function stopPingInterval(): void {
  * @param reportingParams - parameters to send to the server
  * @returns promise to wait for the request
  */
-export function reportPlaybackStart(
+export async function reportPlaybackStart(
     state: PlaybackState,
     reportingParams: PlaybackProgressInfo
 ): Promise<void> {
@@ -77,10 +77,8 @@ export function reportPlaybackStart(
 
     restartPingInterval(reportingParams);
 
-    return JellyfinApi.authAjax('Sessions/Playing', {
-        contentType: 'application/json',
-        data: JSON.stringify(reportingParams),
-        type: 'POST'
+    await getPlaystateApi(JellyfinApi.jellyfinApi).reportPlaybackStart({
+        playbackStartInfo: reportingParams
     });
 }
 
