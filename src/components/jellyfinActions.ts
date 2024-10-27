@@ -220,7 +220,6 @@ export function play(state: PlaybackState): void {
     if (
         DocumentManager.getAppStatus() == AppStatus.Backdrop ||
         DocumentManager.getAppStatus() == AppStatus.PlayingWithControls ||
-        DocumentManager.getAppStatus() == AppStatus.Playing ||
         DocumentManager.getAppStatus() == AppStatus.Audio
     ) {
         setTimeout(() => {
