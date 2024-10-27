@@ -18,12 +18,22 @@ export abstract class JellyfinApi {
     // unique id
     public static deviceId = '';
 
+    // Jellyfin SDK
+    private static jellyfinSdk: Jellyfin | undefined;
+
+    // Jellyfin API
+    public static jellyfinApi: Api;
+
     public static setServerInfo(
         userId?: string,
         accessToken?: string,
         serverAddress?: string,
         receiverName = ''
     ): void {
+        const regenApi =
+            this.accessToken !== accessToken ||
+            this.serverAddress !== serverAddress;
+
         console.debug(
             `JellyfinApi.setServerInfo: user:${userId}, token:${accessToken}, server:${serverAddress}, name:${receiverName}`
         );
@@ -47,6 +57,32 @@ export abstract class JellyfinApi {
                 senders.length !== 0 && senders[0].id
                     ? senders[0].id
                     : new Date().getTime().toString();
+        }
+
+        if (!this.jellyfinSdk) {
+            this.jellyfinSdk = new Jellyfin({
+                clientInfo: {
+                    name: 'Chromecast',
+                    version: packageVersion
+                },
+                deviceInfo: {
+                    id: this.deviceId,
+                    name: this.deviceName
+                }
+            });
+        }
+
+        if (!this.jellyfinApi || regenApi) {
+            if (serverAddress && accessToken) {
+                this.jellyfinApi = this.jellyfinSdk.createApi(
+                    serverAddress,
+                    accessToken
+                );
+            } else {
+                console.error(
+                    'Server address or access token not provided - could not create instance of Jellyfin API'
+                );
+            }
         }
     }
 
