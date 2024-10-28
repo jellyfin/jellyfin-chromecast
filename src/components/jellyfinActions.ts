@@ -2,8 +2,8 @@ import type {
     BaseItemDto,
     DeviceProfile,
     LiveStreamResponse,
-    MediaInfoApiGetPostedPlaybackInfoRequest,
     MediaSourceInfo,
+    PlaybackInfoDto,
     PlaybackProgressInfo,
     PlayRequest
 } from '@jellyfin/sdk/lib/generated-client';
@@ -260,20 +260,34 @@ export async function getPlaybackInfo(
         return Promise.reject('Item ID not available.');
     }
 
-    const query: MediaInfoApiGetPostedPlaybackInfoRequest = {
-        audioStreamIndex: audioStreamIndex ?? undefined,
-        itemId: item.Id,
-        liveStreamId: liveStreamId ?? undefined,
-        maxStreamingBitrate: maxBitrate,
-        mediaSourceId: mediaSourceId ?? undefined,
-        startTimeTicks: startPosition || 0,
-        subtitleStreamIndex: subtitleStreamIndex ?? undefined,
-        userId: JellyfinApi.userId ?? undefined
+    const query: PlaybackInfoDto = {
+        MaxStreamingBitrate: maxBitrate,
+        StartTimeTicks: startPosition || 0,
+        UserId: JellyfinApi.userId
     };
+
+    if (audioStreamIndex != null) {
+        query.AudioStreamIndex = audioStreamIndex;
+    }
+
+    if (subtitleStreamIndex != null) {
+        query.SubtitleStreamIndex = subtitleStreamIndex;
+    }
+
+    if (mediaSourceId) {
+        query.MediaSourceId = mediaSourceId;
+    }
+
+    if (liveStreamId) {
+        query.LiveStreamId = liveStreamId;
+    }
 
     const response = await getMediaInfoApi(
         JellyfinApi.jellyfinApi
-    ).getPostedPlaybackInfo(query);
+    ).getPostedPlaybackInfo({
+        itemId: item.Id,
+        playbackInfoDto: query
+    });
 
     return response.data;
 }
