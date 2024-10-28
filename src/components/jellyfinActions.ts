@@ -237,6 +237,7 @@ export function play(state: PlaybackState): void {
  * get PlaybackInfo
  * @param item - item
  * @param maxBitrate - maxBitrate
+ * @param deviceProfile - deviceProfile
  * @param startPosition - startPosition
  * @param mediaSourceId - mediaSourceId
  * @param audioStreamIndex - audioStreamIndex
@@ -247,6 +248,7 @@ export function play(state: PlaybackState): void {
 export async function getPlaybackInfo(
     item: BaseItemDto,
     maxBitrate: number,
+    deviceProfile: DeviceProfile,
     startPosition: number,
     mediaSourceId: string,
     audioStreamIndex: number,
@@ -261,6 +263,7 @@ export async function getPlaybackInfo(
     }
 
     const query: PlaybackInfoDto = {
+        DeviceProfile: deviceProfile,
         MaxStreamingBitrate: maxBitrate,
         StartTimeTicks: startPosition || 0,
         UserId: JellyfinApi.userId
