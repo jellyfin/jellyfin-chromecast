@@ -29,7 +29,8 @@ export default [
     },
     {
         files: ['**/*.json'],
-        ...json.configs['recommended']
+        ...json.configs['recommended'],
+        ...tseslint.configs.disableTypeChecked
     },
     {
         files: ['**/*.ts'],
@@ -39,11 +40,19 @@ export default [
         }
     },
     {
+        files: ['eslint.config.mjs'],
+        ...tseslint.configs.disableTypeChecked
+    },
+    {
         files: ['**/*.ts', '**/*.js'],
         languageOptions: {
             globals: {
                 ...globals.browser,
                 ...globals.es2015
+            },
+            parserOptions: {
+                projectService: true,
+                tsconfigRootDir: import.meta.dirname
             }
         },
         rules: {
