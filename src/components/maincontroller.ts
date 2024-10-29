@@ -386,11 +386,11 @@ export function setSubtitleStreamIndex(
     let positionTicks;
 
     // FIXME: Possible index error when MediaStreams is undefined.
-    const currentSubtitleStream = state.mediaSource?.MediaStreams?.filter(
+    const currentSubtitleStream = state.mediaSource?.MediaStreams?.find(
         (m: MediaStream) => {
             return m.Index == state.subtitleStreamIndex && m.Type == 'Subtitle';
         }
-    )[0];
+    );
 
     const currentDeliveryMethod = currentSubtitleStream
         ? currentSubtitleStream.DeliveryMethod
@@ -515,17 +515,12 @@ export async function changeStream(
 
     // @ts-expect-error is possible here
     return await PlaybackManager.playItemInternal(state.item, {
-        audioStreamIndex:
-            params.AudioStreamIndex == null
-                ? state.audioStreamIndex
-                : params.AudioStreamIndex,
+        audioStreamIndex: params.AudioStreamIndex ?? state.audioStreamIndex,
         liveStreamId: state.liveStreamId,
         mediaSourceId: state.mediaSourceId,
         startPositionTicks: ticks,
         subtitleStreamIndex:
-            params.SubtitleStreamIndex == null
-                ? state.subtitleStreamIndex
-                : params.SubtitleStreamIndex
+            params.SubtitleStreamIndex ?? state.subtitleStreamIndex
     });
 }
 
@@ -704,24 +699,25 @@ export function showPlaybackInfoErrorMessage(error: string): void {
  */
 export function getOptimalMediaSource(
     versions: MediaSourceInfo[]
-): MediaSourceInfo {
-    let optimalVersion = versions.filter((v) => {
+): MediaSourceInfo | null {
+    let optimalVersion = versions.find((v) => {
         checkDirectPlay(v);
 
         return v.SupportsDirectPlay;
-    })[0];
+    });
 
     if (!optimalVersion) {
-        optimalVersion = versions.filter((v) => {
+        optimalVersion = versions.find((v) => {
             return v.SupportsDirectStream;
-        })[0];
+        });
     }
 
     return (
-        optimalVersion ||
-        versions.filter((s) => {
+        optimalVersion ??
+        versions.find((s) => {
             return s.SupportsTranscoding;
-        })[0]
+        }) ??
+        null
     );
 }
 

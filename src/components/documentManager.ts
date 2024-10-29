@@ -545,7 +545,7 @@ export abstract class DocumentManager {
     private static setGenres(name: string | null): void {
         const element = this.querySelector('.genres');
 
-        element.innerHTML = name || '';
+        element.innerHTML = name ?? '';
     }
 
     /**
@@ -555,7 +555,7 @@ export abstract class DocumentManager {
     private static setOverview(name: string | null): void {
         const element = this.querySelector('.overview');
 
-        element.innerHTML = name || '';
+        element.innerHTML = name ?? '';
     }
 
     /**

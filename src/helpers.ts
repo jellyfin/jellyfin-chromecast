@@ -93,11 +93,11 @@ export function getSenderReportingData(
         const nowPlayingItem = state.NowPlayingItem;
 
         nowPlayingItem.ServerId = item.ServerId;
-        nowPlayingItem.Chapters = item.Chapters || [];
+        nowPlayingItem.Chapters = item.Chapters ?? [];
 
-        const mediaSource = item.MediaSources?.filter((m: MediaSourceInfo) => {
+        const mediaSource = item.MediaSources?.find((m: MediaSourceInfo) => {
             return m.Id == reportingData.MediaSourceId;
-        })[0];
+        });
 
         nowPlayingItem.MediaStreams = mediaSource
             ? mediaSource.MediaStreams
@@ -116,7 +116,7 @@ export function getSenderReportingData(
         nowPlayingItem.Album = item.Album;
         nowPlayingItem.Artists = item.Artists;
 
-        const imageTags = item.ImageTags || {};
+        const imageTags = item.ImageTags ?? {};
 
         if (item.SeriesPrimaryImageTag) {
             nowPlayingItem.PrimaryImageItemId = item.SeriesId;
@@ -235,9 +235,9 @@ export function getMetadata(item: BaseItemDto): any {
         }
 
         // previously: p.PersonType == 'Type'.. wtf?
-        const composer = (item.People || []).filter(
+        const composer = (item.People ?? []).find(
             (p: BaseItemPerson) => p.Type == 'Composer'
-        )[0];
+        );
 
         if (composer) {
             metadata.composer = composer.Name;
@@ -322,14 +322,14 @@ export function createStreamInfo(
                 `videos/${item.Id}/stream.${mediaSource.Container}?mediaSourceId=${mediaSource.Id}&api_key=${JellyfinApi.accessToken}&static=true${seekParam}`
             );
             isStatic = true;
-            playerStartPositionTicks = startPosition || 0;
+            playerStartPositionTicks = startPosition ?? 0;
         } else {
             // TODO deal with !TranscodingUrl
             mediaUrl = JellyfinApi.createUrl(mediaSource.TranscodingUrl!);
 
             if (isHlsStream(mediaSource)) {
                 mediaUrl += seekParam;
-                playerStartPositionTicks = startPosition || 0;
+                playerStartPositionTicks = startPosition ?? 0;
                 contentType = 'application/x-mpegURL';
                 streamContainer = 'm3u8';
             } else {
@@ -347,13 +347,13 @@ export function createStreamInfo(
         if (mediaSource.SupportsDirectPlay) {
             mediaUrl = mediaSource.Path;
             isStatic = true;
-            playerStartPositionTicks = startPosition || 0;
+            playerStartPositionTicks = startPosition ?? 0;
         } else {
             const isDirectStream = mediaSource.SupportsDirectStream;
 
             if (isDirectStream) {
                 const outputContainer = (
-                    mediaSource.Container || ''
+                    mediaSource.Container ?? ''
                 ).toLowerCase();
 
                 mediaUrl = JellyfinApi.createUrl(
@@ -372,7 +372,7 @@ export function createStreamInfo(
 
     // TODO: Remove the second half of the expression by supporting changing the mediaElement src dynamically.
     // It is a pain and will require unbinding all event handlers during the operation
-    const canSeek = (mediaSource.RunTimeTicks || 0) > 0;
+    const canSeek = (mediaSource.RunTimeTicks ?? 0) > 0;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const info: any = {
@@ -445,9 +445,9 @@ export function getStreamByIndex(
     index: number
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): any {
-    return streams.filter((s) => {
+    return streams.find((s) => {
         return s.Type == type && s.Index == index;
-    })[0];
+    });
 }
 
 // defined for use in the 3 next functions
@@ -550,7 +550,7 @@ export async function getItemsForPlayback(
     query: ItemQuery
 ): Promise<BaseItemDtoQueryResult> {
     query.UserId = userId;
-    query.Limit = query.Limit || 100;
+    query.Limit = query.Limit ?? 100;
     query.Fields = requiredItemFields;
     query.ExcludeLocationTypes = 'Virtual';
 
@@ -710,7 +710,7 @@ export async function translateRequestedItems(
             }
         );
 
-        episodesResult.TotalRecordCount = episodesResult.Items?.length || 0;
+        episodesResult.TotalRecordCount = episodesResult.Items?.length ?? 0;
 
         return episodesResult;
     }
