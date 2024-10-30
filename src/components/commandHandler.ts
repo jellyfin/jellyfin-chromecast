@@ -55,36 +55,36 @@ export abstract class CommandHandler {
     }
 
     static playNextHandler(data: DataMessage): void {
-        translateItems(data, <PlayRequest>data.options, data.command);
+        translateItems(data, data.options as PlayRequest, data.command);
     }
 
     static playNowHandler(data: DataMessage): void {
-        translateItems(data, <PlayRequest>data.options, data.command);
+        translateItems(data, data.options as PlayRequest, data.command);
     }
 
     static playLastHandler(data: DataMessage): void {
-        translateItems(data, <PlayRequest>data.options, data.command);
+        translateItems(data, data.options as PlayRequest, data.command);
     }
 
     static shuffleHandler(data: DataMessage): void {
         shuffle(
             data,
-            <PlayRequest>data.options,
-            (<PlayRequest>data.options).items[0]
+            data.options as PlayRequest,
+            (data.options as PlayRequest).items[0]
         );
     }
 
     static instantMixHandler(data: DataMessage): void {
         instantMix(
             data,
-            <PlayRequest>data.options,
-            (<PlayRequest>data.options).items[0]
+            data.options as PlayRequest,
+            (data.options as PlayRequest).items[0]
         );
     }
 
     static displayContentHandler(data: DataMessage): void {
         if (!PlaybackManager.isPlaying()) {
-            DocumentManager.showItemId((<DisplayRequest>data.options).ItemId);
+            DocumentManager.showItemId((data.options as DisplayRequest).ItemId);
         }
     }
 
@@ -103,14 +103,14 @@ export abstract class CommandHandler {
     static setAudioStreamIndexHandler(data: DataMessage): void {
         setAudioStreamIndex(
             PlaybackManager.playbackState,
-            (<SetIndexRequest>data.options).index
+            (data.options as SetIndexRequest).index
         );
     }
 
     static setSubtitleStreamIndexHandler(data: DataMessage): void {
         setSubtitleStreamIndex(
             PlaybackManager.playbackState,
-            (<SetIndexRequest>data.options).index
+            (data.options as SetIndexRequest).index
         );
     }
 
@@ -155,7 +155,7 @@ export abstract class CommandHandler {
     static SeekHandler(data: DataMessage): void {
         seek(
             PlaybackManager.playbackState,
-            (<SeekRequest>data.options).position * TicksPerSecond
+            (data.options as SeekRequest).position * TicksPerSecond
         );
     }
 
@@ -189,7 +189,7 @@ export abstract class CommandHandler {
     }
 
     static SetRepeatModeHandler(data: DataMessage): void {
-        window.repeatMode = (<SetRepeatModeRequest>data.options).RepeatMode;
+        window.repeatMode = (data.options as SetRepeatModeRequest).RepeatMode;
         window.reportEventType = 'repeatmodechange';
     }
 
@@ -200,7 +200,7 @@ export abstract class CommandHandler {
     // We should avoid using a defaulthandler that has a purpose other than informing the dev/user
     // Currently all unhandled commands will be treated as play commands.
     static defaultHandler(data: DataMessage): void {
-        translateItems(data, <PlayRequest>data.options, 'play');
+        translateItems(data, data.options as PlayRequest, 'play');
     }
 
     static processMessage(data: DataMessage, command: string): void {

@@ -128,7 +128,7 @@ export async function ajax(request: any): Promise<Response | string> {
             request.dataType === 'text' ||
             (response.headers.get('Content-Type') || '')
                 .toLowerCase()
-                .indexOf('text/') === 0
+                .startsWith('text/')
         ) {
             return response.text();
         } else {

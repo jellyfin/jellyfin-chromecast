@@ -98,7 +98,7 @@ export function onMediaElementPlaying(): void {
  * @param event - event
  */
 function onMediaElementVolumeChange(event: framework.system.Event): void {
-    window.volume = (<framework.system.SystemVolumeChangedEvent>event).data;
+    window.volume = (event as framework.system.SystemVolumeChangedEvent).data;
     console.log(`Received volume update: ${window.volume.level}`);
 
     if (JellyfinApi.serverAddress !== null) {
@@ -386,11 +386,11 @@ export function setSubtitleStreamIndex(
     let positionTicks;
 
     // FIXME: Possible index error when MediaStreams is undefined.
-    const currentSubtitleStream = state.mediaSource?.MediaStreams?.filter(
+    const currentSubtitleStream = state.mediaSource?.MediaStreams?.find(
         (m: MediaStream) => {
             return m.Index == state.subtitleStreamIndex && m.Type == 'Subtitle';
         }
-    )[0];
+    );
 
     const currentDeliveryMethod = currentSubtitleStream
         ? currentSubtitleStream.DeliveryMethod
@@ -414,11 +414,8 @@ export function setSubtitleStreamIndex(
 
     const mediaStreams = state.PlaybackMediaSource?.MediaStreams;
 
-    const subtitleStream = getStreamByIndex(
-        <MediaStream[]>mediaStreams,
-        'Subtitle',
-        index
-    );
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const subtitleStream = getStreamByIndex(mediaStreams!, 'Subtitle', index);
 
     if (!subtitleStream) {
         console.log(
@@ -519,17 +516,12 @@ export async function changeStream(
 
     // @ts-expect-error is possible here
     return await PlaybackManager.playItemInternal(state.item, {
-        audioStreamIndex:
-            params.AudioStreamIndex == null
-                ? state.audioStreamIndex
-                : params.AudioStreamIndex,
+        audioStreamIndex: params.AudioStreamIndex ?? state.audioStreamIndex,
         liveStreamId: state.liveStreamId,
         mediaSourceId: state.mediaSourceId,
         startPositionTicks: ticks,
         subtitleStreamIndex:
-            params.SubtitleStreamIndex == null
-                ? state.subtitleStreamIndex
-                : params.SubtitleStreamIndex
+            params.SubtitleStreamIndex ?? state.subtitleStreamIndex
     });
 }
 
@@ -707,25 +699,26 @@ export function showPlaybackInfoErrorMessage(error: string): void {
  * @returns stream
  */
 export function getOptimalMediaSource(
-    versions: Array<MediaSourceInfo>
-): MediaSourceInfo {
-    let optimalVersion = versions.filter((v) => {
+    versions: MediaSourceInfo[]
+): MediaSourceInfo | null {
+    let optimalVersion = versions.find((v) => {
         checkDirectPlay(v);
 
         return v.SupportsDirectPlay;
-    })[0];
+    });
 
     if (!optimalVersion) {
-        optimalVersion = versions.filter((v) => {
+        optimalVersion = versions.find((v) => {
             return v.SupportsDirectStream;
-        })[0];
+        });
     }
 
     return (
-        optimalVersion ||
-        versions.filter((s) => {
+        optimalVersion ??
+        versions.find((s) => {
             return s.SupportsTranscoding;
-        })[0]
+        }) ??
+        null
     );
 }
 
@@ -738,8 +731,7 @@ export function checkDirectPlay(mediaSource: MediaSourceInfo): void {
     if (
         mediaSource.SupportsDirectPlay &&
         mediaSource.Protocol == 'Http' &&
-        (!mediaSource.RequiredHttpHeaders ||
-            !mediaSource.RequiredHttpHeaders.length)
+        !mediaSource.RequiredHttpHeaders?.length
     ) {
         return;
     }
@@ -763,7 +755,7 @@ export function setTextTrack(index: number | null): void {
             return;
         }
 
-        const tracks: Array<framework.messages.Track> =
+        const tracks: framework.messages.Track[] =
             textTracksManager.getTracks();
         const subtitleTrack: framework.messages.Track | undefined = tracks.find(
             (track: framework.messages.Track) => {
@@ -771,7 +763,7 @@ export function setTextTrack(index: number | null): void {
             }
         );
 
-        if (subtitleTrack && subtitleTrack.trackId !== undefined) {
+        if (subtitleTrack?.trackId !== undefined) {
             textTracksManager.setActiveByIds([subtitleTrack.trackId]);
 
             const subtitleAppearance = window.subtitleAppearance;

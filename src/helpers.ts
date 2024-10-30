@@ -93,11 +93,11 @@ export function getSenderReportingData(
         const nowPlayingItem = state.NowPlayingItem;
 
         nowPlayingItem.ServerId = item.ServerId;
-        nowPlayingItem.Chapters = item.Chapters || [];
+        nowPlayingItem.Chapters = item.Chapters ?? [];
 
-        const mediaSource = item.MediaSources?.filter((m: MediaSourceInfo) => {
+        const mediaSource = item.MediaSources?.find((m: MediaSourceInfo) => {
             return m.Id == reportingData.MediaSourceId;
-        })[0];
+        });
 
         nowPlayingItem.MediaStreams = mediaSource
             ? mediaSource.MediaStreams
@@ -116,7 +116,7 @@ export function getSenderReportingData(
         nowPlayingItem.Album = item.Album;
         nowPlayingItem.Artists = item.Artists;
 
-        const imageTags = item.ImageTags || {};
+        const imageTags = item.ImageTags ?? {};
 
         if (item.SeriesPrimaryImageTag) {
             nowPlayingItem.PrimaryImageItemId = item.SeriesId;
@@ -129,13 +129,10 @@ export function getSenderReportingData(
             nowPlayingItem.PrimaryImageTag = item.AlbumPrimaryImageTag;
         }
 
-        if (item.BackdropImageTags && item.BackdropImageTags.length) {
+        if (item.BackdropImageTags?.length) {
             nowPlayingItem.BackdropItemId = item.Id;
             nowPlayingItem.BackdropImageTag = item.BackdropImageTags[0];
-        } else if (
-            item.ParentBackdropImageTags &&
-            item.ParentBackdropImageTags.length
-        ) {
+        } else if (item.ParentBackdropImageTags?.length) {
             nowPlayingItem.BackdropItemId = item.ParentBackdropItemId;
             nowPlayingItem.BackdropImageTag = item.ParentBackdropImageTags[0];
         }
@@ -219,8 +216,7 @@ export function getMetadata(item: BaseItemDto): any {
     } else if (item.Type == 'Audio') {
         metadata = new cast.framework.messages.MusicTrackMediaMetadata();
         metadata.songName = item.Name;
-        metadata.artist =
-            item.Artists && item.Artists.length ? item.Artists.join(', ') : '';
+        metadata.artist = item.Artists?.length ? item.Artists.join(', ') : '';
         metadata.albumArtist = item.AlbumArtist;
         metadata.albumName = item.Album;
 
@@ -239,9 +235,9 @@ export function getMetadata(item: BaseItemDto): any {
         }
 
         // previously: p.PersonType == 'Type'.. wtf?
-        const composer = (item.People || []).filter(
+        const composer = (item.People ?? []).find(
             (p: BaseItemPerson) => p.Type == 'Composer'
-        )[0];
+        );
 
         if (composer) {
             metadata.composer = composer.Name;
@@ -263,7 +259,7 @@ export function getMetadata(item: BaseItemDto): any {
             ).toISOString();
         }
 
-        if (item.Studios && item.Studios.length) {
+        if (item.Studios?.length) {
             metadata.studio = item.Studios[0];
         }
     }
@@ -326,25 +322,22 @@ export function createStreamInfo(
                 `videos/${item.Id}/stream.${mediaSource.Container}?mediaSourceId=${mediaSource.Id}&api_key=${JellyfinApi.accessToken}&static=true${seekParam}`
             );
             isStatic = true;
-            playerStartPositionTicks = startPosition || 0;
+            playerStartPositionTicks = startPosition ?? 0;
         } else {
             // TODO deal with !TranscodingUrl
-            mediaUrl = JellyfinApi.createUrl(
-                <string>mediaSource.TranscodingUrl
-            );
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            mediaUrl = JellyfinApi.createUrl(mediaSource.TranscodingUrl!);
 
             if (isHlsStream(mediaSource)) {
                 mediaUrl += seekParam;
-                playerStartPositionTicks = startPosition || 0;
+                playerStartPositionTicks = startPosition ?? 0;
                 contentType = 'application/x-mpegURL';
                 streamContainer = 'm3u8';
             } else {
                 contentType = `video/${mediaSource.TranscodingContainer}`;
                 streamContainer = mediaSource.TranscodingContainer;
 
-                if (
-                    mediaUrl.toLowerCase().indexOf('copytimestamps=true') != -1
-                ) {
+                if (mediaUrl.toLowerCase().includes('copytimestamps=true')) {
                     startPosition = 0;
                 }
             }
@@ -355,13 +348,13 @@ export function createStreamInfo(
         if (mediaSource.SupportsDirectPlay) {
             mediaUrl = mediaSource.Path;
             isStatic = true;
-            playerStartPositionTicks = startPosition || 0;
+            playerStartPositionTicks = startPosition ?? 0;
         } else {
             const isDirectStream = mediaSource.SupportsDirectStream;
 
             if (isDirectStream) {
                 const outputContainer = (
-                    mediaSource.Container || ''
+                    mediaSource.Container ?? ''
                 ).toLowerCase();
 
                 mediaUrl = JellyfinApi.createUrl(
@@ -373,16 +366,15 @@ export function createStreamInfo(
                 contentType = `audio/${mediaSource.TranscodingContainer}`;
 
                 // TODO deal with !TranscodingUrl
-                mediaUrl = JellyfinApi.createUrl(
-                    <string>mediaSource.TranscodingUrl
-                );
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                mediaUrl = JellyfinApi.createUrl(mediaSource.TranscodingUrl!);
             }
         }
     }
 
     // TODO: Remove the second half of the expression by supporting changing the mediaElement src dynamically.
     // It is a pain and will require unbinding all event handlers during the operation
-    const canSeek = (mediaSource.RunTimeTicks || 0) > 0;
+    const canSeek = (mediaSource.RunTimeTicks ?? 0) > 0;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const info: any = {
@@ -403,7 +395,7 @@ export function createStreamInfo(
         mediaSource.MediaStreams?.filter((stream: MediaStream) => {
             return stream.Type === 'Subtitle';
         }) ?? [];
-    const subtitleTracks: Array<framework.messages.Track> = [];
+    const subtitleTracks: framework.messages.Track[] = [];
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     subtitleStreams.forEach((subtitleStream: any) => {
@@ -450,14 +442,14 @@ export function createStreamInfo(
  * @returns first first matching stream
  */
 export function getStreamByIndex(
-    streams: Array<MediaStream>,
+    streams: MediaStream[],
     type: string,
     index: number
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): any {
-    return streams.filter((s) => {
+    return streams.find((s) => {
         return s.Type == type && s.Index == index;
-    })[0];
+    });
 }
 
 // defined for use in the 3 next functions
@@ -560,7 +552,7 @@ export async function getItemsForPlayback(
     query: ItemQuery
 ): Promise<BaseItemDtoQueryResult> {
     query.UserId = userId;
-    query.Limit = query.Limit || 100;
+    query.Limit = query.Limit ?? 100;
     query.Fields = requiredItemFields;
     query.ExcludeLocationTypes = 'Virtual';
 
@@ -640,7 +632,7 @@ export function getUser(): Promise<UserDto> {
  */
 export async function translateRequestedItems(
     userId: string,
-    items: Array<BaseItemDto>,
+    items: BaseItemDto[],
     smart = false
 ): Promise<BaseItemDtoQueryResult> {
     const firstItem = items[0];
@@ -720,7 +712,7 @@ export async function translateRequestedItems(
             }
         );
 
-        episodesResult.TotalRecordCount = episodesResult.Items?.length || 0;
+        episodesResult.TotalRecordCount = episodesResult.Items?.length ?? 0;
 
         return episodesResult;
     }

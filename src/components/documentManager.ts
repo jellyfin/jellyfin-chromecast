@@ -304,11 +304,7 @@ export abstract class DocumentManager {
         let src: string | null = null;
 
         if (item != null) {
-            if (
-                item.BackdropImageTags &&
-                item.BackdropImageTags.length &&
-                item.Id
-            ) {
+            if (item.BackdropImageTags?.length && item.Id) {
                 // get first backdrop of image if applicable
                 src = JellyfinApi.createImageUrl(
                     item.Id,
@@ -317,8 +313,7 @@ export abstract class DocumentManager {
                 );
             } else if (
                 item.ParentBackdropItemId &&
-                item.ParentBackdropImageTags &&
-                item.ParentBackdropImageTags.length
+                item.ParentBackdropImageTags?.length
             ) {
                 // otherwise get first backdrop from parent
                 src = JellyfinApi.createImageUrl(
@@ -376,7 +371,7 @@ export abstract class DocumentManager {
         let src: string | null = null;
         let item: BaseItemDto | null = null;
 
-        if (result.Items && result.Items[0]) {
+        if (result.Items?.[0]) {
             item = result.Items[0];
             src = await DocumentManager.getWaitingBackdropUrl(item);
         }
@@ -459,11 +454,7 @@ export abstract class DocumentManager {
 
         let backdropUrl: string | null = null;
 
-        if (
-            item.BackdropImageTags &&
-            item.BackdropImageTags.length &&
-            item.Id
-        ) {
+        if (item.BackdropImageTags?.length && item.Id) {
             backdropUrl = JellyfinApi.createImageUrl(
                 item.Id,
                 'Backdrop',
@@ -471,8 +462,7 @@ export abstract class DocumentManager {
             );
         } else if (
             item.ParentBackdropItemId &&
-            item.ParentBackdropImageTags &&
-            item.ParentBackdropImageTags.length
+            item.ParentBackdropImageTags?.length
         ) {
             backdropUrl = JellyfinApi.createImageUrl(
                 item.ParentBackdropItemId,
@@ -521,7 +511,8 @@ export abstract class DocumentManager {
      * @param item - source for the displayed name
      */
     private static setDisplayName(item: BaseItemDto): void {
-        const name: string = item.EpisodeTitle ?? <string>item.Name;
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const name: string = item.EpisodeTitle ?? item.Name!;
 
         let displayName: string = name;
 
@@ -555,7 +546,7 @@ export abstract class DocumentManager {
     private static setGenres(name: string | null): void {
         const element = this.querySelector('.genres');
 
-        element.innerHTML = name || '';
+        element.innerHTML = name ?? '';
     }
 
     /**
@@ -565,7 +556,7 @@ export abstract class DocumentManager {
     private static setOverview(name: string | null): void {
         const element = this.querySelector('.overview');
 
-        element.innerHTML = name || '';
+        element.innerHTML = name ?? '';
     }
 
     /**
@@ -574,9 +565,9 @@ export abstract class DocumentManager {
      * @param value - Percentage to set
      */
     private static setPlayedPercentage(value = 0): void {
-        const element = <HTMLInputElement>(
-            this.querySelector('.itemProgressBar')
-        );
+        const element = this.querySelector(
+            '.itemProgressBar'
+        ) as HTMLInputElement;
 
         element.value = value.toString();
     }
@@ -590,9 +581,9 @@ export abstract class DocumentManager {
         const element = this.querySelector('.detailImageProgressContainer');
 
         if (value) {
-            (<HTMLElement>element).classList.remove('d-none');
+            (element as HTMLElement).classList.remove('d-none');
         } else {
-            (<HTMLElement>element).classList.add('d-none');
+            (element as HTMLElement).classList.add('d-none');
         }
     }
 
@@ -643,7 +634,7 @@ export abstract class DocumentManager {
      * @param item - to look up
      */
     private static setMiscInfo(item: BaseItemDto): void {
-        const info: Array<string> = [];
+        const info: string[] = [];
 
         if (item.Type == 'Episode') {
             if (item.PremiereDate) {

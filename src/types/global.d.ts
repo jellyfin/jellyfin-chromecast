@@ -9,9 +9,7 @@ import type {
 } from '@jellyfin/sdk/lib/generated-client';
 import { TextTrackEdgeType } from 'chromecast-caf-receiver/cast.framework.messages';
 
-export interface Dictionary<T> {
-    [Key: string]: T;
-}
+export type Dictionary<T> = Record<string, T>;
 
 // Jellyfin Server
 // Why doesn't the API have a type for this?
@@ -85,9 +83,7 @@ export interface DataMessage {
     command: string;
 }
 
-interface SupportedCommands {
-    [command: string]: (data: DataMessage) => void;
-}
+type SupportedCommands = Record<string, (data: DataMessage) => void>;
 // /From commandHandler
 
 interface SubtitleAppearance {

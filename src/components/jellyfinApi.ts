@@ -58,15 +58,15 @@ export abstract class JellyfinApi {
         };
 
         if (this.accessToken) {
-            parameters['Token'] = this.accessToken;
+            parameters.Token = this.accessToken;
         }
 
         if (this.deviceId) {
-            parameters['DeviceId'] = this.deviceId;
+            parameters.DeviceId = this.deviceId;
         }
 
         if (this.deviceName) {
-            parameters['Device'] = this.deviceName;
+            parameters.Device = this.deviceName;
         }
 
         let header = 'MediaBrowser';
@@ -93,7 +93,7 @@ export abstract class JellyfinApi {
         }
 
         // Remove leading slashes
-        while (path.charAt(0) === '/') {
+        while (path.startsWith('/')) {
             path = path.substring(1);
         }
 
@@ -104,7 +104,7 @@ export abstract class JellyfinApi {
     public static createUserUrl(path: string | null = null): string {
         if (path) {
             // Remove leading slashes
-            while (path.charAt(0) === '/') {
+            while (path.startsWith('/')) {
                 path = path.substring(1);
             }
 
