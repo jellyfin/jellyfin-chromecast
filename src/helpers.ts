@@ -129,13 +129,10 @@ export function getSenderReportingData(
             nowPlayingItem.PrimaryImageTag = item.AlbumPrimaryImageTag;
         }
 
-        if (item.BackdropImageTags && item.BackdropImageTags.length) {
+        if (item.BackdropImageTags?.length) {
             nowPlayingItem.BackdropItemId = item.Id;
             nowPlayingItem.BackdropImageTag = item.BackdropImageTags[0];
-        } else if (
-            item.ParentBackdropImageTags &&
-            item.ParentBackdropImageTags.length
-        ) {
+        } else if (item.ParentBackdropImageTags?.length) {
             nowPlayingItem.BackdropItemId = item.ParentBackdropItemId;
             nowPlayingItem.BackdropImageTag = item.ParentBackdropImageTags[0];
         }
@@ -219,8 +216,7 @@ export function getMetadata(item: BaseItemDto): any {
     } else if (item.Type == 'Audio') {
         metadata = new cast.framework.messages.MusicTrackMediaMetadata();
         metadata.songName = item.Name;
-        metadata.artist =
-            item.Artists && item.Artists.length ? item.Artists.join(', ') : '';
+        metadata.artist = item.Artists?.length ? item.Artists.join(', ') : '';
         metadata.albumArtist = item.AlbumArtist;
         metadata.albumName = item.Album;
 
@@ -263,7 +259,7 @@ export function getMetadata(item: BaseItemDto): any {
             ).toISOString();
         }
 
-        if (item.Studios && item.Studios.length) {
+        if (item.Studios?.length) {
             metadata.studio = item.Studios[0];
         }
     }
@@ -329,9 +325,7 @@ export function createStreamInfo(
             playerStartPositionTicks = startPosition || 0;
         } else {
             // TODO deal with !TranscodingUrl
-            mediaUrl = JellyfinApi.createUrl(
-                mediaSource.TranscodingUrl as string
-            );
+            mediaUrl = JellyfinApi.createUrl(mediaSource.TranscodingUrl!);
 
             if (isHlsStream(mediaSource)) {
                 mediaUrl += seekParam;
@@ -342,9 +336,7 @@ export function createStreamInfo(
                 contentType = `video/${mediaSource.TranscodingContainer}`;
                 streamContainer = mediaSource.TranscodingContainer;
 
-                if (
-                    mediaUrl.toLowerCase().indexOf('copytimestamps=true') != -1
-                ) {
+                if (mediaUrl.toLowerCase().includes('copytimestamps=true')) {
                     startPosition = 0;
                 }
             }
@@ -373,9 +365,7 @@ export function createStreamInfo(
                 contentType = `audio/${mediaSource.TranscodingContainer}`;
 
                 // TODO deal with !TranscodingUrl
-                mediaUrl = JellyfinApi.createUrl(
-                    mediaSource.TranscodingUrl as string
-                );
+                mediaUrl = JellyfinApi.createUrl(mediaSource.TranscodingUrl!);
             }
         }
     }

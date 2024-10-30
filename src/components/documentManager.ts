@@ -304,11 +304,7 @@ export abstract class DocumentManager {
         let src: string | null = null;
 
         if (item != null) {
-            if (
-                item.BackdropImageTags &&
-                item.BackdropImageTags.length &&
-                item.Id
-            ) {
+            if (item.BackdropImageTags?.length && item.Id) {
                 // get first backdrop of image if applicable
                 src = JellyfinApi.createImageUrl(
                     item.Id,
@@ -317,8 +313,7 @@ export abstract class DocumentManager {
                 );
             } else if (
                 item.ParentBackdropItemId &&
-                item.ParentBackdropImageTags &&
-                item.ParentBackdropImageTags.length
+                item.ParentBackdropImageTags?.length
             ) {
                 // otherwise get first backdrop from parent
                 src = JellyfinApi.createImageUrl(
@@ -376,7 +371,7 @@ export abstract class DocumentManager {
         let src: string | null = null;
         let item: BaseItemDto | null = null;
 
-        if (result.Items && result.Items[0]) {
+        if (result.Items?.[0]) {
             item = result.Items[0];
             src = await DocumentManager.getWaitingBackdropUrl(item);
         }
@@ -459,11 +454,7 @@ export abstract class DocumentManager {
 
         let backdropUrl: string | null = null;
 
-        if (
-            item.BackdropImageTags &&
-            item.BackdropImageTags.length &&
-            item.Id
-        ) {
+        if (item.BackdropImageTags?.length && item.Id) {
             backdropUrl = JellyfinApi.createImageUrl(
                 item.Id,
                 'Backdrop',
@@ -471,8 +462,7 @@ export abstract class DocumentManager {
             );
         } else if (
             item.ParentBackdropItemId &&
-            item.ParentBackdropImageTags &&
-            item.ParentBackdropImageTags.length
+            item.ParentBackdropImageTags?.length
         ) {
             backdropUrl = JellyfinApi.createImageUrl(
                 item.ParentBackdropItemId,
@@ -521,7 +511,7 @@ export abstract class DocumentManager {
      * @param item - source for the displayed name
      */
     private static setDisplayName(item: BaseItemDto): void {
-        const name: string = item.EpisodeTitle ?? (item.Name as string);
+        const name: string = item.EpisodeTitle ?? item.Name!;
 
         let displayName: string = name;
 

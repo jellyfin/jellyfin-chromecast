@@ -414,11 +414,7 @@ export function setSubtitleStreamIndex(
 
     const mediaStreams = state.PlaybackMediaSource?.MediaStreams;
 
-    const subtitleStream = getStreamByIndex(
-        mediaStreams as MediaStream[],
-        'Subtitle',
-        index
-    );
+    const subtitleStream = getStreamByIndex(mediaStreams!, 'Subtitle', index);
 
     if (!subtitleStream) {
         console.log(
@@ -738,8 +734,7 @@ export function checkDirectPlay(mediaSource: MediaSourceInfo): void {
     if (
         mediaSource.SupportsDirectPlay &&
         mediaSource.Protocol == 'Http' &&
-        (!mediaSource.RequiredHttpHeaders ||
-            !mediaSource.RequiredHttpHeaders.length)
+        !mediaSource.RequiredHttpHeaders?.length
     ) {
         return;
     }
@@ -771,7 +766,7 @@ export function setTextTrack(index: number | null): void {
             }
         );
 
-        if (subtitleTrack && subtitleTrack.trackId !== undefined) {
+        if (subtitleTrack?.trackId !== undefined) {
             textTracksManager.setActiveByIds([subtitleTrack.trackId]);
 
             const subtitleAppearance = window.subtitleAppearance;
