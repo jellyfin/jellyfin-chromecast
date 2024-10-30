@@ -511,6 +511,7 @@ export abstract class DocumentManager {
      * @param item - source for the displayed name
      */
     private static setDisplayName(item: BaseItemDto): void {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const name: string = item.EpisodeTitle ?? item.Name!;
 
         let displayName: string = name;

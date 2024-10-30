@@ -325,6 +325,7 @@ export function createStreamInfo(
             playerStartPositionTicks = startPosition ?? 0;
         } else {
             // TODO deal with !TranscodingUrl
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             mediaUrl = JellyfinApi.createUrl(mediaSource.TranscodingUrl!);
 
             if (isHlsStream(mediaSource)) {
@@ -365,6 +366,7 @@ export function createStreamInfo(
                 contentType = `audio/${mediaSource.TranscodingContainer}`;
 
                 // TODO deal with !TranscodingUrl
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 mediaUrl = JellyfinApi.createUrl(mediaSource.TranscodingUrl!);
             }
         }

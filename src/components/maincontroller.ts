@@ -414,6 +414,7 @@ export function setSubtitleStreamIndex(
 
     const mediaStreams = state.PlaybackMediaSource?.MediaStreams;
 
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const subtitleStream = getStreamByIndex(mediaStreams!, 'Subtitle', index);
 
     if (!subtitleStream) {
