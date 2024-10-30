@@ -330,7 +330,7 @@ export function createStreamInfo(
         } else {
             // TODO deal with !TranscodingUrl
             mediaUrl = JellyfinApi.createUrl(
-                <string>mediaSource.TranscodingUrl
+                mediaSource.TranscodingUrl as string
             );
 
             if (isHlsStream(mediaSource)) {
@@ -374,7 +374,7 @@ export function createStreamInfo(
 
                 // TODO deal with !TranscodingUrl
                 mediaUrl = JellyfinApi.createUrl(
-                    <string>mediaSource.TranscodingUrl
+                    mediaSource.TranscodingUrl as string
                 );
             }
         }
@@ -403,7 +403,7 @@ export function createStreamInfo(
         mediaSource.MediaStreams?.filter((stream: MediaStream) => {
             return stream.Type === 'Subtitle';
         }) ?? [];
-    const subtitleTracks: Array<framework.messages.Track> = [];
+    const subtitleTracks: framework.messages.Track[] = [];
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     subtitleStreams.forEach((subtitleStream: any) => {
@@ -450,7 +450,7 @@ export function createStreamInfo(
  * @returns first first matching stream
  */
 export function getStreamByIndex(
-    streams: Array<MediaStream>,
+    streams: MediaStream[],
     type: string,
     index: number
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -640,7 +640,7 @@ export function getUser(): Promise<UserDto> {
  */
 export async function translateRequestedItems(
     userId: string,
-    items: Array<BaseItemDto>,
+    items: BaseItemDto[],
     smart = false
 ): Promise<BaseItemDtoQueryResult> {
     const firstItem = items[0];

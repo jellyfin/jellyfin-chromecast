@@ -4,9 +4,7 @@ export interface ServerCredential {
     serverBasePath?: string;
 }
 
-interface CredentialStore {
-    [id: string]: ServerCredential;
-}
+type CredentialStore = Record<string, ServerCredential>;
 
 export class credentialManager {
     /**

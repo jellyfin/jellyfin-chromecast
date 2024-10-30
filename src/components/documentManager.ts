@@ -521,7 +521,7 @@ export abstract class DocumentManager {
      * @param item - source for the displayed name
      */
     private static setDisplayName(item: BaseItemDto): void {
-        const name: string = item.EpisodeTitle ?? <string>item.Name;
+        const name: string = item.EpisodeTitle ?? (item.Name as string);
 
         let displayName: string = name;
 
@@ -574,9 +574,9 @@ export abstract class DocumentManager {
      * @param value - Percentage to set
      */
     private static setPlayedPercentage(value = 0): void {
-        const element = <HTMLInputElement>(
-            this.querySelector('.itemProgressBar')
-        );
+        const element = this.querySelector(
+            '.itemProgressBar'
+        ) as HTMLInputElement;
 
         element.value = value.toString();
     }
@@ -590,9 +590,9 @@ export abstract class DocumentManager {
         const element = this.querySelector('.detailImageProgressContainer');
 
         if (value) {
-            (<HTMLElement>element).classList.remove('d-none');
+            (element as HTMLElement).classList.remove('d-none');
         } else {
-            (<HTMLElement>element).classList.add('d-none');
+            (element as HTMLElement).classList.add('d-none');
         }
     }
 
@@ -643,7 +643,7 @@ export abstract class DocumentManager {
      * @param item - to look up
      */
     private static setMiscInfo(item: BaseItemDto): void {
-        const info: Array<string> = [];
+        const info: string[] = [];
 
         if (item.Type == 'Episode') {
             if (item.PremiereDate) {

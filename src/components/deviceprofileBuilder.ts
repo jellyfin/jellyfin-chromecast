@@ -68,7 +68,7 @@ function createProfileCondition(
  * @todo Why does this always return an empty array?
  * @returns Container profiles.
  */
-function getContainerProfiles(): Array<ContainerProfile> {
+function getContainerProfiles(): ContainerProfile[] {
     return [];
 }
 
@@ -76,8 +76,8 @@ function getContainerProfiles(): Array<ContainerProfile> {
  * Get direct play profiles
  * @returns Direct play profiles.
  */
-function getDirectPlayProfiles(): Array<DirectPlayProfile> {
-    const DirectPlayProfiles: Array<DirectPlayProfile> = [];
+function getDirectPlayProfiles(): DirectPlayProfile[] {
+    const DirectPlayProfiles: DirectPlayProfile[] = [];
 
     if (currentDeviceId !== DeviceIds.AUDIO) {
         const mp4VideoCodecs = getSupportedMP4VideoCodecs();
@@ -140,8 +140,8 @@ function getDirectPlayProfiles(): Array<DirectPlayProfile> {
  * Get codec profiles
  * @returns Codec profiles.
  */
-function getCodecProfiles(): Array<CodecProfile> {
-    const CodecProfiles: Array<CodecProfile> = [];
+function getCodecProfiles(): CodecProfile[] {
+    const CodecProfiles: CodecProfile[] = [];
 
     const audioConditions: CodecProfile = {
         Codec: 'flac',
@@ -285,8 +285,8 @@ function getCodecProfiles(): Array<CodecProfile> {
  * Get transcoding profiles
  * @returns Transcoding profiles.
  */
-function getTranscodingProfiles(): Array<TranscodingProfile> {
-    const TranscodingProfiles: Array<TranscodingProfile> = [];
+function getTranscodingProfiles(): TranscodingProfile[] {
+    const TranscodingProfiles: TranscodingProfile[] = [];
 
     const hlsAudioCodecs = getSupportedHLSAudioCodecs();
     const audioChannels: number = hasSurroundSupport() ? 6 : 2;
@@ -364,8 +364,8 @@ function getTranscodingProfiles(): Array<TranscodingProfile> {
  * Get subtitle profiles
  * @returns Subtitle profiles.
  */
-function getSubtitleProfiles(): Array<SubtitleProfile> {
-    const subProfiles: Array<SubtitleProfile> = [];
+function getSubtitleProfiles(): SubtitleProfile[] {
+    const subProfiles: SubtitleProfile[] = [];
 
     if (hasTextTrackSupport(currentDeviceId)) {
         subProfiles.push({

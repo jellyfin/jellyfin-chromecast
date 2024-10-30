@@ -3,7 +3,7 @@ import { JellyfinApi } from '../jellyfinApi';
 import { version } from '../../../package.json';
 
 const setupMockCastSenders = (): void => {
-    const getSenders = (): Array<any> => [{ id: 'thisIsSenderId' }]; // eslint-disable-line @typescript-eslint/no-explicit-any
+    const getSenders = (): any[] => [{ id: 'thisIsSenderId' }]; // eslint-disable-line @typescript-eslint/no-explicit-any
     const getInstance = (): any => ({ getSenders }); // eslint-disable-line @typescript-eslint/no-explicit-any
 
     // @ts-expect-error cast is already defined globally, however since we're mocking it we need to redefine it.

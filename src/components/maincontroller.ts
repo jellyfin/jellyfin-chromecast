@@ -98,7 +98,7 @@ export function onMediaElementPlaying(): void {
  * @param event - event
  */
 function onMediaElementVolumeChange(event: framework.system.Event): void {
-    window.volume = (<framework.system.SystemVolumeChangedEvent>event).data;
+    window.volume = (event as framework.system.SystemVolumeChangedEvent).data;
     console.log(`Received volume update: ${window.volume.level}`);
 
     if (JellyfinApi.serverAddress !== null) {
@@ -415,7 +415,7 @@ export function setSubtitleStreamIndex(
     const mediaStreams = state.PlaybackMediaSource?.MediaStreams;
 
     const subtitleStream = getStreamByIndex(
-        <MediaStream[]>mediaStreams,
+        mediaStreams as MediaStream[],
         'Subtitle',
         index
     );
@@ -707,7 +707,7 @@ export function showPlaybackInfoErrorMessage(error: string): void {
  * @returns stream
  */
 export function getOptimalMediaSource(
-    versions: Array<MediaSourceInfo>
+    versions: MediaSourceInfo[]
 ): MediaSourceInfo {
     let optimalVersion = versions.filter((v) => {
         checkDirectPlay(v);
@@ -763,7 +763,7 @@ export function setTextTrack(index: number | null): void {
             return;
         }
 
-        const tracks: Array<framework.messages.Track> =
+        const tracks: framework.messages.Track[] =
             textTracksManager.getTracks();
         const subtitleTrack: framework.messages.Track | undefined = tracks.find(
             (track: framework.messages.Track) => {

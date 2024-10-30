@@ -191,7 +191,7 @@ export function getH265LevelSupport(deviceId: DeviceIds): number {
  * Get VPX (VP8, VP9) codecs supported by the active Cast device.
  * @returns Supported VPX codecs.
  */
-export function getSupportedVPXVideoCodecs(): Array<string> {
+export function getSupportedVPXVideoCodecs(): string[] {
     const codecs = [];
 
     if (hasVP8Support()) {
@@ -209,7 +209,7 @@ export function getSupportedVPXVideoCodecs(): Array<string> {
  * Get supported video codecs suitable for use in an MP4 container.
  * @returns Supported MP4 video codecs.
  */
-export function getSupportedMP4VideoCodecs(): Array<string> {
+export function getSupportedMP4VideoCodecs(): string[] {
     const codecs = ['h264'];
 
     if (hasH265Support()) {
@@ -224,7 +224,7 @@ export function getSupportedMP4VideoCodecs(): Array<string> {
  * Get supported audio codecs suitable for use in an MP4 container.
  * @returns Supported MP4 audio codecs.
  */
-export function getSupportedMP4AudioCodecs(): Array<string> {
+export function getSupportedMP4AudioCodecs(): string[] {
     const codecs = [];
 
     if (hasEAC3Support()) {
@@ -245,7 +245,7 @@ export function getSupportedMP4AudioCodecs(): Array<string> {
  * Get supported video codecs suitable for use with HLS.
  * @returns Supported HLS video codecs.
  */
-export function getSupportedHLSVideoCodecs(): Array<string> {
+export function getSupportedHLSVideoCodecs(): string[] {
     // Currently the server does not support fmp4 which is required
     // by the HLS spec for streaming H.265 video.
     return ['h264'];
@@ -255,7 +255,7 @@ export function getSupportedHLSVideoCodecs(): Array<string> {
  * Get supported audio codecs suitable for use with HLS.
  * @returns All supported HLS audio codecs.
  */
-export function getSupportedHLSAudioCodecs(): Array<string> {
+export function getSupportedHLSAudioCodecs(): string[] {
     // HLS basically supports whatever MP4 supports.
     return getSupportedMP4AudioCodecs();
 }
@@ -264,7 +264,7 @@ export function getSupportedHLSAudioCodecs(): Array<string> {
  * Get supported audio codecs suitable for use in a WebM container.
  * @returns All supported WebM audio codecs.
  */
-export function getSupportedWebMAudioCodecs(): Array<string> {
+export function getSupportedWebMAudioCodecs(): string[] {
     return ['vorbis', 'opus'];
 }
 
@@ -272,6 +272,6 @@ export function getSupportedWebMAudioCodecs(): Array<string> {
  * Get supported audio codecs suitable for use in a WebM container.
  * @returns All supported WebM audio codecs.
  */
-export function getSupportedAudioCodecs(): Array<string> {
+export function getSupportedAudioCodecs(): string[] {
     return ['opus', 'mp3', 'aac', 'flac', 'webma', 'wav'];
 }
