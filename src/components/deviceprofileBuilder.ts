@@ -291,7 +291,7 @@ function getTranscodingProfiles(): TranscodingProfile[] {
     const hlsAudioCodecs = getSupportedHLSAudioCodecs();
     const audioChannels: number = hasSurroundSupport() ? 6 : 2;
 
-    if (profileOptions.enableHls !== false) {
+    if (profileOptions.enableHls) {
         TranscodingProfiles.push({
             AudioCodec: hlsAudioCodecs.join(','),
             BreakOnNonKeyFrames: false,
@@ -328,7 +328,7 @@ function getTranscodingProfiles(): TranscodingProfile[] {
     if (
         hlsVideoCodecs.length &&
         hlsAudioCodecs.length &&
-        profileOptions.enableHls !== false
+        profileOptions.enableHls
     ) {
         TranscodingProfiles.push({
             AudioCodec: hlsAudioCodecs.join(','),
