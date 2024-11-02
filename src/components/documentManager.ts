@@ -567,9 +567,9 @@ export abstract class DocumentManager {
     private static setPlayedPercentage(value = 0): void {
         const element = this.querySelector(
             '.itemProgressBar'
-        ) as HTMLInputElement;
+        ) as HTMLProgressElement;
 
-        element.value = value.toString();
+        element.value = value;
     }
 
     /**
