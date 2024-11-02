@@ -409,5 +409,3 @@ export function getDeviceProfile(options: ProfileOptions): DeviceProfile {
 
     return profile;
 }
-
-export default getDeviceProfile;
