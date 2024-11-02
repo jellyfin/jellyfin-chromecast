@@ -333,7 +333,7 @@ function getTranscodingProfiles(): TranscodingProfile[] {
         TranscodingProfiles.push({
             AudioCodec: hlsAudioCodecs.join(','),
             BreakOnNonKeyFrames: false,
-            Container: 'ts',
+            Container: 'mp4',
             Context: EncodingContext.Streaming,
             MaxAudioChannels: audioChannels.toString(),
             MinSegments: 1,
