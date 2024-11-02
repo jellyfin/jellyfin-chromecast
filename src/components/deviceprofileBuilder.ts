@@ -206,7 +206,7 @@ function getCodecProfiles(): CodecProfile[] {
             createProfileCondition(
                 ProfileConditionValue.Width,
                 ProfileConditionType.LessThanEqual,
-                getMaxWidthSupport(currentDeviceId, 'h264').toString(),
+                getMaxWidthSupport(currentDeviceId).toString(),
                 true
             )
         ],
