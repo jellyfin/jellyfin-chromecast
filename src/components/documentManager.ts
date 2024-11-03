@@ -7,7 +7,7 @@ import { DeviceIds, getActiveDeviceId } from './castDevices';
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export abstract class DocumentManager {
     // Duration between each backdrop switch in ms
-    private static backdropPeriodMs: number | null = 30000;
+    private static backdropPeriodMs = 30000;
     // Timer state - so that we don't start the interval more than necessary
     private static backdropTimer: number | null = null;
 
@@ -404,41 +404,12 @@ export abstract class DocumentManager {
         // avoid running it multiple times
         this.clearBackdropInterval();
 
-        // skip out if it's disabled
-        if (!this.backdropPeriodMs) {
-            this.setWaitingBackdrop(null, null);
-
-            return;
-        }
-
         this.backdropTimer = window.setInterval(
             () => DocumentManager.setRandomUserBackdrop(),
             this.backdropPeriodMs
         );
 
         await this.setRandomUserBackdrop();
-    }
-
-    /**
-     * Set interval between backdrop changes, null to disable
-     * @param period - in milliseconds or null
-     */
-    public static setBackdropPeriodMs(period: number | null): void {
-        if (period !== this.backdropPeriodMs) {
-            this.backdropPeriodMs = period;
-
-            // If the timer was running, restart it
-            if (this.backdropTimer !== null) {
-                // startBackdropInterval will also clear the previous one
-                this.startBackdropInterval();
-            }
-
-            if (period === null) {
-                // No backdrop is wanted, and the timer has been cleared.
-                // This call will remove any present backdrop.
-                this.setWaitingBackdrop(null, null);
-            }
-        }
     }
 
     /**
