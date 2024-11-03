@@ -26,7 +26,7 @@ import {
     checkDirectPlay,
     createMediaInformation
 } from './maincontroller';
-import { ItemIndex } from '~/types/global';
+import { ItemIndex, PlayRequest } from '~/types/global';
 
 export interface PlaybackState {
     startPositionTicks: number;
@@ -104,8 +104,7 @@ export abstract class PlaybackManager {
         );
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    static async playFromOptions(options: any): Promise<void> {
+    static async playFromOptions(options: PlayRequest): Promise<void> {
         const firstItem = options.items[0];
 
         if (options.startPositionTicks || firstItem.MediaType !== 'Video') {

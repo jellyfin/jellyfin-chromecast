@@ -593,13 +593,12 @@ export async function translateItems(
 export async function instantMix(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     data: any,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    options: any,
+    options: PlayRequest,
     item: BaseItemDto
 ): Promise<void> {
     const result = await getInstantMixItems(data.userId, item);
 
-    options.items = result.Items;
+    options.items = result.Items ?? [];
     PlaybackManager.playFromOptions(data.options);
 }
 
@@ -613,13 +612,12 @@ export async function instantMix(
 export async function shuffle(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     data: any,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    options: any,
+    options: PlayRequest,
     item: BaseItemDto
 ): Promise<void> {
     const result = await getShuffleItems(data.userId, item);
 
-    options.items = result.Items;
+    options.items = result.Items ?? [];
     PlaybackManager.playFromOptions(data.options);
 }
 
