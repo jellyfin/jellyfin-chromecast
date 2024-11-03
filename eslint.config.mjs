@@ -59,6 +59,7 @@ export default [
         rules: {
             '@typescript-eslint/explicit-function-return-type': 'error',
             '@typescript-eslint/no-explicit-any': 'warn',
+            '@typescript-eslint/no-unnecessary-type-assertion': 'error',
             '@typescript-eslint/no-unused-expressions': 'warn',
             '@typescript-eslint/no-unused-vars': 'error',
             '@typescript-eslint/prefer-ts-expect-error': 'error',

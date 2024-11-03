@@ -581,9 +581,9 @@ export abstract class DocumentManager {
         const element = this.querySelector('.detailImageProgressContainer');
 
         if (value) {
-            (element as HTMLElement).classList.remove('d-none');
+            element.classList.remove('d-none');
         } else {
-            (element as HTMLElement).classList.add('d-none');
+            element.classList.add('d-none');
         }
     }
 
