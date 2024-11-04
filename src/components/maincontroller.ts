@@ -194,14 +194,19 @@ window.playerManager.addEventListener(
     (mediaFinishedEvent): void => {
         const playbackState = PlaybackManager.playbackState;
 
-        reportPlaybackStopped(playbackState, {
-            ...getReportingParams(playbackState),
-            PositionTicks:
-                (mediaFinishedEvent.currentMediaTime ??
-                    getCurrentPositionTicks(playbackState)) * TicksPerSecond
-        });
+        // Don't notify server or client if changing streams, but notify next time.
+        if (!playbackState.isChangingStream) {
+            reportPlaybackStopped(playbackState, {
+                ...getReportingParams(playbackState),
+                PositionTicks:
+                    (mediaFinishedEvent.currentMediaTime ??
+                        getCurrentPositionTicks(playbackState)) * TicksPerSecond
+            });
 
-        defaultOnStop();
+            defaultOnStop();
+        } else {
+            playbackState.isChangingStream = false;
+        }
     }
 );
 
@@ -510,6 +515,8 @@ export async function changeStream(
     //    window.playerManager.pause();
     //    await stopActiveEncodings($scope.playSessionId);
     //}
+
+    state.isChangingStream = true;
 
     // @ts-expect-error is possible here
     return await PlaybackManager.playItemInternal(state.item, {
