@@ -83,7 +83,7 @@ export abstract class CommandHandler {
     }
 
     static displayContentHandler(data: DataMessage): void {
-        if (!PlaybackManager.isPlaying()) {
+        if (PlaybackManager.isIdle()) {
             DocumentManager.showItemId((data.options as DisplayRequest).ItemId);
         }
     }

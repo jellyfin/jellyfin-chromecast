@@ -104,6 +104,13 @@ export abstract class PlaybackManager {
         );
     }
 
+    static isIdle(): boolean {
+        return (
+            this.playerManager.getPlayerState() ===
+            cast.framework.messages.PlayerState.IDLE
+        );
+    }
+
     static async playFromOptions(options: PlayRequest): Promise<void> {
         const firstItem = options.items[0];
 
