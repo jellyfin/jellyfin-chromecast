@@ -12,7 +12,8 @@ import {
     getInstantMixItems,
     translateRequestedItems,
     broadcastToMessageBus,
-    ticksToSeconds
+    ticksToSeconds,
+    TicksPerSecond
 } from '../helpers';
 import {
     reportPlaybackStart,
@@ -153,11 +154,7 @@ export function disableTimeUpdateListener(): void {
 enableTimeUpdateListener();
 
 window.addEventListener('beforeunload', () => {
-    // Try to cleanup after ourselves before the page closes
-    const playbackState = PlaybackManager.playbackState;
-
     disableTimeUpdateListener();
-    reportPlaybackStopped(playbackState, getReportingParams(playbackState));
 });
 
 window.playerManager.addEventListener(
@@ -194,8 +191,25 @@ function defaultOnStop(): void {
 
 window.playerManager.addEventListener(
     cast.framework.events.EventType.MEDIA_FINISHED,
-    defaultOnStop
+    (mediaFinishedEvent): void => {
+        const playbackState = PlaybackManager.playbackState;
+
+        // Don't notify server or client if changing streams, but notify next time.
+        if (!playbackState.isChangingStream) {
+            reportPlaybackStopped(playbackState, {
+                ...getReportingParams(playbackState),
+                PositionTicks:
+                    (mediaFinishedEvent.currentMediaTime ??
+                        getCurrentPositionTicks(playbackState)) * TicksPerSecond
+            });
+
+            defaultOnStop();
+        } else {
+            playbackState.isChangingStream = false;
+        }
+    }
 );
+
 window.playerManager.addEventListener(
     cast.framework.events.EventType.ABORT,
     defaultOnStop
@@ -211,7 +225,6 @@ window.playerManager.addEventListener(
             return;
         }
 
-        reportPlaybackStopped(playbackState, getReportingParams(playbackState));
         PlaybackManager.resetPlaybackScope();
 
         if (!PlaybackManager.playNextItem()) {
@@ -226,16 +239,6 @@ window.playerManager.addEventListener(
     cast.framework.events.EventType.PLAYING,
     (): void => {
         reportPlaybackStart(
-            PlaybackManager.playbackState,
-            getReportingParams(PlaybackManager.playbackState)
-        );
-    }
-);
-// Notify of playback end just before stopping it, to get a good tick position
-window.playerManager.addEventListener(
-    cast.framework.events.EventType.REQUEST_STOP,
-    (): void => {
-        reportPlaybackStopped(
             PlaybackManager.playbackState,
             getReportingParams(PlaybackManager.playbackState)
         );
@@ -512,6 +515,8 @@ export async function changeStream(
     //    window.playerManager.pause();
     //    await stopActiveEncodings($scope.playSessionId);
     //}
+
+    state.isChangingStream = true;
 
     // @ts-expect-error is possible here
     return await PlaybackManager.playItemInternal(state.item, {

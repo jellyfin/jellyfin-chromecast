@@ -201,7 +201,6 @@ export abstract class PlaybackManager {
         item: BaseItemDto,
         options: any // eslint-disable-line @typescript-eslint/no-explicit-any
     ): Promise<void> {
-        this.playbackState.isChangingStream = false;
         DocumentManager.setAppStatus(AppStatus.Loading);
 
         const maxBitrate = await getMaxBitrate();
@@ -293,7 +292,10 @@ export abstract class PlaybackManager {
             loadRequestData.currentTime = ticksToSeconds(startPositionTicks);
         }
 
+        const isChangingStream = this.playbackState.isChangingStream;
+
         load(mediaInfo.customData, item);
+        this.playbackState.isChangingStream = isChangingStream;
         this.playerManager.load(loadRequestData);
 
         this.playbackState.PlaybackMediaSource = mediaSource;
