@@ -126,7 +126,7 @@ export async function ajax(request: any): Promise<Response | string> {
             return response.json();
         } else if (
             request.dataType === 'text' ||
-            (response.headers.get('Content-Type') || '')
+            (response.headers.get('Content-Type') ?? '')
                 .toLowerCase()
                 .startsWith('text/')
         ) {
