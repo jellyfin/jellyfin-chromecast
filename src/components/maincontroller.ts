@@ -757,13 +757,7 @@ export function setTextTrack(index: number | null): void {
             return;
         }
 
-        const tracks: framework.messages.Track[] =
-            textTracksManager.getTracks();
-        const subtitleTrack: framework.messages.Track | undefined = tracks.find(
-            (track: framework.messages.Track) => {
-                return track.trackId === index;
-            }
-        );
+        const subtitleTrack = textTracksManager.getTrackById(index);
 
         if (subtitleTrack?.trackId !== undefined) {
             textTracksManager.setActiveByIds([subtitleTrack.trackId]);
