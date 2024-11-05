@@ -3,9 +3,11 @@ import type {
     DeviceProfile,
     LiveStreamResponse,
     MediaSourceInfo,
+    PlaybackInfoDto,
     PlaybackProgressInfo,
     PlayRequest
 } from '@jellyfin/sdk/lib/generated-client';
+import { getMediaInfoApi, getPlaystateApi } from '@jellyfin/sdk/lib/utils/api';
 import { getSenderReportingData, broadcastToMessageBus } from '../helpers';
 import { AppStatus } from '../types/appStatus';
 import { JellyfinApi } from './jellyfinApi';
@@ -58,7 +60,7 @@ export function stopPingInterval(): void {
  * @param reportingParams - parameters to send to the server
  * @returns promise to wait for the request
  */
-export function reportPlaybackStart(
+export async function reportPlaybackStart(
     state: PlaybackState,
     reportingParams: PlaybackProgressInfo
 ): Promise<void> {
@@ -76,10 +78,8 @@ export function reportPlaybackStart(
 
     restartPingInterval(reportingParams);
 
-    return JellyfinApi.authAjax('Sessions/Playing', {
-        contentType: 'application/json',
-        data: JSON.stringify(reportingParams),
-        type: 'POST'
+    await getPlaystateApi(JellyfinApi.jellyfinApi).reportPlaybackStart({
+        playbackStartInfo: reportingParams
     });
 }
 
@@ -91,7 +91,7 @@ export function reportPlaybackStart(
  * @param broadcastEventName - name of event to send to the cast sender
  * @returns Promise for the http request
  */
-export function reportPlaybackProgress(
+export async function reportPlaybackProgress(
     state: PlaybackState,
     reportingParams: PlaybackProgressInfo,
     reportToServer = true,
@@ -109,10 +109,8 @@ export function reportPlaybackProgress(
     restartPingInterval(reportingParams);
     lastTranscoderPing = new Date().getTime();
 
-    return JellyfinApi.authAjax('Sessions/Playing/Progress', {
-        contentType: 'application/json',
-        data: JSON.stringify(reportingParams),
-        type: 'POST'
+    await getPlaystateApi(JellyfinApi.jellyfinApi).reportPlaybackProgress({
+        playbackProgressInfo: reportingParams
     });
 }
 
@@ -246,7 +244,7 @@ export function play(state: PlaybackState): void {
  * @param liveStreamId - liveStreamId
  * @returns promise
  */
-export function getPlaybackInfo(
+export async function getPlaybackInfo(
     item: BaseItemDto,
     maxBitrate: number,
     deviceProfile: DeviceProfile,
@@ -257,15 +255,17 @@ export function getPlaybackInfo(
     liveStreamId: string | null = null
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<any> {
-    const postData = {
-        DeviceProfile: deviceProfile
-    };
+    if (!item.Id) {
+        console.error('getPlaybackInfo: Item ID not provided');
 
-    // TODO: PlayRequestQuery might not be the proper type for this
-    const query: PlayRequestQuery = {
+        return Promise.reject('Item ID not available.');
+    }
+
+    const query: PlaybackInfoDto = {
+        DeviceProfile: deviceProfile,
         MaxStreamingBitrate: maxBitrate,
         StartTimeTicks: startPosition || 0,
-        UserId: JellyfinApi.userId ?? undefined
+        UserId: JellyfinApi.userId
     };
 
     if (audioStreamIndex != null) {
@@ -284,13 +284,14 @@ export function getPlaybackInfo(
         query.LiveStreamId = liveStreamId;
     }
 
-    return JellyfinApi.authAjax(`Items/${item.Id}/PlaybackInfo`, {
-        contentType: 'application/json',
-        data: JSON.stringify(postData),
-        dataType: 'json',
-        query: query,
-        type: 'POST'
+    const response = await getMediaInfoApi(
+        JellyfinApi.jellyfinApi
+    ).getPostedPlaybackInfo({
+        itemId: item.Id,
+        playbackInfoDto: query
     });
+
+    return response.data;
 }
 
 /**
