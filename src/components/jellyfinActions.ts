@@ -4,8 +4,7 @@ import type {
     LiveStreamResponse,
     MediaSourceInfo,
     PlaybackInfoDto,
-    PlaybackProgressInfo,
-    PlayRequest
+    PlaybackProgressInfo
 } from '@jellyfin/sdk/lib/generated-client';
 import {
     getHlsSegmentApi,
@@ -17,15 +16,6 @@ import { AppStatus } from '../types/appStatus';
 import { JellyfinApi } from './jellyfinApi';
 import { DocumentManager } from './documentManager';
 import { PlaybackManager, PlaybackState } from './playbackManager';
-
-interface PlayRequestQuery extends PlayRequest {
-    UserId?: string;
-    StartTimeTicks?: number;
-    MaxStreamingBitrate?: number;
-    LiveStreamId?: string;
-    ItemId?: string;
-    PlaySessionId?: string;
-}
 
 let pingInterval: number;
 let lastTranscoderPing = 0;
