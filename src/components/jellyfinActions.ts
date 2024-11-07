@@ -4,8 +4,7 @@ import type {
     LiveStreamResponse,
     MediaSourceInfo,
     PlaybackInfoDto,
-    PlaybackProgressInfo,
-    PlayRequest
+    PlaybackProgressInfo
 } from '@jellyfin/sdk/lib/generated-client';
 import {
     getHlsSegmentApi,
@@ -17,15 +16,6 @@ import { AppStatus } from '../types/appStatus';
 import { JellyfinApi } from './jellyfinApi';
 import { DocumentManager } from './documentManager';
 import { PlaybackManager, PlaybackState } from './playbackManager';
-
-interface PlayRequestQuery extends PlayRequest {
-    UserId?: string;
-    StartTimeTicks?: number;
-    MaxStreamingBitrate?: number;
-    LiveStreamId?: string;
-    ItemId?: string;
-    PlaySessionId?: string;
-}
 
 let pingInterval: number;
 let lastTranscoderPing = 0;
@@ -301,7 +291,7 @@ export async function getPlaybackInfo(
  * @param subtitleStreamIndex - subtitleStreamIndex
  * @returns promise
  */
-export function getLiveStream(
+export async function getLiveStream(
     item: BaseItemDto,
     playSessionId: string,
     maxBitrate: number,
@@ -311,34 +301,23 @@ export function getLiveStream(
     audioStreamIndex: number | null,
     subtitleStreamIndex: number | null
 ): Promise<LiveStreamResponse> {
-    const postData = {
-        DeviceProfile: deviceProfile,
-        OpenToken: mediaSource.OpenToken
-    };
-
-    const query: PlayRequestQuery = {
-        ItemId: item.Id,
-        MaxStreamingBitrate: maxBitrate,
-        PlaySessionId: playSessionId,
-        StartTimeTicks: startPosition || 0,
-        UserId: JellyfinApi.userId ?? undefined
-    };
-
-    if (audioStreamIndex != null) {
-        query.AudioStreamIndex = audioStreamIndex;
-    }
-
-    if (subtitleStreamIndex != null) {
-        query.SubtitleStreamIndex = subtitleStreamIndex;
-    }
-
-    return JellyfinApi.authAjax('LiveStreams/Open', {
-        contentType: 'application/json',
-        data: JSON.stringify(postData),
-        dataType: 'json',
-        query: query,
-        type: 'POST'
+    const liveStreamResponse = await getMediaInfoApi(
+        JellyfinApi.jellyfinApi
+    ).openLiveStream({
+        openLiveStreamDto: {
+            AudioStreamIndex: audioStreamIndex,
+            DeviceProfile: deviceProfile,
+            ItemId: item.Id,
+            MaxStreamingBitrate: maxBitrate,
+            OpenToken: mediaSource.OpenToken,
+            PlaySessionId: playSessionId,
+            StartTimeTicks: startPosition || 0,
+            SubtitleStreamIndex: subtitleStreamIndex,
+            UserId: JellyfinApi.userId
+        }
     });
+
+    return liveStreamResponse.data;
 }
 
 /**
