@@ -116,7 +116,7 @@ export async function reportPlaybackProgress(
  * @param reportingParams - parameters to send to the server
  * @returns promise for waiting for the request
  */
-export function reportPlaybackStopped(
+export async function reportPlaybackStopped(
     state: PlaybackState,
     reportingParams: PlaybackProgressInfo
 ): Promise<void> {
@@ -127,10 +127,8 @@ export function reportPlaybackStopped(
         type: 'playbackstop'
     });
 
-    return JellyfinApi.authAjax('Sessions/Playing/Stopped', {
-        contentType: 'application/json',
-        data: JSON.stringify(reportingParams),
-        type: 'POST'
+    await getPlaystateApi(JellyfinApi.jellyfinApi).reportPlaybackStopped({
+        playbackStopInfo: reportingParams
     });
 }
 
