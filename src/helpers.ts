@@ -8,6 +8,7 @@ import type {
     TvShowsApiGetEpisodesRequest,
     UserDto
 } from '@jellyfin/sdk/lib/generated-client';
+import { getTvShowsApi } from '@jellyfin/sdk/lib/utils/api';
 import { JellyfinApi } from './components/jellyfinApi';
 import { PlaybackManager, PlaybackState } from './components/playbackManager';
 import { BusMessage, ItemQuery } from './types/global';
@@ -580,19 +581,17 @@ export async function getItemsForPlayback(
 
 /**
  * Get episodes for a show given by seriesId
- * @param seriesId - series to look up
  * @param query - query parameters to build on
  * @returns episode items
  */
-export function getEpisodesForPlayback(
-    seriesId: string,
+export async function getEpisodesForPlayback(
     query: TvShowsApiGetEpisodesRequest
 ): Promise<BaseItemDtoQueryResult> {
-    return JellyfinApi.authAjax(`Shows/${seriesId}/Episodes`, {
-        dataType: 'json',
-        query: { ...query, fields: requiredItemFields },
-        type: 'GET'
-    });
+    const response = await getTvShowsApi(JellyfinApi.jellyfinApi).getEpisodes(
+        query
+    );
+
+    return response.data;
 }
 
 /**
@@ -688,7 +687,7 @@ export async function translateRequestedItems(
             return result;
         }
 
-        const episodesResult = await getEpisodesForPlayback(episode.SeriesId, {
+        const episodesResult = await getEpisodesForPlayback({
             isMissing: false,
             seriesId: episode.SeriesId,
             userId: userId
