@@ -7,7 +7,11 @@ import type {
     PlaybackProgressInfo,
     PlayRequest
 } from '@jellyfin/sdk/lib/generated-client';
-import { getMediaInfoApi, getPlaystateApi } from '@jellyfin/sdk/lib/utils/api';
+import {
+    getHlsSegmentApi,
+    getMediaInfoApi,
+    getPlaystateApi
+} from '@jellyfin/sdk/lib/utils/api';
 import { getSenderReportingData, broadcastToMessageBus } from '../helpers';
 import { AppStatus } from '../types/appStatus';
 import { JellyfinApi } from './jellyfinApi';
@@ -391,21 +395,14 @@ export async function detectBitrate(numBytes = 500000): Promise<number> {
 
 /**
  * Tell Jellyfin to kill off our active transcoding session
- * @param state - playback state.
+ * @param playSessionId - the play session ID to stop encoding
  * @returns Promise for the http request to go through
  */
-export function stopActiveEncodings(state: PlaybackState): Promise<void> {
-    const options = {
+export async function stopActiveEncodings(
+    playSessionId: string
+): Promise<void> {
+    await getHlsSegmentApi(JellyfinApi.jellyfinApi).stopEncodingProcess({
         deviceId: JellyfinApi.deviceId,
-        PlaySessionId: ''
-    };
-
-    if (state.playSessionId) {
-        options.PlaySessionId = state.playSessionId;
-    }
-
-    return JellyfinApi.authAjax('Videos/ActiveEncodings', {
-        query: options,
-        type: 'DELETE'
+        playSessionId: playSessionId
     });
 }
