@@ -191,12 +191,12 @@ function defaultOnStop(): void {
 
 window.playerManager.addEventListener(
     cast.framework.events.EventType.MEDIA_FINISHED,
-    (mediaFinishedEvent): void => {
+    async (mediaFinishedEvent): Promise<void> => {
         const playbackState = PlaybackManager.playbackState;
 
         // Don't notify server or client if changing streams, but notify next time.
         if (!playbackState.isChangingStream) {
-            reportPlaybackStopped(playbackState, {
+            await reportPlaybackStopped(playbackState, {
                 ...getReportingParams(playbackState),
                 PositionTicks:
                     (mediaFinishedEvent.currentMediaTime ??
