@@ -327,17 +327,21 @@ export async function getLiveStream(
  * @returns the bitrate in bits/s
  */
 export async function getDownloadSpeed(byteSize: number): Promise<number> {
-    const path = `Playback/BitrateTest?size=${byteSize}`;
-
     const now = new Date().getTime();
 
-    const response = await JellyfinApi.authAjax(path, {
-        timeout: 5000,
-        type: 'GET'
-    });
+    const response = await getMediaInfoApi(
+        JellyfinApi.jellyfinApi
+    ).getBitrateTestBytes(
+        {
+            size: byteSize
+        },
+        {
+            timeout: 5000
+        }
+    );
 
     // Force javascript to download the whole response before calculating bitrate
-    await response.blob();
+    await response.data;
 
     const responseTimeSeconds = (new Date().getTime() - now) / 1000;
     const bytesPerSecond = byteSize / responseTimeSeconds;
