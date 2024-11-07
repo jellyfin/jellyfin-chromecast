@@ -3,6 +3,7 @@ import type {
     MediaStream,
     MediaSourceInfo
 } from '@jellyfin/sdk/lib/generated-client';
+import { getSessionApi } from '@jellyfin/sdk/lib/utils/api';
 import {
     getCurrentPositionTicks,
     getReportingParams,
@@ -268,19 +269,15 @@ export async function reportDeviceCapabilities(): Promise<void> {
         enableHls: true
     });
 
-    const capabilities = {
-        DeviceProfile: deviceProfile,
-        PlayableMediaTypes: ['Audio', 'Video'],
-        SupportsMediaControl: true,
-        SupportsPersistentIdentifier: false
-    };
-
     hasReportedCapabilities = true;
 
-    return JellyfinApi.authAjax('Sessions/Capabilities/Full', {
-        contentType: 'application/json',
-        data: JSON.stringify(capabilities),
-        type: 'POST'
+    await getSessionApi(JellyfinApi.jellyfinApi).postFullCapabilities({
+        clientCapabilitiesDto: {
+            DeviceProfile: deviceProfile,
+            PlayableMediaTypes: ['Audio', 'Video'],
+            SupportsMediaControl: true,
+            SupportsPersistentIdentifier: false
+        }
     });
 }
 
