@@ -1,4 +1,5 @@
 import type { BaseItemDto } from '@jellyfin/sdk/lib/generated-client';
+import { getUserLibraryApi } from '@jellyfin/sdk/lib/utils/api';
 import { AppStatus } from '../types/appStatus';
 import { parseISO8601Date, TicksPerSecond, ticksToSeconds } from '../helpers';
 import { JellyfinApi } from './jellyfinApi';
@@ -223,15 +224,14 @@ export abstract class DocumentManager {
             return;
         }
 
-        const item: BaseItemDto = await JellyfinApi.authAjaxUser(
-            `Items/${itemId}`,
-            {
-                dataType: 'json',
-                type: 'GET'
-            }
-        );
+        const response = await getUserLibraryApi(
+            JellyfinApi.jellyfinApi
+        ).getItem({
+            itemId,
+            userId: JellyfinApi.userId
+        });
 
-        DocumentManager.showItem(item);
+        DocumentManager.showItem(response.data);
     }
 
     /**
