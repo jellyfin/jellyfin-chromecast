@@ -3,7 +3,7 @@ import type {
     MediaStream,
     MediaSourceInfo
 } from '@jellyfin/sdk/lib/generated-client';
-import { getSessionApi } from '@jellyfin/sdk/lib/utils/api';
+import { getSessionApi, getUserLibraryApi } from '@jellyfin/sdk/lib/utils/api';
 import {
     getCurrentPositionTicks,
     getReportingParams,
@@ -631,12 +631,15 @@ export async function onStopPlayerBeforePlaybackDone(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     options: any
 ): Promise<void> {
-    const data = await JellyfinApi.authAjaxUser(`Items/${item.Id}`, {
-        dataType: 'json',
-        type: 'GET'
-    });
+    if (item.Id) {
+        const response = await getUserLibraryApi(
+            JellyfinApi.jellyfinApi
+        ).getItem({
+            itemId: item.Id
+        });
 
-    PlaybackManager.playItemInternal(data, options);
+        PlaybackManager.playItemInternal(response.data, options);
+    }
 }
 
 let lastBitrateDetect = 0;
