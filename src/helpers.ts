@@ -10,12 +10,14 @@ import type {
     InstantMixApiGetInstantMixFromAlbumRequest,
     InstantMixApiGetInstantMixFromPlaylistRequest,
     InstantMixApiGetInstantMixFromArtistsRequest,
-    InstantMixApiGetInstantMixFromSongRequest
+    InstantMixApiGetInstantMixFromSongRequest,
+    ItemFields,
+    ItemsApiGetItemsRequest
 } from '@jellyfin/sdk/lib/generated-client';
 import { getInstantMixApi, getTvShowsApi } from '@jellyfin/sdk/lib/utils/api';
 import { JellyfinApi } from './components/jellyfinApi';
 import { PlaybackManager, PlaybackState } from './components/playbackManager';
-import { BusMessage, ItemQuery } from './types/global';
+import { BusMessage } from './types/global';
 
 type InstantMixApiRequest =
     | InstantMixApiGetInstantMixFromAlbumRequest
@@ -464,7 +466,7 @@ export function getStreamByIndex(
 }
 
 // defined for use in the 3 next functions
-const requiredItemFields = 'MediaSources,Chapters';
+const requiredItemFields: ItemFields[] = ['MediaSources', 'Chapters'];
 
 /**
  * Get a random selection of items given one item,
@@ -483,32 +485,42 @@ export function getShuffleItems(
     userId: string,
     item: BaseItemDto
 ): Promise<BaseItemDtoQueryResult> {
-    const query: ItemQuery = {
-        Fields: requiredItemFields,
-        Filters: 'IsNotFolder',
-        Limit: 50,
-        Recursive: true,
-        SortBy: 'Random',
-        UserId: userId
+    const query: ItemsApiGetItemsRequest = {
+        fields: requiredItemFields,
+        filters: ['IsNotFolder'],
+        limit: 50,
+        recursive: true,
+        sortBy: ['Random'],
+        userId
     };
 
+    let additionalParams: ItemsApiGetItemsRequest;
+
     if (item.Type == 'MusicArtist') {
-        query.MediaTypes = 'Audio';
-        query.ArtistIds = item.Id;
+        additionalParams = {
+            artistIds: item.Id ? [item.Id] : undefined,
+            mediaTypes: ['Audio']
+        };
     } else if (item.Type == 'MusicGenre') {
-        query.MediaTypes = 'Audio';
-        query.Genres = item.Name ?? undefined;
+        additionalParams = {
+            genres: item.Name ? [item.Name] : undefined,
+            mediaTypes: ['Audio']
+        };
     } else {
-        query.ParentId = item.Id;
+        additionalParams = {
+            parentId: item.Id
+        };
     }
 
-    return getItemsForPlayback(userId, query);
+    return getItemsForPlayback(userId, {
+        ...query,
+        ...additionalParams
+    });
 }
 
 /**
  * Get an "Instant Mix" given an item, which can be a
  * music artist, genre, album, playlist
- *
  * @param item - Parent item of the search
  * @returns items for the queue
  */
@@ -555,21 +567,20 @@ export async function getInstantMixItems(
  */
 export async function getItemsForPlayback(
     userId: string,
-    query: ItemQuery
+    query: ItemsApiGetItemsRequest
 ): Promise<BaseItemDtoQueryResult> {
-    query.UserId = userId;
-    query.Limit = query.Limit ?? 100;
-    query.Fields = requiredItemFields;
-    query.ExcludeLocationTypes = 'Virtual';
+    const params: ItemsApiGetItemsRequest = {
+        excludeLocationTypes: ['Virtual'],
+        fields: requiredItemFields,
+        limit: query.limit ?? 100,
+        userId
+    };
 
-    if (query.Ids && query.Ids.split(',').length == 1) {
-        const item = await JellyfinApi.authAjaxUser(
-            `Items/${query.Ids.split(',')[0]}`,
-            {
-                dataType: 'json',
-                type: 'GET'
-            }
-        );
+    if (query.ids?.length == 1) {
+        const item = await JellyfinApi.authAjaxUser(`Items/${query.ids[0]}`, {
+            dataType: 'json',
+            type: 'GET'
+        });
 
         return {
             Items: [item],
@@ -578,7 +589,7 @@ export async function getItemsForPlayback(
     } else {
         return JellyfinApi.authAjaxUser('Items', {
             dataType: 'json',
-            query: query,
+            query: { ...query, ...params },
             type: 'GET'
         });
     }
@@ -628,31 +639,31 @@ export async function translateRequestedItems(
 
     if (firstItem.Type == 'Playlist') {
         return await getItemsForPlayback(userId, {
-            ParentId: firstItem.Id
+            parentId: firstItem.Id
         });
     } else if (firstItem.Type == 'MusicArtist') {
         return await getItemsForPlayback(userId, {
-            ArtistIds: firstItem.Id,
-            Filters: 'IsNotFolder',
-            MediaTypes: 'Audio',
-            Recursive: true,
-            SortBy: 'SortName'
+            artistIds: firstItem.Id ? [firstItem.Id] : undefined,
+            filters: ['IsNotFolder'],
+            mediaTypes: ['Audio'],
+            recursive: true,
+            sortBy: ['SortName']
         });
     } else if (firstItem.Type == 'MusicGenre') {
         return await getItemsForPlayback(userId, {
-            Filters: 'IsNotFolder',
-            Genres: firstItem.Name ?? undefined,
-            MediaTypes: 'Audio',
-            Recursive: true,
-            SortBy: 'SortName'
+            filters: ['IsNotFolder'],
+            genres: firstItem.Name ? [firstItem.Name] : undefined,
+            mediaTypes: ['Audio'],
+            recursive: true,
+            sortBy: ['SortName']
         });
     } else if (firstItem.IsFolder) {
         return await getItemsForPlayback(userId, {
-            Filters: 'IsNotFolder',
-            MediaTypes: 'Audio,Video',
-            ParentId: firstItem.Id,
-            Recursive: true,
-            SortBy: 'SortName'
+            filters: ['IsNotFolder'],
+            mediaTypes: ['Audio', 'Video'],
+            parentId: firstItem.Id,
+            recursive: true,
+            sortBy: ['SortName']
         });
     } else if (smart && firstItem.Type == 'Episode' && items.length == 1) {
         const user = await getUser();
@@ -664,7 +675,7 @@ export async function translateRequestedItems(
         }
 
         const result = await getItemsForPlayback(userId, {
-            Ids: firstItem.Id
+            ids: firstItem.Id ? [firstItem.Id] : undefined
         });
 
         if (!result.Items || result.Items.length < 1) {
