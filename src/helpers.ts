@@ -595,21 +595,6 @@ export async function getEpisodesForPlayback(
 }
 
 /**
- * Get intros for a given item. This item should be a video
- * type for this to make sense
- * @param firstItem - item to get intros for
- * @returns intro items
- */
-export function getIntros(
-    firstItem: BaseItemDto
-): Promise<BaseItemDtoQueryResult> {
-    return JellyfinApi.authAjaxUser(`Items/${firstItem.Id}/Intros`, {
-        dataType: 'json',
-        type: 'GET'
-    });
-}
-
-/**
  * Get user object for the current user
  * @returns user object
  */
