@@ -572,27 +572,15 @@ export async function getItemsForPlayback(
     userId: string,
     query: ItemsApiGetItemsRequest
 ): Promise<BaseItemDtoQueryResult> {
-    const params: ItemsApiGetItemsRequest = {
+    const response = await getItemsApi(JellyfinApi.jellyfinApi).getItems({
+        ...query,
         excludeLocationTypes: ['Virtual'],
         fields: requiredItemFields,
         limit: query.limit ?? 100,
         userId
-    };
+    });
 
-    if (query.ids?.length == 1) {
-        const response = await getItemsApi(JellyfinApi.jellyfinApi).getItems({
-            ...query,
-            ...params
-        });
-
-        return response.data;
-    } else {
-        const response = await getItemsApi(JellyfinApi.jellyfinApi).getItems(
-            query
-        );
-
-        return response.data;
-    }
+    return response.data;
 }
 
 /**
