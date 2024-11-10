@@ -17,7 +17,8 @@ import type {
 import {
     getInstantMixApi,
     getItemsApi,
-    getTvShowsApi
+    getTvShowsApi,
+    getUserApi
 } from '@jellyfin/sdk/lib/utils/api';
 import { JellyfinApi } from './components/jellyfinApi';
 import { PlaybackManager, PlaybackState } from './components/playbackManager';
@@ -593,11 +594,10 @@ export async function getEpisodesForPlayback(
  * Get user object for the current user
  * @returns user object
  */
-export function getUser(): Promise<UserDto> {
-    return JellyfinApi.authAjaxUser('', {
-        dataType: 'json',
-        type: 'GET'
-    });
+export async function getUser(): Promise<UserDto> {
+    const response = await getUserApi(JellyfinApi.jellyfinApi).getCurrentUser();
+
+    return response.data;
 }
 
 /**

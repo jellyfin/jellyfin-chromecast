@@ -1,4 +1,5 @@
 import type { BaseItemDto } from '@jellyfin/sdk/lib/generated-client';
+import { getItemsApi, getUserLibraryApi } from '@jellyfin/sdk/lib/utils/api';
 import { AppStatus } from '../types/appStatus';
 import { parseISO8601Date, TicksPerSecond, ticksToSeconds } from '../helpers';
 import { JellyfinApi } from './jellyfinApi';
@@ -223,15 +224,14 @@ export abstract class DocumentManager {
             return;
         }
 
-        const item: BaseItemDto = await JellyfinApi.authAjaxUser(
-            `Items/${itemId}`,
-            {
-                dataType: 'json',
-                type: 'GET'
-            }
-        );
+        const response = await getUserLibraryApi(
+            JellyfinApi.jellyfinApi
+        ).getItem({
+            itemId,
+            userId: JellyfinApi.userId
+        });
 
-        DocumentManager.showItem(item);
+        DocumentManager.showItem(response.data);
     }
 
     /**
@@ -353,20 +353,18 @@ export abstract class DocumentManager {
      * @returns promise waiting for the backdrop to be set
      */
     private static async setRandomUserBackdrop(): Promise<void> {
-        const result = await JellyfinApi.authAjaxUser('Items', {
-            dataType: 'json',
-            query: {
-                ImageTypes: 'Backdrop',
-                IncludeItemTypes: 'Movie,Series',
-                Limit: 1,
-                MaxOfficialRating: 'PG-13',
-                Recursive: true,
-                SortBy: 'Random'
-                // Although we're limiting to what the user has access to,
-                // not everyone will want to see adult backdrops rotating on their TV.
-            },
-            type: 'GET'
+        const response = await getItemsApi(JellyfinApi.jellyfinApi).getItems({
+            imageTypes: ['Backdrop'],
+            includeItemTypes: ['Movie', 'Series'],
+            limit: 1,
+            // Although we're limiting to what the user has access to,
+            // not everyone will want to see adult backdrops rotating on their TV.
+            maxOfficialRating: 'PG-13',
+            recursive: true,
+            sortBy: ['Random']
         });
+
+        const result = response.data;
 
         let src: string | null = null;
         let item: BaseItemDto | null = null;
