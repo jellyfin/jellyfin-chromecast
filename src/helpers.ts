@@ -6,12 +6,22 @@ import type {
     BaseItemDto,
     BaseItemPerson,
     TvShowsApiGetEpisodesRequest,
-    UserDto
+    UserDto,
+    InstantMixApiGetInstantMixFromAlbumRequest,
+    InstantMixApiGetInstantMixFromPlaylistRequest,
+    InstantMixApiGetInstantMixFromArtistsRequest,
+    InstantMixApiGetInstantMixFromSongRequest
 } from '@jellyfin/sdk/lib/generated-client';
-import { getTvShowsApi } from '@jellyfin/sdk/lib/utils/api';
+import { getInstantMixApi, getTvShowsApi } from '@jellyfin/sdk/lib/utils/api';
 import { JellyfinApi } from './components/jellyfinApi';
 import { PlaybackManager, PlaybackState } from './components/playbackManager';
 import { BusMessage, ItemQuery } from './types/global';
+
+type InstantMixApiRequest =
+    | InstantMixApiGetInstantMixFromAlbumRequest
+    | InstantMixApiGetInstantMixFromArtistsRequest
+    | InstantMixApiGetInstantMixFromSongRequest
+    | InstantMixApiGetInstantMixFromPlaylistRequest;
 
 export const TicksPerSecond = 10000000;
 
@@ -499,47 +509,42 @@ export function getShuffleItems(
  * Get an "Instant Mix" given an item, which can be a
  * music artist, genre, album, playlist
  *
- * TODO: JellyfinApi.userId should be fine for this.
- * @param userId - User ID to look up items with
  * @param item - Parent item of the search
  * @returns items for the queue
  */
 export async function getInstantMixItems(
-    userId: string,
     item: BaseItemDto
 ): Promise<BaseItemDtoQueryResult> {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const query: any = {
-        Fields: requiredItemFields,
-        Limit: 50,
-        UserId: userId
+    if (item.Id === undefined) {
+        throw new Error('Item ID not provided');
+    }
+
+    const query: InstantMixApiRequest = {
+        fields: ['MediaSources', 'Chapters'],
+        itemId: item.Id,
+        limit: 50
     };
 
-    let url: string | null = null;
+    const instantMixApi = getInstantMixApi(JellyfinApi.jellyfinApi);
 
     if (item.Type == 'MusicArtist') {
-        url = 'Artists/InstantMix';
-        query.Id = item.Id;
+        return (await instantMixApi.getInstantMixFromArtists(query)).data;
     } else if (item.Type == 'MusicGenre') {
-        url = 'MusicGenres/InstantMix';
-        query.Id = item.Id;
+        return (
+            await instantMixApi.getInstantMixFromMusicGenreById({
+                ...query,
+                id: item.Id
+            })
+        ).data;
     } else if (item.Type == 'MusicAlbum') {
-        url = `Albums/${item.Id}/InstantMix`;
+        return (await instantMixApi.getInstantMixFromAlbum(query)).data;
     } else if (item.Type == 'Audio') {
-        url = `Songs/${item.Id}/InstantMix`;
+        return (await instantMixApi.getInstantMixFromSong(query)).data;
     } else if (item.Type == 'Playlist') {
-        url = `Playlists/${item.Id}/InstantMix`;
+        return (await instantMixApi.getInstantMixFromPlaylist(query)).data;
     }
 
-    if (url) {
-        return JellyfinApi.authAjax(url, {
-            dataType: 'json',
-            query: query,
-            type: 'GET'
-        });
-    } else {
-        throw new Error(`InstantMix: Unknown item type: ${item.Type}`);
-    }
+    throw new Error(`InstantMix: Unknown item type: ${item.Type}`);
 }
 
 /**
