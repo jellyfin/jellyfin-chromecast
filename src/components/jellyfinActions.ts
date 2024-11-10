@@ -247,8 +247,7 @@ export async function getPlaybackInfo(
     const query: PlaybackInfoDto = {
         DeviceProfile: deviceProfile,
         MaxStreamingBitrate: maxBitrate,
-        StartTimeTicks: startPosition || 0,
-        UserId: JellyfinApi.userId
+        StartTimeTicks: startPosition || 0
     };
 
     if (audioStreamIndex != null) {
@@ -310,8 +309,7 @@ export async function getLiveStream(
             OpenToken: mediaSource.OpenToken,
             PlaySessionId: playSessionId,
             StartTimeTicks: startPosition || 0,
-            SubtitleStreamIndex: subtitleStreamIndex,
-            UserId: JellyfinApi.userId
+            SubtitleStreamIndex: subtitleStreamIndex
         }
     });
 
