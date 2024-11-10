@@ -485,7 +485,7 @@ const requiredItemFields: ItemFields[] = ['MediaSources', 'Chapters'];
 export function getShuffleItems(
     item: BaseItemDto
 ): Promise<BaseItemDtoQueryResult> {
-    const query: ItemsApiGetItemsRequest = {
+    let query: ItemsApiGetItemsRequest = {
         fields: requiredItemFields,
         filters: ['IsNotFolder'],
         limit: 50,
@@ -493,28 +493,26 @@ export function getShuffleItems(
         sortBy: ['Random']
     };
 
-    let additionalParams: ItemsApiGetItemsRequest;
-
     if (item.Type == 'MusicArtist') {
-        additionalParams = {
+        query = {
+            ...query,
             artistIds: item.Id ? [item.Id] : undefined,
             mediaTypes: ['Audio']
         };
     } else if (item.Type == 'MusicGenre') {
-        additionalParams = {
+        query = {
+            ...query,
             genres: item.Name ? [item.Name] : undefined,
             mediaTypes: ['Audio']
         };
     } else {
-        additionalParams = {
+        query = {
+            ...query,
             parentId: item.Id
         };
     }
 
-    return getItemsForPlayback({
-        ...query,
-        ...additionalParams
-    });
+    return getItemsForPlayback(query);
 }
 
 /**
