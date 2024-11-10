@@ -25,9 +25,6 @@ axios.interceptors.response.use(
 
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export abstract class JellyfinApi {
-    // userId that we are connecting as currently
-    public static userId: string | undefined;
-
     // Security token to prove authentication
     public static accessToken: string | undefined;
 
@@ -47,7 +44,6 @@ export abstract class JellyfinApi {
     public static jellyfinApi: Api;
 
     public static setServerInfo(
-        userId?: string,
         accessToken?: string,
         serverAddress?: string,
         receiverName = ''
@@ -57,9 +53,8 @@ export abstract class JellyfinApi {
             this.serverAddress !== serverAddress;
 
         console.debug(
-            `JellyfinApi.setServerInfo: user:${userId}, token:${accessToken}, server:${serverAddress}, name:${receiverName}`
+            `JellyfinApi.setServerInfo: token:${accessToken}, server:${serverAddress}, name:${receiverName}`
         );
-        this.userId = userId;
         this.accessToken = accessToken;
         this.serverAddress = serverAddress;
 

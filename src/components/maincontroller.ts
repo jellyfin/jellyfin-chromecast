@@ -287,12 +287,7 @@ export async function reportDeviceCapabilities(): Promise<void> {
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function processMessage(data: any): void {
-    if (
-        !data.command ||
-        !data.serverAddress ||
-        !data.userId ||
-        !data.accessToken
-    ) {
+    if (!data.command || !data.serverAddress || !data.accessToken) {
         console.log('Invalid message sent from sender. Sending error response');
 
         broadcastToMessageBus({
@@ -309,7 +304,6 @@ export function processMessage(data: any): void {
     // Items will have properties - Id, Name, Type, MediaType, IsFolder
 
     JellyfinApi.setServerInfo(
-        data.userId,
         data.accessToken,
         data.serverAddress,
         data.receiverName

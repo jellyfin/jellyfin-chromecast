@@ -21,11 +21,7 @@ describe('creating basic urls', () => {
     });
 
     beforeEach(() => {
-        JellyfinApi.setServerInfo(
-            'thisIsUserId',
-            'thisIsAccessToken',
-            'thisIsServerAddress'
-        );
+        JellyfinApi.setServerInfo('thisIsAccessToken', 'thisIsServerAddress');
     });
 
     test('should return correct url', () => {
@@ -58,11 +54,7 @@ describe('creating image urls', () => {
     });
 
     beforeEach(() => {
-        JellyfinApi.setServerInfo(
-            'thisIsUserId',
-            'thisIsAccessToken',
-            'thisIsServerAddress'
-        );
+        JellyfinApi.setServerInfo('thisIsAccessToken', 'thisIsServerAddress');
     });
 
     test('should return correct url with all parameters provided', () => {
