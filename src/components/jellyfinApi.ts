@@ -1,7 +1,6 @@
 import { Api, Jellyfin } from '@jellyfin/sdk';
 import axios from 'axios';
 import { version as packageVersion } from '../../package.json';
-import { ajax } from './fetchhelper';
 
 axios.interceptors.request.use((request) => {
     console.log(`requesting url: ${request.url}`);
@@ -190,28 +189,5 @@ export abstract class JellyfinApi {
         return this.createUrl(
             `Items/${itemId}/Images/${imgType}/${imgIdx.toString()}?tag=${imgTag}`
         );
-    }
-
-    // Authenticated ajax
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    public static authAjaxUser(path: string, args: any): Promise<any> {
-        if (
-            this.userId === undefined ||
-            this.accessToken === undefined ||
-            this.serverAddress === undefined
-        ) {
-            console.error(
-                'JellyfinApi.authAjaxUser: No userid/accesstoken/serverAddress present. Skipping request'
-            );
-
-            return Promise.reject('no server info present');
-        }
-
-        const params = {
-            headers: this.getSecurityHeaders(),
-            url: this.createUserUrl(path)
-        };
-
-        return ajax({ ...params, ...args });
     }
 }
