@@ -194,29 +194,6 @@ export abstract class JellyfinApi {
 
     // Authenticated ajax
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    public static authAjax(path: string, args: any): Promise<any> {
-        if (
-            this.userId === undefined ||
-            this.accessToken === undefined ||
-            this.serverAddress === undefined
-        ) {
-            console.error(
-                'JellyfinApi.authAjax: No userid/accesstoken/serverAddress present. Skipping request'
-            );
-
-            return Promise.reject('no server info present');
-        }
-
-        const params = {
-            headers: this.getSecurityHeaders(),
-            url: this.createUrl(path)
-        };
-
-        return ajax({ ...params, ...args });
-    }
-
-    // Authenticated ajax
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     public static authAjaxUser(path: string, args: any): Promise<any> {
         if (
             this.userId === undefined ||

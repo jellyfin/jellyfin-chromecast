@@ -142,37 +142,6 @@ describe('creating image urls', () => {
     });
 });
 
-describe('test authenticated ajax', () => {
-    beforeAll(() => {
-        setupMockCastSenders();
-    });
-
-    test('should return rejected promise when server info is undefined', async () => {
-        // Linting requires this weird spacing.
-        JellyfinApi.setServerInfo(undefined, '', '');
-
-        const resultUserIdIsNull = JellyfinApi.authAjax('', {});
-
-        JellyfinApi.setServerInfo('', undefined, '');
-
-        const resultAccessTokenIsNull = JellyfinApi.authAjax('', {});
-
-        JellyfinApi.setServerInfo('', '', undefined);
-
-        const resultServerAddressIsNull = JellyfinApi.authAjax('', {});
-
-        await expect(resultUserIdIsNull).rejects.toEqual(
-            'no server info present'
-        );
-        await expect(resultAccessTokenIsNull).rejects.toEqual(
-            'no server info present'
-        );
-        await expect(resultServerAddressIsNull).rejects.toEqual(
-            'no server info present'
-        );
-    });
-});
-
 describe('test authenticated user ajax', () => {
     test('should return rejected promise when server info is undefined', async () => {
         // Linting requires this weird spacing.
