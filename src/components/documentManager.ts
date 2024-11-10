@@ -357,11 +357,11 @@ export abstract class DocumentManager {
             imageTypes: ['Backdrop'],
             includeItemTypes: ['Movie', 'Series'],
             limit: 1,
+            // Although we're limiting to what the user has access to,
+            // not everyone will want to see adult backdrops rotating on their TV.
             maxOfficialRating: 'PG-13',
             recursive: true,
             sortBy: ['Random']
-            // Although we're limiting to what the user has access to,
-            // not everyone will want to see adult backdrops rotating on their TV.
         });
 
         const result = response.data;
