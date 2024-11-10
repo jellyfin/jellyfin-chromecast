@@ -227,8 +227,7 @@ export abstract class DocumentManager {
         const response = await getUserLibraryApi(
             JellyfinApi.jellyfinApi
         ).getItem({
-            itemId,
-            userId: JellyfinApi.userId
+            itemId
         });
 
         DocumentManager.showItem(response.data);
