@@ -1,7 +1,6 @@
 import { Api, Jellyfin } from '@jellyfin/sdk';
 import axios from 'axios';
 import { version as packageVersion } from '../../package.json';
-import { ajax } from './fetchhelper';
 
 axios.interceptors.request.use((request) => {
     console.log(`requesting url: ${request.url}`);
@@ -109,39 +108,6 @@ export abstract class JellyfinApi {
         }
     }
 
-    // create the necessary headers for authentication
-    private static getSecurityHeaders(): { Authorization?: string } {
-        const parameters: Record<string, string> = {
-            Client: 'Chromecast',
-            Version: packageVersion
-        };
-
-        if (this.accessToken) {
-            parameters.Token = this.accessToken;
-        }
-
-        if (this.deviceId) {
-            parameters.DeviceId = this.deviceId;
-        }
-
-        if (this.deviceName) {
-            parameters.Device = this.deviceName;
-        }
-
-        let header = 'MediaBrowser';
-
-        for (const [key, value] of Object.entries(parameters)) {
-            header += ` ${key}="${encodeURIComponent(value)}", `;
-        }
-
-        // Remove last comma
-        header = header.substring(0, header.length - 2);
-
-        return {
-            Authorization: header
-        };
-    }
-
     // Create a basic url.
     // Cannot start with /.
     public static createUrl(path: string): string {
@@ -190,28 +156,5 @@ export abstract class JellyfinApi {
         return this.createUrl(
             `Items/${itemId}/Images/${imgType}/${imgIdx.toString()}?tag=${imgTag}`
         );
-    }
-
-    // Authenticated ajax
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    public static authAjaxUser(path: string, args: any): Promise<any> {
-        if (
-            this.userId === undefined ||
-            this.accessToken === undefined ||
-            this.serverAddress === undefined
-        ) {
-            console.error(
-                'JellyfinApi.authAjaxUser: No userid/accesstoken/serverAddress present. Skipping request'
-            );
-
-            return Promise.reject('no server info present');
-        }
-
-        const params = {
-            headers: this.getSecurityHeaders(),
-            url: this.createUserUrl(path)
-        };
-
-        return ajax({ ...params, ...args });
     }
 }

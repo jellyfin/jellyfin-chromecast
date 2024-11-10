@@ -1,6 +1,5 @@
 import { describe, beforeAll, beforeEach, test, expect } from 'vitest';
 import { JellyfinApi } from '../jellyfinApi';
-import { version } from '../../../package.json';
 
 const setupMockCastSenders = (): void => {
     const getSenders = (): any[] => [{ id: 'thisIsSenderId' }]; // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -139,72 +138,5 @@ describe('creating image urls', () => {
         const correct = '';
 
         expect(result).toEqual(correct);
-    });
-});
-
-describe('test authenticated user ajax', () => {
-    test('should return rejected promise when server info is undefined', async () => {
-        // Linting requires this weird spacing.
-        JellyfinApi.setServerInfo(undefined, '', '');
-
-        const resultUserIdIsNull = JellyfinApi.authAjaxUser('', {});
-
-        JellyfinApi.setServerInfo('', undefined, '');
-
-        const resultAccessTokenIsNull = JellyfinApi.authAjaxUser('', {});
-
-        JellyfinApi.setServerInfo('', '');
-
-        const resultServerAddressIsNull = JellyfinApi.authAjaxUser('', {});
-
-        await expect(resultUserIdIsNull).rejects.toEqual(
-            'no server info present'
-        );
-        await expect(resultAccessTokenIsNull).rejects.toEqual(
-            'no server info present'
-        );
-        await expect(resultServerAddressIsNull).rejects.toEqual(
-            'no server info present'
-        );
-    });
-});
-
-describe('getting security headers', () => {
-    beforeAll(() => {
-        setupMockCastSenders();
-    });
-
-    test('should return correct auth header with all server details set', () => {
-        JellyfinApi.setServerInfo(
-            'thisIsUserId',
-            'thisIsAccessToken',
-            'thisIsServerAddress',
-            'thisIsReceiverName'
-        );
-
-        // @ts-expect-error Since the method is private.
-        const result = JellyfinApi.getSecurityHeaders();
-        const correctAuth = `MediaBrowser Client="Chromecast",  Version="${version}",  Token="thisIsAccessToken",  DeviceId="${btoa(
-            'thisIsReceiverName'
-        )}",  Device="thisIsReceiverName"`;
-
-        expect(result).toHaveProperty('Authorization');
-        expect(result.Authorization).toMatch(correctAuth);
-    });
-
-    test('should return correct auth header with minimal server details set', () => {
-        JellyfinApi.setServerInfo(
-            undefined,
-            'thisIsAccessToken',
-            'thisIsServerAddress'
-        );
-
-        // @ts-expect-error Since the method is private.
-        const result = JellyfinApi.getSecurityHeaders();
-        const correct = {
-            Authorization: `MediaBrowser Client="Chromecast",  Version="${version}",  Token="thisIsAccessToken",  DeviceId="thisIsSenderId",  Device="Google%20Cast"`
-        };
-
-        expect(result).toMatchObject(correct);
     });
 });
