@@ -509,13 +509,10 @@ export function getShuffleItems(
  * Get an "Instant Mix" given an item, which can be a
  * music artist, genre, album, playlist
  *
- * TODO: JellyfinApi.userId should be fine for this.
- * @param userId - User ID to look up items with
  * @param item - Parent item of the search
  * @returns items for the queue
  */
 export async function getInstantMixItems(
-    userId: string,
     item: BaseItemDto
 ): Promise<BaseItemDtoQueryResult> {
     if (item.Id === undefined) {
@@ -525,8 +522,7 @@ export async function getInstantMixItems(
     const query: InstantMixApiRequest = {
         fields: ['MediaSources', 'Chapters'],
         itemId: item.Id,
-        limit: 50,
-        userId
+        limit: 50
     };
 
     const instantMixApi = getInstantMixApi(JellyfinApi.jellyfinApi);

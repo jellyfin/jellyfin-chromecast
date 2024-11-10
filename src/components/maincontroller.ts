@@ -597,7 +597,7 @@ export async function instantMix(
     options: PlayRequest,
     item: BaseItemDto
 ): Promise<void> {
-    const result = await getInstantMixItems(data.userId, item);
+    const result = await getInstantMixItems(item);
 
     options.items = result.Items ?? [];
     PlaybackManager.playFromOptions(data.options);
