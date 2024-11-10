@@ -108,39 +108,6 @@ export abstract class JellyfinApi {
         }
     }
 
-    // create the necessary headers for authentication
-    private static getSecurityHeaders(): { Authorization?: string } {
-        const parameters: Record<string, string> = {
-            Client: 'Chromecast',
-            Version: packageVersion
-        };
-
-        if (this.accessToken) {
-            parameters.Token = this.accessToken;
-        }
-
-        if (this.deviceId) {
-            parameters.DeviceId = this.deviceId;
-        }
-
-        if (this.deviceName) {
-            parameters.Device = this.deviceName;
-        }
-
-        let header = 'MediaBrowser';
-
-        for (const [key, value] of Object.entries(parameters)) {
-            header += ` ${key}="${encodeURIComponent(value)}", `;
-        }
-
-        // Remove last comma
-        header = header.substring(0, header.length - 2);
-
-        return {
-            Authorization: header
-        };
-    }
-
     // Create a basic url.
     // Cannot start with /.
     public static createUrl(path: string): string {
