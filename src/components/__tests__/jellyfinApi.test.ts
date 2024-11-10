@@ -52,43 +52,6 @@ describe('creating basic urls', () => {
     });
 });
 
-describe('creating user urls', () => {
-    beforeAll(() => {
-        setupMockCastSenders();
-    });
-
-    beforeEach(() => {
-        JellyfinApi.setServerInfo(
-            'thisIsUserId',
-            'thisIsAccessToken',
-            'thisIsServerAddress'
-        );
-    });
-
-    test('should return correct url', () => {
-        const result = JellyfinApi.createUserUrl('somePath');
-        const correct = 'thisIsServerAddress/Users/thisIsUserId/somePath';
-
-        expect(result).toEqual(correct);
-    });
-
-    test('should remove leading slashes', () => {
-        const result = JellyfinApi.createUserUrl('////////somePath');
-        const correct = 'thisIsServerAddress/Users/thisIsUserId/somePath';
-
-        expect(result).toEqual(correct);
-    });
-
-    test('should return empty string on undefined serverAddress', () => {
-        JellyfinApi.setServerInfo();
-
-        const result = JellyfinApi.createUserUrl('somePath');
-        const correct = '';
-
-        expect(result).toEqual(correct);
-    });
-});
-
 describe('creating image urls', () => {
     beforeAll(() => {
         setupMockCastSenders();

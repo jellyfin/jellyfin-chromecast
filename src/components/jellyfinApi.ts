@@ -125,20 +125,6 @@ export abstract class JellyfinApi {
         return `${this.serverAddress}/${path}`;
     }
 
-    // create a path in /Users/userId/ <path>
-    public static createUserUrl(path: string | null = null): string {
-        if (path) {
-            // Remove leading slashes
-            while (path.startsWith('/')) {
-                path = path.substring(1);
-            }
-
-            return this.createUrl(`Users/${this.userId}/${path}`);
-        } else {
-            return this.createUrl(`Users/${this.userId}`);
-        }
-    }
-
     /**
      * Create url to image
      * @param itemId - Item id
