@@ -494,8 +494,7 @@ export function getShuffleItems(
         filters: ['IsNotFolder'],
         limit: 50,
         recursive: true,
-        sortBy: ['Random'],
-        userId
+        sortBy: ['Random']
     };
 
     let additionalParams: ItemsApiGetItemsRequest;
