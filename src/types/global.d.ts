@@ -9,8 +9,6 @@ import type {
 } from '@jellyfin/sdk/lib/generated-client';
 import { TextTrackEdgeType } from 'chromecast-caf-receiver/cast.framework.messages';
 
-export type Dictionary<T> = Record<string, T>;
-
 // Messagebus message
 export interface BusMessage {
     type: string;
