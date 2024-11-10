@@ -565,11 +565,7 @@ export async function translateItems(
 ): Promise<void> {
     const playNow = method != 'PlayNext' && method != 'PlayLast';
 
-    const result = await translateRequestedItems(
-        data.userId,
-        options.items,
-        playNow
-    );
+    const result = await translateRequestedItems(options.items, playNow);
 
     if (result.Items) {
         options.items = result.Items;
@@ -616,7 +612,7 @@ export async function shuffle(
     options: PlayRequest,
     item: BaseItemDto
 ): Promise<void> {
-    const result = await getShuffleItems(data.userId, item);
+    const result = await getShuffleItems(item);
 
     options.items = result.Items ?? [];
     PlaybackManager.playFromOptions(data.options);

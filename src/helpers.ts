@@ -479,14 +479,10 @@ const requiredItemFields: ItemFields[] = ['MediaSources', 'Chapters'];
  * of the provided one.
  *
  * It's used only in maincomponents.shuffle.
- *
- * TODO: JellyfinApi.userId should be fine for this.
- * @param userId - User ID to look up items with
  * @param item - Parent item of shuffle search
  * @returns items for the queue
  */
 export function getShuffleItems(
-    userId: string,
     item: BaseItemDto
 ): Promise<BaseItemDtoQueryResult> {
     const query: ItemsApiGetItemsRequest = {
@@ -515,7 +511,7 @@ export function getShuffleItems(
         };
     }
 
-    return getItemsForPlayback(userId, {
+    return getItemsForPlayback({
         ...query,
         ...additionalParams
     });
@@ -564,20 +560,17 @@ export async function getInstantMixItems(
 
 /**
  * Get items to be played back
- * @param userId - user for the search
  * @param query - specification on what to search for
  * @returns items to be played back
  */
 export async function getItemsForPlayback(
-    userId: string,
     query: ItemsApiGetItemsRequest
 ): Promise<BaseItemDtoQueryResult> {
     const response = await getItemsApi(JellyfinApi.jellyfinApi).getItems({
         ...query,
         excludeLocationTypes: ['Virtual'],
         fields: requiredItemFields,
-        limit: query.limit ?? 100,
-        userId
+        limit: query.limit ?? 100
     });
 
     return response.data;
@@ -612,25 +605,23 @@ export function getUser(): Promise<UserDto> {
 /**
  * Process a list of items for playback
  * by resolving things like folders to playable items.
- * @param userId - userId to use
  * @param items - items to resolve
  * @param smart - If enabled it will try to find the next episode given the current one,
  * if the connected user has enabled that in their settings
  * @returns Promise for search result containing items to play
  */
 export async function translateRequestedItems(
-    userId: string,
     items: BaseItemDto[],
     smart = false
 ): Promise<BaseItemDtoQueryResult> {
     const firstItem = items[0];
 
     if (firstItem.Type == 'Playlist') {
-        return await getItemsForPlayback(userId, {
+        return await getItemsForPlayback({
             parentId: firstItem.Id
         });
     } else if (firstItem.Type == 'MusicArtist') {
-        return await getItemsForPlayback(userId, {
+        return await getItemsForPlayback({
             artistIds: firstItem.Id ? [firstItem.Id] : undefined,
             filters: ['IsNotFolder'],
             mediaTypes: ['Audio'],
@@ -638,7 +629,7 @@ export async function translateRequestedItems(
             sortBy: ['SortName']
         });
     } else if (firstItem.Type == 'MusicGenre') {
-        return await getItemsForPlayback(userId, {
+        return await getItemsForPlayback({
             filters: ['IsNotFolder'],
             genres: firstItem.Name ? [firstItem.Name] : undefined,
             mediaTypes: ['Audio'],
@@ -646,7 +637,7 @@ export async function translateRequestedItems(
             sortBy: ['SortName']
         });
     } else if (firstItem.IsFolder) {
-        return await getItemsForPlayback(userId, {
+        return await getItemsForPlayback({
             filters: ['IsNotFolder'],
             mediaTypes: ['Audio', 'Video'],
             parentId: firstItem.Id,
@@ -662,7 +653,7 @@ export async function translateRequestedItems(
             };
         }
 
-        const result = await getItemsForPlayback(userId, {
+        const result = await getItemsForPlayback({
             ids: firstItem.Id ? [firstItem.Id] : undefined
         });
 
@@ -678,8 +669,7 @@ export async function translateRequestedItems(
 
         const episodesResult = await getEpisodesForPlayback({
             isMissing: false,
-            seriesId: episode.SeriesId,
-            userId: userId
+            seriesId: episode.SeriesId
         });
 
         let foundItem = false;
