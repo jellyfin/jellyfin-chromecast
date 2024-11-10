@@ -14,7 +14,11 @@ import type {
     ItemFields,
     ItemsApiGetItemsRequest
 } from '@jellyfin/sdk/lib/generated-client';
-import { getInstantMixApi, getTvShowsApi } from '@jellyfin/sdk/lib/utils/api';
+import {
+    getInstantMixApi,
+    getItemsApi,
+    getTvShowsApi
+} from '@jellyfin/sdk/lib/utils/api';
 import { JellyfinApi } from './components/jellyfinApi';
 import { PlaybackManager, PlaybackState } from './components/playbackManager';
 import { BusMessage } from './types/global';
@@ -577,21 +581,18 @@ export async function getItemsForPlayback(
     };
 
     if (query.ids?.length == 1) {
-        const item = await JellyfinApi.authAjaxUser(`Items/${query.ids[0]}`, {
-            dataType: 'json',
-            type: 'GET'
+        const response = await getItemsApi(JellyfinApi.jellyfinApi).getItems({
+            ...query,
+            ...params
         });
 
-        return {
-            Items: [item],
-            TotalRecordCount: 1
-        };
+        return response.data;
     } else {
-        return JellyfinApi.authAjaxUser('Items', {
-            dataType: 'json',
-            query: { ...query, ...params },
-            type: 'GET'
-        });
+        const response = await getItemsApi(JellyfinApi.jellyfinApi).getItems(
+            query
+        );
+
+        return response.data;
     }
 }
 
