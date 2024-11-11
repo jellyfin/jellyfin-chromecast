@@ -22,7 +22,7 @@ import {
 } from '@jellyfin/sdk/lib/utils/api';
 import { JellyfinApi } from './components/jellyfinApi';
 import { PlaybackManager, PlaybackState } from './components/playbackManager';
-import { BusMessage } from './types/global';
+import { BusMessage, StreamInfo } from './types/global';
 
 type InstantMixApiRequest =
     | InstantMixApiGetInstantMixFromAlbumRequest
@@ -309,8 +309,7 @@ export function createStreamInfo(
     item: BaseItemDto,
     mediaSource: MediaSourceInfo,
     startPosition: number | null
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-): any {
+): StreamInfo {
     let mediaUrl;
     let contentType;
 
@@ -332,7 +331,7 @@ export function createStreamInfo(
     if (type == 'video') {
         contentType = `video/${mediaSource.Container}`;
 
-        if (mediaSource.SupportsDirectPlay) {
+        if (mediaSource.SupportsDirectPlay && mediaSource.Path) {
             mediaUrl = mediaSource.Path;
             isStatic = true;
         } else if (mediaSource.SupportsDirectStream) {
@@ -363,7 +362,7 @@ export function createStreamInfo(
     } else {
         contentType = `audio/${mediaSource.Container}`;
 
-        if (mediaSource.SupportsDirectPlay) {
+        if (mediaSource.SupportsDirectPlay && mediaSource.Path) {
             mediaUrl = mediaSource.Path;
             isStatic = true;
             playerStartPositionTicks = startPosition ?? 0;
@@ -394,9 +393,8 @@ export function createStreamInfo(
     // It is a pain and will require unbinding all event handlers during the operation
     const canSeek = (mediaSource.RunTimeTicks ?? 0) > 0;
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const info: any = {
-        audioStreamIndex: mediaSource.DefaultAudioStreamIndex,
+    const info: StreamInfo = {
+        audioStreamIndex: mediaSource.DefaultAudioStreamIndex ?? null,
         canClientSeek: isStatic || (canSeek && streamContainer == 'm3u8'),
         canSeek: canSeek,
         contentType: contentType,
@@ -405,7 +403,7 @@ export function createStreamInfo(
         playerStartPositionTicks: playerStartPositionTicks,
         startPositionTicks: startPosition,
         streamContainer: streamContainer,
-        subtitleStreamIndex: mediaSource.DefaultSubtitleStreamIndex,
+        subtitleStreamIndex: mediaSource.DefaultSubtitleStreamIndex ?? null,
         url: mediaUrl
     };
 
@@ -430,6 +428,10 @@ export function createStreamInfo(
         const textStreamUrl = subtitleStream.IsExternalUrl
             ? subtitleStream.DeliveryUrl
             : JellyfinApi.createUrl(subtitleStream.DeliveryUrl);
+
+        if (!info.subtitleStreamIndex) {
+            return;
+        }
 
         const track = new cast.framework.messages.Track(
             info.subtitleStreamIndex,

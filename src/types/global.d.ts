@@ -5,9 +5,13 @@ import {
 import { SystemVolumeData } from 'chromecast-caf-receiver/cast.framework.system';
 import type {
     BaseItemDto,
+    MediaSourceInfo,
     RepeatMode
 } from '@jellyfin/sdk/lib/generated-client';
-import { TextTrackEdgeType } from 'chromecast-caf-receiver/cast.framework.messages';
+import type {
+    TextTrackEdgeType,
+    Track
+} from 'chromecast-caf-receiver/cast.framework.messages';
 
 // Messagebus message
 export interface BusMessage {
@@ -68,6 +72,22 @@ interface SubtitleAppearance {
     textColor: string;
     textBackground: string;
     textSize: 'smaller' | 'small' | 'large' | 'larger' | 'extralarge';
+}
+
+interface StreamInfo {
+    tracks?: Track[];
+    audioStreamIndex: number | null;
+    canClientSeek: boolean;
+    canSeek: boolean;
+    contentType: string;
+    isStatic: boolean;
+    mediaSource?: MediaSourceInfo;
+    playerStartPositionTicks?: number;
+    startPositionTicks: number | null;
+    streamContainer?: string | null;
+    subtitleStreamIndex: number | null;
+    subtitleStreamUrl?: string;
+    url: string;
 }
 
 declare global {
