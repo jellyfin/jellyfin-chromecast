@@ -28,7 +28,7 @@ import { JellyfinApi } from './jellyfinApi';
 import { PlaybackManager, PlaybackState } from './playbackManager';
 import { CommandHandler } from './commandHandler';
 import { getMaxBitrateSupport } from './codecSupportHelper';
-import { PlayRequest } from '~/types/global';
+import { PlayRequest, StreamInfo } from '~/types/global';
 
 window.castReceiverContext = cast.framework.CastReceiverContext.getInstance();
 window.playerManager = window.castReceiverContext.getPlayerManager();
@@ -808,7 +808,6 @@ export function setTextTrack(index: number | null): void {
     }
 }
 
-// TODO no any types
 /**
  * createMediaInformation
  * @param playSessionId - playSessionId
@@ -819,8 +818,7 @@ export function setTextTrack(index: number | null): void {
 export function createMediaInformation(
     playSessionId: string,
     item: BaseItemDto,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    streamInfo: any
+    streamInfo: StreamInfo
 ): framework.messages.MediaInformation {
     const mediaInfo = new cast.framework.messages.MediaInformation();
 
@@ -831,12 +829,12 @@ export function createMediaInformation(
         canClientSeek: streamInfo.canClientSeek,
         canSeek: streamInfo.canSeek,
         itemId: item.Id,
-        liveStreamId: streamInfo.mediaSource.LiveStreamId,
-        mediaSourceId: streamInfo.mediaSource.Id,
+        liveStreamId: streamInfo.mediaSource?.LiveStreamId ?? null,
+        mediaSourceId: streamInfo.mediaSource?.Id ?? null,
         playMethod: streamInfo.isStatic ? 'DirectStream' : 'Transcode',
         playSessionId: playSessionId,
-        runtimeTicks: streamInfo.mediaSource.RunTimeTicks,
-        startPositionTicks: streamInfo.startPositionTicks || 0,
+        runtimeTicks: streamInfo.mediaSource?.RunTimeTicks ?? null,
+        startPositionTicks: streamInfo.startPositionTicks ?? 0,
         subtitleStreamIndex: streamInfo.subtitleStreamIndex
     };
 
@@ -845,7 +843,7 @@ export function createMediaInformation(
     mediaInfo.streamType = cast.framework.messages.StreamType.BUFFERED;
     mediaInfo.tracks = streamInfo.tracks;
 
-    if (streamInfo.mediaSource.RunTimeTicks) {
+    if (streamInfo.mediaSource?.RunTimeTicks) {
         mediaInfo.duration = Math.floor(
             ticksToSeconds(streamInfo.mediaSource.RunTimeTicks)
         );
