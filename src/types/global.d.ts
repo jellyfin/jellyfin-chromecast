@@ -106,16 +106,16 @@ declare global {
 
 declare module 'chromecast-caf-receiver/cast.framework.messages' {
     interface MediaInformationCustomData {
-        audioStreamIndex: string;
+        audioStreamIndex: number | null;
         canClientSeek: boolean;
         canSeek: boolean;
         itemId: string | undefined;
-        liveStreamId: number;
-        mediaSourceId: number;
+        liveStreamId: string | null;
+        mediaSourceId: string | null;
         playMethod: 'DirectStream' | 'Transcode';
         playSessionId: string;
-        runtimeTicks: number;
+        runtimeTicks: number | null;
         startPositionTicks: number;
-        subtitleStreamIndex: number;
+        subtitleStreamIndex: number | null;
     }
 }
