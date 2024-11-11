@@ -33,7 +33,7 @@ export interface PlaybackState {
     mediaType: string | null | undefined;
     itemId: string;
 
-    audioStreamIndex: null;
+    audioStreamIndex: number | null;
     subtitleStreamIndex: number | null;
     mediaSource: MediaSourceInfo | null;
     mediaSourceId: string;
