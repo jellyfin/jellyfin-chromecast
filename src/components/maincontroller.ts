@@ -25,10 +25,10 @@ import {
 } from './jellyfinActions';
 import { getDeviceProfile } from './deviceprofileBuilder';
 import { JellyfinApi } from './jellyfinApi';
-import { PlaybackManager, PlaybackState } from './playbackManager';
+import { PlaybackManager, type PlaybackState } from './playbackManager';
 import { CommandHandler } from './commandHandler';
 import { getMaxBitrateSupport } from './codecSupportHelper';
-import { PlayRequest, StreamInfo } from '~/types/global';
+import type { PlayRequest, StreamInfo } from '~/types/global';
 
 window.castReceiverContext = cast.framework.CastReceiverContext.getInstance();
 window.playerManager = window.castReceiverContext.getPlayerManager();

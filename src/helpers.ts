@@ -21,8 +21,11 @@ import {
     getUserApi
 } from '@jellyfin/sdk/lib/utils/api';
 import { JellyfinApi } from './components/jellyfinApi';
-import { PlaybackManager, PlaybackState } from './components/playbackManager';
-import { BusMessage, StreamInfo } from './types/global';
+import {
+    PlaybackManager,
+    type PlaybackState
+} from './components/playbackManager';
+import type { BusMessage, StreamInfo } from './types/global';
 
 type InstantMixApiRequest =
     | InstantMixApiGetInstantMixFromAlbumRequest

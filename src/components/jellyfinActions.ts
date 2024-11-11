@@ -15,7 +15,7 @@ import { getSenderReportingData, broadcastToMessageBus } from '../helpers';
 import { AppStatus } from '../types/appStatus';
 import { JellyfinApi } from './jellyfinApi';
 import { DocumentManager } from './documentManager';
-import { PlaybackManager, PlaybackState } from './playbackManager';
+import { PlaybackManager, type PlaybackState } from './playbackManager';
 
 let pingInterval: number;
 let lastTranscoderPing = 0;

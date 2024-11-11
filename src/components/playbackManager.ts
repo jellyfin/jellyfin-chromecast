@@ -4,7 +4,7 @@ import type {
     PlayMethod
 } from '@jellyfin/sdk/lib/generated-client';
 import { RepeatMode } from '@jellyfin/sdk/lib/generated-client';
-import { MediaInformationCustomData } from 'chromecast-caf-receiver/cast.framework.messages';
+import type { MediaInformationCustomData } from 'chromecast-caf-receiver/cast.framework.messages';
 import { AppStatus } from '../types/appStatus';
 import {
     broadcastConnectionErrorMessage,
@@ -27,7 +27,7 @@ import {
     checkDirectPlay,
     createMediaInformation
 } from './maincontroller';
-import { ItemIndex, PlayRequest } from '~/types/global';
+import type { ItemIndex, PlayRequest } from '~/types/global';
 
 export interface PlaybackState {
     startPositionTicks: number;
