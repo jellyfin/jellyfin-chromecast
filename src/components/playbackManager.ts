@@ -4,6 +4,7 @@ import type {
     PlayMethod
 } from '@jellyfin/sdk/lib/generated-client';
 import { RepeatMode } from '@jellyfin/sdk/lib/generated-client';
+import { MediaInformationCustomData } from 'chromecast-caf-receiver/cast.framework.messages';
 import { AppStatus } from '../types/appStatus';
 import {
     broadcastConnectionErrorMessage,
@@ -199,7 +200,7 @@ export abstract class PlaybackManager {
     // Would set private, but some refactorings need to happen first.
     static async playItemInternal(
         item: BaseItemDto,
-        options: any // eslint-disable-line @typescript-eslint/no-explicit-any
+        options: MediaInformationCustomData
     ): Promise<void> {
         DocumentManager.setAppStatus(AppStatus.Loading);
 
