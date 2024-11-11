@@ -232,9 +232,9 @@ export async function getPlaybackInfo(
     maxBitrate: number,
     deviceProfile: DeviceProfile,
     startPosition: number,
-    mediaSourceId: string,
-    audioStreamIndex: number,
-    subtitleStreamIndex: number,
+    mediaSourceId: string | null,
+    audioStreamIndex: number | null,
+    subtitleStreamIndex: number | null,
     liveStreamId: string | null = null
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<any> {
