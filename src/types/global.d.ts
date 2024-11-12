@@ -30,12 +30,13 @@ export interface ItemIndex {
 
 // From commandHandler
 export interface PlayRequest {
+    startIndex?: number;
     items: BaseItemDto[];
-    startPositionTicks: number | undefined;
-    mediaSourceId: string | undefined;
-    audioStreamIndex: number | undefined;
-    subtitleStreamIndex: number | undefined;
-    liveStreamId: string | undefined;
+    startPositionTicks?: number;
+    mediaSourceId?: string;
+    audioStreamIndex?: number;
+    subtitleStreamIndex?: number;
+    liveStreamId?: string;
 }
 
 export interface DisplayRequest {

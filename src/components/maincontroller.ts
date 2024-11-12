@@ -622,8 +622,7 @@ export async function shuffle(
  */
 export async function onStopPlayerBeforePlaybackDone(
     item: BaseItemDto,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    options: any
+    options: PlayRequest
 ): Promise<void> {
     if (item.Id) {
         const response = await getUserLibraryApi(

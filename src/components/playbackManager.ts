@@ -4,7 +4,6 @@ import type {
     PlayMethod
 } from '@jellyfin/sdk/lib/generated-client';
 import { RepeatMode } from '@jellyfin/sdk/lib/generated-client';
-import type { MediaInformationCustomData } from 'chromecast-caf-receiver/cast.framework.messages';
 import { AppStatus } from '../types/appStatus';
 import {
     broadcastConnectionErrorMessage,
@@ -122,13 +121,14 @@ export abstract class PlaybackManager {
         return this.playFromOptionsInternal(options);
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    private static playFromOptionsInternal(options: any): Promise<void> {
+    private static playFromOptionsInternal(
+        options: PlayRequest
+    ): Promise<void> {
         const stopPlayer =
             this.activePlaylist && this.activePlaylist.length > 0;
 
         this.activePlaylist = options.items;
-        this.activePlaylistIndex = options.startIndex || 0;
+        this.activePlaylistIndex = options.startIndex ?? 0;
 
         console.log('Loaded new playlist:', this.activePlaylist);
 
@@ -162,7 +162,7 @@ export abstract class PlaybackManager {
 
         if (nextItemInfo) {
             this.activePlaylistIndex = nextItemInfo.index;
-            this.playItem({}, stopPlayer);
+            this.playItem({ items: [] }, stopPlayer);
 
             return true;
         }
@@ -173,7 +173,7 @@ export abstract class PlaybackManager {
     static playPreviousItem(): boolean {
         if (this.activePlaylist && this.activePlaylistIndex > 0) {
             this.activePlaylistIndex--;
-            this.playItem({}, true);
+            this.playItem({ items: [] }, true);
 
             return true;
         }
@@ -183,7 +183,7 @@ export abstract class PlaybackManager {
 
     // play item from playlist
     private static async playItem(
-        options: any, // eslint-disable-line @typescript-eslint/no-explicit-any
+        options: PlayRequest,
         stopPlayer = false
     ): Promise<void> {
         if (stopPlayer) {
@@ -200,7 +200,7 @@ export abstract class PlaybackManager {
     // Would set private, but some refactorings need to happen first.
     static async playItemInternal(
         item: BaseItemDto,
-        options: MediaInformationCustomData
+        options: PlayRequest
     ): Promise<void> {
         DocumentManager.setAppStatus(AppStatus.Loading);
 
@@ -213,10 +213,10 @@ export abstract class PlaybackManager {
             item,
             maxBitrate,
             deviceProfile,
-            options.startPositionTicks,
-            options.mediaSourceId,
-            options.audioStreamIndex,
-            options.subtitleStreamIndex,
+            options.startPositionTicks ?? null,
+            options.mediaSourceId ?? null,
+            options.audioStreamIndex ?? null,
+            options.subtitleStreamIndex ?? null,
             options.liveStreamId
         ).catch(broadcastConnectionErrorMessage);
 
@@ -240,7 +240,7 @@ export abstract class PlaybackManager {
                 playbackInfo.PlaySessionId,
                 maxBitrate,
                 deviceProfile,
-                options.startPositionTicks,
+                options.startPositionTicks ?? null,
                 mediaSource,
                 null,
                 null
@@ -264,14 +264,14 @@ export abstract class PlaybackManager {
         playSessionId: string,
         item: BaseItemDto,
         mediaSource: MediaSourceInfo,
-        options: any // eslint-disable-line @typescript-eslint/no-explicit-any
+        options: PlayRequest
     ): void {
         DocumentManager.setAppStatus(AppStatus.Loading);
 
         const streamInfo = createStreamInfo(
             item,
             mediaSource,
-            options.startPositionTicks
+            options.startPositionTicks ?? null
         );
 
         const mediaInfo = createMediaInformation(
