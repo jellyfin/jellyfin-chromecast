@@ -231,7 +231,7 @@ export async function getPlaybackInfo(
     item: BaseItemDto,
     maxBitrate: number,
     deviceProfile: DeviceProfile,
-    startPosition: number,
+    startPosition: number | null,
     mediaSourceId: string | null,
     audioStreamIndex: number | null,
     subtitleStreamIndex: number | null,
@@ -247,7 +247,7 @@ export async function getPlaybackInfo(
     const query: PlaybackInfoDto = {
         DeviceProfile: deviceProfile,
         MaxStreamingBitrate: maxBitrate,
-        StartTimeTicks: startPosition || 0
+        StartTimeTicks: startPosition ?? 0
     };
 
     if (audioStreamIndex != null) {
@@ -293,7 +293,7 @@ export async function getLiveStream(
     playSessionId: string,
     maxBitrate: number,
     deviceProfile: DeviceProfile,
-    startPosition: number,
+    startPosition: number | null,
     mediaSource: MediaSourceInfo,
     audioStreamIndex: number | null,
     subtitleStreamIndex: number | null
@@ -308,7 +308,7 @@ export async function getLiveStream(
             MaxStreamingBitrate: maxBitrate,
             OpenToken: mediaSource.OpenToken,
             PlaySessionId: playSessionId,
-            StartTimeTicks: startPosition || 0,
+            StartTimeTicks: startPosition ?? 0,
             SubtitleStreamIndex: subtitleStreamIndex
         }
     });
