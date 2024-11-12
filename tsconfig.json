@@ -7,9 +7,9 @@
         "resolveJsonModule": true,
         "allowSyntheticDefaultImports": true,
         "allowJs": true,
-        "isolatedModules": true,
         "sourceMap": true,
         "outDir": "./dist/",
+        "verbatimModuleSyntax": true,
         "strict": true,
         "baseUrl": "./src",
         "paths": {

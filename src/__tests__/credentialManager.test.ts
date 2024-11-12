@@ -2,7 +2,7 @@ import { describe, beforeEach, test, expect } from 'vitest';
 
 import {
     credentialManager,
-    ServerCredential
+    type ServerCredential
 } from '../components/credentialManager';
 
 const serverId1 = 'f4486b851af24255b3305fe614b81f01';
