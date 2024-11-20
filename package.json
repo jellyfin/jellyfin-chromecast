@@ -26,7 +26,7 @@
         "stylelint-config-standard": "36.0.1",
         "typescript": "5.6.3",
         "typescript-eslint": "8.13.0",
-        "vite": "5.4.10",
+        "vite": "5.4.11",
         "vitest": "2.1.4"
     },
     "homepage": "https://jellyfin.org/",
