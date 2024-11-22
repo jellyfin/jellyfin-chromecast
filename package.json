@@ -13,7 +13,7 @@
     "devDependencies": {
         "@types/chromecast-caf-receiver": "6.0.18",
         "@types/node": "22.9.0",
-        "eslint": "9.14.0",
+        "eslint": "9.15.0",
         "eslint-config-prettier": "9.1.0",
         "eslint-import-resolver-typescript": "3.6.3",
         "eslint-plugin-import": "2.31.0",
