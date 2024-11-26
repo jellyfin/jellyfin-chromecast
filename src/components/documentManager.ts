@@ -6,7 +6,7 @@ import { JellyfinApi } from './jellyfinApi';
 import { DeviceIds, getActiveDeviceId } from './castDevices';
 
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
-export abstract class DocumentManager {
+export class DocumentManager {
     // Duration between each backdrop switch in ms
     private static backdropPeriodMs = 30000;
     // Timer state - so that we don't start the interval more than necessary

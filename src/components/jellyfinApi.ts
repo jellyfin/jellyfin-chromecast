@@ -24,7 +24,7 @@ axios.interceptors.response.use(
 );
 
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
-export abstract class JellyfinApi {
+export class JellyfinApi {
     // Security token to prove authentication
     public static accessToken: string | undefined;
 

@@ -22,7 +22,7 @@ import { PlaybackManager } from './playbackManager';
 import { DocumentManager } from './documentManager';
 
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
-export abstract class CommandHandler {
+export class CommandHandler {
     private static playerManager: framework.PlayerManager;
     private static supportedCommands: SupportedCommands = {
         DisplayContent: CommandHandler.displayContentHandler,
