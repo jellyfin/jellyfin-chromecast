@@ -16,6 +16,7 @@ import { AppStatus } from '../types/appStatus';
 import { JellyfinApi } from './jellyfinApi';
 import { DocumentManager } from './documentManager';
 import { PlaybackManager, type PlaybackState } from './playbackManager';
+import type { JellyfinMediaInformationCustomData } from '~/types/global';
 
 let pingInterval: number;
 let lastTranscoderPing = 0;
@@ -164,8 +165,10 @@ export async function pingTranscoder(playSessionId: string): Promise<void> {
  * @param customData - data to set on playback state.
  * @param serverItem - item that is playing
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function load(customData: any, serverItem: BaseItemDto): void {
+export function load(
+    customData: JellyfinMediaInformationCustomData,
+    serverItem: BaseItemDto
+): void {
     PlaybackManager.resetPlaybackScope();
 
     const state = PlaybackManager.playbackState;

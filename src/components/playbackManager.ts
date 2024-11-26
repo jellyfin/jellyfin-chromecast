@@ -295,7 +295,10 @@ export abstract class PlaybackManager {
 
         const isChangingStream = this.playbackState.isChangingStream;
 
-        load(mediaInfo.customData, item);
+        if (mediaInfo.customData) {
+            load(mediaInfo.customData, item);
+        }
+
         this.playbackState.isChangingStream = isChangingStream;
         this.playerManager.load(loadRequestData);
 
