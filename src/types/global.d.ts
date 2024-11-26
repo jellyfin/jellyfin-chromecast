@@ -6,6 +6,7 @@ import { SystemVolumeData } from 'chromecast-caf-receiver/cast.framework.system'
 import type {
     BaseItemDto,
     MediaSourceInfo,
+    PlayMethod,
     RepeatMode
 } from '@jellyfin/sdk/lib/generated-client';
 import type {
@@ -106,17 +107,21 @@ declare global {
 }
 
 declare module 'chromecast-caf-receiver/cast.framework.messages' {
-    interface MediaInformationCustomData {
-        audioStreamIndex: number | null;
-        canClientSeek: boolean;
-        canSeek: boolean;
-        itemId: string | undefined;
-        liveStreamId: string | null;
-        mediaSourceId: string | null;
-        playMethod: 'DirectStream' | 'Transcode';
-        playSessionId: string;
-        runtimeTicks: number | null;
-        startPositionTicks: number;
-        subtitleStreamIndex: number | null;
-    }
+    // eslint-disable-next-line @typescript-eslint/no-empty-object-type
+    interface MediaInformationCustomData
+        extends JellyfinMediaInformationCustomData {}
+}
+
+interface JellyfinMediaInformationCustomData {
+    audioStreamIndex: number | null;
+    canClientSeek: boolean;
+    canSeek: boolean;
+    itemId: string | undefined;
+    liveStreamId: string | null;
+    mediaSourceId: string | null;
+    playMethod: PlayMethod;
+    playSessionId: string;
+    runtimeTicks: number | null;
+    startPositionTicks: number;
+    subtitleStreamIndex: number | null;
 }

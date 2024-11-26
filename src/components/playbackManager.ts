@@ -31,12 +31,12 @@ import type { ItemIndex, PlayRequest } from '~/types/global';
 export interface PlaybackState {
     startPositionTicks: number;
     mediaType: string | null | undefined;
-    itemId: string;
+    itemId: string | undefined;
 
     audioStreamIndex: number | null;
     subtitleStreamIndex: number | null;
     mediaSource: MediaSourceInfo | null;
-    mediaSourceId: string;
+    mediaSourceId: string | null;
     PlaybackMediaSource: MediaSourceInfo | null;
 
     playMethod: PlayMethod | undefined;
@@ -45,10 +45,10 @@ export interface PlaybackState {
     playNextItemBool: boolean;
 
     item: BaseItemDto | null;
-    liveStreamId: string;
+    liveStreamId: string | null;
     playSessionId: string;
 
-    runtimeTicks: number;
+    runtimeTicks: number | null;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
@@ -295,7 +295,10 @@ export abstract class PlaybackManager {
 
         const isChangingStream = this.playbackState.isChangingStream;
 
-        load(mediaInfo.customData, item);
+        if (mediaInfo.customData) {
+            load(mediaInfo.customData, item);
+        }
+
         this.playbackState.isChangingStream = isChangingStream;
         this.playerManager.load(loadRequestData);
 
