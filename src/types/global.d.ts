@@ -6,6 +6,7 @@ import { SystemVolumeData } from 'chromecast-caf-receiver/cast.framework.system'
 import type {
     BaseItemDto,
     MediaSourceInfo,
+    PlayMethod,
     RepeatMode
 } from '@jellyfin/sdk/lib/generated-client';
 import type {
@@ -118,7 +119,7 @@ interface JellyfinMediaInformationCustomData {
     itemId: string | undefined;
     liveStreamId: string | null;
     mediaSourceId: string | null;
-    playMethod: 'DirectStream' | 'Transcode';
+    playMethod: PlayMethod;
     playSessionId: string;
     runtimeTicks: number | null;
     startPositionTicks: number;
