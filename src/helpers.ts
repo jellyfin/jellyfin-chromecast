@@ -20,6 +20,13 @@ import {
     getTvShowsApi,
     getUserApi
 } from '@jellyfin/sdk/lib/utils/api';
+import type {
+    GenericMediaMetadata,
+    MovieMediaMetadata,
+    MusicTrackMediaMetadata,
+    PhotoMediaMetadata,
+    TvShowMediaMetadata
+} from 'chromecast-caf-receiver/cast.framework.messages';
 import { JellyfinApi } from './components/jellyfinApi';
 import {
     PlaybackManager,
@@ -187,10 +194,20 @@ export function getSenderReportingData(
  * @param item - item to look up
  * @returns one of the metadata classes in cast.framework.messages.*Metadata
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function getMetadata(item: BaseItemDto): any {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let metadata: any;
+export function getMetadata(
+    item: BaseItemDto
+):
+    | GenericMediaMetadata
+    | MovieMediaMetadata
+    | MusicTrackMediaMetadata
+    | PhotoMediaMetadata
+    | TvShowMediaMetadata {
+    let metadata:
+        | GenericMediaMetadata
+        | MovieMediaMetadata
+        | MusicTrackMediaMetadata
+        | PhotoMediaMetadata
+        | TvShowMediaMetadata;
     let posterUrl = '';
 
     if (item.SeriesPrimaryImageTag) {
@@ -208,50 +225,59 @@ export function getMetadata(item: BaseItemDto): any {
     }
 
     if (item.Type == 'Episode') {
-        metadata = new cast.framework.messages.TvShowMediaMetadata();
-        metadata.seriesTitle = item.SeriesName;
+        const tvShowMedata = new cast.framework.messages.TvShowMediaMetadata();
+
+        tvShowMedata.seriesTitle = item.SeriesName ?? undefined;
 
         if (item.PremiereDate) {
-            metadata.originalAirdate = parseISO8601Date(
+            tvShowMedata.originalAirdate = parseISO8601Date(
                 item.PremiereDate
             ).toISOString();
         }
 
         if (item.IndexNumber != null) {
-            metadata.episode = item.IndexNumber;
+            tvShowMedata.episode = item.IndexNumber;
         }
 
         if (item.ParentIndexNumber != null) {
-            metadata.season = item.ParentIndexNumber;
+            tvShowMedata.season = item.ParentIndexNumber;
         }
+
+        metadata = tvShowMedata;
     } else if (item.Type == 'Photo') {
-        metadata = new cast.framework.messages.PhotoMediaMetadata();
+        const photoMetadata = new cast.framework.messages.PhotoMediaMetadata();
 
         if (item.PremiereDate) {
-            metadata.creationDateTime = parseISO8601Date(
+            photoMetadata.creationDateTime = parseISO8601Date(
                 item.PremiereDate
             ).toISOString();
         }
         // TODO more metadata?
+
+        metadata = photoMetadata;
     } else if (item.Type == 'Audio') {
-        metadata = new cast.framework.messages.MusicTrackMediaMetadata();
-        metadata.songName = item.Name;
-        metadata.artist = item.Artists?.length ? item.Artists.join(', ') : '';
-        metadata.albumArtist = item.AlbumArtist;
-        metadata.albumName = item.Album;
+        const musicTrackMetadata =
+            new cast.framework.messages.MusicTrackMediaMetadata();
+
+        musicTrackMetadata.songName = item.Name ?? undefined;
+        musicTrackMetadata.artist = item.Artists?.length
+            ? item.Artists.join(', ')
+            : '';
+        musicTrackMetadata.albumArtist = item.AlbumArtist ?? undefined;
+        musicTrackMetadata.albumName = item.Album ?? undefined;
 
         if (item.PremiereDate) {
-            metadata.releaseDate = parseISO8601Date(
+            musicTrackMetadata.releaseDate = parseISO8601Date(
                 item.PremiereDate
             ).toISOString();
         }
 
         if (item.IndexNumber != null) {
-            metadata.trackNumber = item.IndexNumber;
+            musicTrackMetadata.trackNumber = item.IndexNumber;
         }
 
         if (item.ParentIndexNumber != null) {
-            metadata.discNumber = item.ParentIndexNumber;
+            musicTrackMetadata.discNumber = item.ParentIndexNumber;
         }
 
         // previously: p.PersonType == 'Type'.. wtf?
@@ -259,29 +285,36 @@ export function getMetadata(item: BaseItemDto): any {
             (p: BaseItemPerson) => p.Type == 'Composer'
         );
 
-        if (composer) {
-            metadata.composer = composer.Name;
+        if (composer?.Name) {
+            musicTrackMetadata.composer = composer.Name;
         }
+
+        metadata = musicTrackMetadata;
     } else if (item.Type == 'Movie') {
-        metadata = new cast.framework.messages.MovieMediaMetadata();
+        const movieMetadata = new cast.framework.messages.MovieMediaMetadata();
 
         if (item.PremiereDate) {
-            metadata.releaseDate = parseISO8601Date(
+            movieMetadata.releaseDate = parseISO8601Date(
                 item.PremiereDate
             ).toISOString();
         }
+
+        if (item.Studios?.length && item.Studios[0].Name) {
+            movieMetadata.studio = item.Studios[0].Name;
+        }
+
+        metadata = movieMetadata;
     } else {
-        metadata = new cast.framework.messages.GenericMediaMetadata();
+        const genericMetadata =
+            new cast.framework.messages.GenericMediaMetadata();
 
         if (item.PremiereDate) {
-            metadata.releaseDate = parseISO8601Date(
+            genericMetadata.releaseDate = parseISO8601Date(
                 item.PremiereDate
             ).toISOString();
         }
 
-        if (item.Studios?.length) {
-            metadata.studio = item.Studios[0];
-        }
+        metadata = genericMetadata;
     }
 
     metadata.title = item.Name ?? '????';
