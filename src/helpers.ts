@@ -99,8 +99,7 @@ export function getSenderReportingData(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const state: any = {
         ItemId: reportingData.ItemId,
-        PlayState: reportingData,
-        QueueableMediaTypes: ['Audio', 'Video']
+        PlayState: reportingData
     };
 
     state.NowPlayingItem = {
