@@ -526,7 +526,7 @@ window.castReceiverContext.addCustomMessageListener(
     'urn:x-cast:com.connectsdk',
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (evt: any) => {
-        let data: any = evt.data; // eslint-disable-line @typescript-eslint/no-explicit-any
+        let data = evt.data;
 
         // Apparently chromium likes to pass it as json, not as object.
         // chrome on android works fine
