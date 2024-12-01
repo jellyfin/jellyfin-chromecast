@@ -4,6 +4,7 @@ import type {
     LiveStreamResponse,
     MediaSourceInfo,
     PlaybackInfoDto,
+    PlaybackInfoResponse,
     PlaybackProgressInfo
 } from '@jellyfin/sdk/lib/generated-client';
 import {
@@ -239,8 +240,7 @@ export async function getPlaybackInfo(
     audioStreamIndex: number | null,
     subtitleStreamIndex: number | null,
     liveStreamId: string | null = null
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-): Promise<any> {
+): Promise<PlaybackInfoResponse> {
     if (!item.Id) {
         console.error('getPlaybackInfo: Item ID not provided');
 

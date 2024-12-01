@@ -1,6 +1,7 @@
 import type {
     BaseItemDto,
     MediaSourceInfo,
+    PlaybackInfoResponse,
     PlayMethod
 } from '@jellyfin/sdk/lib/generated-client';
 import { RepeatMode } from '@jellyfin/sdk/lib/generated-client';
@@ -209,23 +210,29 @@ export abstract class PlaybackManager {
             bitrateSetting: maxBitrate,
             enableHls: true
         });
-        const playbackInfo = await getPlaybackInfo(
-            item,
-            maxBitrate,
-            deviceProfile,
-            options.startPositionTicks ?? null,
-            options.mediaSourceId ?? null,
-            options.audioStreamIndex ?? null,
-            options.subtitleStreamIndex ?? null,
-            options.liveStreamId
-        ).catch(broadcastConnectionErrorMessage);
+        let playbackInfo: PlaybackInfoResponse = {};
+
+        try {
+            playbackInfo = await getPlaybackInfo(
+                item,
+                maxBitrate,
+                deviceProfile,
+                options.startPositionTicks ?? null,
+                options.mediaSourceId ?? null,
+                options.audioStreamIndex ?? null,
+                options.subtitleStreamIndex ?? null,
+                options.liveStreamId
+            );
+        } catch {
+            broadcastConnectionErrorMessage();
+        }
 
         if (playbackInfo.ErrorCode) {
             return showPlaybackInfoErrorMessage(playbackInfo.ErrorCode);
         }
 
         const mediaSource = await getOptimalMediaSource(
-            playbackInfo.MediaSources
+            playbackInfo.MediaSources ?? []
         );
 
         if (!mediaSource) {
@@ -234,7 +241,7 @@ export abstract class PlaybackManager {
 
         let itemToPlay = mediaSource;
 
-        if (mediaSource.RequiresOpening) {
+        if (mediaSource.RequiresOpening && playbackInfo.PlaySessionId) {
             const openLiveStreamResult = await getLiveStream(
                 item,
                 playbackInfo.PlaySessionId,
@@ -252,12 +259,14 @@ export abstract class PlaybackManager {
             }
         }
 
-        this.playMediaSource(
-            playbackInfo.PlaySessionId,
-            item,
-            itemToPlay,
-            options
-        );
+        if (playbackInfo.PlaySessionId) {
+            this.playMediaSource(
+                playbackInfo.PlaySessionId,
+                item,
+                itemToPlay,
+                options
+            );
+        }
     }
 
     private static playMediaSource(
