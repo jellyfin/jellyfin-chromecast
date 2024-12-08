@@ -448,8 +448,7 @@ export function createStreamInfo(
         }) ?? [];
     const subtitleTracks: framework.messages.Track[] = [];
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    subtitleStreams.forEach((subtitleStream: any) => {
+    subtitleStreams.forEach((subtitleStream) => {
         if (subtitleStream.DeliveryUrl === undefined) {
             /* The CAF v3 player only supports vtt currently,
              * SRT subs can be "transcoded" to vtt by jellyfin.
@@ -460,10 +459,6 @@ export function createStreamInfo(
             return;
         }
 
-        const textStreamUrl = subtitleStream.IsExternalUrl
-            ? subtitleStream.DeliveryUrl
-            : JellyfinApi.createUrl(subtitleStream.DeliveryUrl);
-
         if (!info.subtitleStreamIndex) {
             return;
         }
@@ -473,10 +468,26 @@ export function createStreamInfo(
             cast.framework.messages.TrackType.TEXT
         );
 
-        track.trackId = subtitleStream.Index;
-        track.trackContentId = textStreamUrl;
-        track.language = subtitleStream.Language;
-        track.name = subtitleStream.DisplayTitle;
+        if (subtitleStream.IsExternal && subtitleStream.DeliveryUrl) {
+            track.trackContentId = subtitleStream.DeliveryUrl;
+        } else if (subtitleStream.DeliveryUrl) {
+            track.trackContentId = JellyfinApi.createUrl(
+                subtitleStream.DeliveryUrl
+            );
+        }
+
+        if (subtitleStream.Index) {
+            track.trackId = subtitleStream.Index;
+        }
+
+        if (subtitleStream.Language) {
+            track.language = subtitleStream.Language;
+        }
+
+        if (subtitleStream.DisplayTitle) {
+            track.name = subtitleStream.DisplayTitle;
+        }
+
         // TODO this should not be hardcoded but we only support VTT currently
         track.trackContentType = 'text/vtt';
         track.subtype = cast.framework.messages.TextTrackType.SUBTITLES;
