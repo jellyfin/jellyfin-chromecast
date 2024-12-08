@@ -426,13 +426,17 @@ export function setSubtitleStreamIndex(
         subtitleStream.DeliveryMethod == 'External' ||
         currentDeliveryMethod == 'Encode'
     ) {
-        const textStreamUrl = subtitleStream.IsExternalUrl
-            ? subtitleStream.DeliveryUrl
-            : JellyfinApi.createUrl(subtitleStream.DeliveryUrl);
+        let textStreamUrl;
+
+        if (subtitleStream.IsExternal && subtitleStream.DeliveryUrl) {
+            textStreamUrl = subtitleStream.DeliveryUrl;
+        } else if (subtitleStream.DeliveryUrl) {
+            textStreamUrl = JellyfinApi.createUrl(subtitleStream.DeliveryUrl);
+        }
 
         console.log(`Subtitle url: ${textStreamUrl}`);
         setTextTrack(index);
-        state.subtitleStreamIndex = subtitleStream.Index;
+        state.subtitleStreamIndex = subtitleStream.Index ?? null;
 
         return;
     } else {

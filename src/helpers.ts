@@ -461,17 +461,18 @@ export function createStreamInfo(
  * @param streams - array streams to consider
  * @param type - type of stream
  * @param index - index of stream
- * @returns first first matching stream
+ * @returns first matching stream
  */
 export function getStreamByIndex(
     streams: MediaStream[],
     type: string,
     index: number
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-): any {
-    return streams.find((s) => {
-        return s.Type == type && s.Index == index;
-    });
+): MediaStream {
+    return (
+        streams.find((s) => {
+            return s.Type == type && s.Index == index;
+        }) ?? {}
+    );
 }
 
 // defined for use in the 3 next functions
