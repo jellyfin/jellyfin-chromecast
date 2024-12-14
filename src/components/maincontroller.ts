@@ -28,7 +28,7 @@ import { JellyfinApi } from './jellyfinApi';
 import { PlaybackManager, type PlaybackState } from './playbackManager';
 import { CommandHandler } from './commandHandler';
 import { getMaxBitrateSupport } from './codecSupportHelper';
-import type { PlayRequest, StreamInfo } from '~/types/global';
+import type { BusMessageType, PlayRequest, StreamInfo } from '~/types/global';
 
 window.castReceiverContext = cast.framework.CastReceiverContext.getInstance();
 window.playerManager = window.castReceiverContext.getPlayerManager();
@@ -353,7 +353,7 @@ export function processMessage(data: any): void {
  * @returns Promise
  */
 export function reportEvent(
-    name: string,
+    name: BusMessageType,
     reportToServer: boolean
 ): Promise<void> {
     const playbackState = PlaybackManager.playbackState;
