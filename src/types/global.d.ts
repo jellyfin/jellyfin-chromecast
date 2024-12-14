@@ -14,9 +14,20 @@ import type {
     Track
 } from 'chromecast-caf-receiver/cast.framework.messages';
 
+type BusMessageType =
+    | 'connectionerror'
+    | 'error'
+    | 'playbackerror'
+    | 'playbackprogress'
+    | 'playbackstart'
+    | 'playbackstop'
+    | 'playstatechange'
+    | 'repeatmodechange'
+    | 'volumechange';
+
 // Messagebus message
 export interface BusMessage {
-    type: string;
+    type: BusMessageType;
     message?: string;
     data?: string;
 }

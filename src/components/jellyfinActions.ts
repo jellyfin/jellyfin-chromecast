@@ -17,7 +17,10 @@ import { AppStatus } from '../types/appStatus';
 import { JellyfinApi } from './jellyfinApi';
 import { DocumentManager } from './documentManager';
 import { PlaybackManager, type PlaybackState } from './playbackManager';
-import type { JellyfinMediaInformationCustomData } from '~/types/global';
+import type {
+    BusMessageType,
+    JellyfinMediaInformationCustomData
+} from '~/types/global';
 
 let pingInterval: number;
 let lastTranscoderPing = 0;
@@ -93,7 +96,7 @@ export async function reportPlaybackProgress(
     state: PlaybackState,
     reportingParams: PlaybackProgressInfo,
     reportToServer = true,
-    broadcastEventName = 'playbackprogress'
+    broadcastEventName: BusMessageType = 'playbackprogress'
 ): Promise<void> {
     broadcastToMessageBus({
         data: getSenderReportingData(state, reportingParams),
