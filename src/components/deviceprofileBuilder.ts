@@ -15,7 +15,6 @@ import { ProfileConditionValue } from '@jellyfin/sdk/lib/generated-client/models
 import { SubtitleDeliveryMethod } from '@jellyfin/sdk/lib/generated-client/models/subtitle-delivery-method';
 import { DeviceIds, getActiveDeviceId } from './castDevices';
 import {
-    hasSurroundSupport,
     hasTextTrackSupport,
     hasVP8Support,
     hasVP9Support,
@@ -30,7 +29,8 @@ import {
     getSupportedHLSVideoCodecs,
     getSupportedHLSAudioCodecs,
     getSupportedWebMAudioCodecs,
-    getSupportedAudioCodecs
+    getSupportedAudioCodecs,
+    getMaxAudioChannels
 } from './codecSupportHelper';
 
 interface ProfileOptions {
@@ -289,7 +289,7 @@ function getTranscodingProfiles(): TranscodingProfile[] {
     const TranscodingProfiles: TranscodingProfile[] = [];
 
     const hlsAudioCodecs = getSupportedHLSAudioCodecs();
-    const audioChannels: number = hasSurroundSupport() ? 6 : 2;
+    const audioChannels: number = getMaxAudioChannels();
 
     if (profileOptions.enableHls) {
         TranscodingProfiles.push({
