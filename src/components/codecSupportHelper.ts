@@ -31,17 +31,14 @@ export function hasAC3Support(): boolean {
 }
 
 /**
- * Checks if the device can play any surround codecs.
- *
- * Potentially, we could guess that systems with E-AC-3 or AC-3
- * will mostly support 6ch pcm, and if any generation of cast devices
- * is actually capable of decoding e.g. aac 6ch, we can return true here
- * and give it a shot.
- * @returns true if surround codecs can be played
+ * Checks for the number of audio channels supported on the device.
+ * @returns The maximum number of audio channels supported.
  */
-export function hasSurroundSupport(): boolean {
-    // This will turn on surround support if passthrough is available.
-    return hasAC3Support();
+export function getMaxAudioChannels(): number {
+    const audioCtx = new window.AudioContext();
+
+    // Make sure we allow at least 1 channel, in case of some bad output.
+    return Math.max(audioCtx.destination.maxChannelCount, 1);
 }
 
 /**
