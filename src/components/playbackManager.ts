@@ -207,8 +207,7 @@ export abstract class PlaybackManager {
 
         const maxBitrate = await getMaxBitrate();
         const deviceProfile = getDeviceProfile({
-            bitrateSetting: maxBitrate,
-            enableHls: true
+            bitrateSetting: maxBitrate
         });
         let playbackInfo: PlaybackInfoResponse = {};
 

@@ -34,11 +34,9 @@ import {
 } from './codecSupportHelper';
 
 interface ProfileOptions {
-    enableHls: boolean;
     bitrateSetting: number;
 }
 
-let profileOptions: ProfileOptions;
 let currentDeviceId: DeviceIds;
 
 /**
@@ -291,18 +289,16 @@ function getTranscodingProfiles(): TranscodingProfile[] {
     const hlsAudioCodecs = getSupportedHLSAudioCodecs();
     const audioChannels: number = getMaxAudioChannels();
 
-    if (profileOptions.enableHls) {
-        TranscodingProfiles.push({
-            AudioCodec: hlsAudioCodecs.join(','),
-            BreakOnNonKeyFrames: false,
-            Container: 'ts',
-            Context: EncodingContext.Streaming,
-            MaxAudioChannels: audioChannels.toString(),
-            MinSegments: 1,
-            Protocol: 'hls',
-            Type: DlnaProfileType.Audio
-        });
-    }
+    TranscodingProfiles.push({
+        AudioCodec: hlsAudioCodecs.join(','),
+        BreakOnNonKeyFrames: false,
+        Container: 'ts',
+        Context: EncodingContext.Streaming,
+        MaxAudioChannels: audioChannels.toString(),
+        MinSegments: 1,
+        Protocol: 'hls',
+        Type: DlnaProfileType.Audio
+    });
 
     const supportedAudio = getSupportedAudioCodecs();
 
@@ -325,11 +321,7 @@ function getTranscodingProfiles(): TranscodingProfile[] {
 
     const hlsVideoCodecs = getSupportedHLSVideoCodecs();
 
-    if (
-        hlsVideoCodecs.length &&
-        hlsAudioCodecs.length &&
-        profileOptions.enableHls
-    ) {
+    if (hlsVideoCodecs.length && hlsAudioCodecs.length) {
         TranscodingProfiles.push({
             AudioCodec: hlsAudioCodecs.join(','),
             BreakOnNonKeyFrames: false,
@@ -388,7 +380,6 @@ function getSubtitleProfiles(): SubtitleProfile[] {
  * @returns Device profile.
  */
 export function getDeviceProfile(options: ProfileOptions): DeviceProfile {
-    profileOptions = options;
     currentDeviceId = getActiveDeviceId();
 
     // MaxStaticBitrate seems to be for offline sync only
