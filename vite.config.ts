@@ -11,6 +11,9 @@ export default defineConfig({
         target: 'es2015',
         assetsInlineLimit: 0
     },
+    esbuild: {
+        target: 'es2015'
+    },
     server: {
         port: 9000
     }
