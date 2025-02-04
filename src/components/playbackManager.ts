@@ -230,7 +230,7 @@ export abstract class PlaybackManager {
             return showPlaybackInfoErrorMessage(playbackInfo.ErrorCode);
         }
 
-        const mediaSource = await getOptimalMediaSource(
+        const mediaSource = getOptimalMediaSource(
             playbackInfo.MediaSources ?? []
         );
 
