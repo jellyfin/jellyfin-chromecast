@@ -881,7 +881,7 @@ controls.assignButton(
 
 const options = new cast.framework.CastReceiverOptions();
 
-// Global variable set by Webpack
+// Global variable set by Vite
 if (!import.meta.env.PROD) {
     window.castReceiverContext.setLoggerLevel(cast.framework.LoggerLevel.DEBUG);
     // Don't time out on me :(
