@@ -892,6 +892,8 @@ if (!import.meta.env.PROD) {
     // quits once the client closes the connection.
     // options.maxInactivity = 3600;
 
+    options.shakaVariant = cast.framework.ShakaVariant.DEBUG;
+
     window.playerManager.addEventListener(
         cast.framework.events.category.CORE,
         (event: framework.events.Event) => {
