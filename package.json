@@ -11,7 +11,7 @@
         "axios": "1.7.9"
     },
     "devDependencies": {
-        "@types/chromecast-caf-receiver": "6.0.20",
+        "@types/chromecast-caf-receiver": "6.0.21",
         "@types/node": "22.13.10",
         "eslint": "9.22.0",
         "eslint-config-prettier": "10.1.1",
