@@ -298,7 +298,7 @@ export function processMessage(data: any): void {
         return;
     }
 
-    data.options = data.options || {};
+    data.options = data.options ?? {};
 
     // Items will have properties - Id, Name, Type, MediaType, IsFolder
 
@@ -496,7 +496,7 @@ export async function changeStream(
         return Promise.resolve();
     }
 
-    params = params || {};
+    params = params ?? {};
 
     // TODO Could be useful for garbage collection.
     //      It needs to predict if the server side transcode needs
@@ -538,7 +538,7 @@ window.castReceiverContext.addCustomMessageListener(
             data = JSON.parse(data);
         }
 
-        data.options = data.options || {};
+        data.options = data.options ?? {};
         data.options.senderId = evt.senderId;
         // TODO set it somewhere better perhaps
         window.senderId = evt.senderId;
