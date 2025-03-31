@@ -1,27 +1,5 @@
 import { Api, Jellyfin } from '@jellyfin/sdk';
-import axios from 'axios';
 import { version as packageVersion } from '../../package.json';
-
-axios.interceptors.request.use((request) => {
-    console.log(`requesting url: ${request.url}`);
-
-    return request;
-});
-
-axios.interceptors.response.use(
-    (response) => {
-        console.log(
-            `response status: ${response.status}, url: ${response.request.responseURL}`
-        );
-
-        return response;
-    },
-    // eslint-disable-next-line promise/prefer-await-to-callbacks
-    (error) => {
-        console.log(`request failed to url: ${error.request.url}`);
-        throw error;
-    }
-);
 
 // eslint-disable-next-line @typescript-eslint/no-extraneous-class
 export abstract class JellyfinApi {
