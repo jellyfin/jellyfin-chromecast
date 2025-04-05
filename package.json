@@ -14,7 +14,7 @@
         "@types/node": "22.13.13",
         "eslint": "9.23.0",
         "eslint-config-prettier": "10.1.1",
-        "eslint-import-resolver-typescript": "4.2.7",
+        "eslint-import-resolver-typescript": "4.3.1",
         "eslint-plugin-import": "2.31.0",
         "eslint-plugin-jsdoc": "50.6.9",
         "eslint-plugin-json": "4.0.1",
