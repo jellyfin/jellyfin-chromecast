@@ -4,6 +4,7 @@
         "module": "ESNext",
         "moduleResolution": "bundler",
         "lib": ["dom", "ES2015"],
+        "skipLibCheck": true,
         "resolveJsonModule": true,
         "allowSyntheticDefaultImports": true,
         "allowJs": true,
