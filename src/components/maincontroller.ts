@@ -701,11 +701,9 @@ export function getOptimalMediaSource(
         return v.SupportsDirectPlay;
     });
 
-    if (!optimalVersion) {
-        optimalVersion = versions.find((v) => {
-            return v.SupportsDirectStream;
-        });
-    }
+    optimalVersion ??= versions.find((v) => {
+        return v.SupportsDirectStream;
+    });
 
     return (
         optimalVersion ??

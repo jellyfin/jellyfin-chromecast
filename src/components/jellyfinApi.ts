@@ -54,18 +54,16 @@ export abstract class JellyfinApi {
                     : new Date().getTime().toString();
         }
 
-        if (!this.jellyfinSdk) {
-            this.jellyfinSdk = new Jellyfin({
-                clientInfo: {
-                    name: 'Chromecast',
-                    version: packageVersion
-                },
-                deviceInfo: {
-                    id: this.deviceId,
-                    name: this.deviceName
-                }
-            });
-        }
+        this.jellyfinSdk ??= new Jellyfin({
+            clientInfo: {
+                name: 'Chromecast',
+                version: packageVersion
+            },
+            deviceInfo: {
+                id: this.deviceId,
+                name: this.deviceName
+            }
+        });
 
         if (!this.jellyfinApi || regenApi) {
             if (serverAddress && accessToken) {
