@@ -100,7 +100,7 @@ function getCodecString(
             // luma sample rate (samples/s).
             level = level ?? 10;
 
-            return `hev1.1.${constraintFlag}.${profileFlag}${level * 30}.B0`;
+            return `hev1.1.${constraintFlag}.${profileFlag}${level * 3}.B0`;
         }
         case VideoCodec.VP8:
             return 'vp8';
