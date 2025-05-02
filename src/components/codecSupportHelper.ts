@@ -237,7 +237,7 @@ export function getMaxAudioChannels(): number {
 export function getSupportedVideoCodecs(): VideoCodec[] {
     const supportedVideoCodecs: VideoCodec[] = [];
 
-    for (const videoCodec in VideoCodec) {
+    for (const videoCodec of Object.values(VideoCodec)) {
         if (hasVideoCodecSupport(videoCodec as VideoCodec)) {
             supportedVideoCodecs.push(videoCodec as VideoCodec);
         }
