@@ -36,8 +36,6 @@ interface ProfileOptions {
     bitrateSetting: number;
 }
 
-let profileOptions: ProfileOptions;
-
 /**
  * Create and return a new ProfileCondition
  * @param Property - What property the condition should test.
@@ -455,8 +453,6 @@ function getSubtitleProfiles(): SubtitleProfile[] {
  * @returns Device profile.
  */
 export function getDeviceProfile(options: ProfileOptions): DeviceProfile {
-    profileOptions = options;
-
     // MaxStaticBitrate seems to be for offline sync only
     const profile: DeviceProfile = {
         MaxStaticBitrate: options.bitrateSetting,
