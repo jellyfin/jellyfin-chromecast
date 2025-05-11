@@ -48,12 +48,10 @@ function getCodecString(
                 case 'main':
                     profileFlag = '4d00';
                     break;
-                case 'baseline':
-                    profileFlag = '4200';
-                    break;
                 case 'constrained baseline':
                     profileFlag = '4240';
                     break;
+                case 'baseline':
                 default:
                     profileFlag = '4200';
                     break;
@@ -107,17 +105,17 @@ function getCodecString(
         case VideoCodec.VP9: {
             let profileFlag: string;
 
-            switch (profile) {
-                case 'Profile 0':
+            switch (profile?.toLowerCase()) {
+                case 'profile 0':
                     profileFlag = '00';
                     break;
-                case 'Profile 1':
+                case 'profile 1':
                     profileFlag = '01';
                     break;
-                case 'Profile 2':
+                case 'profile 2':
                     profileFlag = '02';
                     break;
-                case 'Profile 3':
+                case 'profile 3':
                     profileFlag = '03';
                     break;
                 default:
