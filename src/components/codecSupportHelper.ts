@@ -72,10 +72,6 @@ function getCodecString(
             let constraintFlag: number;
 
             switch (profile) {
-                case 'main':
-                    profileFlag = 'L';
-                    constraintFlag = 0;
-                    break;
                 case 'main 10':
                     profileFlag = 'L';
                     constraintFlag = 4;
@@ -88,6 +84,7 @@ function getCodecString(
                     profileFlag = 'H';
                     constraintFlag = 4;
                     break;
+                case 'main':
                 default:
                     profileFlag = 'L';
                     constraintFlag = 0;
@@ -106,9 +103,6 @@ function getCodecString(
             let profileFlag: string;
 
             switch (profile?.toLowerCase()) {
-                case 'profile 0':
-                    profileFlag = '00';
-                    break;
                 case 'profile 1':
                     profileFlag = '01';
                     break;
@@ -118,6 +112,7 @@ function getCodecString(
                 case 'profile 3':
                     profileFlag = '03';
                     break;
+                case 'profile 0':
                 default:
                     profileFlag = '00';
                     break;
@@ -134,15 +129,13 @@ function getCodecString(
             let profileFlag: string;
 
             switch (profile?.toLowerCase()) {
-                case 'main':
-                    profileFlag = '0';
-                    break;
                 case 'high':
                     profileFlag = '1';
                     break;
                 case 'professional':
                     profileFlag = '2';
                     break;
+                case 'main':
                 default:
                     profileFlag = '0';
                     break;
