@@ -13,31 +13,28 @@ import { EncodingContext } from '@jellyfin/sdk/lib/generated-client/models/encod
 import { ProfileConditionType } from '@jellyfin/sdk/lib/generated-client/models/profile-condition-type';
 import { ProfileConditionValue } from '@jellyfin/sdk/lib/generated-client/models/profile-condition-value';
 import { SubtitleDeliveryMethod } from '@jellyfin/sdk/lib/generated-client/models/subtitle-delivery-method';
-import { DeviceIds, getActiveDeviceId } from './castDevices';
 import {
     hasTextTrackSupport,
-    hasVP8Support,
-    hasVP9Support,
-    getMaxWidthSupport,
-    getH264ProfileSupport,
-    getH264LevelSupport,
-    getH265ProfileSupport,
-    getH265LevelSupport,
-    getSupportedVPXVideoCodecs,
+    getSupportedWebMVideoCodecs,
     getSupportedMP4VideoCodecs,
     getSupportedMP4AudioCodecs,
     getSupportedHLSVideoCodecs,
     getSupportedHLSAudioCodecs,
     getSupportedWebMAudioCodecs,
     getSupportedAudioCodecs,
+    hasVideoSupport,
+    getSupportedVideoCodecs,
+    getVideoProfileSupport,
+    getVideoCodecHighestLevelSupport,
+    getVideoCodecHighestBitDepthSupport,
+    type Resolution,
+    getMaxResolutionSupported,
     getMaxAudioChannels
 } from './codecSupportHelper';
 
 interface ProfileOptions {
     bitrateSetting: number;
 }
-
-let currentDeviceId: DeviceIds;
 
 /**
  * Create and return a new ProfileCondition
@@ -77,18 +74,18 @@ function getContainerProfiles(): ContainerProfile[] {
 function getDirectPlayProfiles(): DirectPlayProfile[] {
     const DirectPlayProfiles: DirectPlayProfile[] = [];
 
-    if (currentDeviceId !== DeviceIds.AUDIO) {
+    if (hasVideoSupport()) {
         const mp4VideoCodecs = getSupportedMP4VideoCodecs();
         const mp4AudioCodecs = getSupportedMP4AudioCodecs();
-        const vpxVideoCodecs = getSupportedVPXVideoCodecs();
+        const webmVideoCodecs = getSupportedWebMVideoCodecs();
         const webmAudioCodecs = getSupportedWebMAudioCodecs();
 
-        for (const codec of vpxVideoCodecs) {
+        for (const codec of webmVideoCodecs) {
             DirectPlayProfiles.push({
                 AudioCodec: webmAudioCodecs.join(','),
                 Container: 'webm',
                 Type: DlnaProfileType.Video,
-                VideoCodec: codec
+                VideoCodec: codec as string
             });
         }
 
@@ -139,7 +136,7 @@ function getDirectPlayProfiles(): DirectPlayProfile[] {
  * @returns Codec profiles.
  */
 function getCodecProfiles(): CodecProfile[] {
-    const CodecProfiles: CodecProfile[] = [];
+    const codecProfiles: CodecProfile[] = [];
 
     const audioConditions: CodecProfile = {
         Codec: 'flac',
@@ -158,11 +155,11 @@ function getCodecProfiles(): CodecProfile[] {
         Type: CodecType.Audio
     };
 
-    CodecProfiles.push(audioConditions);
+    codecProfiles.push(audioConditions);
 
     // If device is audio only, don't add all the video related stuff
-    if (currentDeviceId == DeviceIds.AUDIO) {
-        return CodecProfiles;
+    if (!hasVideoSupport()) {
+        return codecProfiles;
     }
 
     const aacConditions: CodecProfile = {
@@ -177,89 +174,142 @@ function getCodecProfiles(): CodecProfile[] {
         Type: CodecType.VideoAudio
     };
 
-    CodecProfiles.push(aacConditions);
+    codecProfiles.push(aacConditions);
 
-    const maxWidth: number = getMaxWidthSupport(currentDeviceId);
-    const h264Level: number = getH264LevelSupport(currentDeviceId);
-    const h264Profile: string = getH264ProfileSupport(currentDeviceId);
+    for (const videoCodec of getSupportedVideoCodecs()) {
+        const videoProfiles = getVideoProfileSupport(videoCodec);
 
-    const h264Conditions: CodecProfile = {
-        Codec: 'h264',
-        Conditions: [
-            createProfileCondition(
-                ProfileConditionValue.IsAnamorphic,
-                ProfileConditionType.NotEquals,
-                'true'
-            ),
-            createProfileCondition(
-                ProfileConditionValue.VideoProfile,
-                ProfileConditionType.EqualsAny,
-                h264Profile
-            ),
-            createProfileCondition(
-                ProfileConditionValue.VideoLevel,
-                ProfileConditionType.LessThanEqual,
-                h264Level.toString()
-            ),
-            createProfileCondition(
-                ProfileConditionValue.Width,
-                ProfileConditionType.LessThanEqual,
-                getMaxWidthSupport(currentDeviceId).toString(),
-                true
-            )
-        ],
-        Type: CodecType.Video
-    };
+        if (videoProfiles.length === 0) {
+            continue;
+        }
 
-    CodecProfiles.push(h264Conditions);
+        const maxLevels: number[] = [];
+        const maxBitDepths: number[] = [];
+        const maxResolutions: Resolution[] = [];
 
-    const h265Level: number = getH265LevelSupport(currentDeviceId);
-    const h265Profile: string = getH265ProfileSupport(currentDeviceId);
+        for (const videoProfile of videoProfiles) {
+            const maxVideoLevel =
+                getVideoCodecHighestLevelSupport(videoCodec, videoProfile) ?? 0;
 
-    const h265Conditions: CodecProfile = {
-        Codec: 'h265',
-        Conditions: [
-            createProfileCondition(
-                ProfileConditionValue.IsAnamorphic,
-                ProfileConditionType.NotEquals,
-                'true'
-            ),
-            createProfileCondition(
-                ProfileConditionValue.VideoProfile,
-                ProfileConditionType.EqualsAny,
-                h265Profile
-            ),
-            createProfileCondition(
-                ProfileConditionValue.VideoLevel,
-                ProfileConditionType.LessThanEqual,
-                h265Level.toString()
-            ),
-            createProfileCondition(
-                ProfileConditionValue.Width,
-                ProfileConditionType.LessThanEqual,
-                maxWidth.toString(),
-                true
-            )
-        ],
-        Type: CodecType.Video
-    };
+            const maxBitDepth =
+                getVideoCodecHighestBitDepthSupport(
+                    videoCodec,
+                    videoProfile,
+                    maxVideoLevel
+                ) ?? 0;
 
-    CodecProfiles.push(h265Conditions);
+            const maxResolution = getMaxResolutionSupported(
+                videoCodec,
+                videoProfile,
+                maxVideoLevel,
+                maxBitDepth
+            );
 
-    // the following are codec independent conditions so hold for all codecs
-    const videoConditions: CodecProfile = {
-        Conditions: [
-            createProfileCondition(
-                ProfileConditionValue.Width,
-                ProfileConditionType.LessThanEqual,
-                getMaxWidthSupport(currentDeviceId).toString(),
-                true
-            )
-        ],
-        Type: CodecType.Video
-    };
+            maxLevels.push(maxVideoLevel);
+            maxBitDepths.push(maxBitDepth);
+            maxResolutions.push(maxResolution);
+        }
 
-    CodecProfiles.push(videoConditions);
+        // If all other constraints are equal, merge into one condition. This
+        // is pretty common.
+        if (
+            maxLevels.every((l) => l === maxLevels[0]) &&
+            maxBitDepths.every((b) => b === maxBitDepths[0]) &&
+            maxResolutions.every((r) => r.equals(maxResolutions[0]))
+        ) {
+            const maxLevel = maxLevels[0];
+            const maxBitDepth = maxBitDepths[0];
+            const maxResolution = maxResolutions[0];
+
+            const profileConditions = [
+                createProfileCondition(
+                    ProfileConditionValue.IsAnamorphic,
+                    ProfileConditionType.NotEquals,
+                    'true'
+                ),
+                createProfileCondition(
+                    ProfileConditionValue.VideoProfile,
+                    ProfileConditionType.EqualsAny,
+                    videoProfiles.join('|')
+                ),
+                createProfileCondition(
+                    ProfileConditionValue.VideoLevel,
+                    ProfileConditionType.LessThanEqual,
+                    maxLevel.toString()
+                ),
+                createProfileCondition(
+                    ProfileConditionValue.VideoBitDepth,
+                    ProfileConditionType.LessThanEqual,
+                    maxBitDepth.toString()
+                ),
+                createProfileCondition(
+                    ProfileConditionValue.Width,
+                    ProfileConditionType.LessThanEqual,
+                    maxResolution.width.toString()
+                ),
+                createProfileCondition(
+                    ProfileConditionValue.Height,
+                    ProfileConditionType.LessThanEqual,
+                    maxResolution.height.toString()
+                )
+            ];
+
+            codecProfiles.push({
+                Codec: videoCodec,
+                Conditions: profileConditions,
+                Type: CodecType.Video
+            });
+        } else {
+            // Different profiles of the same codec have different video profile
+            // constraints. Create a new codec profile for each.
+
+            for (let i = 0; i < videoProfiles.length; i++) {
+                const videoProfile = videoProfiles[i];
+                const maxLevel = maxLevels[i];
+                const maxBitDepth = maxBitDepths[i];
+                const maxResolution = maxResolutions[i];
+
+                const profileConditions = [
+                    createProfileCondition(
+                        ProfileConditionValue.IsAnamorphic,
+                        ProfileConditionType.NotEquals,
+                        'true'
+                    ),
+                    createProfileCondition(
+                        ProfileConditionValue.VideoProfile,
+                        ProfileConditionType.Equals,
+                        videoProfile
+                    ),
+                    createProfileCondition(
+                        ProfileConditionValue.VideoLevel,
+                        ProfileConditionType.LessThanEqual,
+                        maxLevel.toString()
+                    ),
+                    createProfileCondition(
+                        ProfileConditionValue.VideoBitDepth,
+                        ProfileConditionType.LessThanEqual,
+                        maxBitDepth.toString()
+                    ),
+                    createProfileCondition(
+                        ProfileConditionValue.Width,
+                        ProfileConditionType.LessThanEqual,
+                        maxResolution.width.toString()
+                    ),
+                    createProfileCondition(
+                        ProfileConditionValue.Height,
+                        ProfileConditionType.LessThanEqual,
+                        maxResolution.height.toString()
+                    )
+                ];
+
+                codecProfiles.push({
+                    Codec: videoCodec,
+                    Conditions: profileConditions,
+                    Type: CodecType.Video
+                });
+            }
+        }
+    }
 
     const videoAudioConditions: CodecProfile = {
         Conditions: [
@@ -274,9 +324,9 @@ function getCodecProfiles(): CodecProfile[] {
         Type: CodecType.VideoAudio
     };
 
-    CodecProfiles.push(videoAudioConditions);
+    codecProfiles.push(videoAudioConditions);
 
-    return CodecProfiles;
+    return codecProfiles;
 }
 
 /**
@@ -284,12 +334,12 @@ function getCodecProfiles(): CodecProfile[] {
  * @returns Transcoding profiles.
  */
 function getTranscodingProfiles(): TranscodingProfile[] {
-    const TranscodingProfiles: TranscodingProfile[] = [];
+    const transcodingProfiles: TranscodingProfile[] = [];
 
     const hlsAudioCodecs = getSupportedHLSAudioCodecs();
     const audioChannels: number = getMaxAudioChannels();
 
-    TranscodingProfiles.push({
+    transcodingProfiles.push({
         AudioCodec: hlsAudioCodecs.join(','),
         BreakOnNonKeyFrames: false,
         Container: 'ts',
@@ -304,7 +354,7 @@ function getTranscodingProfiles(): TranscodingProfile[] {
 
     // audio only profiles here
     for (const audioFormat of supportedAudio) {
-        TranscodingProfiles.push({
+        transcodingProfiles.push({
             AudioCodec: audioFormat,
             Container: audioFormat,
             Context: EncodingContext.Streaming,
@@ -315,29 +365,52 @@ function getTranscodingProfiles(): TranscodingProfile[] {
     }
 
     // If device is audio only, don't add all the video related stuff
-    if (currentDeviceId == DeviceIds.AUDIO) {
-        return TranscodingProfiles;
+    if (!hasVideoSupport()) {
+        return transcodingProfiles;
     }
+
+    // Create conditions that always need to be honored, regardless of the
+    // codecs profile.
+    //
+    // For now, it's the screen size. Since this is a transcoding profile,
+    // request that the video be no larger than the screen.
+    const profileConditions = [
+        createProfileCondition(
+            ProfileConditionValue.Width,
+            ProfileConditionType.LessThanEqual,
+            window.screen.width.toString()
+        ),
+        createProfileCondition(
+            ProfileConditionValue.Height,
+            ProfileConditionType.LessThanEqual,
+            window.screen.height.toString()
+        )
+    ];
 
     const hlsVideoCodecs = getSupportedHLSVideoCodecs();
 
     if (hlsVideoCodecs.length && hlsAudioCodecs.length) {
-        TranscodingProfiles.push({
+        transcodingProfiles.push({
             AudioCodec: hlsAudioCodecs.join(','),
             BreakOnNonKeyFrames: false,
+            Conditions: profileConditions,
             Container: 'mp4',
             Context: EncodingContext.Streaming,
             MaxAudioChannels: audioChannels.toString(),
             MinSegments: 1,
             Protocol: 'hls',
             Type: DlnaProfileType.Video,
-            VideoCodec: hlsVideoCodecs.join(',')
+            VideoCodec: hlsVideoCodecs.map((codec) => codec as string).join(',')
         });
     }
 
-    if (hasVP8Support() || hasVP9Support()) {
-        TranscodingProfiles.push({
-            AudioCodec: 'vorbis',
+    const webmAudioCodecs = getSupportedWebMAudioCodecs();
+    const webmVideoCodecs = getSupportedWebMVideoCodecs();
+
+    if (webmAudioCodecs.length > 0 && hlsVideoCodecs.length > 0) {
+        transcodingProfiles.push({
+            AudioCodec: webmAudioCodecs.join(','),
+            Conditions: profileConditions,
             Container: 'webm',
             Context: EncodingContext.Streaming,
             // If audio transcoding is needed, limit channels to number of physical audio channels
@@ -345,11 +418,11 @@ function getTranscodingProfiles(): TranscodingProfile[] {
             MaxAudioChannels: audioChannels.toString(),
             Protocol: 'http',
             Type: DlnaProfileType.Video,
-            VideoCodec: 'vpx'
+            VideoCodec: webmVideoCodecs.join(',')
         });
     }
 
-    return TranscodingProfiles;
+    return transcodingProfiles;
 }
 
 /**
@@ -359,7 +432,7 @@ function getTranscodingProfiles(): TranscodingProfile[] {
 function getSubtitleProfiles(): SubtitleProfile[] {
     const subProfiles: SubtitleProfile[] = [];
 
-    if (hasTextTrackSupport(currentDeviceId)) {
+    if (hasTextTrackSupport()) {
         subProfiles.push({
             Format: 'vtt',
             Method: SubtitleDeliveryMethod.External
@@ -380,8 +453,6 @@ function getSubtitleProfiles(): SubtitleProfile[] {
  * @returns Device profile.
  */
 export function getDeviceProfile(options: ProfileOptions): DeviceProfile {
-    currentDeviceId = getActiveDeviceId();
-
     // MaxStaticBitrate seems to be for offline sync only
     const profile: DeviceProfile = {
         MaxStaticBitrate: options.bitrateSetting,
