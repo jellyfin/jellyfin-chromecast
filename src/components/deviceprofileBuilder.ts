@@ -369,31 +369,12 @@ function getTranscodingProfiles(): TranscodingProfile[] {
         return transcodingProfiles;
     }
 
-    // Create conditions that always need to be honored, regardless of the
-    // codecs profile.
-    //
-    // For now, it's the screen size. Since this is a transcoding profile,
-    // request that the video be no larger than the screen.
-    const profileConditions = [
-        createProfileCondition(
-            ProfileConditionValue.Width,
-            ProfileConditionType.LessThanEqual,
-            window.screen.width.toString()
-        ),
-        createProfileCondition(
-            ProfileConditionValue.Height,
-            ProfileConditionType.LessThanEqual,
-            window.screen.height.toString()
-        )
-    ];
-
     const hlsVideoCodecs = getSupportedHLSVideoCodecs();
 
     if (hlsVideoCodecs.length && hlsAudioCodecs.length) {
         transcodingProfiles.push({
             AudioCodec: hlsAudioCodecs.join(','),
             BreakOnNonKeyFrames: false,
-            Conditions: profileConditions,
             Container: 'mp4',
             Context: EncodingContext.Streaming,
             MaxAudioChannels: audioChannels.toString(),
@@ -410,7 +391,6 @@ function getTranscodingProfiles(): TranscodingProfile[] {
     if (webmAudioCodecs.length > 0 && hlsVideoCodecs.length > 0) {
         transcodingProfiles.push({
             AudioCodec: webmAudioCodecs.join(','),
-            Conditions: profileConditions,
             Container: 'webm',
             Context: EncodingContext.Streaming,
             // If audio transcoding is needed, limit channels to number of physical audio channels
