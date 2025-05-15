@@ -21,7 +21,6 @@ import {
     getSupportedHLSVideoCodecs,
     getSupportedHLSAudioCodecs,
     getSupportedWebMAudioCodecs,
-    getSupportedAudioCodecs,
     hasVideoSupport,
     getSupportedVideoCodecs,
     getVideoProfileSupport,
@@ -29,7 +28,9 @@ import {
     getVideoCodecHighestBitDepthSupport,
     type Resolution,
     getMaxResolutionSupported,
-    getMaxAudioChannels
+    getMaxAudioChannels,
+    AudioCodec,
+    getAudioCodecContainerSupport
 } from './codecSupportHelper';
 
 interface ProfileOptions {
@@ -72,7 +73,7 @@ function getContainerProfiles(): ContainerProfile[] {
  * @returns Direct play profiles.
  */
 function getDirectPlayProfiles(): DirectPlayProfile[] {
-    const DirectPlayProfiles: DirectPlayProfile[] = [];
+    const directPlayProfiles: DirectPlayProfile[] = [];
 
     if (hasVideoSupport()) {
         const mp4VideoCodecs = getSupportedMP4VideoCodecs();
@@ -81,7 +82,7 @@ function getDirectPlayProfiles(): DirectPlayProfile[] {
         const webmAudioCodecs = getSupportedWebMAudioCodecs();
 
         for (const codec of webmVideoCodecs) {
-            DirectPlayProfiles.push({
+            directPlayProfiles.push({
                 AudioCodec: webmAudioCodecs.join(','),
                 Container: 'webm',
                 Type: DlnaProfileType.Video,
@@ -89,7 +90,7 @@ function getDirectPlayProfiles(): DirectPlayProfile[] {
             });
         }
 
-        DirectPlayProfiles.push({
+        directPlayProfiles.push({
             AudioCodec: mp4AudioCodecs.join(','),
             Container: 'mp4,m4v',
             Type: DlnaProfileType.Video,
@@ -97,38 +98,21 @@ function getDirectPlayProfiles(): DirectPlayProfile[] {
         });
     }
 
-    const supportedAudio = getSupportedAudioCodecs();
+    for (const audioCodec of Object.values(AudioCodec)) {
+        const supportedContainers = getAudioCodecContainerSupport(audioCodec);
 
-    for (const audioFormat of supportedAudio) {
-        if (audioFormat === 'mp3') {
-            DirectPlayProfiles.push({
-                AudioCodec: audioFormat,
-                Container: audioFormat,
-                Type: DlnaProfileType.Audio
-            });
-        } else if (audioFormat === 'webma') {
-            DirectPlayProfiles.push({
-                Container: 'webma,webm',
-                Type: DlnaProfileType.Audio
-            });
-        } else {
-            DirectPlayProfiles.push({
-                Container: audioFormat,
-                Type: DlnaProfileType.Audio
-            });
+        if (supportedContainers.length < 1) {
+            continue;
         }
 
-        // aac also appears in the m4a and m4b container
-        if (audioFormat === 'aac') {
-            DirectPlayProfiles.push({
-                AudioCodec: audioFormat,
-                Container: 'm4a,m4b',
-                Type: DlnaProfileType.Audio
-            });
-        }
+        directPlayProfiles.push({
+            AudioCodec: audioCodec.toString(),
+            Container: supportedContainers.join(','),
+            Type: DlnaProfileType.Audio
+        });
     }
 
-    return DirectPlayProfiles;
+    return directPlayProfiles;
 }
 
 /**
@@ -350,13 +334,17 @@ function getTranscodingProfiles(): TranscodingProfile[] {
         Type: DlnaProfileType.Audio
     });
 
-    const supportedAudio = getSupportedAudioCodecs();
-
     // audio only profiles here
-    for (const audioFormat of supportedAudio) {
+    for (const audioCodec of Object.values(AudioCodec)) {
+        const audioContainers = getAudioCodecContainerSupport(audioCodec);
+
+        if (audioContainers.length < 1) {
+            continue;
+        }
+
         transcodingProfiles.push({
-            AudioCodec: audioFormat,
-            Container: audioFormat,
+            AudioCodec: audioCodec.toString(),
+            Container: audioContainers.join(','),
             Context: EncodingContext.Streaming,
             MaxAudioChannels: audioChannels.toString(),
             Protocol: 'http',
@@ -390,6 +378,7 @@ function getTranscodingProfiles(): TranscodingProfile[] {
     const hlsVideoCodecs = getSupportedHLSVideoCodecs();
 
     if (hlsVideoCodecs.length && hlsAudioCodecs.length) {
+        // TODO: Signal to the server whether we have Dolby Atmos support when that's expressible.
         transcodingProfiles.push({
             AudioCodec: hlsAudioCodecs.join(','),
             BreakOnNonKeyFrames: false,

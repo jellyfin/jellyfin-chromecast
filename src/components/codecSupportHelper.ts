@@ -20,12 +20,33 @@ function videoCodecToMimeType(codec: VideoCodec): string {
 /**
  * Get the string to use for testing support of a codec.
  * @param codec - The codec in question.
+ * @returns The string to use for testing support of the codec.
+ */
+function getAudioCodecString(codec: AudioCodec): string | undefined {
+    switch (codec) {
+        case AudioCodec.EAC3:
+            return 'ec-3';
+        case AudioCodec.AC3:
+            return 'ac-3';
+        case AudioCodec.AAC:
+            // Use HE-AAC as the test codec, LC-AAC should be supported if HE-AAC is too.
+            return 'mp4a.40.5';
+        case AudioCodec.WAV:
+            return undefined;
+        default:
+            return codec.toString();
+    }
+}
+
+/**
+ * Get the string to use for testing support of a codec.
+ * @param codec - The codec in question.
  * @param profile - The profile for the codec.
  * @param level - The level for the codec.
  * @param bitDepth - The bit depth of the video.
  * @returns The string to use for testing support of the codec.
  */
-function getCodecString(
+function getVideoCodecString(
     codec: VideoCodec,
     profile?: string,
     level?: number,
@@ -182,32 +203,104 @@ export enum VideoCodec {
     AV1 = 'av1'
 }
 
-/**
- * Checks if there is E-AC-3 support.
- * This check returns in line with the cast settings made in Google Home.
- * If the device is in auto, EDID information will be used, otherwise it
- * depends on the manual setting.
- *
- * Currently it's disabled because of problems getting it to work with HLS.
- * @returns true if E-AC-3 can be played
- */
-export function hasEAC3Support(): boolean {
-    //return castContext.canDisplayType('audio/mp4', 'ec-3');
-    return false;
+export enum AudioCodec {
+    EAC3 = 'eac3',
+    AC3 = 'ac3',
+    MP3 = 'mp3',
+    AAC = 'aac',
+    FLAC = 'flac',
+    WAV = 'wav',
+    Vorbis = 'vorbis',
+    Opus = 'opus'
 }
 
 /**
- * Checks if there is AC-3 support.
- * This check returns in line with the cast settings made in Google Home.
- * If the device is in auto, EDID information will be used, otherwise it
- * depends on the manual setting.
- *
- * Currently it's disabled because of problems getting it to work with HLS.
- * @returns true if AC-3 can be played
+ * Checks whether a given audio codec is supported.
+ * @param codec - The codec in question
+ * @returns `true` if the codec is supported.
  */
-export function hasAC3Support(): boolean {
-    //return castContext.canDisplayType('audio/mp4', 'ac-3');
-    return false;
+export function hasAudioCodecSupport(codec: AudioCodec): boolean {
+    return getAudioCodecContainerSupport(codec).length > 0;
+}
+
+/**
+ * Returns the containers supported for a given audio codec.
+ *
+ * Returns an empty array if the codec is not supported.
+ * @param codec - The codec in question
+ * @returns An array of strings representing the supported container formats.
+ */
+export function getAudioCodecContainerSupport(codec: AudioCodec): string[] {
+    const supportedContainers = [];
+    const codecString = getAudioCodecString(codec);
+
+    switch (codec) {
+        case AudioCodec.EAC3:
+        case AudioCodec.AC3:
+        case AudioCodec.AAC:
+            if (castContext.canDisplayType('audio/mp4', codecString)) {
+                supportedContainers.push('mp4');
+            }
+
+            break;
+        case AudioCodec.MP3:
+            if (castContext.canDisplayType('audio/mp4', codecString)) {
+                supportedContainers.push('mp4');
+                supportedContainers.push('m4a');
+            }
+
+            if (castContext.canDisplayType('audio/mpeg', codecString)) {
+                supportedContainers.push('mp3');
+            }
+
+            break;
+        case AudioCodec.FLAC:
+            if (castContext.canDisplayType('audio/mp4', codecString)) {
+                supportedContainers.push('mp4');
+            }
+
+            if (castContext.canDisplayType('audio/flac', codecString)) {
+                supportedContainers.push('flac');
+            }
+
+            break;
+        case AudioCodec.WAV:
+            if (castContext.canDisplayType('audio/wav', codecString)) {
+                supportedContainers.push('wav');
+            }
+
+            break;
+        case AudioCodec.Vorbis:
+        case AudioCodec.Opus:
+            if (castContext.canDisplayType('audio/webm', codecString)) {
+                supportedContainers.push('webm');
+            }
+
+            if (castContext.canDisplayType('audio/ogg', codecString)) {
+                supportedContainers.push('ogg');
+            }
+
+            // Usually, only Opus is supported in MP4.
+            if (castContext.canDisplayType('audio/mp4', codecString)) {
+                supportedContainers.push('mp4');
+            }
+
+            break;
+    }
+
+    return supportedContainers;
+}
+
+/**
+ * Checks whether Dolby Atmos is supported on the device.
+ * @returns `true` if Dolby Atmos is supported.
+ */
+export function hasDolbyAtmosSupport(): boolean {
+    const deviceCaps = castContext.getDeviceCapabilities();
+
+    return deviceCaps?.[
+        cast.framework.system.DeviceCapabilities.IS_DOLBY_ATMOS_SUPPORTED
+    ];
 }
 
 /**
@@ -256,7 +349,7 @@ export function hasVideoSupport(): boolean {
  */
 export function hasVideoCodecSupport(codec: VideoCodec): boolean {
     const mimeType = videoCodecToMimeType(codec);
-    const codecString = getCodecString(codec);
+    const codecString = getVideoCodecString(codec);
 
     return castContext.canDisplayType(mimeType, codecString);
 }
@@ -305,7 +398,7 @@ export function getMaxResolutionSupported(
 
     let maxRes = new Resolution(0, 0);
     const mimeType = videoCodecToMimeType(codec);
-    const codecString = getCodecString(codec, profile, level, bitDepth);
+    const codecString = getVideoCodecString(codec, profile, level, bitDepth);
 
     // Limit the upper bound to 32K, which is more than enough.
     while (maxRes.width < 30720) {
@@ -424,7 +517,7 @@ export function getVideoProfileSupport(codec: VideoCodec): string[] {
     })();
 
     const supportedProfiles = possibleProfiles.filter((profile) => {
-        const codecString = getCodecString(codec, profile);
+        const codecString = getVideoCodecString(codec, profile);
         const mimeType = videoCodecToMimeType(codec);
 
         return castContext.canDisplayType(mimeType, codecString);
@@ -468,7 +561,12 @@ export function getVideoCodecHighestLevelSupport(
 
     const supportedLevels = possibleLevels.filter((level) => {
         const mimeType = videoCodecToMimeType(codec);
-        const codecString = getCodecString(codec, profile, level, bitDepth);
+        const codecString = getVideoCodecString(
+            codec,
+            profile,
+            level,
+            bitDepth
+        );
 
         return castContext.canDisplayType(mimeType, codecString);
     });
@@ -530,7 +628,12 @@ export function getVideoCodecHighestBitDepthSupport(
 
     return possibleBitDepths.find((bitDepth) => {
         const mimeType = videoCodecToMimeType(codec);
-        const codecString = getCodecString(codec, profile, level, bitDepth);
+        const codecString = getVideoCodecString(
+            codec,
+            profile,
+            level,
+            bitDepth
+        );
 
         return castContext.canDisplayType(mimeType, codecString);
     });
@@ -544,7 +647,10 @@ export function getSupportedWebMVideoCodecs(): VideoCodec[] {
     const possibleCodecs = [VideoCodec.VP8, VideoCodec.VP9, VideoCodec.AV1];
 
     const supportedCodecs = possibleCodecs.filter((codec) => {
-        return castContext.canDisplayType('video/webm', getCodecString(codec));
+        return castContext.canDisplayType(
+            'video/webm',
+            getVideoCodecString(codec)
+        );
     });
 
     return supportedCodecs;
@@ -558,7 +664,10 @@ export function getSupportedMP4VideoCodecs(): VideoCodec[] {
     const possibleCodecs = [VideoCodec.H264, VideoCodec.H265, VideoCodec.AV1];
 
     const supportedCodecs = possibleCodecs.filter((codec) => {
-        return castContext.canDisplayType('video/mp4', getCodecString(codec));
+        return castContext.canDisplayType(
+            'video/mp4',
+            getVideoCodecString(codec)
+        );
     });
 
     return supportedCodecs;
@@ -568,19 +677,25 @@ export function getSupportedMP4VideoCodecs(): VideoCodec[] {
  * Get supported audio codecs suitable for use in an MP4 container.
  * @returns Supported MP4 audio codecs.
  */
-export function getSupportedMP4AudioCodecs(): string[] {
+export function getSupportedMP4AudioCodecs(): AudioCodec[] {
+    const possibleCodecs = [
+        AudioCodec.EAC3,
+        AudioCodec.AC3,
+        AudioCodec.AAC,
+        AudioCodec.MP3
+    ];
     const codecs = [];
 
-    if (hasEAC3Support()) {
-        codecs.push('eac3');
-    }
+    for (const codec of possibleCodecs) {
+        const codecString = getAudioCodecString(codec);
 
-    if (hasAC3Support()) {
-        codecs.push('ac3');
+        if (
+            codecString &&
+            castContext.canDisplayType('audio/mp4', codecString)
+        ) {
+            codecs.push(codec);
+        }
     }
-
-    codecs.push('aac');
-    codecs.push('mp3');
 
     return codecs;
 }
@@ -599,7 +714,7 @@ export function getSupportedHLSVideoCodecs(): VideoCodec[] {
  * Get supported audio codecs suitable for use with HLS.
  * @returns All supported HLS audio codecs.
  */
-export function getSupportedHLSAudioCodecs(): string[] {
+export function getSupportedHLSAudioCodecs(): AudioCodec[] {
     // HLS basically supports whatever MP4 supports.
     return getSupportedMP4AudioCodecs();
 }
@@ -608,14 +723,20 @@ export function getSupportedHLSAudioCodecs(): string[] {
  * Get supported audio codecs suitable for use in a WebM container.
  * @returns All supported WebM audio codecs.
  */
-export function getSupportedWebMAudioCodecs(): string[] {
-    return ['vorbis', 'opus'];
-}
+export function getSupportedWebMAudioCodecs(): AudioCodec[] {
+    const possibleCodecs = [AudioCodec.Opus, AudioCodec.Vorbis];
+    const codecs = [];
 
-/**
- * Get supported audio codecs suitable for use in a WebM container.
- * @returns All supported WebM audio codecs.
- */
-export function getSupportedAudioCodecs(): string[] {
-    return ['opus', 'mp3', 'aac', 'flac', 'webma', 'wav'];
+    for (const codec of possibleCodecs) {
+        const codecString = getAudioCodecString(codec);
+
+        if (
+            codecString &&
+            castContext.canDisplayType('audio/webm', codecString)
+        ) {
+            codecs.push(codec);
+        }
+    }
+
+    return codecs;
 }
