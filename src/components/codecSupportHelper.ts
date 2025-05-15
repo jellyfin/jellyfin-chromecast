@@ -65,7 +65,9 @@ function getCodecString(
             //   * https://en.wikipedia.org/wiki/Advanced_Video_Coding#Levels
             level = level ?? 10;
 
-            return `avc1.${profileFlag}${level.toString(16)}`;
+            const levelFlag = level.toString(16).padStart(2, '0');
+
+            return `avc1.${profileFlag}${levelFlag}`;
         }
         case VideoCodec.H265: {
             let profileFlag: string;
@@ -123,7 +125,7 @@ function getCodecString(
 
             const bitDepthFlag = bitDepth.toString().padStart(2, '0');
 
-            return `vp9.${profileFlag}.${level}.${bitDepthFlag}`;
+            return `vp09.${profileFlag}.${level}.${bitDepthFlag}`;
         }
         case VideoCodec.AV1: {
             let profileFlag: string;
@@ -423,9 +425,9 @@ export function getVideoProfileSupport(codec: VideoCodec): string[] {
         }
     })();
 
+    const mimeType = videoCodecToMimeType(codec);
     const supportedProfiles = possibleProfiles.filter((profile) => {
         const codecString = getCodecString(codec, profile);
-        const mimeType = videoCodecToMimeType(codec);
 
         return castContext.canDisplayType(mimeType, codecString);
     });
