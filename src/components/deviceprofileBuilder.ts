@@ -29,7 +29,8 @@ import {
     getVideoCodecHighestBitDepthSupport,
     type Resolution,
     getMaxResolutionSupported,
-    getMaxAudioChannels
+    getMaxAudioChannels,
+    getVideoCodecMinimumBitDepth
 } from './codecSupportHelper';
 
 interface ProfileOptions {
@@ -184,12 +185,18 @@ function getCodecProfiles(): CodecProfile[] {
         }
 
         const maxLevels: number[] = [];
+        const minBitDepths: number[] = [];
         const maxBitDepths: number[] = [];
         const maxResolutions: Resolution[] = [];
 
         for (const videoProfile of videoProfiles) {
             const maxVideoLevel =
                 getVideoCodecHighestLevelSupport(videoCodec, videoProfile) ?? 0;
+
+            const minBitDepth = getVideoCodecMinimumBitDepth(
+                videoCodec,
+                videoProfile
+            );
 
             const maxBitDepth =
                 getVideoCodecHighestBitDepthSupport(
@@ -206,6 +213,7 @@ function getCodecProfiles(): CodecProfile[] {
             );
 
             maxLevels.push(maxVideoLevel);
+            minBitDepths.push(minBitDepth);
             maxBitDepths.push(maxBitDepth);
             maxResolutions.push(maxResolution);
         }
@@ -214,10 +222,12 @@ function getCodecProfiles(): CodecProfile[] {
         // is pretty common.
         if (
             maxLevels.every((l) => l === maxLevels[0]) &&
+            minBitDepths.every((b) => b === minBitDepths[0]) &&
             maxBitDepths.every((b) => b === maxBitDepths[0]) &&
             maxResolutions.every((r) => r.equals(maxResolutions[0]))
         ) {
             const maxLevel = maxLevels[0];
+            const minBitDepth = minBitDepths[0];
             const maxBitDepth = maxBitDepths[0];
             const maxResolution = maxResolutions[0];
 
@@ -236,6 +246,11 @@ function getCodecProfiles(): CodecProfile[] {
                     ProfileConditionValue.VideoLevel,
                     ProfileConditionType.LessThanEqual,
                     maxLevel.toString()
+                ),
+                createProfileCondition(
+                    ProfileConditionValue.VideoBitDepth,
+                    ProfileConditionType.GreaterThanEqual,
+                    minBitDepth.toString()
                 ),
                 createProfileCondition(
                     ProfileConditionValue.VideoBitDepth,
@@ -266,6 +281,7 @@ function getCodecProfiles(): CodecProfile[] {
             for (let i = 0; i < videoProfiles.length; i++) {
                 const videoProfile = videoProfiles[i];
                 const maxLevel = maxLevels[i];
+                const minBitDepth = minBitDepths[i];
                 const maxBitDepth = maxBitDepths[i];
                 const maxResolution = maxResolutions[i];
 
@@ -284,6 +300,11 @@ function getCodecProfiles(): CodecProfile[] {
                         ProfileConditionValue.VideoLevel,
                         ProfileConditionType.LessThanEqual,
                         maxLevel.toString()
+                    ),
+                    createProfileCondition(
+                        ProfileConditionValue.VideoBitDepth,
+                        ProfileConditionType.GreaterThanEqual,
+                        minBitDepth.toString()
                     ),
                     createProfileCondition(
                         ProfileConditionValue.VideoBitDepth,
