@@ -392,7 +392,7 @@ function getTranscodingProfiles(): TranscodingProfile[] {
 
     const hlsVideoCodecs = getSupportedHLSVideoCodecs();
 
-    if (hlsVideoCodecs.length && hlsAudioCodecs.length) {
+    if (hlsVideoCodecs.length > 0 && hlsAudioCodecs.length > 0) {
         transcodingProfiles.push({
             AudioCodec: hlsAudioCodecs.join(','),
             BreakOnNonKeyFrames: false,
@@ -403,6 +403,22 @@ function getTranscodingProfiles(): TranscodingProfile[] {
             Protocol: 'hls',
             Type: DlnaProfileType.Video,
             VideoCodec: hlsVideoCodecs.map((codec) => codec as string).join(',')
+        });
+    }
+
+    const mp4VideoCodecs = getSupportedMP4VideoCodecs();
+    const mp4AudioCodecs = getSupportedMP4AudioCodecs();
+
+    if (mp4AudioCodecs.length > 0 && mp4VideoCodecs.length > 0) {
+        transcodingProfiles.push({
+            AudioCodec: mp4AudioCodecs.join(','),
+            Container: 'mp4',
+            Context: EncodingContext.Streaming,
+            MaxAudioChannels: audioChannels.toString(),
+            MinSegments: 1,
+            Protocol: 'http',
+            Type: DlnaProfileType.Video,
+            VideoCodec: mp4VideoCodecs.join(',')
         });
     }
 
