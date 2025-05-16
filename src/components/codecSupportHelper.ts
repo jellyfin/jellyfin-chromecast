@@ -1,3 +1,5 @@
+import { VideoRangeType } from '@jellyfin/sdk/lib/generated-client';
+
 const castContext = cast.framework.CastReceiverContext.getInstance();
 
 /**
@@ -250,6 +252,199 @@ export function hasVideoCodecSupport(codec: VideoCodec): boolean {
     const codecString = getCodecString(codec);
 
     return castContext.canDisplayType(mimeType, codecString);
+}
+
+/**
+ * Get the supported video ranges for a given codec profile and level.
+ * @param codec - The codec in question.
+ * @param profile - The profile in question.
+ * @param level - The level in question.
+ * @returns A set of supported video ranges.
+ */
+export function getVideoRangeSupport(
+    codec: VideoCodec,
+    profile: string,
+    level: number
+): Set<VideoRangeType> {
+    const supportedRanges = new Set<VideoRangeType>([VideoRangeType.Sdr]);
+
+    profile = profile.toLowerCase();
+
+    const mimeType = videoCodecToMimeType(codec);
+    const codecString = getCodecString(codec, profile, level, 10);
+
+    switch (codec) {
+        case VideoCodec.H265: {
+            if (profile !== 'main 10' && profile !== 'high 10') {
+                break;
+            }
+
+            // HEVC vs. DoVi levels and max pixel rate (luma sample rate)
+            // +------------+---------------+------------+---------------+
+            // | HEVC Level | HEVC Max PPS  | DoVi Level | DoVi Max PPS  |
+            // +------------+---------------+------------+---------------+
+            // | 3.0        | 16_588_800    | 01         | 22_118_400    |
+            // | 3.1        | 33_177_600    | 03         | 49_766_400    |
+            // | 4.0        | 66_846_720    | 04         | 124_416_000   |
+            // | 4.1        | 133_693_440   | 06         | 199_065_600   |
+            // | 5.0        | 267_386_880   | 07         | 248_832_000   |
+            // | 5.1        | 534_773_760   | 10         | 995_328_000   |
+            // | 6.0        | 1_069_547_520 | 11         | 1_990_656_000 |
+            // | 6.1        | 2_139_095_040 | 13         | 3_981_312_000 |
+            // +------------+---------------+------------+---------------+
+            const doviLevel = ((): string => {
+                if (level <= 30 * 3) {
+                    return '01';
+                } else if (level <= 31 * 3) {
+                    return '03';
+                } else if (level <= 40 * 3) {
+                    return '04';
+                } else if (level <= 41 * 3) {
+                    return '06';
+                } else if (level <= 50 * 3) {
+                    return '07';
+                } else if (level <= 51 * 3) {
+                    return '10';
+                } else if (level <= 60 * 3) {
+                    return '11';
+                } else {
+                    return '13';
+                }
+            })();
+
+            if (castContext.canDisplayType(mimeType, `dvhe.05.${doviLevel}`)) {
+                supportedRanges.add(VideoRangeType.Dovi);
+            }
+
+            if (castContext.canDisplayType(mimeType, `dvhe.08.${doviLevel}`)) {
+                supportedRanges.add(VideoRangeType.DoviWithSdr);
+                supportedRanges.add(VideoRangeType.DoviWithHlg);
+                supportedRanges.add(VideoRangeType.DoviWithHdr10);
+            }
+
+            break;
+        }
+        case VideoCodec.AV1: {
+            // AV1 vs. DoVi levels and max pixel rate (luma sample rate)
+            // +-------------------+---------------+------------+---------------+
+            // | AV1 seq_level_idx | AV1 Max PPS   | DoVi Level | DoVi Max PPS  |
+            // +-------------------+---------------+------------+---------------+
+            // | 4                 | 19_975_680    | 01         | 22_118_400    |
+            // | 5                 | 31_950_720    | 03         | 49_766_400    |
+            // | 8                 | 70_778_880    | 04         | 124_416_000   |
+            // | 9                 | 141_557_760   | 06         | 199_065_600   |
+            // | 12                | 267_386_880   | 07         | 248_832_000   |
+            // | 13                | 534_773_760   | 10         | 995_328_000   |
+            // | 16                | 1_069_547_520 | 11         | 1_990_656_000 |
+            // | 6.1               | 2_139_095_040 | 13         | 3_981_312_000 |
+            // +-------------------+---------------+------------+---------------+
+            const doviLevel = ((): string => {
+                if (level <= 4) {
+                    return '01';
+                } else if (level <= 5) {
+                    return '03';
+                } else if (level <= 8) {
+                    return '04';
+                } else if (level <= 9) {
+                    return '06';
+                } else if (level <= 12) {
+                    return '07';
+                } else if (level <= 13) {
+                    return '10';
+                } else if (level <= 16) {
+                    return '11';
+                } else {
+                    return '13';
+                }
+            })();
+
+            // 110: Chroma subsampling (4:2:0), not Monochrome
+            // 09: Color Primary (BT.2020)
+            // 16: Transfer Characteristics (PQ)
+            // 09: Matrix Coefficients (BT.2020 non-constant luminance)
+            const hasHdr10Support = castContext.canDisplayType(
+                mimeType,
+                `${codecString}.110.09.16.09`
+            );
+
+            if (hasHdr10Support) {
+                supportedRanges.add(VideoRangeType.Hdr10);
+                supportedRanges.add(VideoRangeType.Hdr10Plus);
+            }
+
+            // Dolby Vision with AV1 is profile 10.
+            if (castContext.canDisplayType(mimeType, `dav1.10.${doviLevel}`)) {
+                supportedRanges.add(VideoRangeType.Dovi);
+                supportedRanges.add(VideoRangeType.DoviWithSdr);
+                supportedRanges.add(VideoRangeType.DoviWithHlg);
+                supportedRanges.add(VideoRangeType.DoviWithHdr10);
+            }
+
+            break;
+        }
+        case VideoCodec.VP9: {
+            // 01: Chroma subsampling (4:2:0)
+            // 09: Color Primary (BT.2020)
+            // 16: Transfer Characteristics (PQ)
+            // 09: Matrix Coefficients (BT.2020 non-constant luminance)
+            const hasHdr10Support = castContext.canDisplayType(
+                mimeType,
+                `${codecString}.01.09.16.09`
+            );
+
+            if (hasHdr10Support) {
+                supportedRanges.add(VideoRangeType.Hdr10);
+            }
+
+            break;
+        }
+        case VideoCodec.H264: {
+            // H.264 supports 8-bit Dolby Vision with BL signal cross-compatibility with SDR.
+            if (profile !== 'high') {
+                break;
+            }
+
+            // +-------------+---------------+------------+---------------+
+            // | H.264 Level | H.264 Max PPS | DoVi Level | DoVi Max PPS  |
+            // +-------------+---------------+------------+---------------+
+            // | 3.0         | 10_368_000    | 01         | 22_118_400    |
+            // | 3.1         | 27_648_000    | 02         | 27_648_000    |
+            // | 4.1         | 62_914_560    | 04         | 124_416_000   |
+            // | 5.0         | 150_994_944   | 06         | 199_065_600   |
+            // | 5.1         | 251_658_240   | 08         | 398_131_200   |
+            // | 5.2         | 534_773_760   | 10         | 995_328_000   |
+            // | 6.0         | 1_069_547_520 | 11         | 1_990_656_000 |
+            // | 6.1         | 2_139_095_040 | 13         | 3_981_312_000 |
+            // +-------------+---------------+------------+---------------+
+            const doviLevel = ((): string => {
+                if (level <= 30) {
+                    return '01';
+                } else if (level <= 31) {
+                    return '02';
+                } else if (level <= 40) {
+                    return '04';
+                } else if (level <= 41) {
+                    return '06';
+                } else if (level <= 50) {
+                    return '08';
+                } else if (level <= 51) {
+                    return '10';
+                } else if (level <= 60) {
+                    return '11';
+                } else {
+                    return '13';
+                }
+            })();
+
+            if (castContext.canDisplayType(mimeType, `dvav.09.${doviLevel}`)) {
+                supportedRanges.add(VideoRangeType.DoviWithSdr);
+            }
+
+            break;
+        }
+    }
+
+    return supportedRanges;
 }
 
 /**
