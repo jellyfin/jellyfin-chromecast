@@ -1,11 +1,12 @@
-import type {
-    CodecProfile,
-    ContainerProfile,
-    DeviceProfile,
-    DirectPlayProfile,
-    ProfileCondition,
-    SubtitleProfile,
-    TranscodingProfile
+import {
+    VideoRangeType,
+    type CodecProfile,
+    type ContainerProfile,
+    type DeviceProfile,
+    type DirectPlayProfile,
+    type ProfileCondition,
+    type SubtitleProfile,
+    type TranscodingProfile
 } from '@jellyfin/sdk/lib/generated-client';
 import { CodecType } from '@jellyfin/sdk/lib/generated-client/models/codec-type';
 import { DlnaProfileType } from '@jellyfin/sdk/lib/generated-client/models/dlna-profile-type';
@@ -29,7 +30,8 @@ import {
     getVideoCodecHighestBitDepthSupport,
     type Resolution,
     getMaxResolutionSupported,
-    getVideoCodecMinimumBitDepth
+    getVideoCodecMinimumBitDepth,
+    getVideoRangeSupport
 } from './codecSupportHelper';
 
 interface ProfileOptions {
@@ -223,6 +225,7 @@ function getCodecProfiles(): CodecProfile[] {
         const minBitDepths: number[] = [];
         const maxBitDepths: number[] = [];
         const maxResolutions: Resolution[] = [];
+        const videoRangeSets: Set<VideoRangeType>[] = [];
 
         for (const videoProfile of videoProfiles) {
             const maxVideoLevel =
@@ -247,10 +250,17 @@ function getCodecProfiles(): CodecProfile[] {
                 maxBitDepth
             );
 
+            const videoRangeSupport = getVideoRangeSupport(
+                videoCodec,
+                videoProfile,
+                maxVideoLevel
+            );
+
             maxLevels.push(maxVideoLevel);
             minBitDepths.push(minBitDepth);
             maxBitDepths.push(maxBitDepth);
             maxResolutions.push(maxResolution);
+            videoRangeSets.push(videoRangeSupport);
         }
 
         // If all other constraints are equal, merge into one condition. This
@@ -259,12 +269,18 @@ function getCodecProfiles(): CodecProfile[] {
             maxLevels.every((l) => l === maxLevels[0]) &&
             minBitDepths.every((b) => b === minBitDepths[0]) &&
             maxBitDepths.every((b) => b === maxBitDepths[0]) &&
-            maxResolutions.every((r) => r.equals(maxResolutions[0]))
+            maxResolutions.every((r) => r.equals(maxResolutions[0])) &&
+            videoRangeSets.every(
+                (r) =>
+                    r.size === videoRangeSets[0].size &&
+                    [...r].every((v) => videoRangeSets[0].has(v))
+            )
         ) {
             const maxLevel = maxLevels[0];
             const minBitDepth = minBitDepths[0];
             const maxBitDepth = maxBitDepths[0];
             const maxResolution = maxResolutions[0];
+            const videoRanges = videoRangeSets[0];
 
             const profileConditions = [
                 createProfileCondition(
@@ -301,6 +317,11 @@ function getCodecProfiles(): CodecProfile[] {
                     ProfileConditionValue.Height,
                     ProfileConditionType.LessThanEqual,
                     maxResolution.height.toString()
+                ),
+                createProfileCondition(
+                    ProfileConditionValue.VideoRangeType,
+                    ProfileConditionType.EqualsAny,
+                    [...videoRanges].join('|')
                 )
             ];
 
@@ -319,6 +340,7 @@ function getCodecProfiles(): CodecProfile[] {
                 const minBitDepth = minBitDepths[i];
                 const maxBitDepth = maxBitDepths[i];
                 const maxResolution = maxResolutions[i];
+                const videoRanges = videoRangeSets[i];
 
                 const profileConditions = [
                     createProfileCondition(
@@ -355,6 +377,11 @@ function getCodecProfiles(): CodecProfile[] {
                         ProfileConditionValue.Height,
                         ProfileConditionType.LessThanEqual,
                         maxResolution.height.toString()
+                    ),
+                    createProfileCondition(
+                        ProfileConditionValue.VideoRangeType,
+                        ProfileConditionType.EqualsAny,
+                        [...videoRanges].join('|')
                     )
                 ];
 
