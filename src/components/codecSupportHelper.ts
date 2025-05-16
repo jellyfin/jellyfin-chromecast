@@ -95,9 +95,9 @@ function getCodecString(
 
             // Levels are bound by the luma picture size (total pixels) and
             // luma sample rate (samples/s).
-            level = level ?? 10;
+            level = level ?? 30;
 
-            return `hev1.1.${constraintFlag}.${profileFlag}${level * 3}.B0`;
+            return `hev1.1.${constraintFlag}.${profileFlag}${level}.B0`;
         }
         case VideoCodec.VP8:
             return 'vp8';
@@ -120,12 +120,12 @@ function getCodecString(
                     break;
             }
 
-            level = level ?? 10;
+            level = level ?? 1.0;
             bitDepth = bitDepth ?? 8;
 
             const bitDepthFlag = bitDepth.toString().padStart(2, '0');
 
-            return `vp09.${profileFlag}.${level}.${bitDepthFlag}`;
+            return `vp09.${profileFlag}.${level * 10}.${bitDepthFlag}`;
         }
         case VideoCodec.AV1: {
             let profileFlag: string;
@@ -178,7 +178,7 @@ export class Resolution {
  */
 export enum VideoCodec {
     H264 = 'h264',
-    H265 = 'h265',
+    H265 = 'hevc',
     VP8 = 'vp8',
     VP9 = 'vp9',
     AV1 = 'av1'
@@ -455,16 +455,20 @@ export function getVideoCodecHighestLevelSupport(
                     52, 60, 61, 62
                 ];
             case VideoCodec.H265:
-                return [10, 20, 21, 30, 31, 40, 41, 50, 51, 52, 60, 61, 62];
+                // The server expects H.265 levels to be multiplied by 3.
+                return [10, 20, 21, 30, 31, 40, 41, 50, 51, 52, 60, 61, 62].map(
+                    (level) => level * 3
+                );
             case VideoCodec.AV1:
-                // This level should correspond to the `seq_level_idx`, which is
-                // different from other codecs, which just use the
-                // human-readable level multiplied by 10.
+                // This level should correspond to the `seq_level_idx`.
                 return [0, 1, 4, 5, 8, 9, 12, 13, 14, 15, 16, 17, 18, 19];
             case VideoCodec.VP8:
                 return [];
             case VideoCodec.VP9:
-                return [10, 11, 20, 21, 30, 31, 40, 41, 50, 51, 52, 60, 61, 62];
+                return [
+                    1.0, 1.1, 2.0, 2.1, 3.0, 3.1, 4.0, 4.1, 5.0, 5.1, 5.2, 6.0,
+                    6.1, 6.2
+                ];
         }
     })();
 
@@ -495,14 +499,14 @@ export function getVideoCodecHighestBitDepthSupport(
     const possibleBitDepths = ((): number[] => {
         switch (codec) {
             case VideoCodec.H264:
-                switch (profile) {
+                switch (profile?.toLowerCase()) {
                     case 'high 10':
                         return [10, 8];
                     default:
                         return [8];
                 }
             case VideoCodec.H265:
-                switch (profile) {
+                switch (profile?.toLowerCase()) {
                     case 'main 10':
                     case 'high 10':
                         return [10, 8];
@@ -510,7 +514,7 @@ export function getVideoCodecHighestBitDepthSupport(
                         return [8];
                 }
             case VideoCodec.AV1:
-                switch (profile) {
+                switch (profile?.toLowerCase()) {
                     case 'professional':
                         return [10, 8];
                     default:
@@ -520,9 +524,9 @@ export function getVideoCodecHighestBitDepthSupport(
                 // VP8's bitstream officially only supports up to 8 bits.
                 return [8];
             case VideoCodec.VP9:
-                switch (profile) {
-                    case 'Profile 2':
-                    case 'Profile 3':
+                switch (profile?.toLowerCase()) {
+                    case 'profile 2':
+                    case 'profile 3':
                         return [12, 10];
                     default:
                         return [8];
@@ -536,6 +540,29 @@ export function getVideoCodecHighestBitDepthSupport(
 
         return castContext.canDisplayType(mimeType, codecString);
     });
+}
+
+/**
+ * Gets the minimum bit depth required for a given codec and profile.
+ * @param codec - The codec in question.
+ * @param profile - The profile for the codec.
+ * @returns The minimum bit depth required.
+ */
+export function getVideoCodecMinimumBitDepth(
+    codec: VideoCodec,
+    profile: string
+): number {
+    profile = profile.toLowerCase();
+
+    // VP9 profiles 2 and 3 require 10 bit depth.
+    if (
+        codec === VideoCodec.VP9 &&
+        (profile === 'profile 2' || profile === 'profile 3')
+    ) {
+        return 10;
+    }
+
+    return 8;
 }
 
 /**
