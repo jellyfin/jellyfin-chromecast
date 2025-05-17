@@ -404,6 +404,14 @@ function getTranscodingProfiles(): TranscodingProfile[] {
             Type: DlnaProfileType.Video,
             VideoCodec: hlsVideoCodecs.map((codec) => codec as string).join(',')
         });
+
+        // Currently, if there are any HLS codecs, stop early. This mimics the web client's
+        // behavior and works around a bug where the server may pick other single-codec containers
+        // because the audio codec needs less transcoding.
+        //
+        // In reality, we're only really losing out on the VPx codecs, which have middling compute
+        // to efficiency ratios anyways.
+        return transcodingProfiles;
     }
 
     const mp4VideoCodecs = getSupportedMP4VideoCodecs();

@@ -598,7 +598,7 @@ export function getSupportedMP4VideoCodecs(): VideoCodec[] {
  * @returns Supported MP4 audio codecs.
  */
 export function getSupportedMP4AudioCodecs(): string[] {
-    const codecs = [];
+    const codecs = ['aac', 'mp3', 'opus'];
 
     if (hasEAC3Support()) {
         codecs.push('eac3');
@@ -607,9 +607,6 @@ export function getSupportedMP4AudioCodecs(): string[] {
     if (hasAC3Support()) {
         codecs.push('ac3');
     }
-
-    codecs.push('aac');
-    codecs.push('mp3');
 
     return codecs;
 }
