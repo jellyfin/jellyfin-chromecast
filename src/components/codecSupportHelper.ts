@@ -213,17 +213,6 @@ export function hasAC3Support(): boolean {
 }
 
 /**
- * Checks for the number of audio channels supported on the device.
- * @returns The maximum number of audio channels supported.
- */
-export function getMaxAudioChannels(): number {
-    const audioCtx = new window.AudioContext();
-
-    // Make sure we allow at least 1 channel, in case of some bad output.
-    return Math.max(audioCtx.destination.maxChannelCount, 1);
-}
-
-/**
  * Checks for every supported video codec.
  * @returns An array of supported video codecs
  */
@@ -639,9 +628,9 @@ export function getSupportedWebMAudioCodecs(): string[] {
 }
 
 /**
- * Get supported audio codecs suitable for use in a WebM container.
- * @returns All supported WebM audio codecs.
+ * Get supported audio codecs.
+ * @returns the supported audio codecs.
  */
 export function getSupportedAudioCodecs(): string[] {
-    return ['opus', 'mp3', 'aac', 'flac', 'webma', 'wav'];
+    return ['opus', 'vorbis', 'mp3', 'aac', 'flac', 'wav'];
 }
