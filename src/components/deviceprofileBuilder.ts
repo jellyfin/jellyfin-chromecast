@@ -29,7 +29,6 @@ import {
     getVideoCodecHighestBitDepthSupport,
     type Resolution,
     getMaxResolutionSupported,
-    getMaxAudioChannels,
     getVideoCodecMinimumBitDepth
 } from './codecSupportHelper';
 
@@ -100,32 +99,41 @@ function getDirectPlayProfiles(): DirectPlayProfile[] {
 
     const supportedAudio = getSupportedAudioCodecs();
 
+    // N.B. Supported audio formats and containers can be found here:
+    // https://developers.google.com/cast/docs/media#mp4_audio_only
     for (const audioFormat of supportedAudio) {
-        if (audioFormat === 'mp3') {
-            DirectPlayProfiles.push({
-                AudioCodec: audioFormat,
-                Container: audioFormat,
-                Type: DlnaProfileType.Audio
-            });
-        } else if (audioFormat === 'webma') {
-            DirectPlayProfiles.push({
-                Container: 'webma,webm',
-                Type: DlnaProfileType.Audio
-            });
-        } else {
-            DirectPlayProfiles.push({
-                Container: audioFormat,
-                Type: DlnaProfileType.Audio
-            });
-        }
-
-        // aac also appears in the m4a and m4b container
-        if (audioFormat === 'aac') {
-            DirectPlayProfiles.push({
-                AudioCodec: audioFormat,
-                Container: 'm4a,m4b',
-                Type: DlnaProfileType.Audio
-            });
+        switch (audioFormat.toLowerCase()) {
+            case 'mp3':
+                DirectPlayProfiles.push({
+                    AudioCodec: audioFormat,
+                    Container: 'mp3,mp4',
+                    Type: DlnaProfileType.Audio
+                });
+                break;
+            case 'opus':
+            case 'vorbis':
+                DirectPlayProfiles.push({
+                    AudioCodec: audioFormat,
+                    Container: 'ogg,webm',
+                    Type: DlnaProfileType.Audio
+                });
+                break;
+            case 'aac':
+                DirectPlayProfiles.push({
+                    AudioCodec: audioFormat,
+                    Container: 'm4a',
+                    Type: DlnaProfileType.Audio
+                });
+                break;
+            case 'flac':
+            case 'wav':
+            default:
+                DirectPlayProfiles.push({
+                    AudioCodec: audioFormat,
+                    Container: audioFormat,
+                    Type: DlnaProfileType.Audio
+                });
+                break;
         }
     }
 
@@ -138,6 +146,7 @@ function getDirectPlayProfiles(): DirectPlayProfile[] {
  */
 function getCodecProfiles(): CodecProfile[] {
     const codecProfiles: CodecProfile[] = [];
+    const deviceHasVideo = hasVideoSupport();
 
     const audioConditions: CodecProfile = {
         Codec: 'flac',
@@ -158,24 +167,50 @@ function getCodecProfiles(): CodecProfile[] {
 
     codecProfiles.push(audioConditions);
 
-    // If device is audio only, don't add all the video related stuff
-    if (!hasVideoSupport()) {
-        return codecProfiles;
-    }
+    // Google Cast does not support AAC 5.1, as officially stated by the Google team.
+    // Additionally, the Cast SDK seems to silently downmix anything that isn't Opus or Dolby codecs
+    // to stereo.
+    //
+    // Let the server decide how to handle the downmixing vs. transcoding trade-off instead by
+    // transmitting these limitations.
+    //
+    // See: https://issuetracker.google.com/issues/69112577#comment20
+    // See: https://issuetracker.google.com/issues/330548743
+    for (const audioCodec of getSupportedAudioCodecs()) {
+        switch (audioCodec) {
+            case 'opus':
+            case 'eac3':
+            case 'ac3':
+                continue;
+        }
 
-    const aacConditions: CodecProfile = {
-        Codec: 'aac',
-        Conditions: [
+        const profileConditions: ProfileCondition[] = [
             createProfileCondition(
                 ProfileConditionValue.AudioChannels,
                 ProfileConditionType.LessThanEqual,
                 '2'
             )
-        ],
-        Type: CodecType.VideoAudio
-    };
+        ];
 
-    codecProfiles.push(aacConditions);
+        codecProfiles.push({
+            Codec: audioCodec,
+            Conditions: profileConditions,
+            Type: CodecType.Audio
+        });
+
+        if (deviceHasVideo) {
+            codecProfiles.push({
+                Codec: audioCodec,
+                Conditions: profileConditions,
+                Type: CodecType.VideoAudio
+            });
+        }
+    }
+
+    // If device is audio only, don't add all the video related stuff
+    if (!deviceHasVideo) {
+        return codecProfiles;
+    }
 
     for (const videoCodec of getSupportedVideoCodecs()) {
         const videoProfiles = getVideoProfileSupport(videoCodec);
@@ -358,14 +393,12 @@ function getTranscodingProfiles(): TranscodingProfile[] {
     const transcodingProfiles: TranscodingProfile[] = [];
 
     const hlsAudioCodecs = getSupportedHLSAudioCodecs();
-    const audioChannels: number = getMaxAudioChannels();
 
     transcodingProfiles.push({
         AudioCodec: hlsAudioCodecs.join(','),
         BreakOnNonKeyFrames: false,
         Container: 'ts',
         Context: EncodingContext.Streaming,
-        MaxAudioChannels: audioChannels.toString(),
         MinSegments: 1,
         Protocol: 'hls',
         Type: DlnaProfileType.Audio
@@ -379,7 +412,6 @@ function getTranscodingProfiles(): TranscodingProfile[] {
             AudioCodec: audioFormat,
             Container: audioFormat,
             Context: EncodingContext.Streaming,
-            MaxAudioChannels: audioChannels.toString(),
             Protocol: 'http',
             Type: DlnaProfileType.Audio
         });
@@ -398,7 +430,6 @@ function getTranscodingProfiles(): TranscodingProfile[] {
             BreakOnNonKeyFrames: false,
             Container: 'mp4',
             Context: EncodingContext.Streaming,
-            MaxAudioChannels: audioChannels.toString(),
             MinSegments: 1,
             Protocol: 'hls',
             Type: DlnaProfileType.Video,
@@ -422,7 +453,6 @@ function getTranscodingProfiles(): TranscodingProfile[] {
             AudioCodec: mp4AudioCodecs.join(','),
             Container: 'mp4',
             Context: EncodingContext.Streaming,
-            MaxAudioChannels: audioChannels.toString(),
             MinSegments: 1,
             Protocol: 'http',
             Type: DlnaProfileType.Video,
@@ -438,9 +468,6 @@ function getTranscodingProfiles(): TranscodingProfile[] {
             AudioCodec: webmAudioCodecs.join(','),
             Container: 'webm',
             Context: EncodingContext.Streaming,
-            // If audio transcoding is needed, limit channels to number of physical audio channels
-            // Trying to transcode to 5 channels when there are only 2 speakers generally does not sound good
-            MaxAudioChannels: audioChannels.toString(),
             Protocol: 'http',
             Type: DlnaProfileType.Video,
             VideoCodec: webmVideoCodecs.join(',')
