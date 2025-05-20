@@ -360,16 +360,31 @@ export function getVideoRangeSupport(
 
             // 110: Chroma subsampling (4:2:0), not Monochrome
             // 09: Color Primary (BT.2020)
-            // 16: Transfer Characteristics (PQ)
+            // 16: Transfer Characteristics (PQ, SMPTE ST 2084)
             // 09: Matrix Coefficients (BT.2020 non-constant luminance)
+            // 0: Studio swing representation
             const hasHdr10Support = castContext.canDisplayType(
                 mimeType,
-                `${codecString}.110.09.16.09`
+                `${codecString}.110.09.16.09.0`
             );
 
             if (hasHdr10Support) {
                 supportedRanges.add(VideoRangeType.Hdr10);
                 supportedRanges.add(VideoRangeType.Hdr10Plus);
+            }
+
+            // 110: Chroma subsampling (4:2:0), not Monochrome
+            // 09: Color Primary (BT.2020)
+            // 18: Transfer Characteristics (BT.2100 HLG, ARIB STD-B67)
+            // 09: Matrix Coefficients (BT.2020 non-constant luminance)
+            // 0: Studio swing representation
+            const hasHlgSupport = castContext.canDisplayType(
+                mimeType,
+                `${codecString}.110.09.18.09.0`
+            );
+
+            if (hasHlgSupport) {
+                supportedRanges.add(VideoRangeType.Hlg);
             }
 
             // Dolby Vision with AV1 is profile 10.
@@ -387,9 +402,10 @@ export function getVideoRangeSupport(
             // 09: Color Primary (BT.2020)
             // 16: Transfer Characteristics (PQ)
             // 09: Matrix Coefficients (BT.2020 non-constant luminance)
+            // 01: Enforce legal color range
             const hasHdr10Support = castContext.canDisplayType(
                 mimeType,
-                `${codecString}.01.09.16.09`
+                `${codecString}.01.09.16.09.01`
             );
 
             if (hasHdr10Support) {
