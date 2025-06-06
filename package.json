@@ -10,7 +10,7 @@
         "@jellyfin/sdk": "0.10.0"
     },
     "devDependencies": {
-        "@types/chromecast-caf-receiver": "6.0.21",
+        "@types/chromecast-caf-receiver": "6.0.22",
         "@types/node": "22.15.21",
         "eslint": "9.27.0",
         "eslint-config-prettier": "10.1.5",
