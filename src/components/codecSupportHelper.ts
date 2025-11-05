@@ -672,12 +672,19 @@ export function getVideoCodecHighestLevelSupport(
         }
     })();
 
-    const supportedLevels = possibleLevels.filter((level) => {
-        const mimeType = videoCodecToMimeType(codec);
-        const codecString = getCodecString(codec, profile, level, bitDepth);
+    const mimeType = videoCodecToMimeType(codec);
+    const supportedLevels: number[] = [];
 
-        return castContext.canDisplayType(mimeType, codecString);
-    });
+    for (const level of possibleLevels) {
+        const codecString = getCodecString(codec, profile, level, bitDepth);
+        const supported = castContext.canDisplayType(mimeType, codecString);
+
+        if (!supported) {
+            break;
+        }
+
+        supportedLevels.push(level);
+    }
 
     return supportedLevels.length > 0
         ? supportedLevels[supportedLevels.length - 1]
