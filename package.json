@@ -12,7 +12,7 @@
     "devDependencies": {
         "@types/chromecast-caf-receiver": "6.0.22",
         "@types/node": "24.9.2",
-        "eslint": "9.33.0",
+        "eslint": "9.38.0",
         "eslint-config-prettier": "10.1.8",
         "eslint-import-resolver-typescript": "4.4.4",
         "eslint-plugin-import": "2.32.0",
@@ -21,10 +21,10 @@
         "eslint-plugin-prettier": "5.5.4",
         "eslint-plugin-promise": "7.2.1",
         "prettier": "3.6.2",
-        "stylelint": "16.23.1",
-        "stylelint-config-standard": "39.0.0",
+        "stylelint": "16.25.0",
+        "stylelint-config-standard": "39.0.1",
         "typescript": "5.9.3",
-        "typescript-eslint": "8.39.0",
+        "typescript-eslint": "8.46.2",
         "vite": "7.1.12",
         "vitest": "4.0.5"
     },
