@@ -740,9 +740,7 @@ export function setTextTrack(index: number | null): void {
         const textTracksManager = window.playerManager.getTextTracksManager();
 
         if (index == null) {
-            // docs: null is okay
-            // typescript definitions: Must be Array<number>
-            textTracksManager.setActiveByIds([]);
+            textTracksManager.setActiveByIds(null);
 
             return;
         }
