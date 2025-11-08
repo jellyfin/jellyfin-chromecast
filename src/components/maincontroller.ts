@@ -263,10 +263,7 @@ window.playerManager.addEventListener(
  */
 export async function reportDeviceCapabilities(): Promise<void> {
     const maxBitrate = await getMaxBitrate();
-
-    const deviceProfile = getDeviceProfile({
-        bitrateSetting: maxBitrate
-    });
+    const deviceProfile = getDeviceProfile(maxBitrate);
 
     hasReportedCapabilities = true;
 
