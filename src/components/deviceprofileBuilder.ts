@@ -34,10 +34,6 @@ import {
     getVideoRangeSupport
 } from './codecSupportHelper';
 
-interface ProfileOptions {
-    bitrateSetting: number;
-}
-
 /**
  * Create and return a new ProfileCondition
  * @param Property - What property the condition should test.
@@ -528,18 +524,15 @@ function getSubtitleProfiles(): SubtitleProfile[] {
 
 /**
  * Creates a device profile containing supported codecs for the active Cast device.
- * @param options - Profile options
+ * @param maxBitrate - maximum bitrate to be used by the server when streaming data
  * @returns Device profile.
  */
-export function getDeviceProfile(options: ProfileOptions): DeviceProfile {
+export function getDeviceProfile(maxBitrate: number): DeviceProfile {
     // MaxStaticBitrate seems to be for offline sync only
     const profile: DeviceProfile = {
-        MaxStaticBitrate: options.bitrateSetting,
-        MaxStreamingBitrate: options.bitrateSetting,
-        MusicStreamingTranscodingBitrate: Math.min(
-            options.bitrateSetting,
-            192000
-        )
+        MaxStaticBitrate: maxBitrate,
+        MaxStreamingBitrate: maxBitrate,
+        MusicStreamingTranscodingBitrate: Math.min(maxBitrate, 192000)
     };
 
     profile.DirectPlayProfiles = getDirectPlayProfiles();
