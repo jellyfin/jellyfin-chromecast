@@ -118,23 +118,23 @@ jobs:
             - name: Unzip artifact
               run: unzip jellyfin-chromecast.zip -d .
 
-            - name: Deploy to apps1.jellyfin.org/chromecast/nightly
+            - name: Deploy to apps.jellyfin.org/chromecast/unstable
               uses: burnett01/rsync-deployments@33214bd98ba4ac2be90f5976672b3f030fce9ce4 # 7.1.0
               with:
                   switches: -vrptz
                   path: jellyfin-chromecast/
-                  remote_path: /srv/chromecast/nightly/
-                  remote_host: ${{ secrets.DEPLOY_CC_HOST }}
-                  remote_user: ${{ secrets.DEPLOY_CC_USER }}
-                  remote_key: ${{ secrets.DEPLOY_CC_KEY }}
+                  remote_path: /srv/chromecast/unstable/
+                  remote_host: ${{ secrets.DEPLOY_APPS_HOST }}
+                  remote_user: ${{ secrets.DEPLOY_APPS_USER }}
+                  remote_key: ${{ secrets.DEPLOY_APPS_KEY }}
 
-            - name: Deploy to apps1.jellyfin.org/chromecast/stable
+            - name: Deploy to apps.jellyfin.org/chromecast/stable
               if: ${{ startsWith(github.ref, 'refs/tags') }}
               uses: burnett01/rsync-deployments@33214bd98ba4ac2be90f5976672b3f030fce9ce4 # 7.1.0
               with:
                   switches: -vrptz
                   path: jellyfin-chromecast/
                   remote_path: /srv/chromecast/stable/
-                  remote_host: ${{ secrets.DEPLOY_CC_HOST }}
-                  remote_user: ${{ secrets.DEPLOY_CC_USER }}
-                  remote_key: ${{ secrets.DEPLOY_CC_KEY }}
+                  remote_host: ${{ secrets.DEPLOY_APPS_HOST }}
+                  remote_user: ${{ secrets.DEPLOY_APPS_USER }}
+                  remote_key: ${{ secrets.DEPLOY_APPS_KEY }}
