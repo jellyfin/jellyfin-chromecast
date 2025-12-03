@@ -17,10 +17,10 @@ jobs:
 
         steps:
             - name: Checkout
-              uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+              uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
 
             - name: Setup node env
-              uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
+              uses: actions/setup-node@395ad3262231945c25e8478fd5baf05154b1d79f # v6.1.0
               with:
                   node-version: 20
 
@@ -87,7 +87,7 @@ jobs:
                   remote_key: ${{ secrets.REPO_KEY }}
 
             - name: Update repo.jellyfin.org symlinks
-              uses: appleboy/ssh-action@91f3272fc5907f4699dcf59761eb622a07342f5a # v1.2.3
+              uses: appleboy/ssh-action@823bd89e131d8d508129f9443cad5855e9ba96f0 # v1.2.4
               with:
                   host: ${{ secrets.REPO_HOST }}
                   username: ${{ secrets.REPO_USER }}
