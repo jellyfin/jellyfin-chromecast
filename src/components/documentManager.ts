@@ -742,4 +742,4 @@ export abstract class DocumentManager {
     }
 }
 
-DocumentManager.initialize();
+document.addEventListener('load', () => DocumentManager.initialize());
