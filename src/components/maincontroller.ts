@@ -103,7 +103,10 @@ function onMediaElementVolumeChange(event: framework.system.Event): void {
     window.volume = (event as framework.system.SystemVolumeChangedEvent).data;
     console.log(`Received volume update: ${window.volume.level}`);
 
-    if (JellyfinApi.serverAddress !== null) {
+    if (
+        JellyfinApi.serverAddress !== null &&
+        JellyfinApi.jellyfinApi !== undefined
+    ) {
         reportEvent('volumechange', true);
     }
 }
