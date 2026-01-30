@@ -420,16 +420,20 @@ export function getVideoRangeSupport(
                 break;
             }
 
+            // H.264 Max PPS values calculated assuming largest (16x16) macroblock
+            //
             // +-------------+---------------+------------+---------------+
             // | H.264 Level | H.264 Max PPS | DoVi Level | DoVi Max PPS  |
             // +-------------+---------------+------------+---------------+
             // | 3.0         | 10_368_000    | 01         | 22_118_400    |
             // | 3.1         | 27_648_000    | 02         | 27_648_000    |
-            // | 4.1         | 62_914_560    | 04         | 124_416_000   |
+            // | 4.0         | 62_914_560    | 05         | 124_416_000   |
+            // | 4.1         | 62_914_560    | 05         | 124_416_000   |
+            // | 4.2         | 133_693_440   | 06         | 199_065_600   |
             // | 5.0         | 150_994_944   | 06         | 199_065_600   |
             // | 5.1         | 251_658_240   | 08         | 398_131_200   |
-            // | 5.2         | 534_773_760   | 10         | 995_328_000   |
-            // | 6.0         | 1_069_547_520 | 11         | 1_990_656_000 |
+            // | 5.2         | 530_841_600   | 10         | 995_328_000   |
+            // | 6.0         | 1_069_547_520 | 12         | 1_990_656_000 |
             // | 6.1         | 2_139_095_040 | 13         | 3_981_312_000 |
             // +-------------+---------------+------------+---------------+
             const doviLevel = ((): string => {
@@ -437,16 +441,16 @@ export function getVideoRangeSupport(
                     return '01';
                 } else if (level <= 31) {
                     return '02';
-                } else if (level <= 40) {
-                    return '04';
                 } else if (level <= 41) {
-                    return '06';
+                    return '05';
                 } else if (level <= 50) {
-                    return '08';
+                    return '06';
                 } else if (level <= 51) {
+                    return '08';
+                } else if (level <= 52) {
                     return '10';
                 } else if (level <= 60) {
-                    return '11';
+                    return '12';
                 } else {
                     return '13';
                 }
@@ -513,9 +517,9 @@ export function getMaxResolutionSupported(
     while (maxRes.width < 30720) {
         const newRes = ((): Resolution => {
             // Progressively increase steps as resolution increases.
-            if (maxRes.width >= 2160) {
+            if (maxRes.height >= 2160) {
                 return new Resolution(maxRes.width + 1280, maxRes.height + 720);
-            } else if (maxRes.width >= 1080) {
+            } else if (maxRes.height >= 1080) {
                 return new Resolution(maxRes.width + 640, maxRes.height + 360);
             } else {
                 return new Resolution(maxRes.width + 320, maxRes.height + 180);
@@ -530,7 +534,7 @@ export function getMaxResolutionSupported(
                 newRes.height
             )
         ) {
-            break;
+            continue;
         }
 
         maxRes = newRes;
