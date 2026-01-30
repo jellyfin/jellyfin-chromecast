@@ -510,19 +510,20 @@ export function getMaxResolutionSupported(
     // resolution, but other devices may arbitrarily limit the resolution.
 
     let maxRes = new Resolution(0, 0);
+    let newRes = new Resolution(0, 0);
     const mimeType = videoCodecToMimeType(codec);
     const codecString = getCodecString(codec, profile, level, bitDepth);
 
     // Limit the upper bound to 32K, which is more than enough.
-    while (maxRes.width < 30720) {
-        const newRes = ((): Resolution => {
+    while (newRes.width < 30720) {
+        newRes = ((): Resolution => {
             // Progressively increase steps as resolution increases.
-            if (maxRes.height >= 2160) {
-                return new Resolution(maxRes.width + 1280, maxRes.height + 720);
-            } else if (maxRes.height >= 1080) {
-                return new Resolution(maxRes.width + 640, maxRes.height + 360);
+            if (newRes.height >= 2160) {
+                return new Resolution(newRes.width + 1280, newRes.height + 720);
+            } else if (newRes.height >= 1080) {
+                return new Resolution(newRes.width + 640, newRes.height + 360);
             } else {
-                return new Resolution(maxRes.width + 320, maxRes.height + 180);
+                return new Resolution(newRes.width + 320, newRes.height + 180);
             }
         })();
 
