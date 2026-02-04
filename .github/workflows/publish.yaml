@@ -77,7 +77,7 @@ jobs:
                   asset_paths: '["jellyfin-chromecast.zip"]'
 
             - name: Upload release archive to repo.jellyfin.org
-              uses: burnett01/rsync-deployments@33214bd98ba4ac2be90f5976672b3f030fce9ce4 # 7.1.0
+              uses: burnett01/rsync-deployments@dc0d5d44c4728aad3f02154a87309809e62a960f # 8.0.4
               with:
                   switches: -vrptz
                   path: jellyfin-chromecast.zip
@@ -119,7 +119,7 @@ jobs:
               run: unzip jellyfin-chromecast.zip -d .
 
             - name: Deploy to apps.jellyfin.org/chromecast/unstable
-              uses: burnett01/rsync-deployments@33214bd98ba4ac2be90f5976672b3f030fce9ce4 # 7.1.0
+              uses: burnett01/rsync-deployments@dc0d5d44c4728aad3f02154a87309809e62a960f # 8.0.4
               with:
                   switches: -vrptz
                   path: jellyfin-chromecast/
@@ -130,7 +130,7 @@ jobs:
 
             - name: Deploy to apps.jellyfin.org/chromecast/stable
               if: ${{ startsWith(github.ref, 'refs/tags') }}
-              uses: burnett01/rsync-deployments@33214bd98ba4ac2be90f5976672b3f030fce9ce4 # 7.1.0
+              uses: burnett01/rsync-deployments@dc0d5d44c4728aad3f02154a87309809e62a960f # 8.0.4
               with:
                   switches: -vrptz
                   path: jellyfin-chromecast/
