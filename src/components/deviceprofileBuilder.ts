@@ -83,7 +83,7 @@ function getDirectPlayProfiles(): DirectPlayProfile[] {
                 AudioCodec: webmAudioCodecs.join(','),
                 Container: 'webm',
                 Type: DlnaProfileType.Video,
-                VideoCodec: codec as string
+                VideoCodec: codec
             });
         }
 

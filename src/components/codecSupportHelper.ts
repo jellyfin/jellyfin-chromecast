@@ -222,8 +222,8 @@ export function getSupportedVideoCodecs(): VideoCodec[] {
     const supportedVideoCodecs: VideoCodec[] = [];
 
     for (const videoCodec of Object.values(VideoCodec)) {
-        if (hasVideoCodecSupport(videoCodec as VideoCodec)) {
-            supportedVideoCodecs.push(videoCodec as VideoCodec);
+        if (hasVideoCodecSupport(videoCodec)) {
+            supportedVideoCodecs.push(videoCodec);
         }
     }
 
