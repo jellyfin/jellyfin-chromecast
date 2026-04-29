@@ -11,9 +11,8 @@
         "sourceMap": true,
         "outDir": "./dist/",
         "strict": true,
-        "baseUrl": "./src",
         "paths": {
-            "~/*": ["./*"]
+            "~/*": ["./src/*"]
         },
         "types": ["@types/chromecast-caf-receiver", "vite/client"]
     }
