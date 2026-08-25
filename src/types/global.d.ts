@@ -119,8 +119,7 @@ declare global {
 
 declare module 'chromecast-caf-receiver/cast.framework.messages' {
     // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-    interface MediaInformationCustomData
-        extends JellyfinMediaInformationCustomData {}
+    interface MediaInformationCustomData extends JellyfinMediaInformationCustomData {}
 }
 
 interface JellyfinMediaInformationCustomData {
