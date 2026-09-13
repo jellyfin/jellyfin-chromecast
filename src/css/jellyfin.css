@@ -5,12 +5,14 @@ body {
 }
 
 body {
-    font-family: Quicksand, sans-serif;
+    font-family: Figtree, Verdana, sans-serif;
     font-weight: 300;
     color: #ddd;
     background-color: #000;
     margin: 0;
     padding: 0;
+
+    --playback-logo-image: url('../img/banner.svg');
 }
 
 #waiting-container,
@@ -296,7 +298,6 @@ body {
 /* stylelint-disable selector-type-no-unknown */
 cast-media-player {
     --spinner-image: url('../img/spinner.png');
-    --playback-logo-image: url('../img/banner.svg');
     --watermark-image: url('../img/banner.svg');
     --watermark-size: 225px;
     --watermark-position: top right;
