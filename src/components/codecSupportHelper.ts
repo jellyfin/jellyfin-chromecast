@@ -838,8 +838,17 @@ export function getSupportedHLSVideoCodecs(): VideoCodec[] {
  * @returns All supported HLS audio codecs.
  */
 export function getSupportedHLSAudioCodecs(): string[] {
-    // HLS basically supports whatever MP4 supports.
-    return getSupportedMP4AudioCodecs();
+    const codecs = ['aac', 'mp3'];
+
+    if (hasEAC3Support()) {
+        codecs.push('eac3');
+    }
+
+    if (hasAC3Support()) {
+        codecs.push('ac3');
+    }
+
+    return codecs;
 }
 
 /**
