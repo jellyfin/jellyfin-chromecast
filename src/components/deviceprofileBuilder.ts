@@ -19,8 +19,10 @@ import {
     getSupportedWebMVideoCodecs,
     getSupportedMP4VideoCodecs,
     getSupportedMP4AudioCodecs,
-    getSupportedHLSVideoCodecs,
-    getSupportedHLSAudioCodecs,
+    getSupportedHLSInFmp4VideoCodecs,
+    getSupportedHLSInFmp4AudioCodecs,
+    getSupportedHLSInTsVideoCodecs,
+    getSupportedHLSInTsAudioCodecs,
     getSupportedWebMAudioCodecs,
     getSupportedAudioCodecs,
     hasVideoSupport,
@@ -415,10 +417,11 @@ function getCodecProfiles(): CodecProfile[] {
 function getTranscodingProfiles(): TranscodingProfile[] {
     const transcodingProfiles: TranscodingProfile[] = [];
 
-    const hlsAudioCodecs = getSupportedHLSAudioCodecs();
+    // Audio-only HLS is delivered in MPEG-TS segments.
+    const hlsInTsAudioCodecs = getSupportedHLSInTsAudioCodecs();
 
     transcodingProfiles.push({
-        AudioCodec: hlsAudioCodecs.join(','),
+        AudioCodec: hlsInTsAudioCodecs.join(','),
         BreakOnNonKeyFrames: false,
         Container: 'ts',
         Context: EncodingContext.Streaming,
@@ -445,20 +448,52 @@ function getTranscodingProfiles(): TranscodingProfile[] {
         return transcodingProfiles;
     }
 
-    const hlsVideoCodecs = getSupportedHLSVideoCodecs();
+    const hlsInFmp4VideoCodecs = getSupportedHLSInFmp4VideoCodecs();
+    const hlsInFmp4AudioCodecs = getSupportedHLSInFmp4AudioCodecs();
+    const hlsInTsVideoCodecs = getSupportedHLSInTsVideoCodecs();
 
-    if (hlsVideoCodecs.length > 0 && hlsAudioCodecs.length > 0) {
+    let hasHlsVideoProfile = false;
+
+    // fMP4 first, so the server prefers it: it carries every video codec the
+    // device supports, and the audio it cannot carry is re-encoded to AAC.
+    if (hlsInFmp4VideoCodecs.length > 0 && hlsInFmp4AudioCodecs.length > 0) {
         transcodingProfiles.push({
-            AudioCodec: hlsAudioCodecs.join(','),
+            AudioCodec: hlsInFmp4AudioCodecs.join(','),
             BreakOnNonKeyFrames: false,
             Container: 'mp4',
             Context: EncodingContext.Streaming,
             MinSegments: 1,
             Protocol: 'hls',
             Type: DlnaProfileType.Video,
-            VideoCodec: hlsVideoCodecs.map((codec) => codec as string).join(',')
+            VideoCodec: hlsInFmp4VideoCodecs
+                .map((codec) => codec as string)
+                .join(',')
         });
 
+        hasHlsVideoProfile = true;
+    }
+
+    // MPEG-TS fallback, so sources whose audio fMP4 cannot carry (MP3, and
+    // AC-3/E-AC-3 where enabled) can still be stream-copied. The server ranks
+    // video compatibility above audio, so this is only picked for H.264.
+    if (hlsInTsVideoCodecs.length > 0 && hlsInTsAudioCodecs.length > 0) {
+        transcodingProfiles.push({
+            AudioCodec: hlsInTsAudioCodecs.join(','),
+            BreakOnNonKeyFrames: false,
+            Container: 'ts',
+            Context: EncodingContext.Streaming,
+            MinSegments: 1,
+            Protocol: 'hls',
+            Type: DlnaProfileType.Video,
+            VideoCodec: hlsInTsVideoCodecs
+                .map((codec) => codec as string)
+                .join(',')
+        });
+
+        hasHlsVideoProfile = true;
+    }
+
+    if (hasHlsVideoProfile) {
         // Currently, if there are any HLS codecs, stop early. This mimics the web client's
         // behavior and works around a bug where the server may pick other single-codec containers
         // because the audio codec needs less transcoding.
@@ -486,7 +521,7 @@ function getTranscodingProfiles(): TranscodingProfile[] {
     const webmAudioCodecs = getSupportedWebMAudioCodecs();
     const webmVideoCodecs = getSupportedWebMVideoCodecs();
 
-    if (webmAudioCodecs.length > 0 && hlsVideoCodecs.length > 0) {
+    if (webmAudioCodecs.length > 0 && webmVideoCodecs.length > 0) {
         transcodingProfiles.push({
             AudioCodec: webmAudioCodecs.join(','),
             Container: 'webm',
