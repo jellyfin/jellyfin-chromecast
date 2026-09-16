@@ -806,12 +806,11 @@ export function getSupportedMP4VideoCodecs(): VideoCodec[] {
 }
 
 /**
- * Get supported audio codecs suitable for use in an MP4 container.
- * @returns Supported MP4 audio codecs.
+ * Appends the Dolby codecs to a list of audio codecs if the device accepts them.
+ * @param codecs - The list to append to.
+ * @returns The same list, for convenience.
  */
-export function getSupportedMP4AudioCodecs(): string[] {
-    const codecs = ['aac', 'mp3', 'opus'];
-
+function withDolbyAudioCodecs(codecs: string[]): string[] {
     if (hasEAC3Support()) {
         codecs.push('eac3');
     }
@@ -824,31 +823,58 @@ export function getSupportedMP4AudioCodecs(): string[] {
 }
 
 /**
- * Get supported video codecs suitable for use with HLS.
- * @returns Supported HLS video codecs.
+ * Get supported audio codecs suitable for use in an MP4 container.
+ *
+ * Only valid for complete MP4 files, which are demuxed by the platform.
+ * Use {@link getSupportedHLSInFmp4AudioCodecs} for fMP4 HLS segments.
+ * See: https://developers.google.com/cast/docs/media#mp4_audio_only
+ * @returns Supported MP4 audio codecs.
  */
-export function getSupportedHLSVideoCodecs(): VideoCodec[] {
-    // The server now supports fmp4, so return a list of all supported mp4
-    // codecs.
+export function getSupportedMP4AudioCodecs(): string[] {
+    return withDolbyAudioCodecs(['aac', 'mp3']);
+}
+
+/**
+ * Get supported video codecs suitable for use with HLS in fMP4 segments.
+ * @returns Supported fMP4 HLS video codecs.
+ */
+export function getSupportedHLSInFmp4VideoCodecs(): VideoCodec[] {
+    // fMP4 segments carry whatever an MP4 file can carry.
     return getSupportedMP4VideoCodecs();
 }
 
 /**
- * Get supported audio codecs suitable for use with HLS.
- * @returns All supported HLS audio codecs.
+ * Get supported video codecs suitable for use with HLS in MPEG-TS segments.
+ * @returns Supported MPEG-TS HLS video codecs.
  */
-export function getSupportedHLSAudioCodecs(): string[] {
-    const codecs = ['aac', 'mp3'];
+export function getSupportedHLSInTsVideoCodecs(): VideoCodec[] {
+    // This profile only exists to keep audio codecs fMP4 cannot carry
+    // stream-copyable; anything newer than H.264 is better served by fMP4.
+    return getSupportedMP4VideoCodecs().filter(
+        (codec) => codec === VideoCodec.H264
+    );
+}
 
-    if (hasEAC3Support()) {
-        codecs.push('eac3');
-    }
+/**
+ * Get supported audio codecs suitable for use with HLS in fMP4 segments.
+ *
+ * HLS plays through MSE rather than the platform demuxer, and MSE rejects both
+ * Opus and the MPEG-1 audio object types MP3 is carried as in ISO-BMFF
+ * (`mp4a.69`, `mp4a.6B`, `mp4a.40.34`). Announcing either makes the server
+ * stream-copy audio into segments the receiver then refuses to load.
+ * @returns Supported fMP4 HLS audio codecs.
+ */
+export function getSupportedHLSInFmp4AudioCodecs(): string[] {
+    return withDolbyAudioCodecs(['aac']);
+}
 
-    if (hasAC3Support()) {
-        codecs.push('ac3');
-    }
-
-    return codecs;
+/**
+ * Get supported audio codecs suitable for use with HLS in MPEG-TS segments.
+ * @returns Supported MPEG-TS HLS audio codecs.
+ */
+export function getSupportedHLSInTsAudioCodecs(): string[] {
+    // MPEG-TS carries MP3 natively, so it has no such restriction.
+    return withDolbyAudioCodecs(['aac', 'mp3']);
 }
 
 /**
