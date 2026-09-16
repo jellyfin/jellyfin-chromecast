@@ -215,6 +215,21 @@ export function hasAC3Support(): boolean {
 }
 
 /**
+ * Checks if the current setup - the Cast device and the display it is attached
+ * to - can show HDR video.
+ * @returns true if HDR video can be displayed.
+ */
+export function hasHdrSupport(): boolean {
+    const deviceCaps = castContext.getDeviceCapabilities();
+
+    return (
+        deviceCaps?.[
+            cast.framework.system.DeviceCapabilities.IS_HDR_SUPPORTED
+        ] ?? false
+    );
+}
+
+/**
  * Checks for every supported video codec.
  * @returns An array of supported video codecs
  */
@@ -277,6 +292,15 @@ export function getVideoRangeSupport(
         case VideoCodec.H265: {
             if (profile !== 'main 10' && profile !== 'high 10') {
                 break;
+            }
+
+            // Unlike AV1 and VP9, an HEVC codec string has no colour fields, so
+            // the transfer function cannot be probed. Fall back to what the
+            // platform reports for the device and the display combined.
+            if (hasHdrSupport()) {
+                supportedRanges.add(VideoRangeType.Hdr10);
+                supportedRanges.add(VideoRangeType.Hdr10Plus);
+                supportedRanges.add(VideoRangeType.Hlg);
             }
 
             // HEVC vs. DoVi levels and max pixel rate (luma sample rate)
