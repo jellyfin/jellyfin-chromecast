@@ -192,12 +192,12 @@ export enum VideoCodec {
  * If the device is in auto, EDID information will be used, otherwise it
  * depends on the manual setting.
  *
- * Currently it's disabled because of problems getting it to work with HLS.
+ * Only ever announced for MP4 and fMP4: passthrough in MPEG-TS was reported
+ * broken in 2020 and has never been re-verified.
  * @returns true if E-AC-3 can be played
  */
 export function hasEAC3Support(): boolean {
-    //return castContext.canDisplayType('audio/mp4', 'ec-3');
-    return false;
+    return castContext.canDisplayType('audio/mp4', 'ec-3');
 }
 
 /**
@@ -206,12 +206,12 @@ export function hasEAC3Support(): boolean {
  * If the device is in auto, EDID information will be used, otherwise it
  * depends on the manual setting.
  *
- * Currently it's disabled because of problems getting it to work with HLS.
+ * Only ever announced for MP4 and fMP4: passthrough in MPEG-TS was reported
+ * broken in 2020 and has never been re-verified.
  * @returns true if AC-3 can be played
  */
 export function hasAC3Support(): boolean {
-    //return castContext.canDisplayType('audio/mp4', 'ac-3');
-    return false;
+    return castContext.canDisplayType('audio/mp4', 'ac-3');
 }
 
 /**
@@ -873,8 +873,10 @@ export function getSupportedHLSInFmp4AudioCodecs(): string[] {
  * @returns Supported MPEG-TS HLS audio codecs.
  */
 export function getSupportedHLSInTsAudioCodecs(): string[] {
-    // MPEG-TS carries MP3 natively, so it has no such restriction.
-    return withDolbyAudioCodecs(['aac', 'mp3']);
+    // MPEG-TS carries MP3 natively, so it has no such restriction. Dolby is
+    // deliberately absent: passthrough in MPEG-TS was reported broken in 2020
+    // and fMP4 covers it now.
+    return ['aac', 'mp3'];
 }
 
 /**
