@@ -493,12 +493,18 @@ export function createStreamInfo(
             return;
         }
 
-        if (!info.subtitleStreamIndex) {
+        // Index 0 is a valid selection: the server lists external subtitles
+        // ahead of the embedded streams, so an external file routinely lands
+        // there.
+        if (info.subtitleStreamIndex === null) {
             return;
         }
 
+        // The track is looked up by stream index when it gets activated, so
+        // it has to be identified by its own index rather than the selected
+        // one, which would give every track the same id.
         const track = new cast.framework.messages.Track(
-            info.subtitleStreamIndex,
+            subtitleStream.Index ?? info.subtitleStreamIndex,
             cast.framework.messages.TrackType.TEXT
         );
 
@@ -508,10 +514,6 @@ export function createStreamInfo(
             track.trackContentId = JellyfinApi.createUrl(
                 subtitleStream.DeliveryUrl
             );
-        }
-
-        if (subtitleStream.Index) {
-            track.trackId = subtitleStream.Index;
         }
 
         if (subtitleStream.Language) {
