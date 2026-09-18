@@ -10,6 +10,8 @@ import type {
     RepeatMode
 } from '@jellyfin/sdk/lib/generated-client';
 import type {
+    HlsSegmentFormat,
+    HlsVideoSegmentFormat,
     TextTrackEdgeType,
     Track
 } from 'chromecast-caf-receiver/cast.framework.messages';
@@ -93,6 +95,8 @@ interface StreamInfo {
     canClientSeek: boolean;
     canSeek: boolean;
     contentType: string;
+    hlsSegmentFormat?: HlsSegmentFormat;
+    hlsVideoSegmentFormat?: HlsVideoSegmentFormat;
     isStatic: boolean;
     mediaSource?: MediaSourceInfo;
     playerStartPositionTicks?: number;
