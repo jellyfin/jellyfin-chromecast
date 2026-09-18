@@ -265,3 +265,51 @@ describe('direct play profiles', () => {
         }
     });
 });
+
+describe('video profile conditions', () => {
+    // Capability order as the server ranks it, least capable first.
+    const H264_RANK = [
+        'constrained baseline',
+        'baseline',
+        'main',
+        'high',
+        'high 10'
+    ];
+
+    // The announced profiles, in the order the server reads them. A codec may
+    // be split over several codec profiles when their other constraints
+    // differ, so flatten them back into one list.
+    const profilesFor = (profile: DeviceProfile, codec: string): string[] =>
+        (profile.CodecProfiles ?? [])
+            .filter((p) => p.Type === 'Video' && p.Codec === codec)
+            .flatMap(
+                (p) =>
+                    (p.Conditions ?? [])
+                        .find((c) => c.Property === 'VideoProfile')
+                        ?.Value?.split('|') ?? []
+            );
+
+    // The server transcodes to the first profile it reads and treats it as the
+    // ceiling for stream copy, so the most capable one has to lead. Getting
+    // this backwards makes every transcode come back as baseline.
+    test('announces H.264 profiles most capable first', async () => {
+        const announced = profilesFor(await buildProfile({}), 'h264');
+        const ranks = announced.map((p) => H264_RANK.indexOf(p));
+
+        expect(announced).toContain('high');
+        expect(ranks).not.toContain(-1);
+        expect(ranks).toStrictEqual([...ranks].sort((a, b) => b - a));
+    });
+
+    // 'high' and 'high 10' name the tier rather than the profile, and the
+    // server cannot rank them: leading with one makes it reject every HEVC
+    // stream copy.
+    test('leads H.265 with a profile the server can rank', async () => {
+        const announced = profilesFor(
+            await buildProfile({ hevc: true }),
+            'hevc'
+        );
+
+        expect(['main', 'main 10']).toContain(announced[0]);
+    });
+});

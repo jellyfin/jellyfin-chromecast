@@ -633,24 +633,32 @@ export function getMaxResolutionSupported(
  * @returns An array of the supported profiles.
  */
 export function getVideoProfileSupport(codec: VideoCodec): string[] {
+    // Order matters: the server transcodes to the first profile it recognizes
+    // and uses it as the ceiling when deciding whether a source stream can be
+    // copied. List the most capable profile first, or every transcode comes
+    // back as baseline.
     const possibleProfiles = ((): string[] => {
         switch (codec) {
             case VideoCodec.H264:
                 return [
-                    'constrained baseline',
-                    'baseline',
-                    'main',
+                    'high 10',
                     'high',
-                    'high 10'
+                    'main',
+                    'baseline',
+                    'constrained baseline'
                 ];
             case VideoCodec.H265:
-                return ['main', 'main 10', 'high', 'high 10'];
+                // 'high' and 'high 10' describe the tier rather than the
+                // profile, and the server does not rank them, so they must
+                // never lead: that would make it reject every HEVC stream
+                // copy.
+                return ['main 10', 'main', 'high 10', 'high'];
             case VideoCodec.AV1:
-                return ['main', 'high', 'professional'];
+                return ['professional', 'high', 'main'];
             case VideoCodec.VP8:
                 return [''];
             case VideoCodec.VP9:
-                return ['Profile 0', 'Profile 1', 'Profile 2', 'Profile 3'];
+                return ['Profile 3', 'Profile 2', 'Profile 1', 'Profile 0'];
         }
     })();
 
