@@ -332,6 +332,28 @@ function getCodecProfiles(): CodecProfile[] {
             // Different profiles of the same codec have different video profile
             // constraints. Create a new codec profile for each.
 
+            // Which profiles the codec supports at all belongs to the codec
+            // rather than to any single one of them, so it is announced once,
+            // here. Repeating it per entry would set the entries against each
+            // other: a stream carries one video profile, and the server demands
+            // that the conditions of every entry hold at the same time.
+            codecProfiles.push({
+                Codec: videoCodec,
+                Conditions: [
+                    createProfileCondition(
+                        ProfileConditionValue.IsAnamorphic,
+                        ProfileConditionType.NotEquals,
+                        'true'
+                    ),
+                    createProfileCondition(
+                        ProfileConditionValue.VideoProfile,
+                        ProfileConditionType.EqualsAny,
+                        videoProfiles.join('|')
+                    )
+                ],
+                Type: CodecType.Video
+            });
+
             for (let i = 0; i < videoProfiles.length; i++) {
                 const videoProfile = videoProfiles[i];
                 const maxLevel = maxLevels[i];
@@ -341,16 +363,6 @@ function getCodecProfiles(): CodecProfile[] {
                 const videoRanges = videoRangeSets[i];
 
                 const profileConditions = [
-                    createProfileCondition(
-                        ProfileConditionValue.IsAnamorphic,
-                        ProfileConditionType.NotEquals,
-                        'true'
-                    ),
-                    createProfileCondition(
-                        ProfileConditionValue.VideoProfile,
-                        ProfileConditionType.Equals,
-                        videoProfile
-                    ),
                     createProfileCondition(
                         ProfileConditionValue.VideoLevel,
                         ProfileConditionType.LessThanEqual,
@@ -383,7 +395,17 @@ function getCodecProfiles(): CodecProfile[] {
                     )
                 ];
 
+                // Gating the entry on the video profile, rather than asserting
+                // it, is what lets these constraints stay specific to one
+                // profile while the entries for the others stand alongside it.
                 codecProfiles.push({
+                    ApplyConditions: [
+                        createProfileCondition(
+                            ProfileConditionValue.VideoProfile,
+                            ProfileConditionType.Equals,
+                            videoProfile
+                        )
+                    ],
                     Codec: videoCodec,
                     Conditions: profileConditions,
                     Type: CodecType.Video

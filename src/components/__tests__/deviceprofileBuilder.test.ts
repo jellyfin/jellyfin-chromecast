@@ -1,6 +1,8 @@
 import { describe, beforeEach, test, expect, vi } from 'vitest';
 import type {
+    CodecProfile,
     DeviceProfile,
+    ProfileCondition,
     TranscodingProfile
 } from '@jellyfin/sdk/lib/generated-client';
 
@@ -113,15 +115,17 @@ const videoHlsProfiles = (profile: DeviceProfile): TranscodingProfile[] =>
 const codecsOf = (profile: TranscodingProfile): string[] =>
     (profile.AudioCodec ?? '').split(',').filter(Boolean);
 
+// The ranges announced for a codec, one entry per codec profile that speaks
+// about them at all. A codec split over several entries also carries one that
+// only names the video profiles it supports, which says nothing about range.
 const rangesFor = (profile: DeviceProfile, codec: string): string[][] =>
     (profile.CodecProfiles ?? [])
         .filter((p) => p.Type === 'Video' && p.Codec === codec)
-        .map(
-            (p) =>
-                (p.Conditions ?? [])
-                    .find((c) => c.Property === 'VideoRangeType')
-                    ?.Value?.split('|') ?? []
-        );
+        .map((p) =>
+            (p.Conditions ?? []).find((c) => c.Property === 'VideoRangeType')
+        )
+        .filter((c) => c !== undefined)
+        .map((c) => c.Value?.split('|') ?? []);
 
 describe('HLS transcoding profiles', () => {
     let profile: DeviceProfile;
@@ -311,5 +315,167 @@ describe('video profile conditions', () => {
         );
 
         expect(['main', 'main 10']).toContain(announced[0]);
+    });
+});
+
+describe('video codec profile evaluation', () => {
+    // The codec these are checked against: it is the one a device announces
+    // several profiles for, with constraints that differ between them.
+    const CODEC = 'hevc';
+    const LESS_THAN_EQUAL = 'LessThanEqual';
+
+    interface VideoStream {
+        bitDepth: number;
+        codec: string;
+        height: number;
+        level: number;
+        profile: string;
+        rangeType: string;
+        width: number;
+    }
+
+    const streamValues: Record<string, (stream: VideoStream) => unknown> = {
+        Height: (s) => s.height,
+        IsAnamorphic: () => false,
+        VideoBitDepth: (s) => s.bitDepth,
+        VideoLevel: (s) => s.level,
+        VideoProfile: (s) => s.profile,
+        VideoRangeType: (s) => s.rangeType,
+        Width: (s) => s.width
+    };
+
+    const holds = (
+        condition: ProfileCondition,
+        stream: VideoStream
+    ): boolean => {
+        const read = streamValues[condition.Property ?? ''];
+
+        if (!read) {
+            throw new Error(`unhandled property ${condition.Property}`);
+        }
+
+        const actual = String(read(stream));
+        const expected = condition.Value ?? '';
+
+        switch (condition.Condition) {
+            case 'Equals':
+                return actual === expected;
+            case 'EqualsAny':
+                return expected.split('|').includes(actual);
+            case 'GreaterThanEqual':
+                return Number(actual) >= Number(expected);
+            case 'LessThanEqual':
+                return Number(actual) <= Number(expected);
+            case 'NotEquals':
+                return actual !== expected;
+            default:
+                throw new Error(`unhandled condition ${condition.Condition}`);
+        }
+    };
+
+    // An entry takes effect only when all of its ApplyConditions hold, which is
+    // what lets several entries for one codec each describe a different slice
+    // of it without contradicting each other.
+    const appliesTo = (entry: CodecProfile, stream: VideoStream): boolean =>
+        (entry.ApplyConditions ?? []).every((c) => holds(c, stream));
+
+    const entriesFor = (
+        profile: DeviceProfile,
+        codec: string
+    ): CodecProfile[] =>
+        (profile.CodecProfiles ?? []).filter(
+            (p) => p.Type === 'Video' && p.Codec === codec
+        );
+
+    // How the server reads these announcements: every entry that takes effect
+    // has to be satisfied in full before a stream is played untouched.
+    const playsUntouched = (
+        profile: DeviceProfile,
+        stream: VideoStream
+    ): boolean =>
+        entriesFor(profile, stream.codec)
+            .filter((p) => appliesTo(p, stream))
+            .every((p) => (p.Conditions ?? []).every((c) => holds(c, stream)));
+
+    // A stream sitting exactly on the ceiling announced for one video profile.
+    // The constraints may be spread over several entries, so gather them from
+    // each entry that a stream of this profile would bring into effect.
+    const streamAnnouncedFor = (
+        profile: DeviceProfile,
+        codec: string,
+        videoProfile: string
+    ): VideoStream => {
+        const unconstrained: VideoStream = {
+            bitDepth: 0,
+            codec,
+            height: 0,
+            level: 0,
+            profile: videoProfile,
+            rangeType: '',
+            width: 0
+        };
+        const conditions = entriesFor(profile, codec)
+            .filter((p) => appliesTo(p, unconstrained))
+            .flatMap((p) => p.Conditions ?? []);
+        const valueOf = (property: string, type: string): string =>
+            conditions.find(
+                (c) => c.Property === property && c.Condition === type
+            )?.Value ?? '';
+        const ceiling = (property: string): string =>
+            valueOf(property, LESS_THAN_EQUAL);
+
+        return {
+            ...unconstrained,
+            bitDepth: Number(ceiling('VideoBitDepth')),
+            height: Number(ceiling('Height')),
+            level: Number(ceiling('VideoLevel')),
+            rangeType: valueOf('VideoRangeType', 'EqualsAny').split('|')[0],
+            width: Number(ceiling('Width'))
+        };
+    };
+
+    const announcedProfiles = (
+        profile: DeviceProfile,
+        codec: string
+    ): string[] =>
+        entriesFor(profile, codec)
+            .flatMap((p) => [
+                ...(p.ApplyConditions ?? []),
+                ...(p.Conditions ?? [])
+            ])
+            .filter((c) => c.Property === 'VideoProfile')
+            .flatMap((c) => (c.Value ?? '').split('|'))
+            .filter((p, i, all) => all.indexOf(p) === i);
+
+    // Splitting a codec across several entries is how differing constraints get
+    // announced, but a stream only ever has one video profile. Announcing each
+    // of them as a flat requirement makes the entries contradict one another,
+    // and the codec can then never be played untouched at all.
+    test('accepts a stream matching any profile it announced', async () => {
+        const profile = await buildProfile({ hevc: true });
+        const announced = announcedProfiles(profile, CODEC);
+
+        expect(announced.length).toBeGreaterThan(1);
+
+        for (const videoProfile of announced) {
+            const stream = streamAnnouncedFor(profile, CODEC, videoProfile);
+
+            expect({
+                plays: playsUntouched(profile, stream),
+                profile: videoProfile
+            }).toStrictEqual({ plays: true, profile: videoProfile });
+        }
+    });
+
+    test('rejects a stream whose profile it never announced', async () => {
+        const profile = await buildProfile({ hevc: true });
+        const announced = announcedProfiles(profile, CODEC)[0];
+
+        expect(
+            playsUntouched(profile, {
+                ...streamAnnouncedFor(profile, CODEC, announced),
+                profile: 'rext'
+            })
+        ).toBe(false);
     });
 });
