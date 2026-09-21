@@ -57,6 +57,18 @@ const importHelpers = async (): Promise<typeof import('../helpers')> => {
 
 const item: BaseItemDto = { Id: 'itemId', MediaType: 'Video' };
 
+// A source the server hands back as an HLS transcode, packaged as fMP4.
+const hlsMediaSource: MediaSourceInfo = {
+    Container: 'mkv',
+    Id: 'mediaSourceId',
+    RunTimeTicks: 1000,
+    SupportsDirectPlay: false,
+    SupportsDirectStream: false,
+    TranscodingContainer: 'mp4',
+    TranscodingSubProtocol: 'hls',
+    TranscodingUrl: '/videos/itemId/master.m3u8'
+};
+
 // The server lists external subtitles ahead of the embedded streams, so an
 // external file gets index 0 and the embedded streams follow.
 const mediaSource = (defaultSubtitleStreamIndex?: number): MediaSourceInfo => ({
@@ -116,5 +128,25 @@ describe('subtitle tracks', () => {
         expect(
             createStreamInfo(item, mediaSource(), null).tracks
         ).toStrictEqual([]);
+    });
+});
+
+describe('HLS streams', () => {
+    let createStreamInfo: typeof import('../helpers').createStreamInfo;
+
+    beforeEach(async () => {
+        ({ createStreamInfo } = await importHelpers());
+    });
+
+    // Those two describe the segments to MPL, and HLS is handed to Shaka
+    // (`useShakaForHls`), which reads the packaging off the playlist. Sending
+    // them anyway stopped every HLS stream from starting.
+    // See: https://github.com/jellyfin/jellyfin-chromecast/issues/949
+    test('do not carry the MPL segment format hints', () => {
+        const info = createStreamInfo(item, hlsMediaSource, null);
+
+        expect(info.contentType).toBe('application/x-mpegURL');
+        expect(info).not.toHaveProperty('hlsSegmentFormat');
+        expect(info).not.toHaveProperty('hlsVideoSegmentFormat');
     });
 });

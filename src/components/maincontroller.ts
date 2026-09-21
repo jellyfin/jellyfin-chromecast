@@ -835,17 +835,6 @@ export function createMediaInformation(
 
     mediaInfo.metadata = getMetadata(item);
 
-    // The player assumes MPEG-TS segments unless told otherwise, so HLS
-    // streams must announce their segment format or fMP4 playlists never
-    // start playing.
-    if (streamInfo.hlsSegmentFormat) {
-        mediaInfo.hlsSegmentFormat = streamInfo.hlsSegmentFormat;
-    }
-
-    if (streamInfo.hlsVideoSegmentFormat) {
-        mediaInfo.hlsVideoSegmentFormat = streamInfo.hlsVideoSegmentFormat;
-    }
-
     mediaInfo.streamType = cast.framework.messages.StreamType.BUFFERED;
     mediaInfo.tracks = streamInfo.tracks;
 
