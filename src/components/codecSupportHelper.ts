@@ -192,8 +192,8 @@ export enum VideoCodec {
  * If the device is in auto, EDID information will be used, otherwise it
  * depends on the manual setting.
  *
- * Only ever announced for MP4 and fMP4: passthrough in MPEG-TS was reported
- * broken in 2020 and has never been re-verified.
+ * Only ever announced for complete MP4 files, which the platform demuxes
+ * itself. HLS goes through MSE, where passthrough has never worked.
  * @returns true if E-AC-3 can be played
  */
 export function hasEAC3Support(): boolean {
@@ -206,8 +206,8 @@ export function hasEAC3Support(): boolean {
  * If the device is in auto, EDID information will be used, otherwise it
  * depends on the manual setting.
  *
- * Only ever announced for MP4 and fMP4: passthrough in MPEG-TS was reported
- * broken in 2020 and has never been re-verified.
+ * Only ever announced for complete MP4 files, which the platform demuxes
+ * itself. HLS goes through MSE, where passthrough has never worked.
  * @returns true if AC-3 can be played
  */
 export function hasAC3Support(): boolean {
@@ -838,11 +838,16 @@ export function getSupportedMP4VideoCodecs(): VideoCodec[] {
 }
 
 /**
- * Appends the Dolby codecs to a list of audio codecs if the device accepts them.
- * @param codecs - The list to append to.
- * @returns The same list, for convenience.
+ * Get supported audio codecs suitable for use in an MP4 container.
+ *
+ * Only valid for complete MP4 files, which are demuxed by the platform.
+ * Use {@link getSupportedHLSInFmp4AudioCodecs} for fMP4 HLS segments.
+ * See: https://developers.google.com/cast/docs/media#mp4_audio_only
+ * @returns Supported MP4 audio codecs.
  */
-function withDolbyAudioCodecs(codecs: string[]): string[] {
+export function getSupportedMP4AudioCodecs(): string[] {
+    const codecs = ['aac', 'mp3'];
+
     if (hasEAC3Support()) {
         codecs.push('eac3');
     }
@@ -852,18 +857,6 @@ function withDolbyAudioCodecs(codecs: string[]): string[] {
     }
 
     return codecs;
-}
-
-/**
- * Get supported audio codecs suitable for use in an MP4 container.
- *
- * Only valid for complete MP4 files, which are demuxed by the platform.
- * Use {@link getSupportedHLSInFmp4AudioCodecs} for fMP4 HLS segments.
- * See: https://developers.google.com/cast/docs/media#mp4_audio_only
- * @returns Supported MP4 audio codecs.
- */
-export function getSupportedMP4AudioCodecs(): string[] {
-    return withDolbyAudioCodecs(['aac', 'mp3']);
 }
 
 /**
@@ -890,14 +883,21 @@ export function getSupportedHLSInTsVideoCodecs(): VideoCodec[] {
 /**
  * Get supported audio codecs suitable for use with HLS in fMP4 segments.
  *
- * HLS plays through MSE rather than the platform demuxer, and MSE rejects both
- * Opus and the MPEG-1 audio object types MP3 is carried as in ISO-BMFF
- * (`mp4a.69`, `mp4a.6B`, `mp4a.40.34`). Announcing either makes the server
- * stream-copy audio into segments the receiver then refuses to load.
+ * HLS plays through MSE rather than the platform demuxer, and MSE rejects
+ * Opus, the MPEG-1 audio object types MP3 is carried as in ISO-BMFF
+ * (`mp4a.69`, `mp4a.6B`, `mp4a.40.34`), and AC-3/E-AC-3. Announcing any of
+ * them makes the server stream-copy audio into segments the receiver then
+ * refuses to load.
+ *
+ * `canDisplayType('audio/mp4', 'ec-3')` answers for the platform demuxer and
+ * the display behind it, not for MSE, so Dolby is deliberately left out here
+ * even on a setup that can pass it through.
+ *
+ * See: https://github.com/jellyfin/jellyfin-chromecast/issues/949
  * @returns Supported fMP4 HLS audio codecs.
  */
 export function getSupportedHLSInFmp4AudioCodecs(): string[] {
-    return withDolbyAudioCodecs(['aac']);
+    return ['aac'];
 }
 
 /**

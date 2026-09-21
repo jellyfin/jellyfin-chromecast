@@ -333,35 +333,6 @@ export function isHlsStream(mediaSource: MediaSourceInfo): boolean {
 }
 
 /**
- * Describe the segments of an HLS stream to the Cast player.
- *
- * Without this the player assumes MPEG-TS segments and fails to start on the
- * fMP4 playlists the server produces for our `mp4` HLS transcoding profile.
- *
- * See: https://developers.google.com/cast/docs/media/streaming_protocols
- * @param mediaSource - MediaSourceInfo of the HLS stream.
- * @returns The audio and video segment formats to announce.
- */
-function getHlsSegmentFormats(mediaSource: MediaSourceInfo): {
-    hlsSegmentFormat: framework.messages.HlsSegmentFormat;
-    hlsVideoSegmentFormat: framework.messages.HlsVideoSegmentFormat;
-} {
-    if (mediaSource.TranscodingContainer?.toLowerCase() == 'mp4') {
-        return {
-            hlsSegmentFormat: cast.framework.messages.HlsSegmentFormat.FMP4,
-            hlsVideoSegmentFormat:
-                cast.framework.messages.HlsVideoSegmentFormat.FMP4
-        };
-    }
-
-    return {
-        hlsSegmentFormat: cast.framework.messages.HlsSegmentFormat.TS,
-        hlsVideoSegmentFormat:
-            cast.framework.messages.HlsVideoSegmentFormat.MPEG2_TS
-    };
-}
-
-/**
  * Create the necessary information about an item
  * needed for playback
  * @param item - Item to play
@@ -387,8 +358,6 @@ export function createStreamInfo(
 
     let isStatic = false;
     let streamContainer = mediaSource.Container;
-    let hlsSegmentFormats: ReturnType<typeof getHlsSegmentFormats> | undefined =
-        undefined;
 
     let playerStartPositionTicks = 0;
 
@@ -416,7 +385,14 @@ export function createStreamInfo(
                 playerStartPositionTicks = startPosition ?? 0;
                 contentType = 'application/x-mpegURL';
                 streamContainer = 'm3u8';
-                hlsSegmentFormats = getHlsSegmentFormats(mediaSource);
+
+                // Deliberately no hlsSegmentFormat/hlsVideoSegmentFormat here.
+                // Those describe the segments to MPL, and we hand HLS to Shaka
+                // (`useShakaForHls`), which reads the packaging off the
+                // playlist itself. Announcing them anyway broke every HLS
+                // stream, fMP4 and MPEG-TS alike.
+                //
+                // See: https://github.com/jellyfin/jellyfin-chromecast/issues/949
             } else {
                 contentType = `video/${mediaSource.TranscodingContainer}`;
                 streamContainer = mediaSource.TranscodingContainer;
@@ -465,8 +441,6 @@ export function createStreamInfo(
         canClientSeek: isStatic || (canSeek && streamContainer == 'm3u8'),
         canSeek: canSeek,
         contentType: contentType,
-        hlsSegmentFormat: hlsSegmentFormats?.hlsSegmentFormat,
-        hlsVideoSegmentFormat: hlsSegmentFormats?.hlsVideoSegmentFormat,
         isStatic: isStatic,
         mediaSource: mediaSource,
         playerStartPositionTicks: playerStartPositionTicks,

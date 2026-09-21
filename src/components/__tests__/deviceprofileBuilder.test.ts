@@ -1,12 +1,13 @@
 import { describe, beforeEach, test, expect, vi } from 'vitest';
 import type {
     DeviceProfile,
+    DirectPlayProfile,
     TranscodingProfile
 } from '@jellyfin/sdk/lib/generated-client';
 
 // Codecs that a Cast device demuxes natively from a complete file, but which
 // its MSE pipeline rejects inside fMP4 segments.
-const NOT_PLAYABLE_IN_FMP4 = ['mp3', 'opus'];
+const NOT_PLAYABLE_IN_FMP4 = ['mp3', 'opus', 'ac3', 'eac3'];
 // MPEG-TS has no packet type for these, and Dolby passthrough in MPEG-TS was
 // reported broken in 2020 and never re-verified.
 const NOT_PLAYABLE_IN_TS = ['opus', 'flac', 'alac', 'vorbis', 'ac3', 'eac3'];
@@ -110,7 +111,7 @@ const videoHlsProfiles = (profile: DeviceProfile): TranscodingProfile[] =>
         (p) => p.Protocol === 'hls' && p.Type === 'Video'
     );
 
-const codecsOf = (profile: TranscodingProfile): string[] =>
+const codecsOf = (profile: DirectPlayProfile | TranscodingProfile): string[] =>
     (profile.AudioCodec ?? '').split(',').filter(Boolean);
 
 const rangesFor = (profile: DeviceProfile, codec: string): string[][] =>
@@ -133,7 +134,10 @@ describe('HLS transcoding profiles', () => {
     test('announces both an fMP4 and an MPEG-TS HLS video profile', () => {
         const containers = videoHlsProfiles(profile).map((p) => p.Container);
 
-        // fMP4 must come first so the server prefers it.
+        // fMP4 must come first so the server prefers it. The `ts` one has to
+        // be there at all: live TV is narrowed to `ts` transcoding profiles by
+        // the server, and without one it never picks a profile.
+        // See: https://github.com/jellyfin/jellyfin-chromecast/issues/920
         expect(containers).toEqual(['mp4', 'ts']);
     });
 
@@ -187,21 +191,44 @@ describe('HLS transcoding profiles', () => {
 });
 
 describe('Dolby passthrough', () => {
-    test('is offered in fMP4, but never in MPEG-TS', async () => {
-        const profile = await buildProfile({
-            ac3: true,
-            eac3: true,
-            hevc: true
-        });
+    const dolbyDevice = { ac3: true, eac3: true, hevc: true };
 
-        const [fmp4, ts] = videoHlsProfiles(profile);
+    test('is offered for complete MP4 files the platform demuxes', async () => {
+        const profile = await buildProfile(dolbyDevice);
+        const mp4Profiles = (profile.DirectPlayProfiles ?? []).filter(
+            (p) =>
+                p.Type === 'Video' &&
+                (p.Container ?? '').split(',').includes('mp4')
+        );
 
-        expect(codecsOf(fmp4)).toEqual(['aac', 'eac3', 'ac3']);
-        expect(codecsOf(ts)).toEqual(['aac', 'mp3']);
+        expect(mp4Profiles.length).toBeGreaterThan(0);
+
+        for (const mp4Profile of mp4Profiles) {
+            expect(codecsOf(mp4Profile)).toEqual(
+                expect.arrayContaining(['eac3', 'ac3'])
+            );
+        }
+    });
+
+    // The device answers for its demuxer and the display behind it, neither of
+    // which is what plays an HLS stream. Announcing it here makes the server
+    // copy Dolby audio into segments MSE refuses to load.
+    test('is never offered for HLS, in either container', async () => {
+        for (const hlsProfile of videoHlsProfiles(
+            await buildProfile(dolbyDevice)
+        )) {
+            expect(codecsOf(hlsProfile)).not.toContain('ac3');
+            expect(codecsOf(hlsProfile)).not.toContain('eac3');
+        }
     });
 
     test('is absent when the setup cannot pass it through', async () => {
         const profile = await buildProfile({ hevc: true });
+
+        for (const directPlayProfile of profile.DirectPlayProfiles ?? []) {
+            expect(codecsOf(directPlayProfile)).not.toContain('ac3');
+            expect(codecsOf(directPlayProfile)).not.toContain('eac3');
+        }
 
         for (const hlsProfile of videoHlsProfiles(profile)) {
             expect(codecsOf(hlsProfile)).not.toContain('ac3');

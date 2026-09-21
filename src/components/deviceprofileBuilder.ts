@@ -473,9 +473,17 @@ function getTranscodingProfiles(): TranscodingProfile[] {
         hasHlsVideoProfile = true;
     }
 
-    // MPEG-TS fallback, so sources whose audio fMP4 cannot carry (MP3, and
-    // AC-3/E-AC-3 where enabled) can still be stream-copied. The server ranks
-    // video compatibility above audio, so this is only picked for H.264.
+    // MPEG-TS fallback, so sources whose audio fMP4 cannot carry (MP3) can
+    // still be stream-copied. The server ranks video compatibility above
+    // audio, so this is only picked for H.264.
+    //
+    // It is also the only profile live TV can use at all: a live source is
+    // flagged `UseMostCompatibleTranscodingProfile`, and the server then
+    // narrows the transcoding profiles to `ts` alone. Without one it finds no
+    // video profile, falls back to a progressive MPEG-TS stream naming no
+    // codec, and live TV stops at 0 ms.
+    //
+    // See: https://github.com/jellyfin/jellyfin-chromecast/issues/920
     if (hlsInTsVideoCodecs.length > 0 && hlsInTsAudioCodecs.length > 0) {
         transcodingProfiles.push({
             AudioCodec: hlsInTsAudioCodecs.join(','),
