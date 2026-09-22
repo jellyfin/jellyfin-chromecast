@@ -424,10 +424,11 @@ export function setSubtitleStreamIndex(
     ) {
         let textStreamUrl;
 
-        if (subtitleStream.IsExternal && subtitleStream.DeliveryUrl) {
-            textStreamUrl = subtitleStream.DeliveryUrl;
-        } else if (subtitleStream.DeliveryUrl) {
-            textStreamUrl = JellyfinApi.createUrl(subtitleStream.DeliveryUrl);
+        // Only IsExternalUrl carries an absolute url, see createStreamInfo
+        if (subtitleStream.DeliveryUrl) {
+            textStreamUrl = subtitleStream.IsExternalUrl
+                ? subtitleStream.DeliveryUrl
+                : JellyfinApi.createUrl(subtitleStream.DeliveryUrl);
         }
 
         console.log(`Subtitle url: ${textStreamUrl}`);
