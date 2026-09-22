@@ -508,12 +508,14 @@ export function createStreamInfo(
             cast.framework.messages.TrackType.TEXT
         );
 
-        if (subtitleStream.IsExternal && subtitleStream.DeliveryUrl) {
-            track.trackContentId = subtitleStream.DeliveryUrl;
-        } else if (subtitleStream.DeliveryUrl) {
-            track.trackContentId = JellyfinApi.createUrl(
-                subtitleStream.DeliveryUrl
-            );
+        // IsExternalUrl flags the subtitle lives somewhere else entirely,
+        // already has an absolute DeliveryUrl.
+        // IsExternal only flags that the subtitle comes from outside the media file,
+        // the server still delivers it relative to itself.
+        if (subtitleStream.DeliveryUrl) {
+            track.trackContentId = subtitleStream.IsExternalUrl
+                ? subtitleStream.DeliveryUrl
+                : JellyfinApi.createUrl(subtitleStream.DeliveryUrl);
         }
 
         if (subtitleStream.Language) {

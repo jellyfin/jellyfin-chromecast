@@ -71,11 +71,18 @@ const mediaSource = (defaultSubtitleStreamIndex?: number): MediaSourceInfo => ({
             Language: 'eng',
             Type: 'Subtitle'
         },
-        { Index: 1, Type: 'Video' },
-        { Index: 2, Type: 'Audio' },
+        {
+            DeliveryUrl: 'https://subs.example/ext.vtt',
+            Index: 1,
+            IsExternal: true,
+            IsExternalUrl: true,
+            Type: 'Subtitle'
+        },
+        { Index: 2, Type: 'Video' },
+        { Index: 3, Type: 'Audio' },
         {
             DeliveryUrl: '/subs/embedded.vtt',
-            Index: 3,
+            Index: 4,
             IsExternal: false,
             Language: 'fra',
             Type: 'Subtitle'
@@ -98,18 +105,30 @@ describe('subtitle tracks', () => {
 
         expect(info.subtitleStreamIndex).toBe(0);
         expect(info.tracks?.map((track) => track.trackId)).toStrictEqual([
-            0, 3
+            0, 1, 4
         ]);
     });
 
     // The player looks a track up by its stream index when activating it, so
     // each one has to carry its own index rather than the selected one.
     test('are identified by their own index, not the selected one', () => {
-        const info = createStreamInfo(item, mediaSource(3), null);
+        const info = createStreamInfo(item, mediaSource(4), null);
 
         expect(info.tracks?.map((track) => track.trackId)).toStrictEqual([
-            0, 3
+            0, 1, 4
         ]);
+    });
+
+    test('are resolved against the server address unless the subtitle is served by another host', () => {
+        const info = createStreamInfo(item, mediaSource(0), null);
+
+        expect(info.tracks?.map((track) => track.trackContentId)).toStrictEqual(
+            [
+                'serverAddress/subs/external.vtt',
+                'https://subs.example/ext.vtt',
+                'serverAddress/subs/embedded.vtt'
+            ]
+        );
     });
 
     test('are left out when no subtitle is selected', () => {
