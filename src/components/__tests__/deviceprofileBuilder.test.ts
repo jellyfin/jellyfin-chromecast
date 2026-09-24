@@ -6,9 +6,9 @@ import type {
     TranscodingProfile
 } from '@jellyfin/sdk/lib/generated-client';
 
-// Codecs that a Cast device demuxes natively from a complete file, but which
-// its MSE pipeline rejects inside fMP4 segments.
-const NOT_PLAYABLE_IN_FMP4 = ['mp3', 'opus'];
+// The platform demuxer plays these codecs from a complete file. MSE rejects
+// them inside fMP4 segments, including AC-3/E-AC-3 passthrough codecs.
+const NOT_PLAYABLE_IN_FMP4 = ['mp3', 'opus', 'ac3', 'eac3'];
 // MPEG-TS has no packet type for these, and Dolby passthrough in MPEG-TS was
 // reported broken in 2020 and never re-verified.
 const NOT_PLAYABLE_IN_TS = ['opus', 'flac', 'alac', 'vorbis', 'ac3', 'eac3'];
@@ -191,7 +191,7 @@ describe('HLS transcoding profiles', () => {
 });
 
 describe('Dolby passthrough', () => {
-    test('is offered in fMP4, but never in MPEG-TS', async () => {
+    test('is offered in complete MP4 files, but never in HLS', async () => {
         const profile = await buildProfile({
             ac3: true,
             eac3: true,
@@ -200,8 +200,16 @@ describe('Dolby passthrough', () => {
 
         const [fmp4, ts] = videoHlsProfiles(profile);
 
-        expect(codecsOf(fmp4)).toEqual(['aac', 'eac3', 'ac3']);
+        expect(codecsOf(fmp4)).toEqual(['aac']);
         expect(codecsOf(ts)).toEqual(['aac', 'mp3']);
+
+        const mp4DirectPlay = (profile.DirectPlayProfiles ?? []).find(
+            (p) => p.Type === 'Video' && (p.Container ?? '').includes('mp4')
+        );
+
+        expect(mp4DirectPlay?.AudioCodec?.split(',')).toEqual(
+            expect.arrayContaining(['eac3', 'ac3'])
+        );
     });
 
     test('is absent when the setup cannot pass it through', async () => {
