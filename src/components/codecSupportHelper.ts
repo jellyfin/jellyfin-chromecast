@@ -888,16 +888,18 @@ export function getSupportedHLSInTsVideoCodecs(): VideoCodec[] {
 }
 
 /**
- * Get supported audio codecs suitable for use with HLS in fMP4 segments.
+ * Get the audio codecs that fMP4 HLS segments can carry.
  *
- * HLS plays through MSE rather than the platform demuxer, and MSE rejects both
- * Opus and the MPEG-1 audio object types MP3 is carried as in ISO-BMFF
- * (`mp4a.69`, `mp4a.6B`, `mp4a.40.34`). Announcing either makes the server
- * stream-copy audio into segments the receiver then refuses to load.
- * @returns Supported fMP4 HLS audio codecs.
+ * HLS plays through MSE. The server puts the audio into the video segments,
+ * so MSE only ever sees these codecs in a video/mp4 source buffer. MSE
+ * rejects Opus, the ISO-BMFF MP3 object types (`mp4a.69`, `mp4a.6B`,
+ * `mp4a.40.34`), and AC-3/E-AC-3 there. Announcing any of them makes the
+ * receiver refuse the segments. Passthrough still works for complete MP4 files.
+ * See {@link getSupportedMP4AudioCodecs}.
+ * @returns The audio codecs that fMP4 HLS segments can carry.
  */
 export function getSupportedHLSInFmp4AudioCodecs(): string[] {
-    return withDolbyAudioCodecs(['aac']);
+    return ['aac'];
 }
 
 /**
