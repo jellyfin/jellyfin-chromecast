@@ -196,18 +196,27 @@ window.playerManager.addEventListener(
         const playbackState = PlaybackManager.playbackState;
 
         // Don't notify server or client if changing streams, but notify next time.
-        if (!playbackState.isChangingStream) {
-            await reportPlaybackStopped(playbackState, {
-                ...getReportingParams(playbackState),
-                PositionTicks:
-                    (mediaFinishedEvent.currentMediaTime ??
-                        getCurrentPositionTicks(playbackState)) * TicksPerSecond
-            });
-
-            defaultOnStop();
-        } else {
+        if (playbackState.isChangingStream) {
             playbackState.isChangingStream = false;
+
+            return;
         }
+
+        // A new load replaced this media. playbackState already describes the
+        // new item, so reporting a stop here would stop the wrong item, and
+        // onStop would put the idle screen over the new item's video.
+        if (mediaFinishedEvent.endedReason === 'INTERRUPTED') {
+            return;
+        }
+
+        await reportPlaybackStopped(playbackState, {
+            ...getReportingParams(playbackState),
+            PositionTicks:
+                (mediaFinishedEvent.currentMediaTime ??
+                    getCurrentPositionTicks(playbackState)) * TicksPerSecond
+        });
+
+        defaultOnStop();
     }
 );
 
