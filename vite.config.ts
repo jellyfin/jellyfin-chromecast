@@ -5,6 +5,9 @@ import { defineConfig } from 'vite';
 export default defineConfig({
     root: 'src',
     base: './',
+    oxc: {
+        target: 'es2015'
+    },
     build: {
         outDir: '../dist',
         emptyOutDir: true,
