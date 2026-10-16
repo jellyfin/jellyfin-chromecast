@@ -24,7 +24,7 @@
         "prettier": "3.9.7",
         "stylelint": "16.26.1",
         "stylelint-config-standard": "39.0.1",
-        "typescript": "6.0.3",
+        "typescript": "7.0.2",
         "typescript-eslint": "8.70.0",
         "vite": "8.3.0",
         "vitest": "5.0.1"
