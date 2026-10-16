@@ -8,7 +8,7 @@
         "url": "https://github.com/jellyfin/jellyfin-chromecast/issues"
     },
     "dependencies": {
-        "@jellyfin/sdk": "0.13.0"
+        "@jellyfin/sdk": "1.0.0"
     },
     "devDependencies": {
         "@types/chromecast-caf-receiver": "6.0.26",
