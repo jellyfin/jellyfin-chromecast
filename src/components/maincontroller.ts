@@ -13,6 +13,7 @@ import {
     getInstantMixItems,
     translateRequestedItems,
     broadcastToMessageBus,
+    nextMaxBitrate,
     ticksToSeconds,
     TicksPerSecond
 } from '../helpers';
@@ -318,8 +319,12 @@ export function processMessage(data: any): void {
         window.subtitleAppearance = data.subtitleAppearance;
     }
 
-    if (data.maxBitrate) {
-        window.MaxBitrate = data.maxBitrate;
+    const maxBitrate = nextMaxBitrate(data, window.MaxBitrate);
+
+    // The device profile the server knows is built from the cap.
+    if (maxBitrate !== window.MaxBitrate) {
+        window.MaxBitrate = maxBitrate;
+        hasReportedCapabilities = false;
     }
 
     // Report device capabilities

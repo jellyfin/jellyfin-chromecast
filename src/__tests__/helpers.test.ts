@@ -137,3 +137,24 @@ describe('subtitle tracks', () => {
         ).toStrictEqual([]);
     });
 });
+
+describe('max bitrate', () => {
+    let nextMaxBitrate: typeof import('../helpers').nextMaxBitrate;
+
+    beforeEach(async () => {
+        ({ nextMaxBitrate } = await importHelpers());
+    });
+
+    test('takes the cap a message sends', () => {
+        expect(nextMaxBitrate({ maxBitrate: 192000 }, 8000000)).toBe(192000);
+    });
+
+    test('keeps the cap when a message leaves it out', () => {
+        expect(nextMaxBitrate({}, 192000)).toBe(192000);
+    });
+
+    test('lifts the cap on an explicit 0 or null, back to the bandwidth detection', () => {
+        expect(nextMaxBitrate({ maxBitrate: 0 }, 192000)).toBeUndefined();
+        expect(nextMaxBitrate({ maxBitrate: null }, 192000)).toBeUndefined();
+    });
+});

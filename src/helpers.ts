@@ -797,6 +797,28 @@ export function parseISO8601Date(date: string): Date {
 }
 
 /**
+ * Get the bitrate cap after a message: the one it sends, the current one when it
+ * leaves the field out, or none on an explicit 0 or null, which hands the choice
+ * back to the bandwidth detection.
+ * @param data - message from a sender.
+ * @param data.maxBitrate - cap the message sends, in bits per second.
+ * @param current - cap in effect before the message.
+ * @returns cap in bits per second, or undefined for none
+ */
+export function nextMaxBitrate(
+    data: { maxBitrate?: number | null },
+    current: number | undefined
+): number | undefined {
+    if (!('maxBitrate' in data)) {
+        return current;
+    }
+
+    const maxBitrate = data.maxBitrate ?? 0;
+
+    return maxBitrate > 0 ? maxBitrate : undefined;
+}
+
+/**
  * Convert ticks to seconds
  * @param ticks - number of ticks to convert
  * @returns number of seconds
