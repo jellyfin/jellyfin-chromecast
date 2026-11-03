@@ -15,6 +15,9 @@ export abstract class JellyfinApi {
     // unique id
     public static deviceId = '';
 
+    // The Cast device's own id, when a sender gave it
+    private static receiverId: string | undefined;
+
     // Jellyfin SDK
     private static jellyfinSdk: Jellyfin | undefined;
 
@@ -24,26 +27,39 @@ export abstract class JellyfinApi {
     public static setServerInfo(
         accessToken?: string,
         serverAddress?: string,
-        receiverName = ''
+        receiverName = '',
+        receiverId = ''
     ): void {
         const regenApi =
             this.accessToken !== accessToken ||
             this.serverAddress !== serverAddress;
 
         console.debug(
-            `JellyfinApi.setServerInfo: token:${accessToken}, server:${serverAddress}, name:${receiverName}`
+            `JellyfinApi.setServerInfo: server:${serverAddress}, name:${receiverName}`
         );
         this.accessToken = accessToken;
         this.serverAddress = serverAddress;
+
+        if (receiverId) {
+            this.receiverId = receiverId;
+        }
 
         if (receiverName) {
             // remove special characters from the receiver name
             receiverName = receiverName.replace(/[^\w\s]/gi, '');
 
             this.deviceName = receiverName;
+        }
+
+        if (this.receiverId) {
+            // Unlike the name, the Cast device's id is unique and survives a
+            // rename, so a later message without it keeps it.
+            this.deviceId = this.receiverId;
+        } else if (receiverName) {
             // deviceId just needs to be unique-ish
             this.deviceId = btoa(receiverName);
-        } else {
+        } else if (!this.deviceId) {
+            // A message without a name keeps the identity an earlier one gave.
             const senders =
                 cast.framework.CastReceiverContext.getInstance().getSenders();
 
@@ -54,18 +70,26 @@ export abstract class JellyfinApi {
                     : new Date().getTime().toString();
         }
 
-        this.jellyfinSdk ??= new Jellyfin({
-            clientInfo: {
-                name: 'Chromecast',
-                version: packageVersion
-            },
-            deviceInfo: {
-                id: this.deviceId,
-                name: this.deviceName
-            }
-        });
+        // The SDK carries the device into every request, so a new name needs a
+        // new SDK and API.
+        const deviceChanged =
+            this.jellyfinSdk?.deviceInfo.id !== this.deviceId ||
+            this.jellyfinSdk.deviceInfo.name !== this.deviceName;
 
-        if (!this.jellyfinApi || regenApi) {
+        if (!this.jellyfinSdk || deviceChanged) {
+            this.jellyfinSdk = new Jellyfin({
+                clientInfo: {
+                    name: 'Chromecast',
+                    version: packageVersion
+                },
+                deviceInfo: {
+                    id: this.deviceId,
+                    name: this.deviceName
+                }
+            });
+        }
+
+        if (!this.jellyfinApi || regenApi || deviceChanged) {
             if (serverAddress && accessToken) {
                 this.jellyfinApi = this.jellyfinSdk.createApi(
                     serverAddress,

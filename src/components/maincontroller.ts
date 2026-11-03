@@ -311,7 +311,8 @@ export function processMessage(data: any): void {
     JellyfinApi.setServerInfo(
         data.accessToken,
         data.serverAddress,
-        data.receiverName
+        data.receiverName,
+        data.receiverId
     );
 
     if (data.subtitleAppearance) {

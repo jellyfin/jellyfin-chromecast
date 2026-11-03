@@ -1,4 +1,4 @@
-import { describe, beforeAll, beforeEach, test, expect } from 'vitest';
+import { describe, beforeAll, beforeEach, test, expect, vi } from 'vitest';
 import { JellyfinApi } from '../jellyfinApi';
 
 const setupMockCastSenders = (): void => {
@@ -93,5 +93,114 @@ describe('creating image urls', () => {
         const correct = '';
 
         expect(result).toEqual(correct);
+    });
+});
+
+describe('device identity', () => {
+    beforeAll(() => {
+        setupMockCastSenders();
+    });
+
+    test('follows a receiver name sent after the first message', () => {
+        JellyfinApi.setServerInfo('thisIsAccessToken', 'thisIsServerAddress');
+        JellyfinApi.setServerInfo(
+            'thisIsAccessToken',
+            'thisIsServerAddress',
+            'Bedroom'
+        );
+
+        expect(JellyfinApi.jellyfinApi.authorizationHeader).toContain(
+            'Device="Bedroom"'
+        );
+    });
+
+    test('keeps its name when a later message has none', () => {
+        JellyfinApi.setServerInfo(
+            'thisIsAccessToken',
+            'thisIsServerAddress',
+            'Kitchen'
+        );
+        JellyfinApi.setServerInfo('thisIsAccessToken', 'thisIsServerAddress');
+
+        expect(JellyfinApi.jellyfinApi.authorizationHeader).toContain(
+            'Device="Kitchen"'
+        );
+    });
+
+    test('does not log the access token', () => {
+        const debug = vi
+            .spyOn(console, 'debug')
+            .mockImplementation(() => undefined);
+
+        JellyfinApi.setServerInfo(
+            'thisIsAccessToken',
+            'thisIsServerAddress',
+            'Bedroom'
+        );
+
+        expect(debug.mock.calls.flat().join(' ')).not.toContain(
+            'thisIsAccessToken'
+        );
+        debug.mockRestore();
+    });
+});
+
+describe('device id from the sender', () => {
+    let Api: typeof JellyfinApi;
+
+    beforeAll(() => {
+        setupMockCastSenders();
+    });
+
+    beforeEach(async () => {
+        // Each test starts from a receiver that has not had a message yet.
+        vi.resetModules();
+        ({ JellyfinApi: Api } = await import('../jellyfinApi'));
+    });
+
+    test('uses the Cast device id a sender gives', () => {
+        Api.setServerInfo(
+            'thisIsAccessToken',
+            'thisIsServerAddress',
+            'Kitchen',
+            'castDeviceA'
+        );
+
+        expect(Api.jellyfinApi.authorizationHeader).toContain(
+            'DeviceId="castDeviceA"'
+        );
+        expect(Api.jellyfinApi.authorizationHeader).toContain(
+            'Device="Kitchen"'
+        );
+    });
+
+    test('keeps that id when a later message has only a name', () => {
+        Api.setServerInfo(
+            'thisIsAccessToken',
+            'thisIsServerAddress',
+            'Kitchen',
+            'castDeviceA'
+        );
+        Api.setServerInfo(
+            'thisIsAccessToken',
+            'thisIsServerAddress',
+            'Kitchen'
+        );
+
+        expect(Api.jellyfinApi.authorizationHeader).toContain(
+            'DeviceId="castDeviceA"'
+        );
+    });
+
+    test('derives the id from the name when no sender gives one', () => {
+        Api.setServerInfo(
+            'thisIsAccessToken',
+            'thisIsServerAddress',
+            'Kitchen'
+        );
+
+        expect(Api.jellyfinApi.authorizationHeader).toContain(
+            `DeviceId="${encodeURIComponent(btoa('Kitchen'))}"`
+        );
     });
 });
