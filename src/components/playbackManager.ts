@@ -9,7 +9,7 @@ import { AppStatus } from '../types/appStatus';
 import {
     broadcastConnectionErrorMessage,
     createStreamInfo,
-    ticksToSeconds
+    getPlayerStartTime
 } from '../helpers';
 import { DocumentManager } from './documentManager';
 import { getDeviceProfile } from './deviceprofileBuilder';
@@ -290,13 +290,10 @@ export abstract class PlaybackManager {
         loadRequestData.media = mediaInfo;
         loadRequestData.autoplay = true;
 
-        const startPositionTicks =
-            mediaInfo.customData?.startPositionTicks ?? -1;
+        const startTime = getPlayerStartTime(mediaInfo.customData);
 
-        // If we should seek at the start, translate it
-        // to seconds and give it to loadRequestData :)
-        if (startPositionTicks > 0) {
-            loadRequestData.currentTime = ticksToSeconds(startPositionTicks);
+        if (startTime !== undefined) {
+            loadRequestData.currentTime = startTime;
         }
 
         const isChangingStream = this.playbackState.isChangingStream;

@@ -60,6 +60,28 @@ export function getCurrentPositionTicks(state: PlaybackState): number {
 }
 
 /**
+ * Get where the player starts in the stream when a load asks for a start position.
+ * A stream the receiver cannot seek in itself (a progressive transcode) already
+ * begins at that position on the server, and getCurrentPositionTicks adds it back.
+ * @param customData - custom data of the media to load.
+ * @param customData.canClientSeek - whether the receiver seeks in the stream itself.
+ * @param customData.startPositionTicks - position the load asks for, in ticks.
+ * @returns start time in seconds, or undefined to start at the beginning of the stream
+ */
+export function getPlayerStartTime(customData?: {
+    canClientSeek?: boolean;
+    startPositionTicks?: number;
+}): number | undefined {
+    const startPositionTicks = customData?.startPositionTicks ?? 0;
+
+    if (startPositionTicks <= 0 || !customData?.canClientSeek) {
+        return undefined;
+    }
+
+    return ticksToSeconds(startPositionTicks);
+}
+
+/**
  * Get parameters used for playback reporting
  * @param state - playback state.
  * @returns progress information for use with the reporting APIs
