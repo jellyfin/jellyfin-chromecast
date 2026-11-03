@@ -15,6 +15,9 @@ export abstract class JellyfinApi {
     // unique id
     public static deviceId = '';
 
+    // The Cast device's own id, when a sender gave it
+    private static receiverId: string | undefined;
+
     // Jellyfin SDK
     private static jellyfinSdk: Jellyfin | undefined;
 
@@ -24,7 +27,8 @@ export abstract class JellyfinApi {
     public static setServerInfo(
         accessToken?: string,
         serverAddress?: string,
-        receiverName = ''
+        receiverName = '',
+        receiverId = ''
     ): void {
         const regenApi =
             this.accessToken !== accessToken ||
@@ -36,11 +40,22 @@ export abstract class JellyfinApi {
         this.accessToken = accessToken;
         this.serverAddress = serverAddress;
 
+        if (receiverId) {
+            this.receiverId = receiverId;
+        }
+
         if (receiverName) {
             // remove special characters from the receiver name
             receiverName = receiverName.replace(/[^\w\s]/gi, '');
 
             this.deviceName = receiverName;
+        }
+
+        if (this.receiverId) {
+            // Unlike the name, the Cast device's id is unique and survives a
+            // rename, so a later message without it keeps it.
+            this.deviceId = this.receiverId;
+        } else if (receiverName) {
             // deviceId just needs to be unique-ish
             this.deviceId = btoa(receiverName);
         } else if (!this.deviceId) {

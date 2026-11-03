@@ -144,3 +144,63 @@ describe('device identity', () => {
         debug.mockRestore();
     });
 });
+
+describe('device id from the sender', () => {
+    let Api: typeof JellyfinApi;
+
+    beforeAll(() => {
+        setupMockCastSenders();
+    });
+
+    beforeEach(async () => {
+        // Each test starts from a receiver that has not had a message yet.
+        vi.resetModules();
+        ({ JellyfinApi: Api } = await import('../jellyfinApi'));
+    });
+
+    test('uses the Cast device id a sender gives', () => {
+        Api.setServerInfo(
+            'thisIsAccessToken',
+            'thisIsServerAddress',
+            'Kitchen',
+            'castDeviceA'
+        );
+
+        expect(Api.jellyfinApi.authorizationHeader).toContain(
+            'DeviceId="castDeviceA"'
+        );
+        expect(Api.jellyfinApi.authorizationHeader).toContain(
+            'Device="Kitchen"'
+        );
+    });
+
+    test('keeps that id when a later message has only a name', () => {
+        Api.setServerInfo(
+            'thisIsAccessToken',
+            'thisIsServerAddress',
+            'Kitchen',
+            'castDeviceA'
+        );
+        Api.setServerInfo(
+            'thisIsAccessToken',
+            'thisIsServerAddress',
+            'Kitchen'
+        );
+
+        expect(Api.jellyfinApi.authorizationHeader).toContain(
+            'DeviceId="castDeviceA"'
+        );
+    });
+
+    test('derives the id from the name when no sender gives one', () => {
+        Api.setServerInfo(
+            'thisIsAccessToken',
+            'thisIsServerAddress',
+            'Kitchen'
+        );
+
+        expect(Api.jellyfinApi.authorizationHeader).toContain(
+            `DeviceId="${encodeURIComponent(btoa('Kitchen'))}"`
+        );
+    });
+});
