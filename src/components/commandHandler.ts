@@ -1,4 +1,8 @@
-import { getReportingParams, TicksPerSecond } from '../helpers';
+import {
+    broadcastToMessageBus,
+    getReportingParams,
+    TicksPerSecond
+} from '../helpers';
 import type {
     DataMessage,
     DisplayRequest,
@@ -142,12 +146,14 @@ export abstract class CommandHandler {
 
             DocumentManager.startBackdropInterval();
         } else {
-            // When a client connects send back the initial device state (volume etc) via a playbackstop message
+            // When a client connects during playback, send it the current state
+            // (item, position, volume etc) as a playbackstart: a playbackstop
+            // made senders show playback as ended.
             reportPlaybackProgress(
                 PlaybackManager.playbackState,
                 getReportingParams(PlaybackManager.playbackState),
                 true,
-                'playbackstop'
+                'playbackstart'
             );
         }
     }
@@ -200,7 +206,11 @@ export abstract class CommandHandler {
     // We should avoid using a defaulthandler that has a purpose other than informing the dev/user
     // Currently all unhandled commands will be treated as play commands.
     static defaultHandler(data: DataMessage): void {
-        translateItems(data, data.options as PlayRequest, 'play');
+        // An unknown command is refused instead of played as PlayNow.
+        broadcastToMessageBus({
+            message: `Unknown command: ${data.command}`,
+            type: 'error'
+        });
     }
 
     static processMessage(data: DataMessage, command: string): void {
