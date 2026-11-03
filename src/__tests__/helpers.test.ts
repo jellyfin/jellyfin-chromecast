@@ -137,3 +137,35 @@ describe('subtitle tracks', () => {
         ).toStrictEqual([]);
     });
 });
+
+describe('player start time', () => {
+    let getPlayerStartTime: typeof import('../helpers').getPlayerStartTime;
+
+    beforeEach(async () => {
+        ({ getPlayerStartTime } = await importHelpers());
+    });
+
+    test('moves a stream the receiver seeks in itself to the start position', () => {
+        expect(
+            getPlayerStartTime({
+                canClientSeek: true,
+                startPositionTicks: 346600000
+            })
+        ).toBe(34.66);
+    });
+
+    test('leaves a progressive transcode at its beginning, where the server already started it', () => {
+        expect(
+            getPlayerStartTime({
+                canClientSeek: false,
+                startPositionTicks: 346600000
+            })
+        ).toBeUndefined();
+    });
+
+    test('starts at the beginning when no start position is asked for', () => {
+        expect(
+            getPlayerStartTime({ canClientSeek: true, startPositionTicks: 0 })
+        ).toBeUndefined();
+    });
+});
