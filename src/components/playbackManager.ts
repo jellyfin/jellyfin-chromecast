@@ -221,7 +221,10 @@ export abstract class PlaybackManager {
                 options.liveStreamId
             );
         } catch {
+            // Stop here: the stream check below would add a NoCompatibleStream.
             broadcastConnectionErrorMessage();
+
+            return;
         }
 
         if (playbackInfo.ErrorCode) {

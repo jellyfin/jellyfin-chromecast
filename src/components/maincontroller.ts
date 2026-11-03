@@ -12,6 +12,7 @@ import {
     getShuffleItems,
     getInstantMixItems,
     translateRequestedItems,
+    broadcastConnectionErrorMessage,
     broadcastToMessageBus,
     ticksToSeconds,
     TicksPerSecond
@@ -569,7 +570,15 @@ export async function translateItems(
 ): Promise<void> {
     const playNow = method != 'PlayNext' && method != 'PlayLast';
 
-    const result = await translateRequestedItems(options.items, playNow);
+    let result: Awaited<ReturnType<typeof translateRequestedItems>>;
+
+    try {
+        result = await translateRequestedItems(options.items, playNow);
+    } catch {
+        broadcastConnectionErrorMessage();
+
+        return;
+    }
 
     if (result.Items) {
         options.items = result.Items;
@@ -635,11 +644,19 @@ export async function onStopPlayerBeforePlaybackDone(
     options: PlayRequest
 ): Promise<void> {
     if (item.Id) {
-        const response = await getUserLibraryApi(
-            JellyfinApi.jellyfinApi
-        ).getItem({
-            itemId: item.Id
-        });
+        let response;
+
+        try {
+            response = await getUserLibraryApi(JellyfinApi.jellyfinApi).getItem(
+                {
+                    itemId: item.Id
+                }
+            );
+        } catch {
+            broadcastConnectionErrorMessage();
+
+            return;
+        }
 
         PlaybackManager.playItemInternal(response.data, options);
     }
