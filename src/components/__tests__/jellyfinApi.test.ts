@@ -1,4 +1,4 @@
-import { describe, beforeAll, beforeEach, test, expect } from 'vitest';
+import { describe, beforeAll, beforeEach, test, expect, vi } from 'vitest';
 import { JellyfinApi } from '../jellyfinApi';
 
 const setupMockCastSenders = (): void => {
@@ -93,5 +93,54 @@ describe('creating image urls', () => {
         const correct = '';
 
         expect(result).toEqual(correct);
+    });
+});
+
+describe('device identity', () => {
+    beforeAll(() => {
+        setupMockCastSenders();
+    });
+
+    test('follows a receiver name sent after the first message', () => {
+        JellyfinApi.setServerInfo('thisIsAccessToken', 'thisIsServerAddress');
+        JellyfinApi.setServerInfo(
+            'thisIsAccessToken',
+            'thisIsServerAddress',
+            'Bedroom'
+        );
+
+        expect(JellyfinApi.jellyfinApi.authorizationHeader).toContain(
+            'Device="Bedroom"'
+        );
+    });
+
+    test('keeps its name when a later message has none', () => {
+        JellyfinApi.setServerInfo(
+            'thisIsAccessToken',
+            'thisIsServerAddress',
+            'Kitchen'
+        );
+        JellyfinApi.setServerInfo('thisIsAccessToken', 'thisIsServerAddress');
+
+        expect(JellyfinApi.jellyfinApi.authorizationHeader).toContain(
+            'Device="Kitchen"'
+        );
+    });
+
+    test('does not log the access token', () => {
+        const debug = vi
+            .spyOn(console, 'debug')
+            .mockImplementation(() => undefined);
+
+        JellyfinApi.setServerInfo(
+            'thisIsAccessToken',
+            'thisIsServerAddress',
+            'Bedroom'
+        );
+
+        expect(debug.mock.calls.flat().join(' ')).not.toContain(
+            'thisIsAccessToken'
+        );
+        debug.mockRestore();
     });
 });

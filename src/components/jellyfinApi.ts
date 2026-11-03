@@ -31,7 +31,7 @@ export abstract class JellyfinApi {
             this.serverAddress !== serverAddress;
 
         console.debug(
-            `JellyfinApi.setServerInfo: token:${accessToken}, server:${serverAddress}, name:${receiverName}`
+            `JellyfinApi.setServerInfo: server:${serverAddress}, name:${receiverName}`
         );
         this.accessToken = accessToken;
         this.serverAddress = serverAddress;
@@ -43,7 +43,8 @@ export abstract class JellyfinApi {
             this.deviceName = receiverName;
             // deviceId just needs to be unique-ish
             this.deviceId = btoa(receiverName);
-        } else {
+        } else if (!this.deviceId) {
+            // A message without a name keeps the identity an earlier one gave.
             const senders =
                 cast.framework.CastReceiverContext.getInstance().getSenders();
 
@@ -54,18 +55,26 @@ export abstract class JellyfinApi {
                     : new Date().getTime().toString();
         }
 
-        this.jellyfinSdk ??= new Jellyfin({
-            clientInfo: {
-                name: 'Chromecast',
-                version: packageVersion
-            },
-            deviceInfo: {
-                id: this.deviceId,
-                name: this.deviceName
-            }
-        });
+        // The SDK carries the device into every request, so a new name needs a
+        // new SDK and API.
+        const deviceChanged =
+            this.jellyfinSdk?.deviceInfo.id !== this.deviceId ||
+            this.jellyfinSdk.deviceInfo.name !== this.deviceName;
 
-        if (!this.jellyfinApi || regenApi) {
+        if (!this.jellyfinSdk || deviceChanged) {
+            this.jellyfinSdk = new Jellyfin({
+                clientInfo: {
+                    name: 'Chromecast',
+                    version: packageVersion
+                },
+                deviceInfo: {
+                    id: this.deviceId,
+                    name: this.deviceName
+                }
+            });
+        }
+
+        if (!this.jellyfinApi || regenApi || deviceChanged) {
             if (serverAddress && accessToken) {
                 this.jellyfinApi = this.jellyfinSdk.createApi(
                     serverAddress,
