@@ -143,6 +143,11 @@ export abstract class PlaybackManager {
         this.activePlaylist.push(item);
     }
 
+    // insert items right after the current item, keeping their order
+    static enqueueNext(items: BaseItemDto[]): void {
+        this.activePlaylist.splice(this.activePlaylistIndex + 1, 0, ...items);
+    }
+
     static resetPlaylist(): void {
         this.activePlaylistIndex = -1;
         this.activePlaylist = [];

@@ -575,7 +575,9 @@ export async function translateItems(
         options.items = result.Items;
     }
 
-    if (method == 'PlayNext' || method == 'PlayLast') {
+    if (method == 'PlayNext') {
+        PlaybackManager.enqueueNext(options.items);
+    } else if (method == 'PlayLast') {
         for (let i = 0, length = options.items.length; i < length; i++) {
             PlaybackManager.enqueue(options.items[i]);
         }
