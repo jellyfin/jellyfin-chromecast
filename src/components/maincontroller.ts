@@ -255,10 +255,31 @@ window.playerManager.addEventListener(
     }
 );
 
+// Senders skip with a QUEUE_UPDATE that jumps one item (the Google Home app,
+// Home Assistant's Cast integration...). The queue is PlaybackManager's
+// playlist rather than CAF's, so move through that like the NextTrack and
+// PreviousTrack commands do. CAF still answers the request, minus the jump:
+// it would otherwise jump within the single item it knows about.
+window.playerManager.setMessageInterceptor(
+    cast.framework.messages.MessageType.QUEUE_UPDATE,
+    (data) => {
+        if (data.jump === 1) {
+            CommandHandler.nextTrackHandler();
+            delete data.jump;
+        } else if (data.jump === -1) {
+            CommandHandler.previousTrackHandler();
+            delete data.jump;
+        }
+
+        return data;
+    }
+);
+
 // Set the active subtitle track once the player has loaded
 window.playerManager.addEventListener(
     cast.framework.events.EventType.PLAYER_LOAD_COMPLETE,
     () => {
+        PlaybackManager.updateQueueCommands();
         setTextTrack(
             window.playerManager.getMediaInformation()?.customData
                 ?.subtitleStreamIndex ?? null

@@ -141,11 +141,32 @@ export abstract class PlaybackManager {
     // add item to playlist
     static enqueue(item: BaseItemDto): void {
         this.activePlaylist.push(item);
+        this.updateQueueCommands();
     }
 
     static resetPlaylist(): void {
         this.activePlaylistIndex = -1;
         this.activePlaylist = [];
+    }
+
+    /**
+     * Tell Cast senders whether next and previous would do anything, so they
+     * show those buttons (the Google Home app, Home Assistant's Cast
+     * integration...). The queue is this playlist rather than CAF's own, so
+     * CAF can't work that out by itself.
+     */
+    static updateQueueCommands(): void {
+        let commands: number = cast.framework.messages.Command.ALL_BASIC_MEDIA;
+
+        if (this.hasNextItem()) {
+            commands |= cast.framework.messages.Command.QUEUE_NEXT;
+        }
+
+        if (this.hasPrevItem()) {
+            commands |= cast.framework.messages.Command.QUEUE_PREV;
+        }
+
+        this.playerManager.setSupportedMediaCommands(commands, true);
     }
 
     // If there are items in the queue after the current one
