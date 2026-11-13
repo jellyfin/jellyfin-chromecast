@@ -209,12 +209,21 @@ window.playerManager.addEventListener(
             return;
         }
 
+        const stoppedPlaySessionId = playbackState.playSessionId;
+
         await reportPlaybackStopped(playbackState, {
             ...getReportingParams(playbackState),
             PositionTicks:
                 (mediaFinishedEvent.currentMediaTime ??
                     getCurrentPositionTicks(playbackState)) * TicksPerSecond
         });
+
+        // A play request stops the current media before loading the new one.
+        // If that load started while the stop was being reported, the new
+        // item owns the view, and onStop would put the idle screen over it.
+        if (playbackState.playSessionId !== stoppedPlaySessionId) {
+            return;
+        }
 
         defaultOnStop();
     }
